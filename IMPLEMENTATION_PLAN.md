@@ -10,6 +10,9 @@ This document provides a step-by-step implementation plan for building the Money
 - Write component tests for UI elements
 - Run `npm test` after each implementation step to verify
 - Maintain test coverage as features are added
+- **Target: Minimum 80% code coverage across the codebase**
+- Run `npm test -- --coverage` to check coverage metrics
+- All new features must include tests before marking phase as complete
 
 ## Requirements Reference
 
@@ -90,7 +93,8 @@ This plan implements all requirements from REQUIREMENTS.md:
 ### 1.8 Setup GitHub CI/CD
 - [x] Create `.github/workflows/ci.yml` workflow file
 - [x] Configure workflow to run on push and pull request to main branch
-- [x] Add jobs: install dependencies, lint, format check, test, build
+- [x] Add jobs: install dependencies, lint, format check, test with coverage, build
+- [x] Configure coverage threshold in `jest.config.js` (80% minimum)
 - [x] Configure Node.js version matching `.nvmrc`
 - [x] Add caching for node_modules
 - [x] Test: Push code and verify workflow runs successfully on GitHub
@@ -449,8 +453,9 @@ This plan implements all requirements from REQUIREMENTS.md:
 ### 15.4 Test Coverage Review
 - [ ] Review unit test coverage from all phases
 - [ ] Run `npm run test:coverage` to check coverage metrics
+- [ ] Ensure minimum 80% code coverage across the codebase
 - [ ] Add tests for any gaps in critical functionality
-- [ ] **Test**: Adequate coverage for all features
+- [ ] **Test**: Coverage meets 80% threshold, all critical paths tested
 
 ### 15.5 Bug Fixes and Edge Cases
 - [ ] Fix any bugs discovered during testing

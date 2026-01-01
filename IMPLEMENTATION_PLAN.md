@@ -69,11 +69,11 @@ This plan implements all requirements from REQUIREMENTS.md:
 - [x] Verify: Import and use a MUI component in test file
 
 ### 1.6 Create Development Environment Files
-- [ ] Create `.nvmrc` file with Node.js version (LTS - 18 or 20)
-- [ ] Create `.editorconfig` file for consistent coding styles across editors
+- [x] Create `.nvmrc` file with Node.js version (LTS - 18 or 20)
+- [x] Create `.editorconfig` file for consistent coding styles across editors
 
 ### 1.7 Create Project Structure
-- [ ] Create folder structure: `src/components`, `src/stores`, `src/services`, `src/types`, `src/utils`, `src/hooks`, `src/constants`, `src/schemas`
+- [x] Create folder structure: `src/components`, `src/stores`, `src/services`, `src/types`, `src/utils`, `src/hooks`, `src/constants`, `src/schemas`
 - [x] Basic `src/index.tsx` entry point exists
 - [x] Basic `src/App.tsx` root component exists
 - [x] `public/index.html` exists

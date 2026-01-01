@@ -20,6 +20,15 @@ When writing code:
 - Let the code speak for itself rather than relying on comments to explain what it does
 - Keep documentation minimal or not at all if code is self-documenting
 
+## Communication Guidelines
+
+When providing updates or summaries:
+
+- Show summaries directly in chat responses instead of creating files
+- Don't create summary documents like `*_FIXED.md`, `*_COMPLETE.md`, or similar status files
+- Only create documentation files when explicitly requested by the user
+- Keep chat responses concise and focused on what was done
+
 ## Markdown Writing Guidelines
 
 When writing or editing markdown files:
@@ -31,6 +40,3 @@ When writing or editing markdown files:
 - Prefer active voice over passive voice
 - Remove unnecessary words and filler content
 
-## Others
-
-- Don't summarise nor create summary files

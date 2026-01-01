@@ -142,31 +142,31 @@ This plan implements all requirements from REQUIREMENTS.md:
 - [x] **Test**: Can save data file to local machine, can load data file from local machine, data persists
 
 ### 2.4 Setup Data Management UI
-- [ ] Create `src/services/sync.service.ts` with auto-save logic:
-  - [ ] Track unsaved changes across all stores
-  - [ ] Provide `promptSaveIfNeeded()` function to check and prompt before destructive actions
-  - [ ] Implement periodic auto-save with configurable interval (default: 5 minutes)
-  - [ ] Auto-save timer starts when changes are detected
-  - [ ] Auto-save only runs when there are unsaved changes
-  - [ ] Auto-save saves silently without user prompts
-  - [ ] Integrate with useAppStore for unsaved changes tracking
-- [ ] Create `src/components/layout/Header.tsx` with:
-  - [ ] "Load" button (triggers file picker)
-  - [ ] "Save" button (triggers file save)
-  - [ ] Current file name display
-  - [ ] Last saved time display
-  - [ ] Unsaved changes indicator (dot or asterisk)
-- [ ] Create `src/components/common/UnsavedChangesDialog.tsx` - confirmation before closing with unsaved changes
-- [ ] Create `src/components/common/FileLoadErrorDialog.tsx` - show errors when file fails to load
-- [ ] Update `src/App.tsx` to:
-  - [ ] Wrap with Header component
-  - [ ] Add window beforeunload handler for unsaved changes warning
-  - [ ] Connect save/load buttons to storage service
-  - [ ] Prompt to save before loading a different file
-  - [ ] Initialize periodic auto-save on mount
-  - [ ] Clean up auto-save timer on unmount
-- [ ] **Write tests**: Test save/load UI interactions, unsaved changes detection, error handling, auto-save prompts, periodic auto-save
-- [ ] **Test**: Click "Load" → file picker opens → select file → data appears; Click "Save" → file picker opens → save file; Make changes → see unsaved indicator → wait 5 minutes → auto-saved; close browser → get warning; Make changes → load different file → prompted to save first
+- [x] Create `src/services/sync.service.ts` with auto-save logic:
+  - [x] Track unsaved changes across all stores
+  - [x] Provide `promptSaveIfNeeded()` function to check and prompt before destructive actions
+  - [x] Implement periodic auto-save with configurable interval (default: 5 minutes)
+  - [x] Auto-save timer starts when changes are detected
+  - [x] Auto-save only runs when there are unsaved changes
+  - [x] Auto-save saves silently without user prompts
+  - [x] Integrate with useAppStore for unsaved changes tracking
+- [x] Create `src/components/layout/Header.tsx` with:
+  - [x] "Load" button (triggers file picker)
+  - [x] "Save" button (triggers file save)
+  - [x] Current file name display
+  - [x] Last saved time display
+  - [x] Unsaved changes indicator (dot or asterisk)
+- [x] Create `src/components/common/UnsavedChangesDialog.tsx` - confirmation before closing with unsaved changes
+- [x] Create `src/components/common/FileLoadErrorDialog.tsx` - show errors when file fails to load
+- [x] Update `src/App.tsx` to:
+  - [x] Wrap with Header component
+  - [x] Add window beforeunload handler for unsaved changes warning
+  - [x] Connect save/load buttons to storage service
+  - [x] Prompt to save before loading a different file
+  - [x] Initialize periodic auto-save on mount
+  - [x] Clean up auto-save timer on unmount
+- [x] **Write tests**: Test save/load UI interactions, unsaved changes detection, error handling, auto-save prompts, periodic auto-save
+- [x] **Test**: Click "Load" → file picker opens → select file → data appears; Click "Save" → file picker opens → save file; Make changes → see unsaved indicator → wait 5 minutes → auto-saved; close browser → get warning; Make changes → load different file → prompted to save first
 
 ## Phase 3: Account Management Feature
 

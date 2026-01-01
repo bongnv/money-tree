@@ -2,41 +2,29 @@
 
 ## Project Documentation
 
-- Read `REQUIREMENTS.md` for functional and non-functional requirements
-- Read `IMPLEMENTATION_PLAN.md` for the implementation plan and phase breakdown
-- When requirements change, update both files to keep them consistent
-- When updating `REQUIREMENTS.md`, check if `IMPLEMENTATION_PLAN.md` needs updates
-- When updating `IMPLEMENTATION_PLAN.md`, verify it matches requirements in `REQUIREMENTS.md`
+- Read `REQUIREMENTS.md` and `IMPLEMENTATION_PLAN.md` before making changes
+- Keep both files in sync when requirements or plans change
 
-## Coding Guidelines
+## Code Style
 
-When writing code:
+- Write self-documenting code with clear names
+- Keep functions small and focused
+- Avoid unnecessary complexity
+- Don't use deprecated APIs, methods, or constants
+- If deprecated code is unavoidable, add a comment explaining why
+- Don't add comments unless explaining non-obvious logic
+- Don't generate documentation files unless requested
 
-- Write simple, self-documenting code that explains itself through clear naming and structure
-- Use descriptive variable and function names that reveal intent
-- Keep functions small and focused on a single responsibility
-- Avoid unnecessary complexity and over-engineering
-- Don't generate documentation files (Markdown) unless explicitly instructed
-- Let the code speak for itself rather than relying on comments to explain what it does
-- Keep documentation minimal or not at all if code is self-documenting
+## Communication
 
-## Communication Guidelines
+- Provide summaries in chat, not separate files
+- Don't create status files like `*_FIXED.md` or `*_COMPLETE.md`
+- Keep responses concise
 
-When providing updates or summaries:
+## Writing Style
 
-- Show summaries directly in chat responses instead of creating files
-- Don't create summary documents like `*_FIXED.md`, `*_COMPLETE.md`, or similar status files
-- Only create documentation files when explicitly requested by the user
-- Keep chat responses concise and focused on what was done
-
-## Markdown Writing Guidelines
-
-When writing or editing markdown files:
-
-- Use simple, clear language that's easy to understand
-- Avoid jargon and complex terminology unless necessary
-- Keep content concise and to the point
-- Use short paragraphs (2-4 sentences)
-- Prefer active voice over passive voice
-- Remove unnecessary words and filler content
+- Use simple, clear language
+- Keep paragraphs short (2-4 sentences)
+- Use active voice
+- Remove filler words
 

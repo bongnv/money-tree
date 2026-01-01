@@ -1,6 +1,6 @@
 # Money Tree - Implementation Plan
 
-This document provides a step-by-step implementation plan for building the Money Tree application. Each step is small, verifiable, and can be checked off upon completion.
+This document provides a step-by-step implementation plan for building the Money Tree application. The plan is divided into MVP (Minimum Viable Product) and post-MVP phases.
 
 ## Testing Approach
 
@@ -16,33 +16,43 @@ This document provides a step-by-step implementation plan for building the Money
 
 ## Requirements Reference
 
-This plan implements all requirements from REQUIREMENTS.md:
+This plan implements all requirements from REQUIREMENTS.md.
 
-**Functional Requirements:**
-- **FR-1**: Transaction Management → Phase 5, 8
-- **FR-2**: Categorization System → Phase 2, 4
-- **FR-3**: Account Management → Phase 3, 5, 8
-- **FR-4**: Category Customization → Phase 4
-- **FR-5**: Budget Planning → Phase 6, 8
-- **FR-6**: Financial Reports → Phase 7, 8
-- **FR-7**: Data Storage & Sync → Phase 2 (local), 10 (year management), 12 (persistence), 18 (cloud - optional)
-- **FR-8**: Authentication → Phase 18 only (cloud storage providers - optional, not an app feature)
+**MVP Functional Requirements:**
+- **FR-1**: Transaction Management → Phase 5, 8 (MVP)
+- **FR-2**: Categorization System → Phase 2, 4 (MVP)
+- **FR-3**: Account Management → Phase 3, 5, 8 (MVP)
+- **FR-4**: Category Customization → Phase 4 (MVP)
+- **FR-5**: Dashboard & Quick Entry → Phase 8 (MVP)
+- **FR-6**: Data Storage (Local) → Phase 2, 10 (MVP)
+- **FR-7**: Year Management → Phase 10 (MVP)
 
-**Non-Functional Requirements:**
-- **NFR-1**: Architecture → Phase 1, 16
+**Post-MVP Functional Requirements:**
+- **FR-8**: Budget Planning → Phase 12 (Post-MVP)
+- **FR-9**: Financial Reports → Phase 13 (Post-MVP)
+- **FR-10**: Conflict Detection & Auto-Merge → Phase 15 (Post-MVP)
+- **FR-11**: Cloud Storage Integration → Phase 18+ (Post-MVP, Optional)
+
+**MVP Non-Functional Requirements:**
+- **NFR-1**: Architecture → Phase 1, 9
 - **NFR-2**: Technology Stack → Phase 1, 2
-- **NFR-3**: Performance → Phase 14, 16, 17
-- **NFR-4**: Security → Phase 18 (cloud storage only - optional)
-- **NFR-5**: Usability → Phase 11, 13, 14, 17
-- **NFR-6**: Compatibility → Phase 11, 14, 16, 17
-- **NFR-7**: Reliability → Phase 12, 13, 15
-- **NFR-8**: Maintainability → Phase 1, 17
+- **NFR-3**: Performance → Phase 11
+- **NFR-4**: Usability → Phase 8, 11
+- **NFR-5**: Compatibility → Phase 9, 11
+- **NFR-6**: Reliability → Phase 2, 11
+- **NFR-7**: Maintainability → Phase 1, 11
+
+**Post-MVP Non-Functional Requirements:**
+- **NFR-8**: Cloud Security → Phase 18+ (Post-MVP, Optional)
+- **NFR-9**: Advanced Reliability → Phase 15 (Post-MVP)
 
 ---
 
-## Phase 1: Project Setup & Foundation
+# MVP IMPLEMENTATION
 
-**Requirements**: NFR-1, NFR-2, NFR-8
+## Phase 1: Project Setup & Foundation (MVP)
+
+**Requirements**: NFR-1 (Architecture), NFR-2 (Technology Stack), NFR-7 (Maintainability)
 
 **Goal**: Set up development environment, tooling, and project structure
 
@@ -107,9 +117,9 @@ This plan implements all requirements from REQUIREMENTS.md:
 - [x] Configure Jest to pass with no tests (`--passWithNoTests`)
 - [x] Verify: Run `npm test` - passes with no tests
 
-## Phase 2: Core Foundation & Local Storage
+## Phase 2: Core Foundation & Local Storage (MVP)
 
-**Requirements**: FR-8 (Data Storage - Local), NFR-2 (Technology Stack)
+**Requirements**: FR-6 (Data Storage - Local), NFR-2 (Technology Stack), NFR-6 (Reliability)
 
 **Goal**: Establish data models and local file storage foundation
 
@@ -168,7 +178,341 @@ This plan implements all requirements from REQUIREMENTS.md:
 - [x] **Write tests**: Test save/load UI interactions, unsaved changes detection, error handling, auto-save prompts, periodic auto-save
 - [x] **Test**: Click "Load" → file picker opens → select file → data appears; Click "Save" → file picker opens → save file; Make changes → see unsaved indicator → wait 5 minutes → auto-saved; close browser → get warning; Make changes → load different file → prompted to save first
 
-### 2.5 Implement Conflict Detection & Auto-Merge
+## Phase 3: Account Management Feature (MVP)
+
+**Requirements**: FR-3 (Account Management)
+
+**Goal**: Users can create and manage their accounts (bank accounts, credit cards, etc.)
+
+### 3.1 Implement Account Data Layer
+- [x] Create `src/stores/useAccountStore.ts` with account state and CRUD actions
+- [x] Create `src/utils/currency.utils.ts` for formatting amounts with default currencies
+- [x] Load default currencies from constants
+
+### 3.2 Build Account Management UI
+- [x] Create `src/components/layout/MainLayout.tsx` with header, navigation
+- [x] Create `src/components/accounts/AccountCard.tsx`
+- [x] Create `src/components/accounts/AccountList.tsx`
+- [x] Create `src/components/accounts/AccountForm.tsx` with validation
+- [x] Create `src/components/accounts/AccountDialog.tsx`
+- [x] Create `src/components/accounts/AccountsPage.tsx`
+- [x] Add route `/accounts` in router setup
+- [x] **Test**: Create account, edit account, view account list, delete account (all via UI)
+
+## Phase 4: Category & Transaction Type Management Feature (MVP)
+
+**Requirements**: FR-2 (Categorization System), FR-4 (Category Customization)
+
+**Goal**: Users can customize their category structure for organizing transactions
+
+### 4.1 Implement Category Data Layer
+- [ ] Create `src/stores/useCategoryStore.ts` with categories and transaction types
+- [ ] Load default categories and transaction types into store
+
+### 4.2 Build Category Management UI
+- [ ] Create `src/components/categories/CategoryTree.tsx` showing hierarchy
+- [ ] Create `src/components/categories/CategoryForm.tsx`
+- [ ] Create `src/components/categories/TransactionTypeForm.tsx`
+- [ ] Create `src/components/categories/CategoriesPage.tsx`
+- [ ] Add route `/categories`
+- [ ] **Test**: Add category, add transaction type, edit names, delete (with validation), view hierarchy
+
+## Phase 5: Transaction Management Feature (MVP)
+
+**Requirements**: FR-1 (Transaction Management), FR-3 (Account Management - balance updates)
+
+**Goal**: Users can add, view, edit, and delete transactions
+
+### 5.1 Implement Transaction Data Layer
+- [ ] Create `src/stores/useTransactionStore.ts` with transaction CRUD
+- [ ] Create `src/services/calculation.service.ts` for balance calculations
+- [ ] Create `src/services/validation.service.ts` for transaction validation
+- [ ] Create `src/utils/date.utils.ts` for date formatting
+
+### 5.2 Build Transaction Management UI
+- [ ] Install `@mui/x-data-grid` for transaction list
+- [ ] Create `src/components/common/FormTextField.tsx` and other form components
+- [ ] Create `src/components/transactions/TransactionForm.tsx` with conditional from/to accounts
+- [ ] Create `src/components/transactions/TransactionDialog.tsx`
+- [ ] Create `src/components/transactions/TransactionList.tsx` with DataGrid
+- [ ] Create `src/components/transactions/TransactionFilters.tsx`
+- [ ] Create `src/components/transactions/TransactionsPage.tsx`
+- [ ] Add route `/transactions`
+- [ ] **Test**: Add expense (from account), add income (to account), add transfer (both), add investment, filter, edit, delete
+
+### 5.3 Verify Account Balance Updates
+- [ ] Update AccountCard to show calculated balance
+- [ ] **Test**: Add transactions and verify account balances update correctly
+
+## Phase 6: Dashboard with Quick Transaction Entry (MVP)
+
+**Requirements**: FR-5 (Dashboard & Quick Entry), FR-1 (Transaction Management)
+
+**Goal**: Users see a summary dashboard with inline transaction entry
+
+### 6.1 Build Dashboard Widgets
+- [ ] Create `src/components/dashboard/StatsCard.tsx`
+- [ ] Create `src/components/dashboard/RecentTransactions.tsx`
+- [ ] Create `src/components/dashboard/AccountSummary.tsx`
+- [ ] Create `src/components/dashboard/QuickAddTransaction.tsx` - Inline transaction entry form:
+  - [ ] Always visible at top of dashboard (no button click required)
+  - [ ] Essential fields: Amount, Date, Transaction Type, Account(s)
+  - [ ] Auto-save on submit or Enter key
+  - [ ] Clears form after successful submission
+  - [ ] Optional: "More Details" link to open full TransactionDialog for complex transactions
+
+### 6.2 Create Dashboard Page
+- [ ] Create `src/components/dashboard/DashboardPage.tsx`
+- [ ] Place QuickAddTransaction form prominently at the top
+- [ ] Integrate remaining widgets below in responsive grid
+- [ ] Add route `/` (Dashboard)
+- [ ] Update navigation to default to dashboard
+- [ ] **Test**: Open dashboard and immediately start typing to add transaction, submit with Enter key, verify form clears and transaction appears in recent list
+
+## Phase 7: Year Management Feature (MVP)
+
+**Requirements**: FR-7 (Year Management)
+
+**Goal**: Users can switch between years and manage multi-year data
+
+### 7.1 Implement Year Switching
+- [ ] Create `src/components/common/YearSelector.tsx`
+- [ ] Add to header/navigation
+- [ ] Connect to app store
+- [ ] Implement year switching logic (load different file)
+- [ ] **Test**: Switch years, add transactions in different years, verify data isolation
+
+## Phase 8: Navigation & Routing (MVP)
+
+**Requirements**: NFR-4 (Usability - navigation), NFR-5 (Compatibility - responsive)
+
+**Goal**: Complete navigation experience
+
+### 8.1 Complete Routing Setup
+- [ ] Install `react-router-dom`
+- [ ] Create `src/routes.tsx` with route definitions for MVP pages
+- [ ] Wrap app with BrowserRouter
+- [ ] Create 404 page
+
+### 8.2 Complete Navigation
+- [ ] Update Header with navigation links for MVP pages
+- [ ] Add active state styling
+- [ ] Add mobile responsive menu (drawer)
+- [ ] **Test**: Navigate between all pages, verify active states, test on mobile
+
+## Phase 9: Production Build & Deployment (MVP)
+
+**Requirements**: NFR-1 (Architecture), NFR-3 (Performance), NFR-5 (Compatibility)
+
+**Goal**: Deploy the MVP to production
+
+### 9.1 Optimize Bundle
+- [ ] Configure webpack for production with code splitting, minimize bundle size, and add source maps
+- [ ] **Test**: Production build completes without errors, bundle size is reasonable
+
+### 9.2 Create Build Documentation
+- [ ] Update README.md with setup instructions, environment variables, build/deployment instructions
+- [ ] Add troubleshooting guide
+- [ ] **Test**: New developer can follow README to set up project
+
+### 9.3 Test Production Build Locally
+- [ ] Build production bundle, test locally
+- [ ] Verify file save/load works
+- [ ] Test all features in production mode
+- [ ] **Test**: App works correctly in production mode
+
+### 9.4 Deploy to Cloudflare Pages
+- [ ] Create Cloudflare account (if not already)
+- [ ] Connect GitHub repository to Cloudflare Pages
+- [ ] Configure build settings:
+  - [ ] Build command: `npm run build`
+  - [ ] Build output directory: `dist`
+  - [ ] Node.js version: LTS (18 or 20)
+- [ ] Add `_headers` file in `public/` for security headers (CSP, X-Frame-Options, X-Content-Type-Options)
+- [ ] Add `_redirects` file in `public/` for SPA routing (`/* /index.html 200`)
+- [ ] Configure automatic deployment from main branch
+- [ ] Configure preview deployments for pull requests
+- [ ] Deploy application
+- [ ] **Test**: Visit Cloudflare Pages URL, test all features, test on multiple browsers
+
+### 9.5 Configure Custom Domain (Optional)
+- [ ] Add custom domain in Cloudflare Pages dashboard
+- [ ] Update DNS records
+- [ ] Enable automatic HTTPS
+- [ ] **Test**: App works on custom domain with HTTPS
+
+## Phase 10: MVP Testing & Quality Assurance
+
+**Requirements**: All MVP Functional Requirements, NFR-6 (Reliability), NFR-7 (Maintainability)
+
+**Goal**: Comprehensive testing and validation of MVP
+
+### 10.1 Integration Testing
+- [ ] Test complete user workflows end-to-end
+- [ ] Test data flow between stores and components
+- [ ] Test interactions between different features
+- [ ] Test year switching with data dependencies
+
+### 10.2 Cross-Feature Validation
+- [ ] Test account deletion with existing transactions
+- [ ] Test category deletion with existing transaction types
+- [ ] Test transaction changes affecting account balances
+- [ ] Test data consistency across all features
+
+### 10.3 Data Persistence Integration
+- [ ] Test complete save/load workflows with local files
+- [ ] Test data integrity across multiple year files
+- [ ] Test with large datasets (100+ transactions)
+- [ ] **Test**: No data loss in any scenario
+
+### 10.4 Test Coverage Review
+- [ ] Review unit test coverage from all phases
+- [ ] Run `npm run test:coverage` to check coverage metrics
+- [ ] Ensure minimum 80% code coverage across the codebase
+- [ ] Add tests for any gaps in critical functionality
+- [ ] **Test**: Coverage meets 80% threshold, all critical paths tested
+
+### 10.5 Bug Fixes and Edge Cases
+- [ ] Fix any bugs discovered during testing
+- [ ] Handle null/undefined edge cases
+- [ ] Test with extreme values and edge cases
+- [ ] **Test**: App is stable and handles errors gracefully
+
+## Phase 11: UI/UX Polish (MVP)
+
+**Requirements**: NFR-4 (Usability), NFR-3 (Performance)
+
+**Goal**: Professional, polished user experience for MVP
+
+### 11.1 Add Loading States
+- [ ] Create `src/components/common/LoadingSpinner.tsx`
+- [ ] Create `src/components/common/SkeletonLoader.tsx`
+- [ ] Create `src/components/common/LoadingOverlay.tsx`
+- [ ] Add loading states to all async operations
+- [ ] **Test**: Verify smooth loading experience
+
+### 11.2 Add Feedback & Confirmations
+- [ ] Add success snackbars for all CRUD operations
+- [ ] Create `src/components/common/ConfirmDialog.tsx`
+- [ ] Add delete confirmations
+- [ ] Add subtle animations
+- [ ] **Test**: Verify user gets clear feedback for all actions
+
+### 11.3 Improve Responsive Design
+- [ ] Test on mobile devices (iPhone, Android)
+- [ ] Test on tablets (iPad)
+- [ ] Optimize touch targets
+- [ ] **Test**: Full app works well on all screen sizes
+
+### 11.4 Add Accessibility
+- [ ] Add ARIA labels to all interactive elements
+- [ ] Ensure keyboard navigation (Tab, Enter, ESC)
+- [ ] Add focus indicators
+- [ ] Ensure proper heading hierarchy
+- [ ] **Test**: Navigate app with keyboard only
+
+### 11.5 Performance Optimization
+- [ ] Profile app performance with React DevTools
+- [ ] Optimize re-renders with React.memo, useMemo, useCallback
+- [ ] Lazy load route components with React.lazy
+- [ ] **Test**: App is responsive and performant with large datasets
+
+### 11.6 Final Cross-Browser Testing
+- [ ] Test on Chrome (desktop & mobile)
+- [ ] Test on Firefox
+- [ ] Test on Safari (desktop & mobile)
+- [ ] Test on Edge
+- [ ] **Test**: App works consistently across all browsers
+
+---
+
+# POST-MVP ENHANCEMENTS
+
+These features will be implemented after the MVP is validated by users.
+
+## Phase 12: Budget Planning Feature (Post-MVP)
+
+**Requirements**: FR-8 (Budget Planning)
+
+**Goal**: Users can create budgets and track spending against them
+
+### 12.1 Implement Budget Data Layer
+- [ ] Create `src/stores/useBudgetStore.ts` with budget and budget items
+- [ ] Add budget vs actual calculation functions to calculation service
+
+### 12.2 Build Budget Management UI
+- [ ] Create `src/components/budgets/BudgetForm.tsx`
+- [ ] Create `src/components/budgets/BudgetItemsGrid.tsx`
+- [ ] Create `src/components/budgets/BudgetDialog.tsx` with stepper
+- [ ] Create `src/components/budgets/BudgetList.tsx`
+- [ ] Create `src/components/budgets/BudgetOverview.tsx` with progress bars
+- [ ] Create `src/components/budgets/BudgetsPage.tsx`
+- [ ] Add route `/budgets`
+- [ ] **Test**: Create budget with items, set as active, view budget vs actual, edit budget, delete budget
+
+### 12.3 Add Budget Widget to Dashboard
+- [ ] Create `src/components/dashboard/BudgetWidget.tsx`
+- [ ] Integrate into Dashboard page
+- [ ] **Test**: Dashboard shows budget tracking status
+
+## Phase 13: Financial Reports Feature (Post-MVP)
+
+**Requirements**: FR-9 (Financial Reports)
+
+**Goal**: Users can view financial reports and analytics
+
+### 13.1 Setup Chart Library
+- [ ] Install charting library (recharts or nivo)
+- [ ] Create `src/components/charts/LineChart.tsx`
+- [ ] Create `src/components/charts/BarChart.tsx`
+- [ ] Create `src/components/charts/PieChart.tsx`
+
+### 13.2 Build Cash Flow Report
+- [ ] Create `src/components/reports/CashFlowReport.tsx`
+- [ ] Implement cash flow calculations
+- [ ] Add date range selector and period grouping
+- [ ] **Test**: View cash flow for different date ranges, verify calculations match transactions
+
+### 13.3 Build Balance Sheet Report
+- [ ] Create `src/components/reports/BalanceSheet.tsx`
+- [ ] Show accounts grouped by type with balances
+- [ ] Calculate and display net worth
+- [ ] **Test**: Verify balance sheet shows correct account balances and net worth
+
+### 13.4 Build Budget Analysis Report
+- [ ] Create `src/components/reports/BudgetAnalysis.tsx`
+- [ ] Show budget vs actual with progress bars and color coding
+- [ ] **Test**: Verify budget analysis matches budget and transactions
+
+### 13.5 Build Account Overview Report
+- [ ] Create `src/components/reports/AccountOverview.tsx`
+- [ ] Show account transactions and balance over time
+- [ ] **Test**: View individual account history and balance chart
+
+### 13.6 Create Reports Page
+- [ ] Create `src/components/reports/ReportsPage.tsx` with tab navigation
+- [ ] Add export buttons for each report
+- [ ] Create `src/utils/export.utils.ts` for CSV/JSON export
+- [ ] Add route `/reports`
+- [ ] **Test**: Switch between reports, export data
+
+## Phase 14: Settings & Data Management Feature (Post-MVP)
+
+**Requirements**: Data Import/Export
+
+**Goal**: Users can manage app settings and advanced data operations
+
+### 14.1 Build Settings UI
+- [ ] Create `src/components/settings/DataManagement.tsx` with import/export
+- [ ] Create `src/components/settings/SettingsPage.tsx`
+- [ ] Add route `/settings`
+- [ ] **Test**: Export all data, import data, clear data
+
+## Phase 15: Conflict Detection & Auto-Merge (Post-MVP)
+
+**Requirements**: FR-10 (Advanced Data Management), NFR-9 (Advanced Reliability)
+
+**Goal**: Intelligent conflict detection and automatic merging for concurrent modifications
 
 **Conflict Detection:**
 - [ ] Add conflict detection to `src/services/sync.service.ts`:
@@ -205,499 +549,75 @@ This plan implements all requirements from REQUIREMENTS.md:
       - [ ] **Deleted in app, modified in file** → flag as conflict
       - [ ] **Deleted in both** → remove from result
   - [ ] Return merge result: `{ merged: DataFile, conflicts: Conflict[] }`
-  - [ ] Create `Conflict` type:
-    ```typescript
-    interface Conflict {
-      entityType: 'account' | 'transaction' | 'category' | 'transactionType' | 'budget';
-      entityId: string;
-      entityName: string;  // For display
-      type: 'field-conflict' | 'delete-modify-conflict';
-      baseValue?: any;
-      fileValue?: any;
-      appValue?: any;
-      conflictingFields?: string[];  // For field conflicts
-    }
-    ```
-  - [ ] Implement field-level comparison for entities:
-    - [ ] Compare each field between base, file, and app versions
-    - [ ] Detect which fields changed in each version
-    - [ ] Identify overlapping changes
-  - [ ] Special handling for computed fields:
-    - [ ] Account balances: Offer to recalculate from transactions
-    - [ ] Budget totals: Recalculate from items
-    - [ ] Category counts: Recalculate from transaction types
+  - [ ] Create `Conflict` type with entity information and conflict details
+  - [ ] Implement field-level comparison for entities
+  - [ ] Special handling for computed fields (balances, totals)
 
 **Data Consistency Validation:**
-- [ ] Create `src/services/validation.service.ts`:
-  - [ ] Implement `validateDataConsistency(dataFile)`:
-    - [ ] Check account balances match transaction history
-    - [ ] Verify all transaction references point to valid accounts
-    - [ ] Ensure categories have valid parent references
-    - [ ] Validate budget calculations
-  - [ ] Return list of consistency warnings
-  - [ ] Offer auto-fix options where possible
+- [ ] Add data consistency validation functions
+- [ ] Check account balances match transaction history
+- [ ] Verify all references are valid
+- [ ] Offer auto-fix options where possible
 
 **Merge Preview UI:**
 - [ ] Create `src/components/common/MergePreviewDialog.tsx`:
-  - [ ] Show merge preview with tabs:
-    - [ ] **Summary**: Quick overview of what will happen
-    - [ ] **Auto-Merged**: List of non-conflicting changes being merged
-    - [ ] **Conflicts**: Interactive resolution for each conflict
-    - [ ] **Validation**: Any consistency warnings
-  - [ ] For auto-merged changes, show:
-    - [ ] Count of new entities from each version
-    - [ ] Count of modified entities (non-conflicting)
-    - [ ] Expandable details for each change
-  - [ ] For conflicts, show:
-    - [ ] Side-by-side comparison of conflicting values
-    - [ ] Radio buttons: "Keep both", "Use file version", "Use your version"
-    - [ ] Default to "Keep both" when possible (e.g., different fields)
-    - [ ] Highlight differences visually
-  - [ ] Validation warnings section:
-    - [ ] List any data consistency issues found
-    - [ ] Offer auto-fix buttons
-    - [ ] Show what auto-fix will do
-  - [ ] Action buttons:
-    - [ ] **Apply Merge** - Proceed with merge and save
-    - [ ] **Manual Resolution** - Switch to old manual conflict dialog
-    - [ ] **Cancel** - Return to editing
-
-**Fallback Manual Resolution:**
-- [ ] Keep existing simple conflict dialog as fallback
-- [ ] Add "Try Auto-Merge" button to simple dialog
-- [ ] Allow user to choose between auto-merge and manual resolution
+  - [ ] Show merge preview with tabs for different sections
+  - [ ] Display auto-merged changes
+  - [ ] Interactive resolution for conflicts
+  - [ ] Validation warnings with auto-fix options
 
 **Integration:**
-- [ ] Update `saveNow()` in sync.service:
-  - [ ] When conflict detected, attempt three-way merge first
-  - [ ] If merge successful with no conflicts → apply silently and save
-  - [ ] If conflicts found → show merge preview dialog
-  - [ ] After user resolves conflicts → validate and save
-  - [ ] Update base version and hash after successful save
-- [ ] Handle auto-save:
-  - [ ] Pause auto-save when conflicts detected
-  - [ ] Only auto-save if merge has no conflicts
-  - [ ] Never auto-save with unresolved conflicts
-  - [ ] Resume auto-save after manual resolution
+- [ ] Update `saveNow()` in sync.service to use merge logic
+- [ ] Handle auto-save with conflict detection
+- [ ] Never auto-save with unresolved conflicts
 
 **Testing:**
-- [ ] **Write tests**: 
-  - [ ] Test MD5 hash calculation
-  - [ ] Test three-way merge with various scenarios:
-    - [ ] New entities in file only
-    - [ ] New entities in app only
-    - [ ] New entities in both (different IDs)
-    - [ ] Modified entities (non-conflicting fields)
-    - [ ] Modified entities (conflicting fields)
-    - [ ] Deleted in one, modified in other
-    - [ ] Deleted in both
-  - [ ] Test field-level merge logic
-  - [ ] Test conflict detection and flagging
-  - [ ] Test consistency validation
-  - [ ] Test merge preview UI interactions
-  - [ ] Test each resolution option
-  - [ ] Test auto-save behavior during conflicts
-- [ ] **Integration tests**: 
-  - [ ] Load file → externally add account → add different account in app → merge successfully
-  - [ ] Load file → externally modify account name → modify same account balance in app → merge both
-  - [ ] Load file → externally modify account name → modify same account name in app → conflict dialog
-  - [ ] Open two tabs → add different transactions → save from both → auto-merge works
-  - [ ] Verify no false alarms from file metadata updates
-  - [ ] Verify balance validation catches inconsistencies
+- [ ] Test MD5 hash calculation
+- [ ] Test three-way merge scenarios
+- [ ] Test conflict detection and resolution
+- [ ] Integration tests with concurrent modifications
 
-## Phase 3: Account Management Feature
+## Phase 16: User Documentation (Post-MVP)
 
-**Requirements**: FR-3 (Account Management)
+**Requirements**: NFR-4 (Usability)
 
-**Goal**: Users can create and manage their accounts (bank accounts, credit cards, etc.)
+**Goal**: Complete user documentation
 
-### 3.1 Implement Account Data Layer
-- [x] Create `src/stores/useAccountStore.ts` with account state and CRUD actions
-- [x] Create `src/utils/currency.utils.ts` for formatting amounts with default currencies
-- [x] Load default currencies from constants
-
-### 3.2 Build Account Management UI
-- [x] Create `src/components/layout/MainLayout.tsx` with header, navigation
-- [x] Create `src/components/accounts/AccountCard.tsx`
-- [x] Create `src/components/accounts/AccountList.tsx`
-- [x] Create `src/components/accounts/AccountForm.tsx` with validation
-- [x] Create `src/components/accounts/AccountDialog.tsx`
-- [x] Create `src/components/accounts/AccountsPage.tsx`
-- [x] Add route `/accounts` in router setup
-- [x] **Test**: Create account, edit account, view account list, delete account (all via UI)
-
-## Phase 4: Category & Transaction Type Management Feature
-
-**Requirements**: FR-2 (Categorization System), FR-4 (Category Customization)
-
-**Goal**: Users can customize their category structure for organizing transactions
-
-### 4.1 Implement Category Data Layer
-- [ ] Create `src/stores/useCategoryStore.ts` with categories and transaction types
-- [ ] Load default categories and transaction types into store
-
-### 4.2 Build Category Management UI
-- [ ] Create `src/components/categories/CategoryTree.tsx` showing hierarchy
-- [ ] Create `src/components/categories/CategoryForm.tsx`
-- [ ] Create `src/components/categories/TransactionTypeForm.tsx`
-- [ ] Create `src/components/categories/CategoriesPage.tsx`
-- [ ] Add route `/categories`
-- [ ] **Test**: Add category, add transaction type, edit names, delete (with validation), view hierarchy
-
-## Phase 5: Transaction Management Feature
-
-**Requirements**: FR-1 (Transaction Management), FR-3 (Account Management - balance updates)
-
-**Goal**: Users can add, view, edit, and delete transactions
-
-### 5.1 Implement Transaction Data Layer
-- [ ] Create `src/stores/useTransactionStore.ts` with transaction CRUD
-- [ ] Create `src/services/calculation.service.ts` for balance calculations
-- [ ] Create `src/services/validation.service.ts` for transaction validation
-- [ ] Create `src/utils/date.utils.ts` for date formatting
-
-### 5.2 Build Transaction Management UI
-- [ ] Install `@mui/x-data-grid` for transaction list
-- [ ] Create `src/components/common/FormTextField.tsx` and other form components
-- [ ] Create `src/components/transactions/TransactionForm.tsx` with conditional from/to accounts
-- [ ] Create `src/components/transactions/TransactionDialog.tsx`
-- [ ] Create `src/components/transactions/TransactionList.tsx` with DataGrid
-- [ ] Create `src/components/transactions/TransactionFilters.tsx`
-- [ ] Create `src/components/transactions/TransactionsPage.tsx`
-- [ ] Add route `/transactions`
-- [ ] **Test**: Add expense (from account), add income (to account), add transfer (both), add investment, filter, edit, delete
-
-### 5.3 Verify Account Balance Updates
-- [ ] Update AccountCard to show calculated balance
-- [ ] **Test**: Add transactions and verify account balances update correctly
-
-## Phase 6: Budget Planning Feature
-
-**Requirements**: FR-6 (Budget Planning)
-
-**Goal**: Users can create budgets and track spending against them
-
-### 6.1 Implement Budget Data Layer
-- [ ] Create `src/stores/useBudgetStore.ts` with budget and budget items
-- [ ] Add budget vs actual calculation functions to calculation service
-
-### 6.2 Build Budget Management UI
-- [ ] Create `src/components/budgets/BudgetForm.tsx`
-- [ ] Create `src/components/budgets/BudgetItemsGrid.tsx`
-- [ ] Create `src/components/budgets/BudgetDialog.tsx` with stepper
-- [ ] Create `src/components/budgets/BudgetList.tsx`
-- [ ] Create `src/components/budgets/BudgetOverview.tsx` with progress bars
-- [ ] Create `src/components/budgets/BudgetsPage.tsx`
-- [ ] Add route `/budgets`
-- [ ] **Test**: Create budget with items, set as active, view budget vs actual, edit budget, delete budget
-
-## Phase 7: Financial Reports Feature
-
-**Requirements**: FR-7 (Financial Reports)
-
-**Goal**: Users can view financial reports and analytics
-
-### 7.1 Setup Chart Library
-- [ ] Install charting library (recharts or nivo)
-- [ ] Create `src/components/charts/LineChart.tsx`
-- [ ] Create `src/components/charts/BarChart.tsx`
-- [ ] Create `src/components/charts/PieChart.tsx`
-
-### 7.2 Build Cash Flow Report
-- [ ] Create `src/components/reports/CashFlowReport.tsx`
-- [ ] Implement cash flow calculations
-- [ ] Add date range selector and period grouping
-- [ ] **Test**: View cash flow for different date ranges, verify calculations match transactions
-
-### 7.3 Build Balance Sheet Report
-- [ ] Create `src/components/reports/BalanceSheet.tsx`
-- [ ] Show accounts grouped by type with balances
-- [ ] Calculate and display net worth
-- [ ] **Test**: Verify balance sheet shows correct account balances and net worth
-
-### 7.4 Build Budget Analysis Report
-- [ ] Create `src/components/reports/BudgetAnalysis.tsx`
-- [ ] Show budget vs actual with progress bars and color coding
-- [ ] **Test**: Verify budget analysis matches budget and transactions
-
-### 7.5 Build Account Overview Report
-- [ ] Create `src/components/reports/AccountOverview.tsx`
-- [ ] Show account transactions and balance over time
-- [ ] **Test**: View individual account history and balance chart
-
-### 7.6 Create Reports Page
-- [ ] Create `src/components/reports/ReportsPage.tsx` with tab navigation
-- [ ] Add export buttons for each report
-- [ ] Create `src/utils/export.utils.ts` for CSV/JSON export
-- [ ] Add route `/reports`
-- [ ] **Test**: Switch between reports, export data
-
-## Phase 8: Dashboard Feature
-
-**Requirements**: FR-1, FR-3, FR-6, FR-7 (Summary views of all data)
-
-**Goal**: Users see a summary dashboard when they log in
-
-### 8.1 Build Dashboard Widgets
-- [ ] Create `src/components/dashboard/StatsCard.tsx`
-- [ ] Create `src/components/dashboard/RecentTransactions.tsx`
-- [ ] Create `src/components/dashboard/AccountSummary.tsx`
-- [ ] Create `src/components/dashboard/BudgetWidget.tsx`
-- [ ] Create `src/components/dashboard/QuickAddTransaction.tsx` - Inline transaction entry form with minimal fields:
-  - [ ] Always visible at top of dashboard (no button click required)
-  - [ ] Essential fields: Amount, Date, Transaction Type, Account(s)
-  - [ ] Auto-save on submit or Enter key
-  - [ ] Clears form after successful submission
-  - [ ] Optional: "More Details" link to open full TransactionDialog for complex transactions
-
-### 8.2 Create Dashboard Page
-- [ ] Create `src/components/dashboard/DashboardPage.tsx`
-- [ ] Place QuickAddTransaction form prominently at the top
-- [ ] Integrate remaining widgets below in responsive grid
-- [ ] Add route `/` (Dashboard)
-- [ ] Update navigation to default to dashboard
-- [ ] **Test**: Open dashboard and immediately start typing to add transaction, submit with Enter key, verify form clears and transaction appears in recent list
-
-## Phase 9: Settings & Data Management Feature
-
-**Requirements**: FR-7 (Data Import/Export)
-
-**Goal**: Users can manage app settings and data import/export
-
-### 9.1 Build Settings UI
-- [ ] Create `src/components/settings/DataManagement.tsx` with import/export
-- [ ] Create `src/components/settings/SettingsPage.tsx`
-- [ ] Add route `/settings`
-- [ ] **Test**: Export all data, import data, clear data
-
-## Phase 10: Year Management Feature
-
-**Requirements**: FR-7 (Data Storage - multi-year files)
-
-**Goal**: Users can switch between years and manage multi-year data
-
-### 10.1 Implement Year Switching
-- [ ] Create `src/components/common/YearSelector.tsx`
-- [ ] Add to header/navigation
-- [ ] Connect to app store
-- [ ] Implement year switching logic (load different file)
-- [ ] **Test**: Switch years, add transactions in different years, verify data isolation
-
-## Phase 11: Navigation & Routing Polish
-
-**Requirements**: NFR-5 (Usability - navigation), NFR-6 (Compatibility - responsive)
-
-**Goal**: Complete navigation experience
-
-### 11.1 Complete Routing Setup
-- [ ] Install `react-router-dom`
-- [ ] Create `src/routes.tsx` with all route definitions
-- [ ] Wrap app with BrowserRouter and ProtectedRoute
-- [ ] Create 404 page
-
-### 11.2 Complete Navigation
-- [ ] Update Header with all navigation links
-- [ ] Add active state styling
-- [ ] Add mobile responsive menu (drawer)
-- [ ] **Test**: Navigate between all pages, verify active states, test on mobile
-
-## Phase 12: Data Persistence Polish
-
-**Requirements**: FR-8 (Data Storage & Sync), NFR-7 (Reliability)
-
-**Goal**: Ensure data saves/loads reliably
-
-### 12.1 Complete Data Sync
-- [ ] Connect all stores to trigger auto-save
-- [ ] Add sync status indicators in UI
-- [ ] Implement offline support with localStorage queue
-- [ ] Add conflict resolution (last-write-wins)
-- [ ] **Test**: Make changes and verify auto-save, go offline and verify queue, reconnect and verify sync
-
-## Phase 13: Validation & Error Handling
-
-**Requirements**: NFR-5 (Usability - error messages), NFR-7 (Reliability - error handling)
-
-**Goal**: Ensure data integrity and good error UX
-
-### 13.1 Add Comprehensive Validation
-- [ ] Add Zod validation to all forms
-- [ ] Validate business rules (account requirements by transaction type)
-- [ ] Prevent deletion of referenced entities
-- [ ] Add user-friendly error messages
-- [ ] **Test**: Try to submit invalid data, try to delete referenced entities
-
-### 13.2 Add Error Handling
-- [ ] Create `src/components/common/ErrorBoundary.tsx`
-- [ ] Create `src/components/common/ErrorMessage.tsx`
-- [ ] Create `src/components/common/NotificationSnackbar.tsx`
-- [ ] Wrap major sections in error boundaries
-- [ ] Handle OneDrive API errors with retry
-- [ ] **Test**: Simulate errors, verify user sees helpful messages
-
-## Phase 14: UI/UX Polish
-
-**Requirements**: NFR-5 (Usability), NFR-6 (Compatibility - responsive), NFR-3 (Performance)
-
-**Goal**: Professional, polished user experience
-
-### 14.1 Add Loading States
-- [ ] Create `src/components/common/LoadingSpinner.tsx`
-- [ ] Create `src/components/common/SkeletonLoader.tsx`
-- [ ] Create `src/components/common/LoadingOverlay.tsx`
-- [ ] Add loading states to all async operations
-- [ ] **Test**: Verify smooth loading experience
-
-### 14.2 Add Feedback & Confirmations
-- [ ] Add success snackbars for all CRUD operations
-- [ ] Create `src/components/common/ConfirmDialog.tsx`
-- [ ] Add delete confirmations
-- [ ] Add subtle animations
-- [ ] **Test**: Verify user gets clear feedback for all actions
-
-### 14.3 Improve Responsive Design
-- [ ] Test on mobile devices (iPhone, Android)
-- [ ] Test on tablets (iPad)
-- [ ] Optimize touch targets
-- [ ] **Test**: Full app works well on all screen sizes
-
-### 14.4 Add Accessibility
-- [ ] Add ARIA labels to all interactive elements
-- [ ] Ensure keyboard navigation (Tab, Enter, ESC)
-- [ ] Add focus indicators
-- [ ] Ensure proper heading hierarchy
-- [ ] **Test**: Navigate app with keyboard only
-
-## Phase 15: Integration Testing & Quality Assurance
-
-**Requirements**: All FR (Functional Requirements), NFR-7 (Reliability)
-
-**Goal**: Comprehensive integration testing and validation
-
-**Note**: Unit tests are written in each phase (2-14) alongside implementation. This phase focuses on integration testing and cross-feature validation.
-
-### 15.1 Integration Testing
-- [ ] Test complete user workflows end-to-end
-- [ ] Test data flow between stores and components
-- [ ] Test interactions between different features
-- [ ] Test year switching with data dependencies
-
-### 15.2 Cross-Feature Validation
-- [ ] Test account deletion with existing transactions
-- [ ] Test category deletion with existing transaction types
-- [ ] Test transaction changes affecting budgets and reports
-- [ ] Test data consistency across all features
-
-### 15.3 Data Persistence Integration
-- [ ] Test complete save/load workflows with local files
-- [ ] Test data integrity across multiple year files
-- [ ] Test with large datasets (100+ transactions)
-- [ ] **Test**: No data loss in any scenario
-
-### 15.4 Test Coverage Review
-- [ ] Review unit test coverage from all phases
-- [ ] Run `npm run test:coverage` to check coverage metrics
-- [ ] Ensure minimum 80% code coverage across the codebase
-- [ ] Add tests for any gaps in critical functionality
-- [ ] **Test**: Coverage meets 80% threshold, all critical paths tested
-
-### 15.5 Bug Fixes and Edge Cases
-- [ ] Fix any bugs discovered during testing
-- [ ] Handle null/undefined edge cases
-- [ ] Test with extreme values and edge cases
-- [ ] **Test**: App is stable and handles errors gracefully
-
-## Phase 16: Production Build & Deployment
-
-**Requirements**: NFR-1 (Architecture), NFR-3 (Performance), NFR-4 (Security), NFR-6 (Compatibility)
-
-**Goal**: Deploy the application to production
-
-### 16.1 Optimize Bundle
-- [ ] Configure webpack for production with code splitting, minimize bundle size, and add source maps
-- [ ] **Test**: Production build completes without errors, bundle size is reasonable
-
-### 16.2 Setup Environment Variables
-- [ ] Create `.env.example` file with Azure AD Client ID and environment-specific configs
-- [ ] Document environment setup in README
-- [ ] **Test**: Environment variables work in production
-
-### 16.3 Create Build Documentation
-- [ ] Update README.md with setup instructions, environment variables, build/deployment instructions, and Azure AD app registration steps
-- [ ] Add troubleshooting guide
-- [ ] **Test**: New developer can follow README to set up project
-
-### 16.4 Test Production Build Locally
-- [ ] Build production bundle, test locally
-- [ ] Verify authentication works
-- [ ] Verify OneDrive integration works
-- [ ] Test all features in production mode
-- [ ] **Test**: App works correctly in production mode
-
-### 16.5 Deploy to Cloudflare Pages
-- [ ] Create Cloudflare account (if not already)
-- [ ] Connect GitHub repository to Cloudflare Pages
-- [ ] Configure build settings:
-  - [ ] Build command: `npm run build`
-  - [ ] Build output directory: `dist`
-  - [ ] Node.js version: LTS (18 or 20)
-  - [ ] Environment variables: Add `AZURE_CLIENT_ID`
-- [ ] Add `_headers` file in `public/` for security headers (CSP, X-Frame-Options, X-Content-Type-Options)
-- [ ] Add `_redirects` file in `public/` for SPA routing (`/* /index.html 200`)
-- [ ] Install Wrangler CLI: `npm install --save-dev wrangler`
-- [ ] Add deployment script: `"deploy": "npm run build && wrangler pages publish dist"`
-- [ ] Configure automatic deployment from main branch
-- [ ] Configure preview deployments for pull requests
-- [ ] Deploy application
-- [ ] **Test**: Visit Cloudflare Pages URL, test authentication, test OneDrive integration, test all features, test on multiple browsers
-
-### 16.6 Configure Custom Domain (Optional)
-- [ ] Add custom domain in Cloudflare Pages dashboard
-- [ ] Update DNS records
-- [ ] Enable automatic HTTPS
-- [ ] **Test**: App works on custom domain with HTTPS
-
-## Phase 17: Final Polish & Documentation
-
-**Requirements**: NFR-5 (Usability - documentation), NFR-3 (Performance), NFR-6 (Compatibility), NFR-8 (Maintainability)
-
-**Goal**: Complete and document the application
-
-### 17.1 Add User Documentation
+### 16.1 Add User Documentation
 - [ ] Add help tooltips in UI for complex features
 - [ ] Create FAQ section in settings or help page
 - [ ] Create user guide (optional) with screenshots
 - [ ] **Test**: New user can understand how to use each feature
 
-### 17.2 Performance Optimization
-- [ ] Profile app performance with React DevTools
-- [ ] Optimize re-renders with React.memo, useMemo, useCallback
-- [ ] Lazy load route components with React.lazy
-- [ ] Optimize chart rendering (debounce updates, limit data points)
-- [ ] **Test**: App is responsive and performant with large datasets
+## Phase 17: Advanced Error Handling & Validation (Post-MVP)
 
-### 17.3 Final Cross-Browser Testing
-- [ ] Test on Chrome (desktop & mobile)
-- [ ] Test on Firefox
-- [ ] Test on Safari (desktop & mobile)
-- [ ] Test on Edge
-- [ ] **Test**: App works consistently across all browsers
+**Requirements**: NFR-6 (Reliability), NFR-4 (Usability)
 
-### 17.4 Add Monitoring (Optional)
-- [ ] Setup error logging (e.g., Sentry)
-- [ ] Setup analytics (e.g., Google Analytics, optional)
-- [ ] Add performance monitoring
-- [ ] **Test**: Errors are logged, analytics work
+**Goal**: Enhanced error handling and validation
 
-## Phase 18: Cloud Storage Integration (Optional - Future)
+### 17.1 Add Error Boundary
+- [ ] Create `src/components/common/ErrorBoundary.tsx`
+- [ ] Create `src/components/common/ErrorMessage.tsx`
+- [ ] Create `src/components/common/NotificationSnackbar.tsx`
+- [ ] Wrap major sections in error boundaries
+- [ ] **Test**: Simulate errors, verify user sees helpful messages
 
-**Requirements**: FR-8 (Cloud Storage), FR-9 (Authentication via SDKs), NFR-4 (Security)
+### 17.2 Enhanced Validation
+- [ ] Add comprehensive Zod validation to all forms
+- [ ] Validate business rules
+- [ ] Prevent deletion of referenced entities
+- [ ] Add user-friendly error messages
+- [ ] **Test**: Try to submit invalid data, try to delete referenced entities
+
+## Phase 18: Cloud Storage Integration (Post-MVP, Optional)
+
+**Requirements**: FR-11 (Cloud Storage Integration), NFR-8 (Cloud Security)
 
 **Goal**: Add optional cloud storage providers (OneDrive, Google Drive) for users who want automatic sync
 
-**Important**: This phase is completely optional. The app is fully functional with local storage. This phase adds cloud sync as an opt-in feature for users who want it.
+**Important**: This phase is completely optional. The app is fully functional with local storage. This phase adds cloud sync as an opt-in feature.
 
-**Note on Authentication**: Authentication is NOT implemented by Money Tree. It is provided by the cloud storage provider's SDK (e.g., Microsoft's MSAL, Google's Sign-In SDK). Money Tree simply integrates these SDKs to enable file access.
+**Note on Authentication**: Authentication is NOT implemented by Money Tree. It is provided by the cloud storage provider's SDK. Money Tree simply integrates these SDKs to enable file access.
 
 ### 18.1 Implement OneDrive Storage Provider
 - [ ] Install dependencies: `@azure/msal-browser`, `@microsoft/microsoft-graph-client`
@@ -719,7 +639,7 @@ This plan implements all requirements from REQUIREMENTS.md:
 ### 18.3 Implement Auto-Sync for Cloud Storage
 - [ ] Add automatic sync on data changes (debounced) for cloud providers
 - [ ] Show sync status in UI (syncing, synced, error, offline)
-- [ ] Add offline support with conflict resolution (last-write-wins)
+- [ ] Add offline support with conflict resolution
 - [ ] Add "Force Sync" button for manual sync
 - [ ] **Write tests**: Test auto-sync, offline queue, conflict resolution
 - [ ] **Test**: Changes auto-sync to OneDrive, offline changes sync when reconnected
@@ -738,25 +658,45 @@ This plan implements all requirements from REQUIREMENTS.md:
 - [ ] Document OneDrive setup (Azure AD app registration)
 - [ ] Document Google Drive setup (Google Cloud Console setup)
 - [ ] Add migration guide: how to move from local to cloud storage
-- [ ] Add FAQ: "Is authentication required?" → No, only for cloud storage
+- [ ] Add FAQ about authentication requirements
 - [ ] **Test**: Users can migrate their local data to cloud storage
 
-## Completion Checklist
+---
 
-- [ ] All phases completed
-- [ ] All features implemented
-- [ ] All tests passing
+## MVP Completion Checklist
+
+- [ ] All MVP phases (1-11) completed
+- [ ] All MVP features implemented and tested
+- [ ] All tests passing with 80%+ coverage
 - [ ] Documentation complete
 - [ ] Production build deployed
 - [ ] No critical bugs
+- [ ] App is usable for daily personal finance tracking
+
+## Post-MVP Completion Checklist
+
+- [ ] Budget planning feature complete
+- [ ] Financial reports complete
+- [ ] Advanced data management complete
+- [ ] Conflict detection and auto-merge complete
+- [ ] All enhancements tested
+- [ ] Optional: Cloud storage integration complete
 
 ---
 
 ## Notes for AI Implementation
 
+**MVP Priority:**
+- Focus on completing MVP (Phases 1-11) first
+- MVP should be fully functional and deployable
+- Users can track finances completely with MVP features
+- Post-MVP features are enhancements, not requirements
+
 **Verification Methods:**
 - Run `npm run build` - should complete without errors
 - Run `npm run lint` - should pass without errors
+- Run `npm test` - all tests should pass
+- Run `npm test -- --coverage` - should meet 80% threshold
 - Run `npm start` - app should load in browser
 - Test each feature manually in the browser
 - Check browser console for errors
@@ -776,7 +716,6 @@ This plan implements all requirements from REQUIREMENTS.md:
 - Missing dependencies
 - Incorrect import paths
 - Zustand store not updating UI
-- OneDrive API authentication issues
 - Date timezone issues
 - Decimal precision in calculations
 - Race conditions in async operations

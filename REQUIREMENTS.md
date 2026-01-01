@@ -4,7 +4,11 @@
 
 Money Tree is a personal finance management web application that helps users track transactions, manage budgets, and analyze financial data.
 
-## Functional Requirements
+---
+
+## MVP (Minimum Viable Product)
+
+The MVP focuses on core personal finance tracking functionality with local file storage. Users can immediately start using the app to track their finances without any setup or authentication.
 
 ### FR-1: Transaction Management
 
@@ -69,30 +73,16 @@ Money Tree is a personal finance management web application that helps users tra
   - [ ] Users can move categories between groups
   - [ ] Create custom hierarchies that fit their financial tracking needs
 
-### FR-5: Budget Planning
-
-- [ ] Users can create budget plans
-- [ ] Users can set budget limits for different categories
-- [ ] Users can define budget periods (monthly, quarterly, yearly)
-- [ ] Users can modify budget plans as needed
-
-### FR-6: Financial Reports and Dashboard
+### FR-5: Dashboard and Quick Entry
 
 - [ ] Users see a summary dashboard as the starting page:
   - [ ] Inline transaction entry form at the top (always visible, ready for input)
   - [ ] Summary statistics and key metrics
   - [ ] Recent transaction activity
   - [ ] Account balance overview
-  - [ ] Budget tracking status
-- [ ] Users can view and analyze their financial data through multiple reports:
-  - [ ] **Cash Flow Report**: Track income and expenses over time
-  - [ ] **Balance Sheet**: View current financial position and account balances
-  - [ ] **Budget Analysis**: Compare planned budget versus actual spending
-  - [ ] **Account Overview**: View individual account balances and transaction history
 
-### FR-7: Data Storage and Synchronization
+### FR-6: Data Storage (Local Files - MVP)
 
-**Primary Storage (Phase 1):**
 - [x] All data is stored on the user's local machine using browser's File System Access API
 - [x] Users can save data files to their local file system
 - [x] Users can load data files from their local file system
@@ -102,7 +92,7 @@ Money Tree is a personal finance management web application that helps users tra
 - [x] Data format is portable and readable (JSON)
 - [x] One file per year for better organization
 
-**Auto-Save:**
+**Basic Auto-Save (MVP):**
 - [ ] Application automatically detects when data has changed
 - [ ] Users are prompted to save changes when:
   - [ ] Closing the browser tab or window
@@ -115,7 +105,42 @@ Money Tree is a personal finance management web application that helps users tra
   - [ ] Non-intrusive - happens silently without user prompts
 - [ ] Unsaved changes indicator visible in the UI
 - [ ] Manual save option always available
-- [ ] Auto-save features prevent accidental data loss
+
+**Architecture:**
+- [x] Storage system is designed with an extensible interface/adapter pattern
+- [x] Easy to add new storage providers in the future
+- [x] Core business logic is independent of storage implementation
+
+### FR-7: Year Management
+
+- [ ] Users can switch between different years
+- [ ] Each year's data is stored in a separate file
+- [ ] Users can create new year files
+- [ ] Year selector visible in the interface
+
+---
+
+## Future Enhancements
+
+These features will be implemented after the MVP is complete and validated by users.
+
+### FR-8: Budget Planning (Post-MVP)
+
+- [ ] Users can create budget plans
+- [ ] Users can set budget limits for different categories
+- [ ] Users can define budget periods (monthly, quarterly, yearly)
+- [ ] Users can modify budget plans as needed
+- [ ] Dashboard shows budget tracking status
+
+### FR-9: Financial Reports (Post-MVP)
+
+- [ ] Users can view and analyze their financial data through multiple reports:
+  - [ ] **Cash Flow Report**: Track income and expenses over time
+  - [ ] **Balance Sheet**: View current financial position and account balances
+  - [ ] **Budget Analysis**: Compare planned budget versus actual spending
+  - [ ] **Account Overview**: View individual account balances and transaction history
+
+### FR-10: Advanced Data Management (Post-MVP)
 
 **Conflict Detection & Auto-Merge:**
 - [ ] Application detects when files have been modified externally
@@ -150,27 +175,17 @@ Money Tree is a personal finance management web application that helps users tra
   - [ ] Shows clear warning about data loss implications
   - [ ] Validates data consistency after merge (account balances, etc.)
 
-**Architecture:**
-- [x] Storage system is designed with an extensible interface/adapter pattern
-- [x] Easy to add new storage providers (OneDrive, Google Drive, Dropbox, etc.)
-- [x] Core business logic is independent of storage implementation
+### FR-11: Cloud Storage Integration (Post-MVP, Optional)
 
-**Future Storage Options (Deferred):**
-- [ ] **OneDrive Integration**: Full sync with Microsoft OneDrive (Phase 18+)
-- [ ] **Google Drive Integration**: Sync with Google Drive (future)
-- [ ] **Dropbox Integration**: Sync with Dropbox (future)
+**Storage Options:**
+- [ ] **OneDrive Integration**: Full sync with Microsoft OneDrive
+- [ ] **Google Drive Integration**: Sync with Google Drive
+- [ ] **Dropbox Integration**: Sync with Dropbox
 
-### FR-8: Authentication (Cloud Storage Providers Only)
+**Authentication (Cloud Providers Only):**
 
-**Important**: Authentication is NOT a core application feature. It is only required by cloud storage providers (OneDrive, Google Drive, etc.) to access their APIs for loading and saving data. The authentication is handled by the storage provider's SDK, not by the Money Tree application itself.
+**Important**: Authentication is NOT a core application feature. It is only required by cloud storage providers to access their APIs. The authentication is handled by the storage provider's SDK, not by Money Tree.
 
-**Local Storage (Phases 1-17):**
-- No authentication required
-- No login needed
-- App can be used immediately
-- Full functionality with local files
-
-**Cloud Storage (Phase 18+ - Optional):**
 - Authentication is provided by the cloud storage provider's SDK:
   - **OneDrive**: Uses `@azure/msal-browser` (Microsoft's authentication library)
   - **Google Drive**: Uses Google Sign-In SDK
@@ -179,15 +194,17 @@ Money Tree is a personal finance management web application that helps users tra
 - Users choose whether to enable cloud storage (opt-in)
 - Local-only usage remains fully functional without any authentication
 
+---
+
 ## Non-Functional Requirements
 
-### NFR-1: Architecture
+### NFR-1: Architecture (MVP)
 
 - [x] Static web application (no backend server)
 - [x] Runs entirely in the browser
 - [x] All processing happens client-side
 
-### NFR-2: Technology Stack
+### NFR-2: Technology Stack (MVP)
 
 **Core:**
 - [x] **TypeScript**: Primary programming language
@@ -204,7 +221,6 @@ Money Tree is a personal finance management web application that helps users tra
 - [x] **Zustand**: Lightweight state management solution
   - [ ] Manages application state (transactions, accounts, categories, budgets)
   - [x] Currencies are fixed constants (not part of state)
-  - [x] Manages storage provider settings (local vs cloud)
   - [x] Simple API with minimal boilerplate
   - [x] Excellent TypeScript support
 
@@ -218,17 +234,11 @@ Money Tree is a personal finance management web application that helps users tra
 - [x] **date-fns**: Date manipulation and formatting
 - [x] **Zod**: Schema validation for data integrity
 
-**Storage (Phase 1 - Local):**
+**Storage (MVP):**
 - [x] **File System Access API**: Browser native API for reading/writing local files
 - [x] **localStorage**: For caching and app preferences
 
-**Cloud Integration (Future Phases - Optional):**
-- [ ] **@microsoft/microsoft-graph-client**: OneDrive API integration (Phase 18+)
-- [ ] **@azure/msal-browser**: Microsoft authentication SDK (Phase 18+)
-- [ ] **Google Drive API**: Google Drive integration (future)
-- [x] **Note**: Authentication is handled by these SDKs, not by the application itself
-
-### NFR-3: Performance
+### NFR-3: Performance (MVP)
 
 - [ ] Application loads quickly
 - [ ] Responsive user interface
@@ -236,34 +246,25 @@ Money Tree is a personal finance management web application that helps users tra
 - [ ] Efficient data loading and saving
 - [ ] Optimized bundle size through code splitting
 
-### NFR-4: Security
-
-- [ ] Secure authentication through Microsoft OAuth
-- [ ] Data access limited to authenticated user
-- [ ] No data stored on third-party servers
-- [ ] All operations require valid login session
-
-### NFR-5: Usability
+### NFR-4: Usability (MVP)
 
 - [ ] Intuitive user interface
 - [ ] Clear navigation structure
 - [ ] Helpful error messages
 - [ ] Responsive design for different screen sizes
 
-### NFR-6: Compatibility
+### NFR-5: Compatibility (MVP)
 
 - [ ] Works on modern web browsers (Chrome, Firefox, Safari, Edge)
 - [ ] Compatible with desktop and tablet devices
-- [ ] Supports current OneDrive API standards
 
-### NFR-7: Reliability
+### NFR-6: Reliability (MVP)
 
 - [ ] Data integrity maintained during save operations
-- [ ] Proper error handling for network issues
-- [ ] Data backup and recovery mechanisms
-- [ ] Graceful handling of OneDrive connection failures
+- [ ] Proper error handling for file access issues
+- [ ] Graceful degradation when File System Access API not available
 
-### NFR-8: Maintainability
+### NFR-7: Maintainability (MVP)
 
 - [x] Clean, modular code structure
 - [ ] Well-documented codebase
@@ -273,9 +274,35 @@ Money Tree is a personal finance management web application that helps users tra
 - [x] Consistent code style enforced by ESLint and Prettier
 - [x] Comprehensive test coverage (minimum 80%) for all features and business logic
 
+---
+
+## Non-Functional Requirements - Future Enhancements
+
+### NFR-8: Cloud Security (Post-MVP)
+
+- [ ] Secure authentication through OAuth providers
+- [ ] Data access limited to authenticated user
+- [ ] No data stored on third-party servers (only cloud storage providers)
+- [ ] All operations require valid session when using cloud storage
+
+### NFR-9: Advanced Reliability (Post-MVP)
+
+- [ ] Advanced conflict resolution with auto-merge
+- [ ] Data backup and recovery mechanisms
+- [ ] Graceful handling of cloud storage failures
+- [ ] Offline-first support with sync queue
+
+---
+
 ## Technical Constraints
 
+### MVP Constraints
+
 - [x] No backend infrastructure required
-- [ ] Depends on Microsoft OneDrive service availability (Phase 18+ only)
-- [ ] Requires internet connection for data synchronization (Phase 18+ only)
+- [x] Limited by browser File System Access API capabilities
 - [x] Limited by browser storage capabilities for local caching
+
+### Post-MVP Constraints (Cloud Storage)
+
+- [ ] Depends on cloud storage provider availability
+- [ ] Requires internet connection for cloud synchronization

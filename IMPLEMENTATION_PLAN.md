@@ -24,12 +24,12 @@ This document provides a step-by-step implementation plan for building the Money
 - [x] Verify: Run `npm run dev` and see basic page at localhost
 
 ### 1.4 Configure Code Quality Tools
-- [ ] Install ESLint and `@typescript-eslint` packages
-- [ ] Create `.eslintrc.js` with TypeScript rules
-- [ ] Install Prettier
-- [ ] Create `.prettierrc` with formatting rules
-- [ ] Add ESLint-Prettier integration
-- [ ] Verify: Run `npm run lint` successfully
+- [x] Install ESLint and `@typescript-eslint` packages
+- [x] Create `.eslintrc.js` with TypeScript rules
+- [x] Install Prettier
+- [x] Create `.prettierrc` with formatting rules
+- [x] Add ESLint-Prettier integration
+- [x] Verify: Run `npm run lint` successfully
 
 ### 1.5 Setup Material-UI
 - [ ] Install `@mui/material` and `@emotion/react`, `@emotion/styled`

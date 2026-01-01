@@ -129,16 +129,23 @@ This plan implements all requirements from REQUIREMENTS.md:
 - [x] **Test**: Interface is well-defined, local storage provider compiles
 
 ### 2.3 Implement Local File Storage
-- [ ] Implement `LocalStorageProvider.saveDataFile()` using File System Access API (download/save file picker)
-- [ ] Implement `LocalStorageProvider.loadDataFile()` using File System Access API (file open picker)
-- [ ] Add error handling for browser compatibility and user cancellation
-- [ ] Create `src/services/storage.service.ts` for localStorage caching (app state, preferences)
-- [ ] Create `src/stores/useAppStore.ts` for app-level state (year, file handle, loading status)
-- [ ] **Write tests**: Test save/load operations, error handling, cancellation
-- [ ] **Test**: Can save data file to local machine, can load data file from local machine, data persists
+- [x] Implement `LocalStorageProvider.saveDataFile()` using File System Access API (download/save file picker)
+- [x] Implement `LocalStorageProvider.loadDataFile()` using File System Access API (file open picker)
+- [x] Add error handling for browser compatibility and user cancellation
+- [x] Create `src/services/storage.service.ts` for localStorage caching (app state, preferences)
+- [x] Create `src/stores/useAppStore.ts` for app-level state (year, file handle, loading status)
+- [x] **Write tests**: Test save/load operations, error handling, cancellation
+- [x] **Test**: Can save data file to local machine, can load data file from local machine, data persists
 
 ### 2.4 Setup Data Management UI
-- [ ] Create `src/services/sync.service.ts` with auto-save prompt logic
+- [ ] Create `src/services/sync.service.ts` with auto-save logic:
+  - [ ] Track unsaved changes across all stores
+  - [ ] Provide `promptSaveIfNeeded()` function to check and prompt before destructive actions
+  - [ ] Implement periodic auto-save with configurable interval (default: 5 minutes)
+  - [ ] Auto-save timer starts when changes are detected
+  - [ ] Auto-save only runs when there are unsaved changes
+  - [ ] Auto-save saves silently without user prompts
+  - [ ] Integrate with useAppStore for unsaved changes tracking
 - [ ] Create `src/components/layout/Header.tsx` with:
   - [ ] "Load" button (triggers file picker)
   - [ ] "Save" button (triggers file save)
@@ -151,8 +158,11 @@ This plan implements all requirements from REQUIREMENTS.md:
   - [ ] Wrap with Header component
   - [ ] Add window beforeunload handler for unsaved changes warning
   - [ ] Connect save/load buttons to storage service
-- [ ] **Write tests**: Test save/load UI interactions, unsaved changes detection, error handling
-- [ ] **Test**: Click "Load" → file picker opens → select file → data appears; Click "Save" → file picker opens → save file; Make changes → see unsaved indicator → close browser → get warning
+  - [ ] Prompt to save before loading a different file
+  - [ ] Initialize periodic auto-save on mount
+  - [ ] Clean up auto-save timer on unmount
+- [ ] **Write tests**: Test save/load UI interactions, unsaved changes detection, error handling, auto-save prompts, periodic auto-save
+- [ ] **Test**: Click "Load" → file picker opens → select file → data appears; Click "Save" → file picker opens → save file; Make changes → see unsaved indicator → wait 5 minutes → auto-saved; close browser → get warning; Make changes → load different file → prompted to save first
 
 ## Phase 3: Account Management Feature
 

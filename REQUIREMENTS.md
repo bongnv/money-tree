@@ -99,6 +99,21 @@ Users can view and analyze their financial data through multiple reports:
 - Data format is portable and readable (JSON)
 - One file per year for better organization
 
+**Auto-Save:**
+- Application automatically detects when data has changed
+- Users are prompted to save changes when:
+  - Closing the browser tab or window
+  - Navigating away from the page
+  - Loading a different year's data file
+- Periodic auto-save runs in the background:
+  - Automatically saves data at regular intervals when changes are detected
+  - Configurable save interval (default: every 5 minutes)
+  - Only saves when there are unsaved changes
+  - Non-intrusive - happens silently without user prompts
+- Unsaved changes indicator visible in the UI
+- Manual save option always available
+- Auto-save features prevent accidental data loss
+
 **Architecture:**
 - Storage system is designed with an extensible interface/adapter pattern
 - Easy to add new storage providers (OneDrive, Google Drive, Dropbox, etc.)

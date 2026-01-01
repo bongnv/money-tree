@@ -175,9 +175,9 @@ This plan implements all requirements from REQUIREMENTS.md:
 **Goal**: Users can create and manage their accounts (bank accounts, credit cards, etc.)
 
 ### 3.1 Implement Account Data Layer
-- [ ] Create `src/stores/useAccountStore.ts` with account state and CRUD actions
-- [ ] Create `src/utils/currency.utils.ts` for formatting amounts with default currencies
-- [ ] Load default currencies from constants
+- [x] Create `src/stores/useAccountStore.ts` with account state and CRUD actions
+- [x] Create `src/utils/currency.utils.ts` for formatting amounts with default currencies
+- [x] Load default currencies from constants
 
 ### 3.2 Build Account Management UI
 - [ ] Create `src/components/layout/MainLayout.tsx` with header, navigation

@@ -112,20 +112,28 @@ Users can view and analyze their financial data through multiple reports:
 - Core business logic is independent of storage implementation
 
 **Future Storage Options (Deferred):**
-- **OneDrive Integration**: Full sync with Microsoft OneDrive (Phase 16+)
+- **OneDrive Integration**: Full sync with Microsoft OneDrive (Phase 18+)
 - **Google Drive Integration**: Sync with Google Drive (future)
 - **Dropbox Integration**: Sync with Dropbox (future)
 
-### FR-9: Authentication
+### FR-9: Authentication (Cloud Storage Providers Only)
 
-**Phase 1 (Local Storage):**
-- No authentication required for local file storage
-- App can be used immediately without login
+**Important**: Authentication is NOT a core application feature. It is only required by cloud storage providers (OneDrive, Google Drive, etc.) to access their APIs for loading and saving data. The authentication is handled by the storage provider's SDK, not by the Money Tree application itself.
 
-**Future Phases (Cloud Storage):**
-- Microsoft account login for OneDrive integration
-- Google account login for Google Drive integration
-- Session management for secure cloud access
+**Local Storage (Phases 1-17):**
+- ✅ No authentication required
+- ✅ No login needed
+- ✅ App can be used immediately
+- ✅ Full functionality with local files
+
+**Cloud Storage (Phase 18+ - Optional):**
+- Authentication is provided by the cloud storage provider's SDK:
+  - **OneDrive**: Uses `@azure/msal-browser` (Microsoft's authentication library)
+  - **Google Drive**: Uses Google Sign-In SDK
+  - **Dropbox**: Uses Dropbox SDK authentication
+- Money Tree simply integrates these SDKs to enable cloud sync
+- Users choose whether to enable cloud storage (opt-in)
+- Local-only usage remains fully functional without any authentication
 
 ## Non-Functional Requirements
 
@@ -151,7 +159,7 @@ Users can view and analyze their financial data through multiple reports:
 **State Management:**
 - **Zustand**: Lightweight state management solution
   - Manages application state (transactions, accounts, categories, budgets, currencies)
-  - Handles authentication state
+  - Manages storage provider settings (local vs cloud)
   - Simple API with minimal boilerplate
   - Excellent TypeScript support
 
@@ -167,10 +175,11 @@ Users can view and analyze their financial data through multiple reports:
 - **File System Access API**: Browser native API for reading/writing local files
 - **localStorage**: For caching and app preferences
 
-**Cloud Integration (Future Phases):**
-- **@microsoft/microsoft-graph-client**: OneDrive API integration (deferred)
-- **@azure/msal-browser**: Microsoft authentication (deferred)
+**Cloud Integration (Future Phases - Optional):**
+- **@microsoft/microsoft-graph-client**: OneDrive API integration (Phase 18+)
+- **@azure/msal-browser**: Microsoft authentication SDK (Phase 18+)
 - **Google Drive API**: Google Drive integration (future)
+- **Note**: Authentication is handled by these SDKs, not by the application itself
 
 ### NFR-3: Performance
 

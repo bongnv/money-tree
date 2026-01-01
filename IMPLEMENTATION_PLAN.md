@@ -23,14 +23,14 @@ This plan implements all requirements from REQUIREMENTS.md:
 - **FR-5**: Currency Management → Phase 3, 9
 - **FR-6**: Budget Planning → Phase 6, 8
 - **FR-7**: Financial Reports → Phase 7, 8
-- **FR-8**: Data Storage & Sync → Phase 2, 9, 10, 12
-- **FR-9**: Authentication → Phase 2
+- **FR-8**: Data Storage & Sync → Phase 2 (local), 10 (year management), 12 (persistence), 18 (cloud - optional)
+- **FR-9**: Authentication → Phase 18 only (cloud storage providers - optional, not an app feature)
 
 **Non-Functional Requirements:**
 - **NFR-1**: Architecture → Phase 1, 16
-- **NFR-2**: Technology Stack → Phase 1
+- **NFR-2**: Technology Stack → Phase 1, 2
 - **NFR-3**: Performance → Phase 14, 16, 17
-- **NFR-4**: Security → Phase 2, 16
+- **NFR-4**: Security → Phase 18 (cloud storage only - optional)
 - **NFR-5**: Usability → Phase 11, 13, 14, 17
 - **NFR-6**: Compatibility → Phase 11, 14, 16, 17
 - **NFR-7**: Reliability → Phase 12, 13, 15
@@ -94,7 +94,7 @@ This plan implements all requirements from REQUIREMENTS.md:
 - [x] Add jobs: install dependencies, lint, format check, test, build
 - [x] Configure Node.js version matching `.nvmrc`
 - [x] Add caching for node_modules
-- [ ] Test: Push code and verify workflow runs successfully on GitHub
+- [x] Test: Push code and verify workflow runs successfully on GitHub
 
 ### 1.9 Setup Testing Framework
 - [x] Install Jest and TypeScript support: `jest`, `@types/jest`, `ts-jest`
@@ -104,35 +104,56 @@ This plan implements all requirements from REQUIREMENTS.md:
 - [x] Configure Jest to pass with no tests (`--passWithNoTests`)
 - [x] Verify: Run `npm test` - passes with no tests
 
-## Phase 2: Core Foundation & Authentication
+## Phase 2: Core Foundation & Local Storage
 
-**Requirements**: FR-9 (Authentication), FR-8 (Data Storage & Sync), NFR-4 (Security)
+**Requirements**: FR-8 (Data Storage - Local), NFR-2 (Technology Stack)
 
-**Goal**: Enable user login and establish data storage foundation
+**Goal**: Establish data models and local file storage foundation
+
+**Note**: No authentication required. Users can use the app immediately with local file storage.
 
 ### 2.1 Setup Core Infrastructure
-- [ ] Install dependencies: `zustand`, `zod`, `date-fns`, `@azure/msal-browser`, `@microsoft/microsoft-graph-client`
-- [ ] Create folder structure: `src/components`, `src/stores`, `src/services`, `src/types`, `src/utils`, `src/hooks`, `src/constants`, `src/schemas`
+- [ ] Install dependencies: `zustand`, `zod`, `date-fns`
 - [ ] Create `src/types/enums.ts` with all enums: `Group`, `AccountType`, `BudgetPeriod`
 - [ ] Create `src/types/models.ts` with all interfaces: `Currency`, `Account`, `Category`, `TransactionType`, `Transaction`, `Budget`, `BudgetItem`, `DataFile`
 - [ ] Create `src/schemas/models.schema.ts` with Zod schemas for all models
 - [ ] Create `src/constants/defaults.ts` with default currencies and categories
+- [ ] **Write tests**: `enums.test.ts`, `models.schema.test.ts` (Zod validation)
+- [ ] **Test**: All schemas validate correctly, default data is valid
 
-### 2.2 Implement Authentication (User Login)
-- [ ] Create `src/services/auth.service.ts` with MSAL configuration
-- [ ] Create `src/stores/useAuthStore.ts` with auth state and actions
-- [ ] Create `src/components/auth/AuthProvider.tsx`
-- [ ] Create `src/components/auth/LoginPage.tsx` with Microsoft login button
-- [ ] Create `src/components/auth/ProtectedRoute.tsx`
-- [ ] Update `src/App.tsx` to show LoginPage if not authenticated
-- [ ] **Test**: User can click "Login with Microsoft" and authenticate successfully
+### 2.2 Implement Storage Interface (Extensible Architecture)
+- [ ] Create `src/services/storage/IStorageProvider.ts` - interface defining storage contract
+- [ ] Define methods: `loadDataFile(year)`, `saveDataFile(year, data)`, `listAvailableYears()`, `deleteDataFile(year)`
+- [ ] Create `src/services/storage/LocalStorageProvider.ts` - implements IStorageProvider using File System Access API
+- [ ] Create `src/services/storage/StorageFactory.ts` - factory to get current storage provider
+- [ ] **Write tests**: `IStorageProvider.test.ts`, `LocalStorageProvider.test.ts`
+- [ ] **Test**: Interface is well-defined, local storage provider compiles
 
-### 2.3 Setup Data Storage & Sync
-- [ ] Create `src/services/onedrive.service.ts` with file operations
-- [ ] Create `src/services/storage.service.ts` for localStorage caching
-- [ ] Create `src/services/sync.service.ts` with debounced save
-- [ ] Create `src/stores/useAppStore.ts` for app-level state (year, sync status)
-- [ ] **Test**: Load empty data file from OneDrive, save to OneDrive, cache in localStorage
+### 2.3 Implement Local File Storage
+- [ ] Implement `LocalStorageProvider.saveDataFile()` using File System Access API (download/save file picker)
+- [ ] Implement `LocalStorageProvider.loadDataFile()` using File System Access API (file open picker)
+- [ ] Add error handling for browser compatibility and user cancellation
+- [ ] Create `src/services/storage.service.ts` for localStorage caching (app state, preferences)
+- [ ] Create `src/stores/useAppStore.ts` for app-level state (year, file handle, loading status)
+- [ ] **Write tests**: Test save/load operations, error handling, cancellation
+- [ ] **Test**: Can save data file to local machine, can load data file from local machine, data persists
+
+### 2.4 Setup Data Management UI
+- [ ] Create `src/services/sync.service.ts` with auto-save prompt logic
+- [ ] Create `src/components/layout/Header.tsx` with:
+  - [ ] "Load" button (triggers file picker)
+  - [ ] "Save" button (triggers file save)
+  - [ ] Current file name display
+  - [ ] Last saved time display
+  - [ ] Unsaved changes indicator (dot or asterisk)
+- [ ] Create `src/components/common/UnsavedChangesDialog.tsx` - confirmation before closing with unsaved changes
+- [ ] Create `src/components/common/FileLoadErrorDialog.tsx` - show errors when file fails to load
+- [ ] Update `src/App.tsx` to:
+  - [ ] Wrap with Header component
+  - [ ] Add window beforeunload handler for unsaved changes warning
+  - [ ] Connect save/load buttons to storage service
+- [ ] **Write tests**: Test save/load UI interactions, unsaved changes detection, error handling
+- [ ] **Test**: Click "Load" → file picker opens → select file → data appears; Click "Save" → file picker opens → save file; Make changes → see unsaved indicator → close browser → get warning
 
 ## Phase 3: Account Management Feature
 
@@ -511,6 +532,58 @@ This plan implements all requirements from REQUIREMENTS.md:
 - [ ] Setup analytics (e.g., Google Analytics, optional)
 - [ ] Add performance monitoring
 - [ ] **Test**: Errors are logged, analytics work
+
+## Phase 18: Cloud Storage Integration (Optional - Future)
+
+**Requirements**: FR-8 (Cloud Storage), FR-9 (Authentication via SDKs), NFR-4 (Security)
+
+**Goal**: Add optional cloud storage providers (OneDrive, Google Drive) for users who want automatic sync
+
+**Important**: This phase is completely optional. The app is fully functional with local storage. This phase adds cloud sync as an opt-in feature for users who want it.
+
+**Note on Authentication**: Authentication is NOT implemented by Money Tree. It is provided by the cloud storage provider's SDK (e.g., Microsoft's MSAL, Google's Sign-In SDK). Money Tree simply integrates these SDKs to enable file access.
+
+### 18.1 Implement OneDrive Storage Provider
+- [ ] Install dependencies: `@azure/msal-browser`, `@microsoft/microsoft-graph-client`
+- [ ] Create `src/services/storage/OneDriveStorageProvider.ts` implementing IStorageProvider
+- [ ] Integrate `@azure/msal-browser` for authentication (handled by Microsoft's SDK)
+- [ ] Implement OneDrive file operations using Microsoft Graph API
+- [ ] Add error handling and retry logic
+- [ ] **Write tests**: Test OneDrive operations (with mocks)
+- [ ] **Test**: Can authenticate with Microsoft (via their SDK), can save/load files from OneDrive
+
+### 18.2 Add Storage Provider Selector
+- [ ] Create UI in Settings to select storage provider (Local, OneDrive, Google Drive)
+- [ ] Update StorageFactory to switch between providers based on user preference
+- [ ] Add "Connect to OneDrive" button that triggers MSAL authentication
+- [ ] Store provider preference in localStorage
+- [ ] Show current provider and connection status in UI
+- [ ] **Test**: Can switch between local and OneDrive storage, authentication works
+
+### 18.3 Implement Auto-Sync for Cloud Storage
+- [ ] Add automatic sync on data changes (debounced) for cloud providers
+- [ ] Show sync status in UI (syncing, synced, error, offline)
+- [ ] Add offline support with conflict resolution (last-write-wins)
+- [ ] Add "Force Sync" button for manual sync
+- [ ] **Write tests**: Test auto-sync, offline queue, conflict resolution
+- [ ] **Test**: Changes auto-sync to OneDrive, offline changes sync when reconnected
+
+### 18.4 Add Google Drive Provider (Optional)
+- [ ] Install Google Drive API dependencies
+- [ ] Create `src/services/storage/GoogleDriveStorageProvider.ts` implementing IStorageProvider
+- [ ] Integrate Google Sign-In SDK for authentication (handled by Google's SDK)
+- [ ] Implement Google Drive file operations
+- [ ] Add Google Drive to storage provider selector
+- [ ] **Write tests**: Test Google Drive operations (with mocks)
+- [ ] **Test**: Can save/load files from Google Drive
+
+### 18.5 Documentation and Migration
+- [ ] Update README with cloud storage setup instructions
+- [ ] Document OneDrive setup (Azure AD app registration)
+- [ ] Document Google Drive setup (Google Cloud Console setup)
+- [ ] Add migration guide: how to move from local to cloud storage
+- [ ] Add FAQ: "Is authentication required?" → No, only for cloud storage
+- [ ] **Test**: Users can migrate their local data to cloud storage
 
 ## Completion Checklist
 

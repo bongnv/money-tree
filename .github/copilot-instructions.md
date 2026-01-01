@@ -13,4 +13,4 @@ When writing or editing markdown files:
 
 ## Others
 
-- Don't summarise nor create summary
+- Don't summarise nor create summary files

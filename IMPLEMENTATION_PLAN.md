@@ -20,11 +20,10 @@ This plan implements all requirements from REQUIREMENTS.md:
 - **FR-2**: Categorization System → Phase 2, 4
 - **FR-3**: Account Management → Phase 3, 5, 8
 - **FR-4**: Category Customization → Phase 4
-- **FR-5**: Currency Management → Phase 3, 9
-- **FR-6**: Budget Planning → Phase 6, 8
-- **FR-7**: Financial Reports → Phase 7, 8
-- **FR-8**: Data Storage & Sync → Phase 2 (local), 10 (year management), 12 (persistence), 18 (cloud - optional)
-- **FR-9**: Authentication → Phase 18 only (cloud storage providers - optional, not an app feature)
+- **FR-5**: Budget Planning → Phase 6, 8
+- **FR-6**: Financial Reports → Phase 7, 8
+- **FR-7**: Data Storage & Sync → Phase 2 (local), 10 (year management), 12 (persistence), 18 (cloud - optional)
+- **FR-8**: Authentication → Phase 18 only (cloud storage providers - optional, not an app feature)
 
 **Non-Functional Requirements:**
 - **NFR-1**: Architecture → Phase 1, 16
@@ -113,13 +112,13 @@ This plan implements all requirements from REQUIREMENTS.md:
 **Note**: No authentication required. Users can use the app immediately with local file storage.
 
 ### 2.1 Setup Core Infrastructure
-- [ ] Install dependencies: `zustand`, `zod`, `date-fns`
-- [ ] Create `src/types/enums.ts` with all enums: `Group`, `AccountType`, `BudgetPeriod`
-- [ ] Create `src/types/models.ts` with all interfaces: `Currency`, `Account`, `Category`, `TransactionType`, `Transaction`, `Budget`, `BudgetItem`, `DataFile`
-- [ ] Create `src/schemas/models.schema.ts` with Zod schemas for all models
-- [ ] Create `src/constants/defaults.ts` with default currencies and categories
-- [ ] **Write tests**: `enums.test.ts`, `models.schema.test.ts` (Zod validation)
-- [ ] **Test**: All schemas validate correctly, default data is valid
+- [x] Install dependencies: `zustand`, `zod`, `date-fns`
+- [x] Create `src/types/enums.ts` with all enums: `Group`, `AccountType`, `BudgetPeriod`
+- [x] Create `src/types/models.ts` with all interfaces: `Currency`, `Account`, `Category`, `TransactionType`, `Transaction`, `Budget`, `BudgetItem`, `DataFile`
+- [x] Create `src/schemas/models.schema.ts` with Zod schemas for all models
+- [x] Create `src/constants/defaults.ts` with default currencies and categories
+- [x] **Write tests**: `enums.test.ts`, `models.schema.test.ts` (Zod validation)
+- [x] **Test**: All schemas validate correctly, default data is valid
 
 ### 2.2 Implement Storage Interface (Extensible Architecture)
 - [ ] Create `src/services/storage/IStorageProvider.ts` - interface defining storage contract
@@ -157,15 +156,14 @@ This plan implements all requirements from REQUIREMENTS.md:
 
 ## Phase 3: Account Management Feature
 
-**Requirements**: FR-3 (Account Management), FR-5 (Currency Management)
+**Requirements**: FR-3 (Account Management)
 
 **Goal**: Users can create and manage their accounts (bank accounts, credit cards, etc.)
 
 ### 3.1 Implement Account Data Layer
 - [ ] Create `src/stores/useAccountStore.ts` with account state and CRUD actions
-- [ ] Create `src/stores/useCurrencyStore.ts` with currency state
-- [ ] Create `src/utils/currency.utils.ts` for formatting amounts
-- [ ] Load default currencies into store
+- [ ] Create `src/utils/currency.utils.ts` for formatting amounts with default currencies
+- [ ] Load default currencies from constants
 
 ### 3.2 Build Account Management UI
 - [ ] Create `src/components/layout/MainLayout.tsx` with header, navigation
@@ -302,22 +300,21 @@ This plan implements all requirements from REQUIREMENTS.md:
 - [ ] Update navigation to default to dashboard
 - [ ] **Test**: View dashboard with all widgets showing correct data, click through to detail pages
 
-## Phase 9: Settings & Currency Management Feature
+## Phase 9: Settings & Data Management Feature
 
-**Requirements**: FR-5 (Currency Management), FR-8 (Data Import/Export)
+**Requirements**: FR-7 (Data Import/Export)
 
-**Goal**: Users can manage currencies and app settings
+**Goal**: Users can manage app settings and data import/export
 
 ### 9.1 Build Settings UI
-- [ ] Create `src/components/settings/CurrencySettings.tsx`
 - [ ] Create `src/components/settings/DataManagement.tsx` with import/export
 - [ ] Create `src/components/settings/SettingsPage.tsx`
 - [ ] Add route `/settings`
-- [ ] **Test**: Add currency, delete currency, export all data, import data, clear data
+- [ ] **Test**: Export all data, import data, clear data
 
 ## Phase 10: Year Management Feature
 
-**Requirements**: FR-8 (Data Storage - multi-year files)
+**Requirements**: FR-7 (Data Storage - multi-year files)
 
 **Goal**: Users can switch between years and manage multi-year data
 

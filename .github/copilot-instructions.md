@@ -1,5 +1,13 @@
 # GitHub Copilot Instructions
 
+## Project Documentation
+
+- Read `REQUIREMENTS.md` for functional and non-functional requirements
+- Read `IMPLEMENTATION_PLAN.md` for the implementation plan and phase breakdown
+- When requirements change, update both files to keep them consistent
+- When updating `REQUIREMENTS.md`, check if `IMPLEMENTATION_PLAN.md` needs updates
+- When updating `IMPLEMENTATION_PLAN.md`, verify it matches requirements in `REQUIREMENTS.md`
+
 ## Markdown Writing Guidelines
 
 When writing or editing markdown files:

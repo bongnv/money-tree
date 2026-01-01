@@ -71,22 +71,14 @@ Users can fully customize the categorization structure within Expense, Income, a
 - Users can move categories between groups
 - Create custom hierarchies that fit their financial tracking needs
 
-### FR-5: Currency Management
-
-- Users can add custom currencies to the system
-- Users can remove currencies they don't use
-- Each account is associated with a specific currency
-- Transactions are recorded in the account's currency
-- Support for displaying amounts in different currencies
-
-### FR-6: Budget Planning
+### FR-5: Budget Planning
 
 - Users can create budget plans
 - Users can set budget limits for different categories
 - Users can define budget periods (monthly, quarterly, yearly)
 - Users can modify budget plans as needed
 
-### FR-7: Financial Reports
+### FR-6: Financial Reports
 
 Users can view and analyze their financial data through multiple reports:
 
@@ -95,14 +87,15 @@ Users can view and analyze their financial data through multiple reports:
 - **Budget Analysis**: Compare planned budget versus actual spending
 - **Account Overview**: View individual account balances and transaction history
 
-### FR-8: Data Storage and Synchronization
+### FR-7: Data Storage and Synchronization
 
 **Primary Storage (Phase 1):**
 - All data is stored on the user's local machine using browser's File System Access API
 - Users can save data files to their local file system
 - Users can load data files from their local file system
 - Each calendar year's data is stored in a separate JSON file
-- Data includes transactions, accounts, categories, budgets, and currencies
+- Data includes transactions, accounts, categories, and budgets
+- Currencies are fixed defaults (not stored in data files)
 - Data format is portable and readable (JSON)
 - One file per year for better organization
 
@@ -116,7 +109,7 @@ Users can view and analyze their financial data through multiple reports:
 - **Google Drive Integration**: Sync with Google Drive (future)
 - **Dropbox Integration**: Sync with Dropbox (future)
 
-### FR-9: Authentication (Cloud Storage Providers Only)
+### FR-8: Authentication (Cloud Storage Providers Only)
 
 **Important**: Authentication is NOT a core application feature. It is only required by cloud storage providers (OneDrive, Google Drive, etc.) to access their APIs for loading and saving data. The authentication is handled by the storage provider's SDK, not by the Money Tree application itself.
 
@@ -158,7 +151,8 @@ Users can view and analyze their financial data through multiple reports:
 
 **State Management:**
 - **Zustand**: Lightweight state management solution
-  - Manages application state (transactions, accounts, categories, budgets, currencies)
+  - Manages application state (transactions, accounts, categories, budgets)
+  - Currencies are fixed constants (not part of state)
   - Manages storage provider settings (local vs cloud)
   - Simple API with minimal boilerplate
   - Excellent TypeScript support

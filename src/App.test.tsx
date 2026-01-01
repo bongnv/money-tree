@@ -30,7 +30,7 @@ describe('App', () => {
 
     // Check for main content
     expect(screen.getByText('Personal Finance Manager')).toBeInTheDocument();
-    expect(screen.getByText('Get Started')).toBeInTheDocument();
+    expect(screen.getByText('Manage Accounts')).toBeInTheDocument();
   });
 
   it('should start auto-save on mount', () => {

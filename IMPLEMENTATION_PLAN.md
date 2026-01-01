@@ -180,14 +180,14 @@ This plan implements all requirements from REQUIREMENTS.md:
 - [x] Load default currencies from constants
 
 ### 3.2 Build Account Management UI
-- [ ] Create `src/components/layout/MainLayout.tsx` with header, navigation
-- [ ] Create `src/components/accounts/AccountCard.tsx`
-- [ ] Create `src/components/accounts/AccountList.tsx`
-- [ ] Create `src/components/accounts/AccountForm.tsx` with validation
-- [ ] Create `src/components/accounts/AccountDialog.tsx`
-- [ ] Create `src/components/accounts/AccountsPage.tsx`
-- [ ] Add route `/accounts` in router setup
-- [ ] **Test**: Create account, edit account, view account list, delete account (all via UI)
+- [x] Create `src/components/layout/MainLayout.tsx` with header, navigation
+- [x] Create `src/components/accounts/AccountCard.tsx`
+- [x] Create `src/components/accounts/AccountList.tsx`
+- [x] Create `src/components/accounts/AccountForm.tsx` with validation
+- [x] Create `src/components/accounts/AccountDialog.tsx`
+- [x] Create `src/components/accounts/AccountsPage.tsx`
+- [x] Add route `/accounts` in router setup
+- [x] **Test**: Create account, edit account, view account list, delete account (all via UI)
 
 ## Phase 4: Category & Transaction Type Management Feature
 

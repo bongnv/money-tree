@@ -1,4 +1,5 @@
 import { useAppStore } from '../stores/useAppStore';
+import { useAccountStore } from '../stores/useAccountStore';
 import { StorageFactory } from './storage/StorageFactory';
 import type { DataFile } from '../types/models';
 
@@ -49,10 +50,6 @@ class SyncService {
 
     const state = useAppStore.getState();
 
-    if (!state.dataFile) {
-      throw new Error('No data to save');
-    }
-
     if (!state.hasUnsavedChanges) {
       return;
     }
@@ -62,14 +59,25 @@ class SyncService {
 
     try {
       const storage = StorageFactory.getCurrentProvider();
+      
+      // Gather data from all domain stores
+      const accountStore = useAccountStore.getState();
+      
       const dataToSave: DataFile = {
-        ...state.dataFile,
+        version: '1.0.0',
+        year: state.currentYear,
+        accounts: accountStore.accounts,
+        categories: [],
+        transactionTypes: [],
+        transactions: [],
+        budgets: [],
         lastModified: new Date().toISOString(),
       };
 
       await storage.saveDataFile(dataToSave.year, dataToSave);
 
       state.markAsSaved();
+      state.setFileName(`money-tree-${dataToSave.year}.json`);
       state.setError(null);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save';
@@ -124,8 +132,11 @@ class SyncService {
       const dataFile = await storage.loadDataFile(year);
 
       if (dataFile) {
-        state.setDataFile(dataFile);
+        // Distribute data to domain stores
+        useAccountStore.getState().setAccounts(dataFile.accounts || []);
+        
         state.setCurrentYear(year);
+        state.setFileName(`money-tree-${year}.json`);
         state.markAsSaved();
       }
     } catch (error) {

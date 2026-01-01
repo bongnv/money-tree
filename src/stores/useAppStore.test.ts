@@ -15,7 +15,6 @@ describe('useAppStore', () => {
     const { result } = renderHook(() => useAppStore());
 
     expect(result.current.currentYear).toBe(new Date().getFullYear());
-    expect(result.current.dataFile).toBeNull();
     expect(result.current.fileName).toBeNull();
     expect(result.current.lastSaved).toBeNull();
     expect(result.current.hasUnsavedChanges).toBe(false);
@@ -34,24 +33,13 @@ describe('useAppStore', () => {
     expect(storageService.getCurrentYear()).toBe(2024);
   });
 
-  it('should set data file and mark as unsaved', () => {
+  it('should mark changes as unsaved', () => {
     const { result } = renderHook(() => useAppStore());
-    const mockDataFile = {
-      version: '1.0.0',
-      year: 2024,
-      accounts: [],
-      categories: [],
-      transactionTypes: [],
-      transactions: [],
-      budgets: [],
-      lastModified: new Date().toISOString(),
-    };
 
     act(() => {
-      result.current.setDataFile(mockDataFile);
+      result.current.setUnsavedChanges(true);
     });
 
-    expect(result.current.dataFile).toEqual(mockDataFile);
     expect(result.current.hasUnsavedChanges).toBe(true);
     expect(storageService.getUnsavedChanges()).toBe(true);
   });
@@ -169,7 +157,6 @@ describe('useAppStore', () => {
     });
 
     expect(result.current.currentYear).toBe(new Date().getFullYear());
-    expect(result.current.dataFile).toBeNull();
     expect(result.current.fileName).toBeNull();
     expect(result.current.lastSaved).toBeNull();
     expect(result.current.hasUnsavedChanges).toBe(false);

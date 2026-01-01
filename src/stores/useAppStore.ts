@@ -1,10 +1,8 @@
 import { create } from 'zustand';
-import type { DataFile } from '../types/models';
 import { storageService } from '../services/storage.service';
 
 interface AppState {
   currentYear: number;
-  dataFile: DataFile | null;
   fileName: string | null;
   lastSaved: string | null;
   hasUnsavedChanges: boolean;
@@ -14,7 +12,6 @@ interface AppState {
 
 interface AppActions {
   setCurrentYear: (year: number) => void;
-  setDataFile: (dataFile: DataFile | null) => void;
   setFileName: (fileName: string | null) => void;
   setLastSaved: (timestamp: string) => void;
   setUnsavedChanges: (hasChanges: boolean) => void;
@@ -31,7 +28,6 @@ const getCurrentYear = (): number => {
 
 export const useAppStore = create<AppState & AppActions>((set) => ({
   currentYear: getCurrentYear(),
-  dataFile: null,
   fileName: storageService.getFileName(),
   lastSaved: storageService.getLastSaved(),
   hasUnsavedChanges: storageService.getUnsavedChanges(),
@@ -41,11 +37,6 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
   setCurrentYear: (year) => {
     storageService.setCurrentYear(year);
     set({ currentYear: year });
-  },
-
-  setDataFile: (dataFile) => {
-    set({ dataFile, hasUnsavedChanges: true });
-    storageService.setUnsavedChanges(true);
   },
 
   setFileName: (fileName) => {
@@ -86,7 +77,6 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
     storageService.clearAll();
     set({
       currentYear: new Date().getFullYear(),
-      dataFile: null,
       fileName: null,
       lastSaved: null,
       hasUnsavedChanges: false,

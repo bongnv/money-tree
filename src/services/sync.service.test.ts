@@ -1,7 +1,9 @@
 import { syncService } from './sync.service';
 import { useAppStore } from '../stores/useAppStore';
+import { useAccountStore } from '../stores/useAccountStore';
 import { StorageFactory } from './storage/StorageFactory';
 import type { DataFile } from '../types/models';
+import { AccountType } from '../types/enums';
 
 jest.mock('./storage/StorageFactory');
 
@@ -12,6 +14,8 @@ describe('SyncService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     useAppStore.getState().resetState();
+    // Reset account store by setting accounts to empty
+    useAccountStore.setState({ accounts: [] });
 
     mockSaveDataFile = jest.fn();
     mockLoadDataFile = jest.fn();
@@ -38,18 +42,18 @@ describe('SyncService', () => {
     });
 
     it('should prompt user when there are unsaved changes', async () => {
-      const mockDataFile: DataFile = {
-        version: '1.0.0',
-        year: 2024,
-        accounts: [],
-        categories: [],
-        transactionTypes: [],
-        transactions: [],
-        budgets: [],
-        lastModified: new Date().toISOString(),
-      };
-
-      useAppStore.getState().setDataFile(mockDataFile);
+      // Add some data to domain stores to trigger save
+      useAccountStore.getState().addAccount({
+        id: '1',
+        name: 'Test Account',
+        type: AccountType.CASH,
+        currencyId: 'USD',
+        initialBalance: 1000,
+        isActive: true,
+        description: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
       useAppStore.getState().setUnsavedChanges(true);
 
       await syncService.promptSaveIfNeeded();
@@ -60,18 +64,17 @@ describe('SyncService', () => {
     });
 
     it('should save and return true when user confirms', async () => {
-      const mockDataFile: DataFile = {
-        version: '1.0.0',
-        year: 2024,
-        accounts: [],
-        categories: [],
-        transactionTypes: [],
-        transactions: [],
-        budgets: [],
-        lastModified: new Date().toISOString(),
-      };
-
-      useAppStore.getState().setDataFile(mockDataFile);
+      useAccountStore.getState().addAccount({
+        id: '1',
+        name: 'Test Account',
+        type: AccountType.CASH,
+        currencyId: 'USD',
+        initialBalance: 1000,
+        isActive: true,
+        description: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
       useAppStore.getState().setUnsavedChanges(true);
 
       (window.confirm as jest.Mock).mockReturnValue(true);
@@ -84,18 +87,17 @@ describe('SyncService', () => {
     });
 
     it('should return true when user cancels', async () => {
-      const mockDataFile: DataFile = {
-        version: '1.0.0',
-        year: 2024,
-        accounts: [],
-        categories: [],
-        transactionTypes: [],
-        transactions: [],
-        budgets: [],
-        lastModified: new Date().toISOString(),
-      };
-
-      useAppStore.getState().setDataFile(mockDataFile);
+      useAccountStore.getState().addAccount({
+        id: '1',
+        name: 'Test Account',
+        type: AccountType.CASH,
+        currencyId: 'USD',
+        initialBalance: 1000,
+        isActive: true,
+        description: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
       useAppStore.getState().setUnsavedChanges(true);
 
       (window.confirm as jest.Mock).mockReturnValue(false);
@@ -109,18 +111,18 @@ describe('SyncService', () => {
 
   describe('saveNow', () => {
     it('should save data file', async () => {
-      const mockDataFile: DataFile = {
-        version: '1.0.0',
-        year: 2024,
-        accounts: [],
-        categories: [],
-        transactionTypes: [],
-        transactions: [],
-        budgets: [],
-        lastModified: new Date().toISOString(),
-      };
-
-      useAppStore.getState().setDataFile(mockDataFile);
+      useAccountStore.getState().addAccount({
+        id: '1',
+        name: 'Test Account',
+        type: AccountType.CASH,
+        currencyId: 'USD',
+        initialBalance: 1000,
+        isActive: true,
+        description: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      useAppStore.getState().setCurrentYear(2024);
       useAppStore.getState().setUnsavedChanges(true);
 
       mockSaveDataFile.mockResolvedValue(undefined);
@@ -138,23 +140,36 @@ describe('SyncService', () => {
       expect(useAppStore.getState().hasUnsavedChanges).toBe(false);
     });
 
-    it('should throw error when no data to save', async () => {
-      await expect(syncService.saveNow()).rejects.toThrow('No data to save');
+    it('should save empty data file when no domain data', async () => {
+      useAppStore.getState().setCurrentYear(2024);
+      useAppStore.getState().setUnsavedChanges(true);
+      mockSaveDataFile.mockResolvedValue(undefined);
+
+      await syncService.saveNow();
+
+      expect(mockSaveDataFile).toHaveBeenCalledWith(
+        2024,
+        expect.objectContaining({
+          version: '1.0.0',
+          year: 2024,
+          accounts: [],
+        })
+      );
     });
 
     it('should not save when no unsaved changes', async () => {
-      const mockDataFile: DataFile = {
-        version: '1.0.0',
-        year: 2024,
-        accounts: [],
-        categories: [],
-        transactionTypes: [],
-        transactions: [],
-        budgets: [],
-        lastModified: new Date().toISOString(),
-      };
-
-      useAppStore.getState().setDataFile(mockDataFile);
+      useAccountStore.getState().addAccount({
+        id: '1',
+        name: 'Test Account',
+        type: AccountType.CASH,
+        currencyId: 'USD',
+        initialBalance: 1000,
+        isActive: true,
+        description: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      useAppStore.getState().setCurrentYear(2024);
       useAppStore.getState().setUnsavedChanges(false);
 
       await syncService.saveNow();
@@ -163,18 +178,18 @@ describe('SyncService', () => {
     });
 
     it('should handle save errors', async () => {
-      const mockDataFile: DataFile = {
-        version: '1.0.0',
-        year: 2024,
-        accounts: [],
-        categories: [],
-        transactionTypes: [],
-        transactions: [],
-        budgets: [],
-        lastModified: new Date().toISOString(),
-      };
-
-      useAppStore.getState().setDataFile(mockDataFile);
+      useAccountStore.getState().addAccount({
+        id: '1',
+        name: 'Test Account',
+        type: AccountType.CASH,
+        currencyId: 'USD',
+        initialBalance: 1000,
+        isActive: true,
+        description: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      useAppStore.getState().setCurrentYear(2024);
       useAppStore.getState().setUnsavedChanges(true);
 
       mockSaveDataFile.mockRejectedValue(new Error('Save failed'));
@@ -189,7 +204,17 @@ describe('SyncService', () => {
       const mockDataFile: DataFile = {
         version: '1.0.0',
         year: 2024,
-        accounts: [],
+        accounts: [{
+          id: '1',
+          name: 'Test Account',
+          type: AccountType.CASH,
+          currencyId: 'USD',
+          initialBalance: 1000,
+          isActive: true,
+          description: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        }],
         categories: [],
         transactionTypes: [],
         transactions: [],
@@ -202,7 +227,8 @@ describe('SyncService', () => {
       await syncService.loadDataFile(2024);
 
       expect(mockLoadDataFile).toHaveBeenCalledWith(2024);
-      expect(useAppStore.getState().dataFile).toEqual(mockDataFile);
+      expect(useAccountStore.getState().accounts).toHaveLength(1);
+      expect(useAccountStore.getState().accounts[0].name).toBe('Test Account');
       expect(useAppStore.getState().currentYear).toBe(2024);
       expect(useAppStore.getState().hasUnsavedChanges).toBe(false);
     });
@@ -219,7 +245,8 @@ describe('SyncService', () => {
 
       await syncService.loadDataFile(2024);
 
-      expect(useAppStore.getState().dataFile).toBe(null);
+      // Should not throw and should not modify stores
+      expect(useAccountStore.getState().accounts).toHaveLength(0);
     });
   });
 
@@ -240,18 +267,18 @@ describe('SyncService', () => {
     });
 
     it('should auto-save when changes are detected', async () => {
-      const mockDataFile: DataFile = {
-        version: '1.0.0',
-        year: 2024,
-        accounts: [],
-        categories: [],
-        transactionTypes: [],
-        transactions: [],
-        budgets: [],
-        lastModified: new Date().toISOString(),
-      };
-
-      useAppStore.getState().setDataFile(mockDataFile);
+      useAccountStore.getState().addAccount({
+        id: '1',
+        name: 'Test Account',
+        type: AccountType.CASH,
+        currencyId: 'USD',
+        initialBalance: 1000,
+        isActive: true,
+        description: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      useAppStore.getState().setCurrentYear(2024);
       useAppStore.getState().setUnsavedChanges(true);
 
       mockSaveDataFile.mockResolvedValue(undefined);
@@ -268,18 +295,18 @@ describe('SyncService', () => {
     });
 
     it('should not auto-save when no changes', async () => {
-      const mockDataFile: DataFile = {
-        version: '1.0.0',
-        year: 2024,
-        accounts: [],
-        categories: [],
-        transactionTypes: [],
-        transactions: [],
-        budgets: [],
-        lastModified: new Date().toISOString(),
-      };
-
-      useAppStore.getState().setDataFile(mockDataFile);
+      useAccountStore.getState().addAccount({
+        id: '1',
+        name: 'Test Account',
+        type: AccountType.CASH,
+        currencyId: 'USD',
+        initialBalance: 1000,
+        isActive: true,
+        description: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      useAppStore.getState().setCurrentYear(2024);
       useAppStore.getState().setUnsavedChanges(false);
 
       syncService.startAutoSave();

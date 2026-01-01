@@ -1,25 +1,44 @@
 import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { Box, Container, Typography, Button } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import theme from './theme';
-import { Header } from './components/layout/Header';
+import { MainLayout } from './components/layout/MainLayout';
 import { FileLoadErrorDialog } from './components/common/FileLoadErrorDialog';
+import { AccountsPage } from './components/accounts/AccountsPage';
 import { useAppStore } from './stores/useAppStore';
 import { syncService } from './services/sync.service';
+
+const DashboardPage: React.FC = () => {
+  return (
+    <Box sx={{ textAlign: 'center', py: 8 }}>
+      <Typography variant="h3" component="h1" gutterBottom>
+        Money Tree
+      </Typography>
+      <Typography variant="h6" component="h2" gutterBottom color="text.secondary">
+        Personal Finance Manager
+      </Typography>
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+        Dashboard coming soon. Start by managing your accounts.
+      </Typography>
+      <Button variant="contained" color="primary" href="/accounts">
+        Manage Accounts
+      </Button>
+    </Box>
+  );
+};
 
 const App: React.FC = () => {
   const { error, setError, hasUnsavedChanges } = useAppStore();
 
   useEffect(() => {
-    // Start periodic auto-save
     syncService.startAutoSave();
 
-    // Handle browser close/refresh with unsaved changes
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
         e.preventDefault();
-        e.returnValue = ''; // Modern browsers require this
+        e.returnValue = '';
       }
     };
 
@@ -38,20 +57,15 @@ const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Header />
-      <Container maxWidth="lg">
-        <Box sx={{ my: 4 }}>
-          <Typography variant="h1" component="h1" gutterBottom>
-            Money Tree
-          </Typography>
-          <Typography variant="h5" component="h2" gutterBottom color="text.secondary">
-            Personal Finance Manager
-          </Typography>
-          <Button variant="contained" color="primary" sx={{ mt: 2 }}>
-            Get Started
-          </Button>
-        </Box>
-      </Container>
+      <BrowserRouter>
+        <MainLayout>
+          <Routes>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/accounts" element={<AccountsPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </MainLayout>
+      </BrowserRouter>
       <FileLoadErrorDialog
         open={!!error}
         error={error}

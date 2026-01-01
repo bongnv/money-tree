@@ -6,7 +6,7 @@ Money Tree is a personal finance management web application that helps users tra
 
 ## Functional Requirements
 
-### 1. Transaction Management
+### FR-1: Transaction Management
 
 Users can add, edit, and delete transactions. Each transaction includes the following details:
 
@@ -29,7 +29,7 @@ Users can add, edit, and delete transactions. Each transaction includes the foll
   - Dividends/Returns: requires To Account (money entering from returns)
 - **Transfer transactions**: Require both From Account and To Account (money moving between accounts)
 
-### 2. Categorization System
+### FR-2: Categorization System
 
 The application uses a three-level hierarchy to organize transactions:
 
@@ -51,7 +51,7 @@ The application uses a three-level hierarchy to organize transactions:
 - **Investment**: Investment-related activities (uses categories and transaction types)
 - **Transfer**: Money moving between accounts (does not use categories or transaction types)
 
-### 3. Account Management
+### FR-3: Account Management
 
 - Users can create and manage multiple accounts (e.g., bank accounts, credit cards, cash)
 - Each account tracks its current balance
@@ -59,7 +59,7 @@ The application uses a three-level hierarchy to organize transactions:
 - Users can add, edit, and delete accounts
 - Users can view account history and balance changes over time
 
-### 4. Category Customization
+### FR-4: Category Customization
 
 Users can fully customize the categorization structure within Expense, Income, and Investment groups:
 
@@ -71,7 +71,7 @@ Users can fully customize the categorization structure within Expense, Income, a
 - Users can move categories between groups
 - Create custom hierarchies that fit their financial tracking needs
 
-### 5. Currency Management
+### FR-5: Currency Management
 
 - Users can add custom currencies to the system
 - Users can remove currencies they don't use
@@ -79,14 +79,14 @@ Users can fully customize the categorization structure within Expense, Income, a
 - Transactions are recorded in the account's currency
 - Support for displaying amounts in different currencies
 
-### 6. Budget Planning
+### FR-6: Budget Planning
 
 - Users can create budget plans
 - Users can set budget limits for different categories
 - Users can define budget periods (monthly, quarterly, yearly)
 - Users can modify budget plans as needed
 
-### 7. Financial Reports
+### FR-7: Financial Reports
 
 Users can view and analyze their financial data through multiple reports:
 
@@ -95,7 +95,7 @@ Users can view and analyze their financial data through multiple reports:
 - **Budget Analysis**: Compare planned budget versus actual spending
 - **Account Overview**: View individual account balances and transaction history
 
-### 8. Data Storage and Synchronization
+### FR-8: Data Storage and Synchronization
 
 - All data is stored in the user's OneDrive account
 - Each calendar year's data is stored in a separate file
@@ -105,7 +105,7 @@ Users can view and analyze their financial data through multiple reports:
 - Data format is portable and readable
 - One file per year for better organization
 
-### 9. Authentication
+### FR-9: Authentication
 
 - Users must log in using their Microsoft account
 - Login grants access to OneDrive storage
@@ -113,13 +113,13 @@ Users can view and analyze their financial data through multiple reports:
 
 ## Non-Functional Requirements
 
-### 1. Architecture
+### NFR-1: Architecture
 
 - Static web application (no backend server)
 - Runs entirely in the browser
 - All processing happens client-side
 
-### 2. Technology Stack
+### NFR-2: Technology Stack
 
 **Core:**
 - **TypeScript**: Primary programming language
@@ -151,7 +151,7 @@ Users can view and analyze their financial data through multiple reports:
 - **@microsoft/microsoft-graph-client**: OneDrive API integration
 - **@azure/msal-browser**: Microsoft authentication (OAuth)
 
-### 3. Performance
+### NFR-3: Performance
 
 - Application loads quickly
 - Responsive user interface
@@ -159,34 +159,34 @@ Users can view and analyze their financial data through multiple reports:
 - Efficient data loading and saving
 - Optimized bundle size through code splitting
 
-### 4. Security
+### NFR-4: Security
 
 - Secure authentication through Microsoft OAuth
 - Data access limited to authenticated user
 - No data stored on third-party servers
 - All operations require valid login session
 
-### 5. Usability
+### NFR-5: Usability
 
 - Intuitive user interface
 - Clear navigation structure
 - Helpful error messages
 - Responsive design for different screen sizes
 
-### 6. Compatibility
+### NFR-6: Compatibility
 
 - Works on modern web browsers (Chrome, Firefox, Safari, Edge)
 - Compatible with desktop and tablet devices
 - Supports current OneDrive API standards
 
-### 7. Reliability
+### NFR-7: Reliability
 
 - Data integrity maintained during save operations
 - Proper error handling for network issues
 - Data backup and recovery mechanisms
 - Graceful handling of OneDrive connection failures
 
-### 8. Maintainability
+### NFR-8: Maintainability
 
 - Clean, modular code structure
 - Well-documented codebase

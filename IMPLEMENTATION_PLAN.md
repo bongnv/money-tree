@@ -1,8 +1,39 @@
 # Money Tree - Implementation Plan
 
-This document provides a step-by-step implementation plan for building the Money Tree application. Each step is small, verifiable, and can be checked off upon completion. For more details of requirements, read REQUIREMENTS.MD
+This document provides a step-by-step implementation plan for building the Money Tree application. Each step is small, verifiable, and can be checked off upon completion.
+
+## Requirements Reference
+
+This plan implements all requirements from REQUIREMENTS.md:
+
+**Functional Requirements:**
+- **FR-1**: Transaction Management → Phase 5, 8
+- **FR-2**: Categorization System → Phase 2, 4
+- **FR-3**: Account Management → Phase 3, 5, 8
+- **FR-4**: Category Customization → Phase 4
+- **FR-5**: Currency Management → Phase 3, 9
+- **FR-6**: Budget Planning → Phase 6, 8
+- **FR-7**: Financial Reports → Phase 7, 8
+- **FR-8**: Data Storage & Sync → Phase 2, 9, 10, 12
+- **FR-9**: Authentication → Phase 2
+
+**Non-Functional Requirements:**
+- **NFR-1**: Architecture → Phase 1, 16
+- **NFR-2**: Technology Stack → Phase 1
+- **NFR-3**: Performance → Phase 14, 16, 17
+- **NFR-4**: Security → Phase 2, 16
+- **NFR-5**: Usability → Phase 11, 13, 14, 17
+- **NFR-6**: Compatibility → Phase 11, 14, 16, 17
+- **NFR-7**: Reliability → Phase 12, 13, 15
+- **NFR-8**: Maintainability → Phase 1, 17
+
+---
 
 ## Phase 1: Project Setup & Foundation
+
+**Requirements**: NFR-1, NFR-2, NFR-8
+
+**Goal**: Set up development environment, tooling, and project structure
 
 ### 1.1 Initialize Project
 - [x] Create `package.json` with project metadata
@@ -37,827 +68,428 @@ This document provides a step-by-step implementation plan for building the Money
 - [x] Create `src/theme.ts` with basic MUI theme
 - [x] Verify: Import and use a MUI component in test file
 
-### 1.6 Create Project Structure
-- [ ] Create folder structure: `src/components`, `src/stores`, `src/services`, `src/types`, `src/utils`, `src/hooks`, `src/constants`, `src/schemas`
-- [ ] Create basic `src/index.tsx` entry point
-- [ ] Create basic `src/App.tsx` root component
-- [ ] Create `public/index.html`
-- [ ] Verify: App renders "Hello World" in browser
+### 1.6 Create Development Environment Files
+- [ ] Create `.nvmrc` file with Node.js version (LTS - 18 or 20)
+- [ ] Create `.editorconfig` file for consistent coding styles across editors
 
-### 1.7 Setup Scripts
-- [ ] Add `start` script for dev server
-- [ ] Add `build` script for production build
-- [ ] Add `lint` script for ESLint
-- [ ] Add `format` script for Prettier
-- [ ] Verify: All scripts run without errors
+### 1.7 Create Project Structure
+- [ ] Create folder structure: `src/components`, `src/stores`, `src/services`, `src/types`, `src/utils`, `src/hooks`, `src/constants`, `src/schemas`
+- [x] Basic `src/index.tsx` entry point exists
+- [x] Basic `src/App.tsx` root component exists
+- [x] `public/index.html` exists
+- [x] Scripts for dev, build, lint, format are configured
 
 ### 1.8 Setup GitHub CI/CD
-- [ ] Create `.github/workflows` directory
-- [ ] Create `ci.yml` workflow file
-- [ ] Configure workflow to run on push and pull request
-- [ ] Add job to run `npm install`
-- [ ] Add job to run `npm run lint`
-- [ ] Add job to run `npm run format:check`
-- [ ] Add job to run `npm run build`
-- [ ] Configure Node.js version (use LTS)
+- [ ] Create `.github/workflows/ci.yml` workflow file
+- [ ] Configure workflow to run on push and pull request to main branch
+- [ ] Add jobs: install dependencies, lint, format check, build
+- [ ] Configure Node.js version matching `.nvmrc`
 - [ ] Add caching for node_modules
-- [ ] Verify: Push code and check workflow runs successfully on GitHub
+- [ ] Test: Push code and verify workflow runs successfully on GitHub
 
-## Phase 2: Data Models & Type Definitions
+## Phase 2: Core Foundation & Authentication
 
-### 2.1 Define Core Enums
-- [ ] Create `src/types/enums.ts`
-- [ ] Define `Group` enum (EXPENSE, INCOME, INVESTMENT, TRANSFER)
-- [ ] Define `AccountType` enum
-- [ ] Define `BudgetPeriod` enum
-- [ ] Verify: Import enums in test file without errors
+**Requirements**: FR-9 (Authentication), FR-8 (Data Storage & Sync), NFR-4 (Security)
 
-### 2.2 Define Data Model Interfaces
-- [ ] Create `src/types/models.ts`
-- [ ] Define `Currency` interface
-- [ ] Define `Account` interface
-- [ ] Define `Category` interface
-- [ ] Define `TransactionType` interface
-- [ ] Define `Transaction` interface
-- [ ] Define `Budget` interface
-- [ ] Define `BudgetItem` interface
-- [ ] Define `DataFile` interface
-- [ ] Verify: All interfaces compile without errors
+**Goal**: Enable user login and establish data storage foundation
 
-### 2.3 Create Zod Schemas
-- [ ] Install `zod` package
-- [ ] Create `src/schemas/models.schema.ts`
-- [ ] Create Zod schema for `Currency`
-- [ ] Create Zod schema for `Account`
-- [ ] Create Zod schema for `Category`
-- [ ] Create Zod schema for `TransactionType`
-- [ ] Create Zod schema for `Transaction`
-- [ ] Create Zod schema for `Budget` and `BudgetItem`
-- [ ] Create Zod schema for `DataFile`
-- [ ] Verify: Parse sample data with schemas successfully
+### 2.1 Setup Core Infrastructure
+- [ ] Install dependencies: `zustand`, `zod`, `date-fns`, `@azure/msal-browser`, `@microsoft/microsoft-graph-client`
+- [ ] Create folder structure: `src/components`, `src/stores`, `src/services`, `src/types`, `src/utils`, `src/hooks`, `src/constants`, `src/schemas`
+- [ ] Create `src/types/enums.ts` with all enums: `Group`, `AccountType`, `BudgetPeriod`
+- [ ] Create `src/types/models.ts` with all interfaces: `Currency`, `Account`, `Category`, `TransactionType`, `Transaction`, `Budget`, `BudgetItem`, `DataFile`
+- [ ] Create `src/schemas/models.schema.ts` with Zod schemas for all models
+- [ ] Create `src/constants/defaults.ts` with default currencies and categories
 
-### 2.4 Create Default Data Constants
-- [ ] Create `src/constants/defaults.ts`
-- [ ] Define default currencies (USD, EUR, GBP, JPY)
-- [ ] Define default categories for each group
-- [ ] Define default transaction types for each category
-- [ ] Define empty data file structure
-- [ ] Verify: Import and use default data in test
-
-## Phase 3: Authentication Setup
-
-### 3.1 Setup MSAL Configuration
-- [ ] Install `@azure/msal-browser`
-- [ ] Create `src/services/auth.service.ts`
-- [ ] Define MSAL configuration object
-- [ ] Define login request scopes
-- [ ] Create PublicClientApplication instance
-- [ ] Verify: Configuration object is valid
-
-### 3.2 Create Auth Store
-- [ ] Install `zustand`
-- [ ] Create `src/stores/useAuthStore.ts`
-- [ ] Add state: `user`, `isAuthenticated`, `isLoading`
-- [ ] Add action: `login()`
-- [ ] Add action: `logout()`
-- [ ] Add action: `checkAuth()`
-- [ ] Verify: Store can be imported and used
-
-### 3.3 Create Auth Context Component
+### 2.2 Implement Authentication (User Login)
+- [ ] Create `src/services/auth.service.ts` with MSAL configuration
+- [ ] Create `src/stores/useAuthStore.ts` with auth state and actions
 - [ ] Create `src/components/auth/AuthProvider.tsx`
-- [ ] Wrap MSAL context
-- [ ] Handle authentication on mount
-- [ ] Handle redirect callback
-- [ ] Verify: Component renders children when authenticated
-
-### 3.4 Create Login Page
-- [ ] Create `src/components/auth/LoginPage.tsx`
-- [ ] Add "Login with Microsoft" button
-- [ ] Connect to auth store login action
-- [ ] Add loading state
-- [ ] Style with Material-UI
-- [ ] Verify: Login page renders correctly
-
-### 3.5 Create Protected Route Component
+- [ ] Create `src/components/auth/LoginPage.tsx` with Microsoft login button
 - [ ] Create `src/components/auth/ProtectedRoute.tsx`
-- [ ] Check authentication status
-- [ ] Redirect to login if not authenticated
-- [ ] Show loading while checking auth
-- [ ] Verify: Routes are protected correctly
+- [ ] Update `src/App.tsx` to show LoginPage if not authenticated
+- [ ] **Test**: User can click "Login with Microsoft" and authenticate successfully
 
-## Phase 4: OneDrive Integration
+### 2.3 Setup Data Storage & Sync
+- [ ] Create `src/services/onedrive.service.ts` with file operations
+- [ ] Create `src/services/storage.service.ts` for localStorage caching
+- [ ] Create `src/services/sync.service.ts` with debounced save
+- [ ] Create `src/stores/useAppStore.ts` for app-level state (year, sync status)
+- [ ] **Test**: Load empty data file from OneDrive, save to OneDrive, cache in localStorage
 
-### 4.1 Setup Microsoft Graph Client
-- [ ] Install `@microsoft/microsoft-graph-client`
-- [ ] Create `src/services/onedrive.service.ts`
-- [ ] Initialize Graph client with auth provider
-- [ ] Verify: Client can be instantiated
+## Phase 3: Account Management Feature
 
-### 4.2 Implement File Operations
-- [ ] Create `loadDataFile(year: number)` function
-- [ ] Create `saveDataFile(year: number, data: DataFile)` function
-- [ ] Create `fileExists(year: number)` function
-- [ ] Create `createDataFile(year: number)` function
-- [ ] Add error handling for network issues
-- [ ] Verify: Functions compile and handle errors
+**Requirements**: FR-3 (Account Management), FR-5 (Currency Management)
 
-### 4.3 Create Data Sync Service
-- [ ] Create `src/services/sync.service.ts`
-- [ ] Implement debounced save function
-- [ ] Implement load with caching
-- [ ] Add sync status tracking (saving, saved, error)
-- [ ] Verify: Service manages sync state correctly
+**Goal**: Users can create and manage their accounts (bank accounts, credit cards, etc.)
 
-### 4.4 Add Local Storage Caching
-- [ ] Create `src/services/storage.service.ts`
-- [ ] Implement `saveToLocalStorage()`
-- [ ] Implement `loadFromLocalStorage()`
-- [ ] Implement `clearLocalStorage()`
-- [ ] Add cache versioning
-- [ ] Verify: Data persists in localStorage
+### 3.1 Implement Account Data Layer
+- [ ] Create `src/stores/useAccountStore.ts` with account state and CRUD actions
+- [ ] Create `src/stores/useCurrencyStore.ts` with currency state
+- [ ] Create `src/utils/currency.utils.ts` for formatting amounts
+- [ ] Load default currencies into store
 
-## Phase 5: State Management (Zustand Stores)
-
-### 5.1 Create Currency Store
-- [ ] Create `src/stores/useCurrencyStore.ts`
-- [ ] Add state: `currencies` array
-- [ ] Add action: `loadCurrencies()`
-- [ ] Add action: `addCurrency()`
-- [ ] Add action: `deleteCurrency()`
-- [ ] Add selector: `getCurrencyById()`
-- [ ] Verify: Store operations work correctly
-
-### 5.2 Create Account Store
-- [ ] Create `src/stores/useAccountStore.ts`
-- [ ] Add state: `accounts` array
-- [ ] Add action: `loadAccounts()`
-- [ ] Add action: `addAccount()`
-- [ ] Add action: `updateAccount()`
-- [ ] Add action: `deleteAccount()`
-- [ ] Add selector: `getAccountById()`
-- [ ] Add computed: `getAccountBalance()`
-- [ ] Verify: Store operations work correctly
-
-### 5.3 Create Category Store
-- [ ] Create `src/stores/useCategoryStore.ts`
-- [ ] Add state: `categories` array, `transactionTypes` array
-- [ ] Add action: `loadCategories()`
-- [ ] Add action: `addCategory()`
-- [ ] Add action: `updateCategory()`
-- [ ] Add action: `deleteCategory()`
-- [ ] Add action: `addTransactionType()`
-- [ ] Add action: `updateTransactionType()`
-- [ ] Add action: `deleteTransactionType()`
-- [ ] Add selector: `getCategoriesByGroup()`
-- [ ] Add selector: `getTransactionTypesByCategory()`
-- [ ] Verify: Store operations maintain hierarchy correctly
-
-### 5.4 Create Transaction Store
-- [ ] Create `src/stores/useTransactionStore.ts`
-- [ ] Add state: `transactions` array
-- [ ] Add action: `loadTransactions()`
-- [ ] Add action: `addTransaction()`
-- [ ] Add action: `updateTransaction()`
-- [ ] Add action: `deleteTransaction()`
-- [ ] Add selector: `getTransactionsByAccount()`
-- [ ] Add selector: `getTransactionsByDateRange()`
-- [ ] Verify: Store operations work correctly
-
-### 5.5 Create Budget Store
-- [ ] Create `src/stores/useBudgetStore.ts`
-- [ ] Add state: `budgets` array, `budgetItems` array
-- [ ] Add action: `loadBudgets()`
-- [ ] Add action: `addBudget()`
-- [ ] Add action: `updateBudget()`
-- [ ] Add action: `deleteBudget()`
-- [ ] Add action: `setActiveBudget()`
-- [ ] Add action: `addBudgetItem()`
-- [ ] Add action: `updateBudgetItem()`
-- [ ] Add action: `deleteBudgetItem()`
-- [ ] Add selector: `getActiveBudget()`
-- [ ] Verify: Store operations work correctly
-
-### 5.6 Create App Store
-- [ ] Create `src/stores/useAppStore.ts`
-- [ ] Add state: `currentYear`, `syncStatus`, `isLoading`
-- [ ] Add action: `setCurrentYear()`
-- [ ] Add action: `setSyncStatus()`
-- [ ] Add action: `loadAllData()`
-- [ ] Add action: `saveAllData()`
-- [ ] Verify: Store coordinates data loading/saving
-
-## Phase 6: Business Logic Services
-
-### 6.1 Create Validation Service
-- [ ] Create `src/services/validation.service.ts`
-- [ ] Implement `validateTransaction()`
-- [ ] Implement `validateAccount()`
-- [ ] Implement `validateCategory()`
-- [ ] Implement `validateBudget()`
-- [ ] Return user-friendly error messages
-- [ ] Verify: Validation catches all edge cases
-
-### 6.2 Create Calculation Service
-- [ ] Create `src/services/calculation.service.ts`
-- [ ] Implement `calculateAccountBalance()`
-- [ ] Implement `calculateAccountBalanceOverTime()`
-- [ ] Implement `calculateCashFlow()`
-- [ ] Implement `calculateBudgetVsActual()`
-- [ ] Implement `calculateNetWorth()`
-- [ ] Verify: All calculations return correct results
-
-### 6.3 Create Date Utils
-- [ ] Install `date-fns`
-- [ ] Create `src/utils/date.utils.ts`
-- [ ] Implement `formatDate()`
-- [ ] Implement `parseDate()`
-- [ ] Implement `isDateInRange()`
-- [ ] Implement `getDateRangeForPeriod()`
-- [ ] Verify: Date functions work correctly
-
-### 6.4 Create Currency Utils
-- [ ] Create `src/utils/currency.utils.ts`
-- [ ] Implement `formatAmount()`
-- [ ] Implement `parseAmount()`
-- [ ] Implement `getCurrencySymbol()`
-- [ ] Verify: Currency formatting works correctly
-
-### 6.5 Create Export Utils
-- [ ] Create `src/utils/export.utils.ts`
-- [ ] Implement `exportToCSV()`
-- [ ] Implement `exportToJSON()`
-- [ ] Implement `downloadFile()`
-- [ ] Verify: Export functions generate correct files
-
-## Phase 7: Common UI Components
-
-### 7.1 Create Layout Components
-- [ ] Create `src/components/layout/Header.tsx`
-- [ ] Create `src/components/layout/Sidebar.tsx`
-- [ ] Create `src/components/layout/Footer.tsx`
-- [ ] Create `src/components/layout/MainLayout.tsx`
-- [ ] Add navigation menu
-- [ ] Add user profile menu
-- [ ] Verify: Layout renders correctly
-
-### 7.2 Create Year Selector Component
-- [ ] Create `src/components/common/YearSelector.tsx`
-- [ ] Display current year
-- [ ] Allow switching years
-- [ ] Connect to app store
-- [ ] Verify: Year selector changes current year
-
-### 7.3 Create Loading Components
-- [ ] Create `src/components/common/LoadingSpinner.tsx`
-- [ ] Create `src/components/common/SkeletonLoader.tsx`
-- [ ] Create `src/components/common/LoadingOverlay.tsx`
-- [ ] Verify: Loading states display correctly
-
-### 7.4 Create Error Components
-- [ ] Create `src/components/common/ErrorBoundary.tsx`
-- [ ] Create `src/components/common/ErrorMessage.tsx`
-- [ ] Create `src/components/common/NotificationSnackbar.tsx`
-- [ ] Verify: Errors display user-friendly messages
-
-### 7.5 Create Form Components
-- [ ] Create `src/components/common/FormTextField.tsx`
-- [ ] Create `src/components/common/FormSelect.tsx`
-- [ ] Create `src/components/common/FormDatePicker.tsx`
-- [ ] Create `src/components/common/FormAutocomplete.tsx`
-- [ ] Create `src/components/common/FormNumberField.tsx`
-- [ ] Verify: Form components handle validation
-
-### 7.6 Create Dialog Components
-- [ ] Create `src/components/common/ConfirmDialog.tsx`
-- [ ] Create `src/components/common/FormDialog.tsx`
-- [ ] Verify: Dialogs open and close correctly
-
-## Phase 8: Transaction Management UI
-
-### 8.1 Create Transaction List Component
-- [ ] Create `src/components/transactions/TransactionList.tsx`
-- [ ] Display transactions in MUI DataGrid
-- [ ] Add sorting and filtering
-- [ ] Add pagination
-- [ ] Connect to transaction store
-- [ ] Verify: Transactions display correctly
-
-### 8.2 Create Transaction Form
-- [ ] Create `src/components/transactions/TransactionForm.tsx`
-- [ ] Add transaction type selector
-- [ ] Add amount input with validation
-- [ ] Add date picker
-- [ ] Add description field
-- [ ] Add account selectors (from/to based on group)
-- [ ] Connect to transaction store
-- [ ] Verify: Form creates/updates transactions
-
-### 8.3 Create Transaction Dialog
-- [ ] Create `src/components/transactions/TransactionDialog.tsx`
-- [ ] Embed TransactionForm in dialog
-- [ ] Handle create mode
-- [ ] Handle edit mode
-- [ ] Add save/cancel actions
-- [ ] Verify: Dialog creates/updates transactions
-
-### 8.4 Create Transaction Filters
-- [ ] Create `src/components/transactions/TransactionFilters.tsx`
-- [ ] Add date range filter
-- [ ] Add account filter
-- [ ] Add category filter
-- [ ] Add amount range filter
-- [ ] Verify: Filters update transaction list
-
-### 8.5 Create Transactions Page
-- [ ] Create `src/components/transactions/TransactionsPage.tsx`
-- [ ] Add TransactionList
-- [ ] Add TransactionFilters
-- [ ] Add "Add Transaction" button
-- [ ] Add bulk actions
-- [ ] Verify: Full transaction management works
-
-## Phase 9: Account Management UI
-
-### 9.1 Create Account Card Component
+### 3.2 Build Account Management UI
+- [ ] Create `src/components/layout/MainLayout.tsx` with header, navigation
 - [ ] Create `src/components/accounts/AccountCard.tsx`
-- [ ] Display account name, type, balance
-- [ ] Show currency symbol
-- [ ] Add edit/delete actions
-- [ ] Verify: Account card displays correctly
-
-### 9.2 Create Account List Component
 - [ ] Create `src/components/accounts/AccountList.tsx`
-- [ ] Display accounts in grid
-- [ ] Group by account type
-- [ ] Show total by currency
-- [ ] Connect to account store
-- [ ] Verify: Accounts display correctly
-
-### 9.3 Create Account Form
-- [ ] Create `src/components/accounts/AccountForm.tsx`
-- [ ] Add name field
-- [ ] Add type selector
-- [ ] Add currency selector
-- [ ] Add initial balance input
-- [ ] Add active checkbox
-- [ ] Verify: Form creates/updates accounts
-
-### 9.4 Create Account Dialog
+- [ ] Create `src/components/accounts/AccountForm.tsx` with validation
 - [ ] Create `src/components/accounts/AccountDialog.tsx`
-- [ ] Embed AccountForm in dialog
-- [ ] Handle create/edit modes
-- [ ] Verify: Dialog creates/updates accounts
-
-### 9.5 Create Account Detail View
-- [ ] Create `src/components/accounts/AccountDetail.tsx`
-- [ ] Show account information
-- [ ] Display transaction list for account
-- [ ] Show balance over time chart
-- [ ] Verify: Account detail shows correct data
-
-### 9.6 Create Accounts Page
 - [ ] Create `src/components/accounts/AccountsPage.tsx`
-- [ ] Add AccountList
-- [ ] Add "Add Account" button
-- [ ] Add account summary stats
-- [ ] Verify: Full account management works
+- [ ] Add route `/accounts` in router setup
+- [ ] **Test**: Create account, edit account, view account list, delete account (all via UI)
 
-## Phase 10: Category Management UI
+## Phase 4: Category & Transaction Type Management Feature
 
-### 10.1 Create Category Tree Component
-- [ ] Create `src/components/categories/CategoryTree.tsx`
-- [ ] Display Group → Category → Transaction Type hierarchy
-- [ ] Add expand/collapse functionality
-- [ ] Add inline editing
-- [ ] Connect to category store
-- [ ] Verify: Hierarchy displays correctly
+**Requirements**: FR-2 (Categorization System), FR-4 (Category Customization)
 
-### 10.2 Create Category Form
+**Goal**: Users can customize their category structure for organizing transactions
+
+### 4.1 Implement Category Data Layer
+- [ ] Create `src/stores/useCategoryStore.ts` with categories and transaction types
+- [ ] Load default categories and transaction types into store
+
+### 4.2 Build Category Management UI
+- [ ] Create `src/components/categories/CategoryTree.tsx` showing hierarchy
 - [ ] Create `src/components/categories/CategoryForm.tsx`
-- [ ] Add name field
-- [ ] Add group selector
-- [ ] Verify: Form creates/updates categories
-
-### 10.3 Create Transaction Type Form
 - [ ] Create `src/components/categories/TransactionTypeForm.tsx`
-- [ ] Add name field
-- [ ] Add category selector
-- [ ] Verify: Form creates/updates transaction types
-
-### 10.4 Create Category Actions
-- [ ] Add "Add Category" action to tree
-- [ ] Add "Add Transaction Type" action
-- [ ] Add "Edit" action with inline form
-- [ ] Add "Delete" action with confirmation
-- [ ] Add drag-drop reordering
-- [ ] Verify: All actions work correctly
-
-### 10.5 Create Categories Page
 - [ ] Create `src/components/categories/CategoriesPage.tsx`
-- [ ] Add CategoryTree
-- [ ] Add instructions for users
-- [ ] Verify: Full category management works
+- [ ] Add route `/categories`
+- [ ] **Test**: Add category, add transaction type, edit names, delete (with validation), view hierarchy
 
-## Phase 11: Budget Management UI
+## Phase 5: Transaction Management Feature
 
-### 11.1 Create Budget List Component
-- [ ] Create `src/components/budgets/BudgetList.tsx`
-- [ ] Display budgets in table
-- [ ] Show active badge
-- [ ] Add edit/delete actions
-- [ ] Connect to budget store
-- [ ] Verify: Budgets display correctly
+**Requirements**: FR-1 (Transaction Management), FR-3 (Account Management - balance updates)
 
-### 11.2 Create Budget Form - Basic Info
+**Goal**: Users can add, view, edit, and delete transactions
+
+### 5.1 Implement Transaction Data Layer
+- [ ] Create `src/stores/useTransactionStore.ts` with transaction CRUD
+- [ ] Create `src/services/calculation.service.ts` for balance calculations
+- [ ] Create `src/services/validation.service.ts` for transaction validation
+- [ ] Create `src/utils/date.utils.ts` for date formatting
+
+### 5.2 Build Transaction Management UI
+- [ ] Install `@mui/x-data-grid` for transaction list
+- [ ] Create `src/components/common/FormTextField.tsx` and other form components
+- [ ] Create `src/components/transactions/TransactionForm.tsx` with conditional from/to accounts
+- [ ] Create `src/components/transactions/TransactionDialog.tsx`
+- [ ] Create `src/components/transactions/TransactionList.tsx` with DataGrid
+- [ ] Create `src/components/transactions/TransactionFilters.tsx`
+- [ ] Create `src/components/transactions/TransactionsPage.tsx`
+- [ ] Add route `/transactions`
+- [ ] **Test**: Add expense (from account), add income (to account), add transfer (both), add investment, filter, edit, delete
+
+### 5.3 Verify Account Balance Updates
+- [ ] Update AccountCard to show calculated balance
+- [ ] **Test**: Add transactions and verify account balances update correctly
+
+## Phase 6: Budget Planning Feature
+
+**Requirements**: FR-6 (Budget Planning)
+
+**Goal**: Users can create budgets and track spending against them
+
+### 6.1 Implement Budget Data Layer
+- [ ] Create `src/stores/useBudgetStore.ts` with budget and budget items
+- [ ] Add budget vs actual calculation functions to calculation service
+
+### 6.2 Build Budget Management UI
 - [ ] Create `src/components/budgets/BudgetForm.tsx`
-- [ ] Add name field
-- [ ] Add date range pickers
-- [ ] Add period selector
-- [ ] Add active checkbox
-- [ ] Verify: Basic budget info can be saved
-
-### 11.3 Create Budget Items Grid
 - [ ] Create `src/components/budgets/BudgetItemsGrid.tsx`
-- [ ] Display categories with amount inputs
-- [ ] Group by Group (Expense/Income/Investment)
-- [ ] Allow adding/removing items
-- [ ] Verify: Budget items can be edited
-
-### 11.4 Create Budget Dialog
-- [ ] Create `src/components/budgets/BudgetDialog.tsx`
-- [ ] Embed BudgetForm and BudgetItemsGrid
-- [ ] Handle create/edit modes
-- [ ] Add stepper for multi-step form
-- [ ] Verify: Dialog creates/updates budgets
-
-### 11.5 Create Budget Overview Card
-- [ ] Create `src/components/budgets/BudgetOverview.tsx`
-- [ ] Show budget vs actual summary
-- [ ] Display progress bars
-- [ ] Color-code by status
-- [ ] Verify: Overview shows correct data
-
-### 11.6 Create Budgets Page
+- [ ] Create `src/components/budgets/BudgetDialog.tsx` with stepper
+- [ ] Create `src/components/budgets/BudgetList.tsx`
+- [ ] Create `src/components/budgets/BudgetOverview.tsx` with progress bars
 - [ ] Create `src/components/budgets/BudgetsPage.tsx`
-- [ ] Add BudgetList
-- [ ] Add "Create Budget" button
-- [ ] Add active budget overview
-- [ ] Verify: Full budget management works
+- [ ] Add route `/budgets`
+- [ ] **Test**: Create budget with items, set as active, view budget vs actual, edit budget, delete budget
 
-## Phase 12: Reports & Analytics UI
+## Phase 7: Financial Reports Feature
 
-### 12.1 Create Report Layout
-- [ ] Create `src/components/reports/ReportsPage.tsx`
-- [ ] Add tab navigation for report types
-- [ ] Add date range selector (shared)
-- [ ] Add export buttons
-- [ ] Verify: Report tabs switch correctly
+**Requirements**: FR-7 (Financial Reports)
 
-### 12.2 Create Cash Flow Report
-- [ ] Create `src/components/reports/CashFlowReport.tsx`
-- [ ] Implement cash flow calculations
-- [ ] Add line/bar chart (use recharts or nivo)
-- [ ] Add breakdown table by category
-- [ ] Add period grouping selector
-- [ ] Verify: Report shows correct cash flow data
+**Goal**: Users can view financial reports and analytics
 
-### 12.3 Create Balance Sheet Report
-- [ ] Create `src/components/reports/BalanceSheet.tsx`
-- [ ] Calculate assets and liabilities
-- [ ] Display accounts grouped by type
-- [ ] Show net worth
-- [ ] Group by currency
-- [ ] Verify: Balance sheet calculates correctly
-
-### 12.4 Create Budget Analysis Report
-- [ ] Create `src/components/reports/BudgetAnalysis.tsx`
-- [ ] Calculate budget vs actual for each category
-- [ ] Add progress bars with color coding
-- [ ] Add variance column
-- [ ] Add chart visualization
-- [ ] Add period selector
-- [ ] Verify: Analysis shows correct comparisons
-
-### 12.5 Create Account Overview Report
-- [ ] Create `src/components/reports/AccountOverview.tsx`
-- [ ] Display account details
-- [ ] Show transaction list for account
-- [ ] Add balance over time chart
-- [ ] Add filters
-- [ ] Verify: Overview shows account history correctly
-
-### 12.6 Add Chart Components
+### 7.1 Setup Chart Library
 - [ ] Install charting library (recharts or nivo)
 - [ ] Create `src/components/charts/LineChart.tsx`
 - [ ] Create `src/components/charts/BarChart.tsx`
 - [ ] Create `src/components/charts/PieChart.tsx`
-- [ ] Style charts with MUI theme
-- [ ] Verify: Charts display data correctly
 
-## Phase 13: Dashboard
+### 7.2 Build Cash Flow Report
+- [ ] Create `src/components/reports/CashFlowReport.tsx`
+- [ ] Implement cash flow calculations
+- [ ] Add date range selector and period grouping
+- [ ] **Test**: View cash flow for different date ranges, verify calculations match transactions
 
-### 13.1 Create Dashboard Stats Cards
+### 7.3 Build Balance Sheet Report
+- [ ] Create `src/components/reports/BalanceSheet.tsx`
+- [ ] Show accounts grouped by type with balances
+- [ ] Calculate and display net worth
+- [ ] **Test**: Verify balance sheet shows correct account balances and net worth
+
+### 7.4 Build Budget Analysis Report
+- [ ] Create `src/components/reports/BudgetAnalysis.tsx`
+- [ ] Show budget vs actual with progress bars and color coding
+- [ ] **Test**: Verify budget analysis matches budget and transactions
+
+### 7.5 Build Account Overview Report
+- [ ] Create `src/components/reports/AccountOverview.tsx`
+- [ ] Show account transactions and balance over time
+- [ ] **Test**: View individual account history and balance chart
+
+### 7.6 Create Reports Page
+- [ ] Create `src/components/reports/ReportsPage.tsx` with tab navigation
+- [ ] Add export buttons for each report
+- [ ] Create `src/utils/export.utils.ts` for CSV/JSON export
+- [ ] Add route `/reports`
+- [ ] **Test**: Switch between reports, export data
+
+## Phase 8: Dashboard Feature
+
+**Requirements**: FR-1, FR-3, FR-6, FR-7 (Summary views of all data)
+
+**Goal**: Users see a summary dashboard when they log in
+
+### 8.1 Build Dashboard Widgets
 - [ ] Create `src/components/dashboard/StatsCard.tsx`
-- [ ] Create card for total income
-- [ ] Create card for total expenses
-- [ ] Create card for net worth
-- [ ] Create card for budget status
-- [ ] Verify: Cards display correct values
-
-### 13.2 Create Recent Transactions Widget
 - [ ] Create `src/components/dashboard/RecentTransactions.tsx`
-- [ ] Display last 10 transactions
-- [ ] Add "View All" link
-- [ ] Verify: Widget shows recent transactions
-
-### 13.3 Create Account Summary Widget
 - [ ] Create `src/components/dashboard/AccountSummary.tsx`
-- [ ] Display accounts with balances
-- [ ] Show total by currency
-- [ ] Verify: Widget shows account balances
-
-### 13.4 Create Budget Widget
 - [ ] Create `src/components/dashboard/BudgetWidget.tsx`
-- [ ] Display active budget progress
-- [ ] Show top categories by usage
-- [ ] Add alerts for over-budget categories
-- [ ] Verify: Widget shows budget status
 
-### 13.5 Create Dashboard Page
+### 8.2 Create Dashboard Page
 - [ ] Create `src/components/dashboard/DashboardPage.tsx`
-- [ ] Add all widgets in grid layout
-- [ ] Make responsive
-- [ ] Verify: Dashboard loads and displays correctly
+- [ ] Integrate all widgets in responsive grid
+- [ ] Add route `/` (Dashboard)
+- [ ] Update navigation to default to dashboard
+- [ ] **Test**: View dashboard with all widgets showing correct data, click through to detail pages
 
-## Phase 14: Settings & Configuration
+## Phase 9: Settings & Currency Management Feature
 
-### 14.1 Create Currency Management UI
+**Requirements**: FR-5 (Currency Management), FR-8 (Data Import/Export)
+
+**Goal**: Users can manage currencies and app settings
+
+### 9.1 Build Settings UI
 - [ ] Create `src/components/settings/CurrencySettings.tsx`
-- [ ] Display currency list
-- [ ] Add "Add Currency" form
-- [ ] Add delete action with validation
-- [ ] Verify: Currency management works
-
-### 14.2 Create Data Export/Import UI
-- [ ] Create `src/components/settings/DataManagement.tsx`
-- [ ] Add "Export Data" button (JSON/CSV)
-- [ ] Add "Import Data" button (with validation)
-- [ ] Add "Clear All Data" with confirmation
-- [ ] Verify: Export/import works correctly
-
-### 14.3 Create Settings Page
+- [ ] Create `src/components/settings/DataManagement.tsx` with import/export
 - [ ] Create `src/components/settings/SettingsPage.tsx`
-- [ ] Add tabs for different settings
-- [ ] Add CurrencySettings
-- [ ] Add DataManagement
-- [ ] Add about/version info
-- [ ] Verify: Settings page displays correctly
+- [ ] Add route `/settings`
+- [ ] **Test**: Add currency, delete currency, export all data, import data, clear data
 
-## Phase 15: Routing & Navigation
+## Phase 10: Year Management Feature
 
-### 15.1 Setup React Router
+**Requirements**: FR-8 (Data Storage - multi-year files)
+
+**Goal**: Users can switch between years and manage multi-year data
+
+### 10.1 Implement Year Switching
+- [ ] Create `src/components/common/YearSelector.tsx`
+- [ ] Add to header/navigation
+- [ ] Connect to app store
+- [ ] Implement year switching logic (load different file)
+- [ ] **Test**: Switch years, add transactions in different years, verify data isolation
+
+## Phase 11: Navigation & Routing Polish
+
+**Requirements**: NFR-5 (Usability - navigation), NFR-6 (Compatibility - responsive)
+
+**Goal**: Complete navigation experience
+
+### 11.1 Complete Routing Setup
 - [ ] Install `react-router-dom`
-- [ ] Create `src/routes.tsx` with route definitions
-- [ ] Wrap app with BrowserRouter
-- [ ] Verify: Routing is configured
+- [ ] Create `src/routes.tsx` with all route definitions
+- [ ] Wrap app with BrowserRouter and ProtectedRoute
+- [ ] Create 404 page
 
-### 15.2 Create Route Components
-- [ ] Setup route for `/` (Dashboard)
-- [ ] Setup route for `/transactions`
-- [ ] Setup route for `/accounts`
-- [ ] Setup route for `/accounts/:id`
-- [ ] Setup route for `/categories`
-- [ ] Setup route for `/budgets`
-- [ ] Setup route for `/reports`
-- [ ] Setup route for `/settings`
-- [ ] Add 404 page
-- [ ] Verify: All routes navigate correctly
-
-### 15.3 Add Navigation Menu
-- [ ] Update Header with navigation links
+### 11.2 Complete Navigation
+- [ ] Update Header with all navigation links
 - [ ] Add active state styling
-- [ ] Add mobile menu (drawer)
-- [ ] Verify: Navigation works on all screen sizes
+- [ ] Add mobile responsive menu (drawer)
+- [ ] **Test**: Navigate between all pages, verify active states, test on mobile
 
-## Phase 16: Data Persistence Integration
+## Phase 12: Data Persistence Polish
 
-### 16.1 Connect Stores to OneDrive
-- [ ] Update stores to trigger save on data changes
-- [ ] Implement debounced save in app store
-- [ ] Add sync status indicators
-- [ ] Verify: Changes save to OneDrive
+**Requirements**: FR-8 (Data Storage & Sync), NFR-7 (Reliability)
 
-### 16.2 Implement Data Loading
-- [ ] Load data on app initialization
-- [ ] Handle year switching
-- [ ] Show loading states
-- [ ] Verify: Data loads from OneDrive correctly
+**Goal**: Ensure data saves/loads reliably
 
-### 16.3 Add Offline Support
-- [ ] Cache data in localStorage
-- [ ] Queue changes when offline
-- [ ] Sync when connection restored
-- [ ] Show offline indicator
-- [ ] Verify: App works offline and syncs when online
+### 12.1 Complete Data Sync
+- [ ] Connect all stores to trigger auto-save
+- [ ] Add sync status indicators in UI
+- [ ] Implement offline support with localStorage queue
+- [ ] Add conflict resolution (last-write-wins)
+- [ ] **Test**: Make changes and verify auto-save, go offline and verify queue, reconnect and verify sync
 
-### 16.4 Handle Data Conflicts
-- [ ] Implement last-write-wins strategy
-- [ ] Add version tracking
-- [ ] Show conflict warnings (future enhancement)
-- [ ] Verify: Conflicts are handled gracefully
+## Phase 13: Validation & Error Handling
 
-## Phase 17: Validation & Error Handling
+**Requirements**: NFR-5 (Usability - error messages), NFR-7 (Reliability - error handling)
 
-### 17.1 Add Form Validation
-- [ ] Add validation to all forms using Zod
-- [ ] Display inline error messages
-- [ ] Prevent submission with invalid data
-- [ ] Verify: Forms show helpful validation errors
+**Goal**: Ensure data integrity and good error UX
 
-### 17.2 Add Business Rule Validation
-- [ ] Validate account requirements by transaction group
+### 13.1 Add Comprehensive Validation
+- [ ] Add Zod validation to all forms
+- [ ] Validate business rules (account requirements by transaction type)
 - [ ] Prevent deletion of referenced entities
-- [ ] Validate budget date ranges
-- [ ] Verify: Business rules are enforced
+- [ ] Add user-friendly error messages
+- [ ] **Test**: Try to submit invalid data, try to delete referenced entities
 
-### 17.3 Add Error Boundaries
-- [ ] Wrap major sections with ErrorBoundary
-- [ ] Add fallback UI for errors
-- [ ] Log errors for debugging
-- [ ] Verify: App doesn't crash on errors
+### 13.2 Add Error Handling
+- [ ] Create `src/components/common/ErrorBoundary.tsx`
+- [ ] Create `src/components/common/ErrorMessage.tsx`
+- [ ] Create `src/components/common/NotificationSnackbar.tsx`
+- [ ] Wrap major sections in error boundaries
+- [ ] Handle OneDrive API errors with retry
+- [ ] **Test**: Simulate errors, verify user sees helpful messages
 
-### 17.4 Add Network Error Handling
-- [ ] Handle OneDrive API errors
-- [ ] Show retry buttons
-- [ ] Add timeout handling
-- [ ] Verify: Network errors are handled gracefully
+## Phase 14: UI/UX Polish
 
-## Phase 18: Polish & User Experience
+**Requirements**: NFR-5 (Usability), NFR-6 (Compatibility - responsive), NFR-3 (Performance)
 
-### 18.1 Add Loading States
-- [ ] Add skeleton loaders for data loading
-- [ ] Add progress indicators for saves
-- [ ] Add spinners for async operations
-- [ ] Verify: Loading states provide good UX
+**Goal**: Professional, polished user experience
 
-### 18.2 Add Success Feedback
-- [ ] Show snackbar on successful save
-- [ ] Show success messages on CRUD operations
+### 14.1 Add Loading States
+- [ ] Create `src/components/common/LoadingSpinner.tsx`
+- [ ] Create `src/components/common/SkeletonLoader.tsx`
+- [ ] Create `src/components/common/LoadingOverlay.tsx`
+- [ ] Add loading states to all async operations
+- [ ] **Test**: Verify smooth loading experience
+
+### 14.2 Add Feedback & Confirmations
+- [ ] Add success snackbars for all CRUD operations
+- [ ] Create `src/components/common/ConfirmDialog.tsx`
+- [ ] Add delete confirmations
 - [ ] Add subtle animations
-- [ ] Verify: Users get clear feedback
+- [ ] **Test**: Verify user gets clear feedback for all actions
 
-### 18.3 Add Confirmation Dialogs
-- [ ] Confirm before deleting transactions
-- [ ] Confirm before deleting accounts
-- [ ] Confirm before deleting categories
-- [ ] Confirm before deleting budgets
-- [ ] Verify: Confirmations prevent accidental deletion
+### 14.3 Improve Responsive Design
+- [ ] Test on mobile devices (iPhone, Android)
+- [ ] Test on tablets (iPad)
+- [ ] Optimize touch targets
+- [ ] **Test**: Full app works well on all screen sizes
 
-### 18.4 Improve Responsive Design
-- [ ] Test on mobile devices
-- [ ] Optimize layouts for tablets
-- [ ] Ensure touch-friendly controls
-- [ ] Verify: App works well on all screen sizes
-
-### 18.5 Add Keyboard Shortcuts
-- [ ] Add shortcuts for common actions (optional)
-- [ ] Add ESC to close dialogs
-- [ ] Add Enter to submit forms
-- [ ] Verify: Keyboard navigation works
-
-### 18.6 Improve Accessibility
-- [ ] Add ARIA labels
-- [ ] Ensure proper heading hierarchy
-- [ ] Test with screen reader (optional)
+### 14.4 Add Accessibility
+- [ ] Add ARIA labels to all interactive elements
+- [ ] Ensure keyboard navigation (Tab, Enter, ESC)
 - [ ] Add focus indicators
-- [ ] Verify: App is accessible
+- [ ] Ensure proper heading hierarchy
+- [ ] **Test**: Navigate app with keyboard only
 
-## Phase 19: Testing & Bug Fixes
+## Phase 15: Testing & Quality Assurance
 
-### 19.1 Test Data Loading/Saving
-- [ ] Test loading data for different years
-- [ ] Test creating new year files
-- [ ] Test saving changes
-- [ ] Test data migration (if schema changes)
-- [ ] Verify: Data persistence works correctly
+**Requirements**: All FR (Functional Requirements), NFR-7 (Reliability)
 
-### 19.2 Test Calculations
-- [ ] Test account balance calculations
-- [ ] Test cash flow calculations
-- [ ] Test budget vs actual calculations
-- [ ] Test with edge cases (negative balances, zero amounts)
-- [ ] Verify: All calculations are correct
+**Goal**: Ensure app works correctly in all scenarios
 
-### 19.3 Test CRUD Operations
-- [ ] Test creating all entity types
-- [ ] Test updating all entity types
-- [ ] Test deleting all entity types
-- [ ] Test validation rules
-- [ ] Verify: All CRUD operations work correctly
+### 15.1 Test Core Features
+- [ ] Test complete account workflow (create, edit, delete)
+- [ ] Test complete transaction workflow (all types, filters, edit, delete)
+- [ ] Test complete budget workflow (create, track, edit, delete)
+- [ ] Test all reports with various data scenarios
+- [ ] Test year switching with multiple years of data
+- [ ] **Test**: All features work end-to-end
 
-### 19.4 Test User Flows
-- [ ] Test new user onboarding
-- [ ] Test adding first transaction
-- [ ] Test creating first budget
-- [ ] Test generating reports
-- [ ] Test year switching
-- [ ] Verify: Complete user flows work end-to-end
+### 15.2 Test Calculations
+- [ ] Verify account balances with complex transaction history
+- [ ] Verify cash flow calculations
+- [ ] Verify budget vs actual calculations
+- [ ] Test edge cases (negative balances, zero amounts, large numbers)
+- [ ] **Test**: All calculations are accurate
 
-### 19.5 Fix Bugs
-- [ ] Review and fix any identified bugs
-- [ ] Test edge cases
-- [ ] Handle null/undefined values
-- [ ] Verify: App is stable
+### 15.3 Test Data Persistence
+- [ ] Test data saves correctly to OneDrive
+- [ ] Test data loads correctly from OneDrive
+- [ ] Test multiple year files
+- [ ] Test offline queue and sync
+- [ ] **Test**: No data loss in any scenario
 
-## Phase 20: Production Build & Deployment
+### 15.4 Fix Bugs
+- [ ] Review and fix all identified bugs
+- [ ] Handle null/undefined edge cases
+- [ ] Test with large datasets
+- [ ] **Test**: App is stable and performant
 
-### 20.1 Optimize Bundle
-- [ ] Configure webpack for production
-- [ ] Enable code splitting
-- [ ] Minimize bundle size
-- [ ] Add source maps
-- [ ] Verify: Production build is optimized
+## Phase 16: Production Build & Deployment
 
-### 20.2 Setup Environment Variables
-- [ ] Create `.env.example` file
-- [ ] Configure Azure AD Client ID
-- [ ] Add environment-specific configs
-- [ ] Verify: Environment variables work correctly
+**Requirements**: NFR-1 (Architecture), NFR-3 (Performance), NFR-4 (Security), NFR-6 (Compatibility)
 
-### 20.3 Create Build Documentation
-- [ ] Update README.md with setup instructions
-- [ ] Document environment variables
-- [ ] Add build/deployment instructions
-- [ ] Document Azure AD app registration steps
-- [ ] Verify: Documentation is complete
+**Goal**: Deploy the application to production
 
-### 20.4 Test Production Build
-- [ ] Build production bundle
-- [ ] Test production build locally
+### 16.1 Optimize Bundle
+- [ ] Configure webpack for production with code splitting, minimize bundle size, and add source maps
+- [ ] **Test**: Production build completes without errors, bundle size is reasonable
+
+### 16.2 Setup Environment Variables
+- [ ] Create `.env.example` file with Azure AD Client ID and environment-specific configs
+- [ ] Document environment setup in README
+- [ ] **Test**: Environment variables work in production
+
+### 16.3 Create Build Documentation
+- [ ] Update README.md with setup instructions, environment variables, build/deployment instructions, and Azure AD app registration steps
+- [ ] Add troubleshooting guide
+- [ ] **Test**: New developer can follow README to set up project
+
+### 16.4 Test Production Build Locally
+- [ ] Build production bundle, test locally
 - [ ] Verify authentication works
 - [ ] Verify OneDrive integration works
-- [ ] Verify: Production build works correctly
+- [ ] Test all features in production mode
+- [ ] **Test**: App works correctly in production mode
 
-### 20.5 Deploy to Cloudflare Pages
+### 16.5 Deploy to Cloudflare Pages
 - [ ] Create Cloudflare account (if not already)
 - [ ] Connect GitHub repository to Cloudflare Pages
-- [ ] Configure build settings in Cloudflare dashboard:
+- [ ] Configure build settings:
   - [ ] Build command: `npm run build`
   - [ ] Build output directory: `dist`
   - [ ] Node.js version: LTS (18 or 20)
-  - [ ] Environment variables: Add `AZURE_CLIENT_ID` for Microsoft authentication
-- [ ] Add `_headers` file in `public/` directory for security headers
-  - [ ] Configure Content Security Policy (CSP)
-  - [ ] Configure CORS headers if needed
-  - [ ] Add X-Frame-Options, X-Content-Type-Options
-- [ ] Add `_redirects` file in `public/` directory for SPA routing
-  - [ ] Add rule: `/* /index.html 200` for client-side routing
-- [ ] Install Wrangler CLI locally: `npm install --save-dev wrangler`
-- [ ] Add deployment script to package.json: `"deploy": "npm run build && wrangler pages publish dist"`
-- [ ] Configure custom domain (optional):
-  - [ ] Add custom domain in Cloudflare Pages dashboard
-  - [ ] Update DNS records
-  - [ ] Enable automatic HTTPS
-- [ ] Setup automatic deployment:
-  - [ ] Configure production branch (main/master)
-  - [ ] Configure preview deployments for pull requests
-- [ ] Deploy application:
-  - [ ] First deployment via Cloudflare dashboard (connect repo)
-  - [ ] Or manual deploy: `npm run deploy`
-- [ ] Test deployed application:
-  - [ ] Visit Cloudflare Pages URL
-  - [ ] Test authentication flow (Microsoft login)
-  - [ ] Test OneDrive integration (load/save data)
-  - [ ] Test all major features
-  - [ ] Test on different browsers
-- [ ] Verify: App is live and fully functional on Cloudflare Pages
+  - [ ] Environment variables: Add `AZURE_CLIENT_ID`
+- [ ] Add `_headers` file in `public/` for security headers (CSP, X-Frame-Options, X-Content-Type-Options)
+- [ ] Add `_redirects` file in `public/` for SPA routing (`/* /index.html 200`)
+- [ ] Install Wrangler CLI: `npm install --save-dev wrangler`
+- [ ] Add deployment script: `"deploy": "npm run build && wrangler pages publish dist"`
+- [ ] Configure automatic deployment from main branch
+- [ ] Configure preview deployments for pull requests
+- [ ] Deploy application
+- [ ] **Test**: Visit Cloudflare Pages URL, test authentication, test OneDrive integration, test all features, test on multiple browsers
 
-## Phase 21: Final Polish
+### 16.6 Configure Custom Domain (Optional)
+- [ ] Add custom domain in Cloudflare Pages dashboard
+- [ ] Update DNS records
+- [ ] Enable automatic HTTPS
+- [ ] **Test**: App works on custom domain with HTTPS
 
-### 21.1 Add User Documentation
-- [ ] Create user guide (optional)
-- [ ] Add help tooltips in UI
-- [ ] Add FAQ section
-- [ ] Verify: Users can understand how to use the app
+## Phase 17: Final Polish & Documentation
 
-### 21.2 Performance Optimization
-- [ ] Profile app performance
-- [ ] Optimize re-renders
-- [ ] Lazy load components
-- [ ] Optimize chart rendering
-- [ ] Verify: App is performant
+**Requirements**: NFR-5 (Usability - documentation), NFR-3 (Performance), NFR-6 (Compatibility), NFR-8 (Maintainability)
 
-### 21.3 Final Testing
-- [ ] Test on multiple browsers
-- [ ] Test on multiple devices
-- [ ] Test with large datasets
-- [ ] Test all user flows again
-- [ ] Verify: App works consistently
+**Goal**: Complete and document the application
 
-### 21.4 Add Monitoring (Optional)
-- [ ] Add error logging (e.g., Sentry)
-- [ ] Add analytics (optional)
-- [ ] Verify: Monitoring is working
+### 17.1 Add User Documentation
+- [ ] Add help tooltips in UI for complex features
+- [ ] Create FAQ section in settings or help page
+- [ ] Create user guide (optional) with screenshots
+- [ ] **Test**: New user can understand how to use each feature
+
+### 17.2 Performance Optimization
+- [ ] Profile app performance with React DevTools
+- [ ] Optimize re-renders with React.memo, useMemo, useCallback
+- [ ] Lazy load route components with React.lazy
+- [ ] Optimize chart rendering (debounce updates, limit data points)
+- [ ] **Test**: App is responsive and performant with large datasets
+
+### 17.3 Final Cross-Browser Testing
+- [ ] Test on Chrome (desktop & mobile)
+- [ ] Test on Firefox
+- [ ] Test on Safari (desktop & mobile)
+- [ ] Test on Edge
+- [ ] **Test**: App works consistently across all browsers
+
+### 17.4 Add Monitoring (Optional)
+- [ ] Setup error logging (e.g., Sentry)
+- [ ] Setup analytics (e.g., Google Analytics, optional)
+- [ ] Add performance monitoring
+- [ ] **Test**: Errors are logged, analytics work
 
 ## Completion Checklist
 

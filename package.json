@@ -25,6 +25,10 @@
     "url": "https://github.com/yourusername/money-tree.git"
   },
   "dependencies": {
+    "@emotion/react": "^11.13.5",
+    "@emotion/styled": "^11.13.5",
+    "@mui/material": "^6.3.0",
+    "@mui/icons-material": "^6.3.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "typescript": "^5.9.3"

@@ -32,10 +32,10 @@ This document provides a step-by-step implementation plan for building the Money
 - [x] Verify: Run `npm run lint` successfully
 
 ### 1.5 Setup Material-UI
-- [ ] Install `@mui/material` and `@emotion/react`, `@emotion/styled`
-- [ ] Install `@mui/icons-material`
-- [ ] Create `src/theme.ts` with basic MUI theme
-- [ ] Verify: Import and use a MUI component in test file
+- [x] Install `@mui/material` and `@emotion/react`, `@emotion/styled`
+- [x] Install `@mui/icons-material`
+- [x] Create `src/theme.ts` with basic MUI theme
+- [x] Verify: Import and use a MUI component in test file
 
 ### 1.6 Create Project Structure
 - [ ] Create folder structure: `src/components`, `src/stores`, `src/services`, `src/types`, `src/utils`, `src/hooks`, `src/constants`, `src/schemas`

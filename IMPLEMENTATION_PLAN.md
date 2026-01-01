@@ -168,6 +168,143 @@ This plan implements all requirements from REQUIREMENTS.md:
 - [x] **Write tests**: Test save/load UI interactions, unsaved changes detection, error handling, auto-save prompts, periodic auto-save
 - [x] **Test**: Click "Load" → file picker opens → select file → data appears; Click "Save" → file picker opens → save file; Make changes → see unsaved indicator → wait 5 minutes → auto-saved; close browser → get warning; Make changes → load different file → prompted to save first
 
+### 2.5 Implement Conflict Detection & Auto-Merge
+
+**Conflict Detection:**
+- [ ] Add conflict detection to `src/services/sync.service.ts`:
+  - [ ] Create `calculateMD5Hash()` utility function using Web Crypto API
+  - [ ] Store file content hash when loading file in `useAppStore`
+  - [ ] Store original loaded data as base version for three-way merge
+  - [ ] Before saving, detect conflicts by:
+    - [ ] Re-reading the current file content
+    - [ ] Calculating MD5 hash of current file
+    - [ ] Comparing with stored hash from load time
+  - [ ] If hashes differ, trigger auto-merge flow
+  - [ ] Handle file not found/deleted scenarios
+  - [ ] Handle permission errors gracefully
+- [ ] Add conflict metadata to `useAppStore`:
+  - [ ] `fileContentHash: string | null` - MD5 hash of loaded file
+  - [ ] `fileLoadedAt: string | null` - ISO timestamp when file was loaded
+  - [ ] `baseVersion: DataFile | null` - Original loaded data for three-way merge
+
+**Three-Way Merge Algorithm:**
+- [ ] Create `src/services/merge.service.ts` with entity-level merge logic:
+  - [ ] Implement `performThreeWayMerge(base, fileVersion, appVersion)`:
+    - [ ] Compare each entity collection (accounts, transactions, categories, etc.)
+    - [ ] For each entity ID:
+      - [ ] **New in file only** → include from file
+      - [ ] **New in app only** → include from app
+      - [ ] **Exists in both:**
+        - [ ] If unchanged in app → use file version (file wins)
+        - [ ] If unchanged in file → use app version (app wins)
+        - [ ] If changed in both → check field-level changes:
+          - [ ] Different fields changed → merge both changes (auto-merge)
+          - [ ] Same fields changed to same value → use either
+          - [ ] Same fields changed to different values → flag as conflict
+      - [ ] **Deleted in file, modified in app** → flag as conflict
+      - [ ] **Deleted in app, modified in file** → flag as conflict
+      - [ ] **Deleted in both** → remove from result
+  - [ ] Return merge result: `{ merged: DataFile, conflicts: Conflict[] }`
+  - [ ] Create `Conflict` type:
+    ```typescript
+    interface Conflict {
+      entityType: 'account' | 'transaction' | 'category' | 'transactionType' | 'budget';
+      entityId: string;
+      entityName: string;  // For display
+      type: 'field-conflict' | 'delete-modify-conflict';
+      baseValue?: any;
+      fileValue?: any;
+      appValue?: any;
+      conflictingFields?: string[];  // For field conflicts
+    }
+    ```
+  - [ ] Implement field-level comparison for entities:
+    - [ ] Compare each field between base, file, and app versions
+    - [ ] Detect which fields changed in each version
+    - [ ] Identify overlapping changes
+  - [ ] Special handling for computed fields:
+    - [ ] Account balances: Offer to recalculate from transactions
+    - [ ] Budget totals: Recalculate from items
+    - [ ] Category counts: Recalculate from transaction types
+
+**Data Consistency Validation:**
+- [ ] Create `src/services/validation.service.ts`:
+  - [ ] Implement `validateDataConsistency(dataFile)`:
+    - [ ] Check account balances match transaction history
+    - [ ] Verify all transaction references point to valid accounts
+    - [ ] Ensure categories have valid parent references
+    - [ ] Validate budget calculations
+  - [ ] Return list of consistency warnings
+  - [ ] Offer auto-fix options where possible
+
+**Merge Preview UI:**
+- [ ] Create `src/components/common/MergePreviewDialog.tsx`:
+  - [ ] Show merge preview with tabs:
+    - [ ] **Summary**: Quick overview of what will happen
+    - [ ] **Auto-Merged**: List of non-conflicting changes being merged
+    - [ ] **Conflicts**: Interactive resolution for each conflict
+    - [ ] **Validation**: Any consistency warnings
+  - [ ] For auto-merged changes, show:
+    - [ ] Count of new entities from each version
+    - [ ] Count of modified entities (non-conflicting)
+    - [ ] Expandable details for each change
+  - [ ] For conflicts, show:
+    - [ ] Side-by-side comparison of conflicting values
+    - [ ] Radio buttons: "Keep both", "Use file version", "Use your version"
+    - [ ] Default to "Keep both" when possible (e.g., different fields)
+    - [ ] Highlight differences visually
+  - [ ] Validation warnings section:
+    - [ ] List any data consistency issues found
+    - [ ] Offer auto-fix buttons
+    - [ ] Show what auto-fix will do
+  - [ ] Action buttons:
+    - [ ] **Apply Merge** - Proceed with merge and save
+    - [ ] **Manual Resolution** - Switch to old manual conflict dialog
+    - [ ] **Cancel** - Return to editing
+
+**Fallback Manual Resolution:**
+- [ ] Keep existing simple conflict dialog as fallback
+- [ ] Add "Try Auto-Merge" button to simple dialog
+- [ ] Allow user to choose between auto-merge and manual resolution
+
+**Integration:**
+- [ ] Update `saveNow()` in sync.service:
+  - [ ] When conflict detected, attempt three-way merge first
+  - [ ] If merge successful with no conflicts → apply silently and save
+  - [ ] If conflicts found → show merge preview dialog
+  - [ ] After user resolves conflicts → validate and save
+  - [ ] Update base version and hash after successful save
+- [ ] Handle auto-save:
+  - [ ] Pause auto-save when conflicts detected
+  - [ ] Only auto-save if merge has no conflicts
+  - [ ] Never auto-save with unresolved conflicts
+  - [ ] Resume auto-save after manual resolution
+
+**Testing:**
+- [ ] **Write tests**: 
+  - [ ] Test MD5 hash calculation
+  - [ ] Test three-way merge with various scenarios:
+    - [ ] New entities in file only
+    - [ ] New entities in app only
+    - [ ] New entities in both (different IDs)
+    - [ ] Modified entities (non-conflicting fields)
+    - [ ] Modified entities (conflicting fields)
+    - [ ] Deleted in one, modified in other
+    - [ ] Deleted in both
+  - [ ] Test field-level merge logic
+  - [ ] Test conflict detection and flagging
+  - [ ] Test consistency validation
+  - [ ] Test merge preview UI interactions
+  - [ ] Test each resolution option
+  - [ ] Test auto-save behavior during conflicts
+- [ ] **Integration tests**: 
+  - [ ] Load file → externally add account → add different account in app → merge successfully
+  - [ ] Load file → externally modify account name → modify same account balance in app → merge both
+  - [ ] Load file → externally modify account name → modify same account name in app → conflict dialog
+  - [ ] Open two tabs → add different transactions → save from both → auto-merge works
+  - [ ] Verify no false alarms from file metadata updates
+  - [ ] Verify balance validation catches inconsistencies
+
 ## Phase 3: Account Management Feature
 
 **Requirements**: FR-3 (Account Management)

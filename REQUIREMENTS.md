@@ -48,10 +48,10 @@ Money Tree is a personal finance management web application that helps users tra
 
 ### FR-3: Account Management
 
-- [ ] Users can create and manage multiple accounts (e.g., bank accounts, credit cards, cash)
+- [x] Users can create and manage multiple accounts (e.g., bank accounts, credit cards, cash)
 - [ ] Each account tracks its current balance
 - [ ] Account balances update automatically based on transactions
-- [ ] Users can add, edit, and delete accounts
+- [x] Users can add, edit, and delete accounts
 - [ ] Users can view account history and balance changes over time
 
 ### FR-4: Category Customization
@@ -106,6 +106,39 @@ Money Tree is a personal finance management web application that helps users tra
 - [ ] Unsaved changes indicator visible in the UI
 - [ ] Manual save option always available
 - [ ] Auto-save features prevent accidental data loss
+
+**Conflict Detection & Auto-Merge:**
+- [ ] Application detects when files have been modified externally
+- [ ] Prevents data loss from concurrent modifications by:
+  - [ ] Another browser tab/window
+  - [ ] External text editor
+  - [ ] Cloud sync service (Dropbox, Google Drive, etc.)
+  - [ ] Another device editing the same file
+- [ ] **Auto-Merge:** Automatically merges non-conflicting changes
+  - [ ] When both versions have changes, intelligently combines them
+  - [ ] Preserves new accounts, transactions, categories from both versions
+  - [ ] Automatically merges changes to different records
+  - [ ] Automatically merges changes to different fields in same record
+  - [ ] Shows merge preview before applying
+  - [ ] Lists what will be auto-merged and what needs user decision
+- [ ] **User decides conflicts only when:**
+  - [ ] Same record modified in both versions with overlapping field changes
+  - [ ] Record deleted in one version but modified in the other
+  - [ ] Changes that could affect data consistency (balances, totals)
+- [ ] When conflict detected on save:
+  - [ ] Shows intelligent merge dialog with:
+    - [ ] **Auto-Merged Changes**: List of changes that can be safely merged
+    - [ ] **Conflicts Requiring Decision**: Side-by-side comparison
+    - [ ] Options for each conflict: Keep both, file version, your version
+    - [ ] Preview of final merged result
+  - [ ] Manual resolution options if user prefers:
+    - [ ] **Overwrite**: Replace file with current changes (loses external changes)
+    - [ ] **Reload**: Load latest file version (loses current unsaved changes)
+    - [ ] **Save As**: Save current changes to a new file
+    - [ ] **Cancel**: Return to editing without saving
+  - [ ] Displays when file was last modified
+  - [ ] Shows clear warning about data loss implications
+  - [ ] Validates data consistency after merge (account balances, etc.)
 
 **Architecture:**
 - [x] Storage system is designed with an extensible interface/adapter pattern

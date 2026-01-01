@@ -121,12 +121,12 @@ This plan implements all requirements from REQUIREMENTS.md:
 - [x] **Test**: All schemas validate correctly, default data is valid
 
 ### 2.2 Implement Storage Interface (Extensible Architecture)
-- [ ] Create `src/services/storage/IStorageProvider.ts` - interface defining storage contract
-- [ ] Define methods: `loadDataFile(year)`, `saveDataFile(year, data)`, `listAvailableYears()`, `deleteDataFile(year)`
-- [ ] Create `src/services/storage/LocalStorageProvider.ts` - implements IStorageProvider using File System Access API
-- [ ] Create `src/services/storage/StorageFactory.ts` - factory to get current storage provider
-- [ ] **Write tests**: `IStorageProvider.test.ts`, `LocalStorageProvider.test.ts`
-- [ ] **Test**: Interface is well-defined, local storage provider compiles
+- [x] Create `src/services/storage/IStorageProvider.ts` - interface defining storage contract
+- [x] Define methods: `loadDataFile(year)`, `saveDataFile(year, data)`, `listAvailableYears()`
+- [x] Create `src/services/storage/LocalStorageProvider.ts` - implements IStorageProvider using File System Access API
+- [x] Create `src/services/storage/StorageFactory.ts` - factory to get current storage provider
+- [x] **Write tests**: `IStorageProvider.test.ts`, `LocalStorageProvider.test.ts`
+- [x] **Test**: Interface is well-defined, local storage provider compiles
 
 ### 2.3 Implement Local File Storage
 - [ ] Implement `LocalStorageProvider.saveDataFile()` using File System Access API (download/save file picker)

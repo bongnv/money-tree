@@ -8,6 +8,18 @@
 - When updating `REQUIREMENTS.md`, check if `IMPLEMENTATION_PLAN.md` needs updates
 - When updating `IMPLEMENTATION_PLAN.md`, verify it matches requirements in `REQUIREMENTS.md`
 
+## Coding Guidelines
+
+When writing code:
+
+- Write simple, self-documenting code that explains itself through clear naming and structure
+- Use descriptive variable and function names that reveal intent
+- Keep functions small and focused on a single responsibility
+- Avoid unnecessary complexity and over-engineering
+- Don't generate documentation files (Markdown) unless explicitly instructed
+- Let the code speak for itself rather than relying on comments to explain what it does
+- Keep documentation minimal or not at all if code is self-documenting
+
 ## Markdown Writing Guidelines
 
 When writing or editing markdown files:

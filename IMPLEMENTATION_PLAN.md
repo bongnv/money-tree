@@ -1,6 +1,6 @@
 # Money Tree - Implementation Plan
 
-This document provides a step-by-step implementation plan for building the Money Tree application. Each step is small, verifiable, and can be checked off upon completion.
+This document provides a step-by-step implementation plan for building the Money Tree application. Each step is small, verifiable, and can be checked off upon completion. For more details of requirements, read REQUIREMENTS.MD
 
 ## Phase 1: Project Setup & Foundation
 
@@ -50,6 +50,18 @@ This document provides a step-by-step implementation plan for building the Money
 - [ ] Add `lint` script for ESLint
 - [ ] Add `format` script for Prettier
 - [ ] Verify: All scripts run without errors
+
+### 1.8 Setup GitHub CI/CD
+- [ ] Create `.github/workflows` directory
+- [ ] Create `ci.yml` workflow file
+- [ ] Configure workflow to run on push and pull request
+- [ ] Add job to run `npm install`
+- [ ] Add job to run `npm run lint`
+- [ ] Add job to run `npm run format:check`
+- [ ] Add job to run `npm run build`
+- [ ] Configure Node.js version (use LTS)
+- [ ] Add caching for node_modules
+- [ ] Verify: Push code and check workflow runs successfully on GitHub
 
 ## Phase 2: Data Models & Type Definitions
 
@@ -786,12 +798,39 @@ This document provides a step-by-step implementation plan for building the Money
 - [ ] Verify OneDrive integration works
 - [ ] Verify: Production build works correctly
 
-### 20.5 Deploy to Hosting
-- [ ] Choose hosting provider (GitHub Pages, Netlify, Vercel, etc.)
-- [ ] Configure deployment
-- [ ] Deploy application
-- [ ] Test deployed application
-- [ ] Verify: App is live and working
+### 20.5 Deploy to Cloudflare Pages
+- [ ] Create Cloudflare account (if not already)
+- [ ] Connect GitHub repository to Cloudflare Pages
+- [ ] Configure build settings in Cloudflare dashboard:
+  - [ ] Build command: `npm run build`
+  - [ ] Build output directory: `dist`
+  - [ ] Node.js version: LTS (18 or 20)
+  - [ ] Environment variables: Add `AZURE_CLIENT_ID` for Microsoft authentication
+- [ ] Add `_headers` file in `public/` directory for security headers
+  - [ ] Configure Content Security Policy (CSP)
+  - [ ] Configure CORS headers if needed
+  - [ ] Add X-Frame-Options, X-Content-Type-Options
+- [ ] Add `_redirects` file in `public/` directory for SPA routing
+  - [ ] Add rule: `/* /index.html 200` for client-side routing
+- [ ] Install Wrangler CLI locally: `npm install --save-dev wrangler`
+- [ ] Add deployment script to package.json: `"deploy": "npm run build && wrangler pages publish dist"`
+- [ ] Configure custom domain (optional):
+  - [ ] Add custom domain in Cloudflare Pages dashboard
+  - [ ] Update DNS records
+  - [ ] Enable automatic HTTPS
+- [ ] Setup automatic deployment:
+  - [ ] Configure production branch (main/master)
+  - [ ] Configure preview deployments for pull requests
+- [ ] Deploy application:
+  - [ ] First deployment via Cloudflare dashboard (connect repo)
+  - [ ] Or manual deploy: `npm run deploy`
+- [ ] Test deployed application:
+  - [ ] Visit Cloudflare Pages URL
+  - [ ] Test authentication flow (Microsoft login)
+  - [ ] Test OneDrive integration (load/save data)
+  - [ ] Test all major features
+  - [ ] Test on different browsers
+- [ ] Verify: App is live and fully functional on Cloudflare Pages
 
 ## Phase 21: Final Polish
 

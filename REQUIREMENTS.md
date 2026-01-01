@@ -9,6 +9,10 @@ Money Tree is a personal finance management web application that helps users tra
 ### FR-1: Transaction Management
 
 - [ ] Users can add, edit, and delete transactions
+- [ ] Users can add transactions instantly from the dashboard:
+  - [ ] Inline form always visible on the starting page (no button click required)
+  - [ ] Enter essential details (amount, date, type, account) and submit
+  - [ ] Form clears automatically after submission for quick consecutive entries
 - [ ] Each transaction includes the following details:
   - [ ] **Transaction Type**: Defines the specific classification (e.g., "Groceries", "Salary", "Stock Purchase")
     - [ ] The Transaction Type automatically determines its parent Category and Group through the hierarchy
@@ -72,8 +76,14 @@ Money Tree is a personal finance management web application that helps users tra
 - [ ] Users can define budget periods (monthly, quarterly, yearly)
 - [ ] Users can modify budget plans as needed
 
-### FR-6: Financial Reports
+### FR-6: Financial Reports and Dashboard
 
+- [ ] Users see a summary dashboard as the starting page:
+  - [ ] Inline transaction entry form at the top (always visible, ready for input)
+  - [ ] Summary statistics and key metrics
+  - [ ] Recent transaction activity
+  - [ ] Account balance overview
+  - [ ] Budget tracking status
 - [ ] Users can view and analyze their financial data through multiple reports:
   - [ ] **Cash Flow Report**: Track income and expenses over time
   - [ ] **Balance Sheet**: View current financial position and account balances

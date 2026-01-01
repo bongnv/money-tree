@@ -443,13 +443,20 @@ This plan implements all requirements from REQUIREMENTS.md:
 - [ ] Create `src/components/dashboard/RecentTransactions.tsx`
 - [ ] Create `src/components/dashboard/AccountSummary.tsx`
 - [ ] Create `src/components/dashboard/BudgetWidget.tsx`
+- [ ] Create `src/components/dashboard/QuickAddTransaction.tsx` - Inline transaction entry form with minimal fields:
+  - [ ] Always visible at top of dashboard (no button click required)
+  - [ ] Essential fields: Amount, Date, Transaction Type, Account(s)
+  - [ ] Auto-save on submit or Enter key
+  - [ ] Clears form after successful submission
+  - [ ] Optional: "More Details" link to open full TransactionDialog for complex transactions
 
 ### 8.2 Create Dashboard Page
 - [ ] Create `src/components/dashboard/DashboardPage.tsx`
-- [ ] Integrate all widgets in responsive grid
+- [ ] Place QuickAddTransaction form prominently at the top
+- [ ] Integrate remaining widgets below in responsive grid
 - [ ] Add route `/` (Dashboard)
 - [ ] Update navigation to default to dashboard
-- [ ] **Test**: View dashboard with all widgets showing correct data, click through to detail pages
+- [ ] **Test**: Open dashboard and immediately start typing to add transaction, submit with Enter key, verify form clears and transaction appears in recent list
 
 ## Phase 9: Settings & Data Management Feature
 

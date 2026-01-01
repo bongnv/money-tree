@@ -36,7 +36,6 @@ export interface Category {
   id: string;
   name: string;
   group: Group;
-  parentId?: string; // For sub-categories
   description?: string;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
@@ -67,7 +66,6 @@ export interface Transaction {
   transactionTypeId: string;
   fromAccountId?: string; // For expenses and transfers
   toAccountId?: string; // For income and transfers
-  notes?: string;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }

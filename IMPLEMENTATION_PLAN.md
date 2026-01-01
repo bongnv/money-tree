@@ -130,7 +130,7 @@ This plan implements all requirements from REQUIREMENTS.md.
 - [x] Create `src/types/enums.ts` with all enums: `Group`, `AccountType`, `BudgetPeriod`
 - [x] Create `src/types/models.ts` with all interfaces: `Currency`, `Account`, `Category`, `TransactionType`, `Transaction`, `Budget`, `BudgetItem`, `DataFile`
 - [x] Create `src/schemas/models.schema.ts` with Zod schemas for all models
-- [x] Create `src/constants/defaults.ts` with default currencies and categories
+- [x] Create `src/constants/defaults.ts` with default currencies
 - [x] **Write tests**: `enums.test.ts`, `models.schema.test.ts` (Zod validation)
 - [x] **Test**: All schemas validate correctly, default data is valid
 
@@ -206,8 +206,7 @@ This plan implements all requirements from REQUIREMENTS.md.
 **Goal**: Users can customize their category structure for organizing transactions
 
 ### 4.1 Implement Category Data Layer
-- [ ] Create `src/stores/useCategoryStore.ts` with categories and transaction types
-- [ ] Load default categories and transaction types into store
+- [x] Create `src/stores/useCategoryStore.ts` with categories and transaction types
 
 ### 4.2 Build Category Management UI
 - [ ] Create `src/components/categories/CategoryTree.tsx` showing hierarchy

@@ -2,6 +2,15 @@
 
 This document provides a step-by-step implementation plan for building the Money Tree application. Each step is small, verifiable, and can be checked off upon completion.
 
+## Testing Approach
+
+**Unit tests should be written alongside implementation in each phase:**
+- Write tests for utility functions, services, and business logic
+- Write tests for Zustand stores
+- Write component tests for UI elements
+- Run `npm test` after each implementation step to verify
+- Maintain test coverage as features are added
+
 ## Requirements Reference
 
 This plan implements all requirements from REQUIREMENTS.md:
@@ -80,12 +89,20 @@ This plan implements all requirements from REQUIREMENTS.md:
 - [x] Scripts for dev, build, lint, format are configured
 
 ### 1.8 Setup GitHub CI/CD
-- [ ] Create `.github/workflows/ci.yml` workflow file
-- [ ] Configure workflow to run on push and pull request to main branch
-- [ ] Add jobs: install dependencies, lint, format check, build
-- [ ] Configure Node.js version matching `.nvmrc`
-- [ ] Add caching for node_modules
+- [x] Create `.github/workflows/ci.yml` workflow file
+- [x] Configure workflow to run on push and pull request to main branch
+- [x] Add jobs: install dependencies, lint, format check, test, build
+- [x] Configure Node.js version matching `.nvmrc`
+- [x] Add caching for node_modules
 - [ ] Test: Push code and verify workflow runs successfully on GitHub
+
+### 1.9 Setup Testing Framework
+- [x] Install Jest and TypeScript support: `jest`, `@types/jest`, `ts-jest`
+- [x] Install React Testing Library: `@testing-library/react`, `@testing-library/jest-dom`, `@testing-library/user-event`
+- [x] Create `jest.config.js` with TypeScript and path mapping support
+- [x] Add test scripts to package.json: `test`, `test:watch`, `test:coverage`
+- [x] Configure Jest to pass with no tests (`--passWithNoTests`)
+- [x] Verify: Run `npm test` - passes with no tests
 
 ## Phase 2: Core Foundation & Authentication
 
@@ -375,39 +392,43 @@ This plan implements all requirements from REQUIREMENTS.md:
 - [ ] Ensure proper heading hierarchy
 - [ ] **Test**: Navigate app with keyboard only
 
-## Phase 15: Testing & Quality Assurance
+## Phase 15: Integration Testing & Quality Assurance
 
 **Requirements**: All FR (Functional Requirements), NFR-7 (Reliability)
 
-**Goal**: Ensure app works correctly in all scenarios
+**Goal**: Comprehensive integration testing and validation
 
-### 15.1 Test Core Features
-- [ ] Test complete account workflow (create, edit, delete)
-- [ ] Test complete transaction workflow (all types, filters, edit, delete)
-- [ ] Test complete budget workflow (create, track, edit, delete)
-- [ ] Test all reports with various data scenarios
-- [ ] Test year switching with multiple years of data
-- [ ] **Test**: All features work end-to-end
+**Note**: Unit tests are written in each phase (2-14) alongside implementation. This phase focuses on integration testing and cross-feature validation.
 
-### 15.2 Test Calculations
-- [ ] Verify account balances with complex transaction history
-- [ ] Verify cash flow calculations
-- [ ] Verify budget vs actual calculations
-- [ ] Test edge cases (negative balances, zero amounts, large numbers)
-- [ ] **Test**: All calculations are accurate
+### 15.1 Integration Testing
+- [ ] Test complete user workflows end-to-end
+- [ ] Test data flow between stores and components
+- [ ] Test interactions between different features
+- [ ] Test year switching with data dependencies
 
-### 15.3 Test Data Persistence
-- [ ] Test data saves correctly to OneDrive
-- [ ] Test data loads correctly from OneDrive
-- [ ] Test multiple year files
-- [ ] Test offline queue and sync
+### 15.2 Cross-Feature Validation
+- [ ] Test account deletion with existing transactions
+- [ ] Test category deletion with existing transaction types
+- [ ] Test transaction changes affecting budgets and reports
+- [ ] Test data consistency across all features
+
+### 15.3 Data Persistence Integration
+- [ ] Test complete save/load workflows with local files
+- [ ] Test data integrity across multiple year files
+- [ ] Test with large datasets (100+ transactions)
 - [ ] **Test**: No data loss in any scenario
 
-### 15.4 Fix Bugs
-- [ ] Review and fix all identified bugs
+### 15.4 Test Coverage Review
+- [ ] Review unit test coverage from all phases
+- [ ] Run `npm run test:coverage` to check coverage metrics
+- [ ] Add tests for any gaps in critical functionality
+- [ ] **Test**: Adequate coverage for all features
+
+### 15.5 Bug Fixes and Edge Cases
+- [ ] Fix any bugs discovered during testing
 - [ ] Handle null/undefined edge cases
-- [ ] Test with large datasets
-- [ ] **Test**: App is stable and performant
+- [ ] Test with extreme values and edge cases
+- [ ] **Test**: App is stable and handles errors gracefully
 
 ## Phase 16: Production Build & Deployment
 

@@ -97,19 +97,35 @@ Users can view and analyze their financial data through multiple reports:
 
 ### FR-8: Data Storage and Synchronization
 
-- All data is stored in the user's OneDrive account
-- Each calendar year's data is stored in a separate file
-- Data files are automatically synchronized with OneDrive
+**Primary Storage (Phase 1):**
+- All data is stored on the user's local machine using browser's File System Access API
+- Users can save data files to their local file system
+- Users can load data files from their local file system
+- Each calendar year's data is stored in a separate JSON file
 - Data includes transactions, accounts, categories, budgets, and currencies
-- Uses OneDrive API for persistence
-- Data format is portable and readable
+- Data format is portable and readable (JSON)
 - One file per year for better organization
+
+**Architecture:**
+- Storage system is designed with an extensible interface/adapter pattern
+- Easy to add new storage providers (OneDrive, Google Drive, Dropbox, etc.)
+- Core business logic is independent of storage implementation
+
+**Future Storage Options (Deferred):**
+- **OneDrive Integration**: Full sync with Microsoft OneDrive (Phase 16+)
+- **Google Drive Integration**: Sync with Google Drive (future)
+- **Dropbox Integration**: Sync with Dropbox (future)
 
 ### FR-9: Authentication
 
-- Users must log in using their Microsoft account
-- Login grants access to OneDrive storage
-- Session management for secure access
+**Phase 1 (Local Storage):**
+- No authentication required for local file storage
+- App can be used immediately without login
+
+**Future Phases (Cloud Storage):**
+- Microsoft account login for OneDrive integration
+- Google account login for Google Drive integration
+- Session management for secure cloud access
 
 ## Non-Functional Requirements
 
@@ -147,9 +163,14 @@ Users can view and analyze their financial data through multiple reports:
 - **date-fns**: Date manipulation and formatting
 - **Zod**: Schema validation for data integrity
 
-**Microsoft Integration:**
-- **@microsoft/microsoft-graph-client**: OneDrive API integration
-- **@azure/msal-browser**: Microsoft authentication (OAuth)
+**Storage (Phase 1 - Local):**
+- **File System Access API**: Browser native API for reading/writing local files
+- **localStorage**: For caching and app preferences
+
+**Cloud Integration (Future Phases):**
+- **@microsoft/microsoft-graph-client**: OneDrive API integration (deferred)
+- **@azure/msal-browser**: Microsoft authentication (deferred)
+- **Google Drive API**: Google Drive integration (future)
 
 ### NFR-3: Performance
 

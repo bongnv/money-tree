@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, Paper, Typography, IconButton, Chip } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Box, Paper, Typography, IconButton, Chip, Button } from '@mui/material';
+import { Edit as EditIcon, Delete as DeleteIcon, TrendingUp as TrendingUpIcon } from '@mui/icons-material';
 import type { ManualAsset } from '../../types/models';
 import { AssetType } from '../../types/enums';
 import { formatCurrency } from '../../utils/currency.utils';
@@ -10,9 +10,15 @@ interface ManualAssetCardProps {
   asset: ManualAsset;
   onEdit: (asset: ManualAsset) => void;
   onDelete: (asset: ManualAsset) => void;
+  onUpdateValue?: (asset: ManualAsset) => void;
 }
 
-export const ManualAssetCard: React.FC<ManualAssetCardProps> = ({ asset, onEdit, onDelete }) => {
+export const ManualAssetCard: React.FC<ManualAssetCardProps> = ({
+  asset,
+  onEdit,
+  onDelete,
+  onUpdateValue,
+}) => {
   const assetTypeLabels: Record<AssetType, string> = {
     [AssetType.REAL_ESTATE]: 'Real Estate',
     [AssetType.SUPERANNUATION]: 'Superannuation',
@@ -71,6 +77,20 @@ export const ManualAssetCard: React.FC<ManualAssetCardProps> = ({ asset, onEdit,
         As of {formatDate(asset.date)}
       </Typography>
 
+
+      {onUpdateValue && (
+        <Box sx={{ mt: 2 }}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<TrendingUpIcon />}
+            onClick={() => onUpdateValue(asset)}
+            fullWidth
+          >
+            Update Value
+          </Button>
+        </Box>
+      )}
       {asset.notes && (
         <Typography variant="body2" sx={{ mt: 1 }}>
           {asset.notes}

@@ -88,19 +88,60 @@ export const BudgetSchema = z
   });
 
 /**
+ * Zod schema for AssetValueHistory
+ */
+export const AssetValueHistorySchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  value: z.number(),
+  notes: z.string().optional(),
+});
+
+/**
  * Zod schema for ManualAsset
  */
-export const ManualAssetSchema = z.object({
-  id: z.string().min(1, 'ID is required'),
-  name: z.string().min(1, 'Asset name is required'),
-  type: z.nativeEnum(AssetType),
-  value: z.number(),
-  currencyId: z.string().min(1, 'Currency ID is required'),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
-  notes: z.string().optional(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
-});
+export const ManualAssetSchema = z
+  .object({
+    id: z.string().min(1, 'ID is required'),
+    name: z.string().min(1, 'Asset name is required'),
+    type: z.nativeEnum(AssetType),
+    value: z.number(),
+    currencyId: z.string().min(1, 'Currency ID is required'),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+    notes: z.string().optional(),
+    valueHistory: z.array(AssetValueHistorySchema).optional(),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+  })
+  .refine(
+    (data) => {
+      // If valueHistory exists, validate that all dates are in chronological order
+      if (data.valueHistory && data.valueHistory.length > 1) {
+        for (let i = 1; i < data.valueHistory.length; i++) {
+          if (data.valueHistory[i].date < data.valueHistory[i - 1].date) {
+            return false;
+          }
+        }
+      }
+      return true;
+    },
+    {
+      message: 'Value history entries must be in chronological order',
+      path: ['valueHistory'],
+    }
+  )
+  .refine(
+    (data) => {
+      // If valueHistory exists, validate that all history dates are before or equal to current date
+      if (data.valueHistory && data.valueHistory.length > 0) {
+        return data.valueHistory.every((entry) => entry.date <= data.date);
+      }
+      return true;
+    },
+    {
+      message: 'Historical value dates must be before or equal to the current valuation date',
+      path: ['valueHistory'],
+    }
+  );
 
 /**
  * Zod schema for DataFile

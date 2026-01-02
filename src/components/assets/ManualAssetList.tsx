@@ -7,9 +7,15 @@ interface ManualAssetListProps {
   assets: ManualAsset[];
   onEdit: (asset: ManualAsset) => void;
   onDelete: (asset: ManualAsset) => void;
+  onUpdateValue?: (asset: ManualAsset) => void;
 }
 
-export const ManualAssetList: React.FC<ManualAssetListProps> = ({ assets, onEdit, onDelete }) => {
+export const ManualAssetList: React.FC<ManualAssetListProps> = ({
+  assets,
+  onEdit,
+  onDelete,
+  onUpdateValue,
+}) => {
   if (assets.length === 0) {
     return (
       <Box sx={{ textAlign: 'center', py: 4 }}>
@@ -24,7 +30,12 @@ export const ManualAssetList: React.FC<ManualAssetListProps> = ({ assets, onEdit
     <Grid container spacing={3}>
       {assets.map((asset) => (
         <Grid item xs={12} sm={6} md={4} key={asset.id}>
-          <ManualAssetCard asset={asset} onEdit={onEdit} onDelete={onDelete} />
+          <ManualAssetCard
+            asset={asset}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onUpdateValue={onUpdateValue}
+          />
         </Grid>
       ))}
     </Grid>

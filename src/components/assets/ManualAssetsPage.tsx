@@ -19,21 +19,31 @@ export const ManualAssetsPage: React.FC = () => {
   const { manualAssets, deleteManualAsset } = useAssetStore();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<ManualAsset | undefined>();
+  const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'update-value'>('create');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [assetToDelete, setAssetToDelete] = useState<ManualAsset | undefined>();
 
   const handleOpenDialog = () => {
     setSelectedAsset(undefined);
+    setDialogMode('create');
     setDialogOpen(true);
   };
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setSelectedAsset(undefined);
+    setDialogMode('create');
   };
 
   const handleEdit = (asset: ManualAsset) => {
     setSelectedAsset(asset);
+    setDialogMode('edit');
+    setDialogOpen(true);
+  };
+
+  const handleUpdateValue = (asset: ManualAsset) => {
+    setSelectedAsset(asset);
+    setDialogMode('update-value');
     setDialogOpen(true);
   };
 
@@ -66,9 +76,19 @@ export const ManualAssetsPage: React.FC = () => {
         </Button>
       </Box>
 
-      <ManualAssetList assets={manualAssets} onEdit={handleEdit} onDelete={handleDelete} />
+      <ManualAssetList
+        assets={manualAssets}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onUpdateValue={handleUpdateValue}
+      />
 
-      <ManualAssetDialog open={dialogOpen} asset={selectedAsset} onClose={handleCloseDialog} />
+      <ManualAssetDialog
+        open={dialogOpen}
+        asset={selectedAsset}
+        onClose={handleCloseDialog}
+        mode={dialogMode}
+      />
 
       <Dialog open={deleteDialogOpen} onClose={handleCancelDelete}>
         <DialogTitle>Delete Asset</DialogTitle>

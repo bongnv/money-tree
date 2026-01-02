@@ -86,6 +86,16 @@ export interface Budget {
 }
 
 /**
+ * Asset Value History model
+ * Represents a historical value entry for a manual asset
+ */
+export interface AssetValueHistory {
+  date: string; // Date string in YYYY-MM-DD format
+  value: number; // Value at this date (can be negative for liabilities)
+  notes?: string; // Optional notes about this value update
+}
+
+/**
  * Manual Asset model
  * Represents manually tracked assets and liabilities (not connected to accounts)
  */
@@ -97,6 +107,7 @@ export interface ManualAsset {
   currencyId: string;
   date: string; // Date string in YYYY-MM-DD format - date of valuation
   notes?: string;
+  valueHistory?: AssetValueHistory[]; // Historical values (excluding current)
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }

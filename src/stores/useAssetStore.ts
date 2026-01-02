@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { ManualAsset } from '../types/models';
 import { useAppStore } from './useAppStore';
+import { updateAssetValue as updateAssetValueService } from '../services/history.service';
 
 interface AssetState {
   manualAssets: ManualAsset[];
@@ -10,6 +11,7 @@ interface AssetActions {
   setManualAssets: (manualAssets: ManualAsset[]) => void;
   addManualAsset: (asset: ManualAsset) => void;
   updateManualAsset: (id: string, updates: Partial<ManualAsset>) => void;
+  updateAssetValue: (id: string, newValue: number, newDate: string, notes?: string) => void;
   deleteManualAsset: (id: string) => void;
   getManualAssetById: (id: string) => ManualAsset | undefined;
   getManualAssetsByType: (type: ManualAsset['type']) => ManualAsset[];
@@ -35,6 +37,18 @@ export const useAssetStore = create<AssetState & AssetActions>((set, get) => ({
       manualAssets: state.manualAssets.map((asset) =>
         asset.id === id ? { ...asset, ...updates, updatedAt: new Date().toISOString() } : asset
       ),
+    }));
+    useAppStore.getState().setUnsavedChanges(true);
+  },
+
+  updateAssetValue: (id, newValue, newDate, notes) => {
+    set((state) => ({
+      manualAssets: state.manualAssets.map((asset) => {
+        if (asset.id === id) {
+          return updateAssetValueService(asset, newValue, newDate, notes);
+        }
+        return asset;
+      }),
     }));
     useAppStore.getState().setUnsavedChanges(true);
   },

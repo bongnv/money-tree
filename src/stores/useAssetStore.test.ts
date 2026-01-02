@@ -236,4 +236,88 @@ describe('useAssetStore', () => {
       expect(result.current.manualAssets).toHaveLength(0);
     });
   });
+
+  describe('updateAssetValue', () => {
+    it('should update asset value and move current to history', () => {
+      const { result } = renderHook(() => useAssetStore());
+
+      act(() => {
+        result.current.addManualAsset(mockAsset);
+      });
+
+      act(() => {
+        result.current.updateAssetValue('asset-1', 510000, '2026-04-01', 'Market appraisal');
+      });
+
+      const updatedAsset = result.current.manualAssets[0];
+      expect(updatedAsset.value).toBe(510000);
+      expect(updatedAsset.date).toBe('2026-04-01');
+      expect(updatedAsset.notes).toBe('Market appraisal');
+      expect(updatedAsset.valueHistory).toHaveLength(1);
+      expect(updatedAsset.valueHistory![0].value).toBe(500000);
+    });
+
+    it('should add to existing history when updating value', () => {
+      const { result } = renderHook(() => useAssetStore());
+      const assetWithHistory: ManualAsset = {
+        ...mockAsset,
+        valueHistory: [
+          { date: '2025-01-01', value: 450000, notes: 'Initial' },
+        ],
+      };
+
+      act(() => {
+        result.current.addManualAsset(assetWithHistory);
+      });
+
+      act(() => {
+        result.current.updateAssetValue('asset-1', 510000, '2026-04-01');
+      });
+
+      const updatedAsset = result.current.manualAssets[0];
+      expect(updatedAsset.valueHistory).toHaveLength(2);
+      expect(updatedAsset.valueHistory![0].value).toBe(450000);
+      expect(updatedAsset.valueHistory![1].value).toBe(500000);
+    });
+
+    it('should mark unsaved changes', () => {
+      const { result } = renderHook(() => useAssetStore());
+      const setUnsavedChanges = jest.fn();
+      (useAppStore.getState as jest.Mock).mockReturnValue({ setUnsavedChanges });
+
+      act(() => {
+        result.current.addManualAsset(mockAsset);
+      });
+
+      jest.clearAllMocks();
+
+      act(() => {
+        result.current.updateAssetValue('asset-1', 510000, '2026-04-01');
+      });
+
+      expect(setUnsavedChanges).toHaveBeenCalledWith(true);
+    });
+
+    it('should not update non-matching assets', () => {
+      const { result } = renderHook(() => useAssetStore());
+      const asset2: ManualAsset = {
+        ...mockAsset,
+        id: 'asset-2',
+        name: 'Car',
+        value: 30000,
+      };
+
+      act(() => {
+        result.current.addManualAsset(mockAsset);
+        result.current.addManualAsset(asset2);
+      });
+
+      act(() => {
+        result.current.updateAssetValue('asset-1', 510000, '2026-04-01');
+      });
+
+      expect(result.current.manualAssets[0].value).toBe(510000);
+      expect(result.current.manualAssets[1].value).toBe(30000);
+    });
+  });
 });

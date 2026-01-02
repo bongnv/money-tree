@@ -1117,33 +1117,33 @@ These features will be implemented after the MVP is validated by users.
 **Note**: Transactional account balances are automatically calculated from transaction history, so no separate balance tracking is needed for accounts (FR-3.4). This phase focuses only on manual assets.
 
 ### 13.1 Update Asset Value Workflow
-- [ ] Update `src/types/models.ts`:
-  - [ ] Add `AssetValueHistory` type: `{ date: string, value: number, notes?: string }`
-  - [ ] Add `valueHistory?: AssetValueHistory[]` to ManualAsset type
-  - [ ] Keep existing `value` and `valuationDate` fields as "current value"
-- [ ] Update `src/schemas/models.schema.ts`:
-  - [ ] Add Zod schema for AssetValueHistory
-  - [ ] Validate history entries (dates in chronological order, non-negative values)
-  - [ ] Ensure history dates are before or equal to current valuationDate
-- [ ] Create `src/services/history.service.ts`:
-  - [ ] `updateAssetValue(assetId, newValue, newDate, notes)`: 
-    - [ ] Move current value/date to valueHistory array
-    - [ ] Set new value as current value/valuationDate
-    - [ ] Return updated asset
-- [ ] Update `useAssetStore`:
-  - [ ] Add `updateAssetValue` action that calls history service
-  - [ ] Maintain valueHistory array when updating values
-- [ ] Update `ManualAssetDialog.tsx` to show "Update Value" workflow:
-  - [ ] Add checkbox/toggle: "Update existing value" vs "Create new asset"
-  - [ ] When updating: show current value and date (read-only)
-  - [ ] Input for new value, new date (defaults to today), optional notes
-  - [ ] On submit: old value moves to history, new value becomes current
-  - [ ] Show confirmation message: "Value updated. Previous value ($X on DATE) saved to history."
-- [ ] Update `ManualAssetCard.tsx`:
-  - [ ] Add "Update Value" button next to "Edit" button
-  - [ ] Opens ManualAssetDialog in "update value" mode
-- [ ] **Write tests**: Schema validation, updateAssetValue service, store action, dialog update mode
-- [ ] **Test**: Create asset with $500k value, click "Update Value", enter $510k → verify current value is $510k, old $500k in valueHistory
+- [x] Update `src/types/models.ts`:
+  - [x] Add `AssetValueHistory` type: `{ date: string, value: number, notes?: string }`
+  - [x] Add `valueHistory?: AssetValueHistory[]` to ManualAsset type
+  - [x] Keep existing `value` and `valuationDate` fields as "current value"
+- [x] Update `src/schemas/models.schema.ts`:
+  - [x] Add Zod schema for AssetValueHistory
+  - [x] Validate history entries (dates in chronological order, non-negative values)
+  - [x] Ensure history dates are before or equal to current valuationDate
+- [x] Create `src/services/history.service.ts`:
+  - [x] `updateAssetValue(assetId, newValue, newDate, notes)`: 
+    - [x] Move current value/date to valueHistory array
+    - [x] Set new value as current value/valuationDate
+    - [x] Return updated asset
+- [x] Update `useAssetStore`:
+  - [x] Add `updateAssetValue` action that calls history service
+  - [x] Maintain valueHistory array when updating values
+- [x] Update `ManualAssetDialog.tsx` to show "Update Value" workflow:
+  - [x] Add checkbox/toggle: "Update existing value" vs "Create new asset"
+  - [x] When updating: show current value and date (read-only)
+  - [x] Input for new value, new date (defaults to today), optional notes
+  - [x] On submit: old value moves to history, new value becomes current
+  - [x] Show confirmation message: "Value updated. Previous value ($X on DATE) saved to history."
+- [x] Update `ManualAssetCard.tsx`:
+  - [x] Add "Update Value" button next to "Edit" button
+  - [x] Opens ManualAssetDialog in "update value" mode
+- [x] **Write tests**: Schema validation, updateAssetValue service, store action, dialog update mode
+- [x] **Test**: Create asset with $500k value, click "Update Value", enter $510k → verify current value is $510k, old $500k in valueHistory
 
 **Manual Verification (User):** Create manual asset "House - $500,000" on Jan 1, 2026. Click "Update Value" button on the card, enter new value $510,000 with date Apr 1, 2026, add note "Market appraisal". Submit and verify card now shows $510,000 as current value. Verify confirmation message mentions old value saved to history.
 

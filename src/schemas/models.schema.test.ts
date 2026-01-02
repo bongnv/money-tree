@@ -357,6 +357,128 @@ describe('Model Schemas', () => {
         expect(() => ManualAssetSchema.parse(asset)).not.toThrow();
       });
     });
+
+    it('should validate asset with value history', () => {
+      const assetWithHistory = {
+        id: 'asset-1',
+        name: 'House',
+        type: AssetType.REAL_ESTATE,
+        value: 510000,
+        currencyId: 'usd',
+        date: '2026-04-01',
+        valueHistory: [
+          { date: '2026-01-01', value: 500000, notes: 'Initial purchase' },
+        ],
+        createdAt: getDateTimeString(),
+        updatedAt: getDateTimeString(),
+      };
+      expect(() => ManualAssetSchema.parse(assetWithHistory)).not.toThrow();
+    });
+
+    it('should validate asset with multiple history entries in chronological order', () => {
+      const assetWithHistory = {
+        id: 'asset-1',
+        name: 'House',
+        type: AssetType.REAL_ESTATE,
+        value: 530000,
+        currencyId: 'usd',
+        date: '2026-10-01',
+        valueHistory: [
+          { date: '2026-01-01', value: 500000 },
+          { date: '2026-04-01', value: 510000 },
+          { date: '2026-07-01', value: 520000 },
+        ],
+        createdAt: getDateTimeString(),
+        updatedAt: getDateTimeString(),
+      };
+      expect(() => ManualAssetSchema.parse(assetWithHistory)).not.toThrow();
+    });
+
+    it('should reject asset with history entries not in chronological order', () => {
+      const invalidAsset = {
+        id: 'asset-1',
+        name: 'House',
+        type: AssetType.REAL_ESTATE,
+        value: 530000,
+        currencyId: 'usd',
+        date: '2026-10-01',
+        valueHistory: [
+          { date: '2026-04-01', value: 510000 },
+          { date: '2026-01-01', value: 500000 }, // Out of order
+        ],
+        createdAt: getDateTimeString(),
+        updatedAt: getDateTimeString(),
+      };
+      expect(() => ManualAssetSchema.parse(invalidAsset)).toThrow();
+    });
+
+    it('should reject asset with history dates after current date', () => {
+      const invalidAsset = {
+        id: 'asset-1',
+        name: 'House',
+        type: AssetType.REAL_ESTATE,
+        value: 520000,
+        currencyId: 'usd',
+        date: '2026-07-01',
+        valueHistory: [
+          { date: '2026-08-01', value: 500000 }, // After current date
+        ],
+        createdAt: getDateTimeString(),
+        updatedAt: getDateTimeString(),
+      };
+      expect(() => ManualAssetSchema.parse(invalidAsset)).toThrow();
+    });
+
+    it('should allow history date equal to current date', () => {
+      const validAsset = {
+        id: 'asset-1',
+        name: 'House',
+        type: AssetType.REAL_ESTATE,
+        value: 520000,
+        currencyId: 'usd',
+        date: '2026-07-01',
+        valueHistory: [
+          { date: '2026-07-01', value: 500000 }, // Same as current date
+        ],
+        createdAt: getDateTimeString(),
+        updatedAt: getDateTimeString(),
+      };
+      expect(() => ManualAssetSchema.parse(validAsset)).not.toThrow();
+    });
+
+    it('should validate history entry without optional notes', () => {
+      const assetWithHistory = {
+        id: 'asset-1',
+        name: 'House',
+        type: AssetType.REAL_ESTATE,
+        value: 510000,
+        currencyId: 'usd',
+        date: '2026-04-01',
+        valueHistory: [
+          { date: '2026-01-01', value: 500000 }, // No notes
+        ],
+        createdAt: getDateTimeString(),
+        updatedAt: getDateTimeString(),
+      };
+      expect(() => ManualAssetSchema.parse(assetWithHistory)).not.toThrow();
+    });
+
+    it('should reject history entry with invalid date format', () => {
+      const invalidAsset = {
+        id: 'asset-1',
+        name: 'House',
+        type: AssetType.REAL_ESTATE,
+        value: 510000,
+        currencyId: 'usd',
+        date: '2026-04-01',
+        valueHistory: [
+          { date: '01/01/2026', value: 500000 }, // Invalid format
+        ],
+        createdAt: getDateTimeString(),
+        updatedAt: getDateTimeString(),
+      };
+      expect(() => ManualAssetSchema.parse(invalidAsset)).toThrow();
+    });
   });
 
   describe('DataFileSchema', () => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TextField, MenuItem, Box, Button } from '@mui/material';
 import type { ManualAsset } from '../../types/models';
 import { AssetType } from '../../types/enums';
@@ -9,9 +9,10 @@ interface ManualAssetFormProps {
   asset?: ManualAsset;
   onSubmit: (asset: Omit<ManualAsset, 'id' | 'createdAt' | 'updatedAt'>) => void;
   onCancel: () => void;
+  updateValueOnly?: boolean;
 }
 
-export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({ asset, onSubmit, onCancel }) => {
+export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({ asset, onSubmit, onCancel, updateValueOnly = false }) => {
   const currencies = getAllCurrencies();
   const [formData, setFormData] = useState({
     name: asset?.name || '',
@@ -21,6 +22,18 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({ asset, onSubmi
     date: asset?.date || getTodayDate(),
     notes: asset?.notes || '',
   });
+
+  // Update form data when asset prop changes
+  useEffect(() => {
+    setFormData({
+      name: asset?.name || '',
+      type: asset?.type || AssetType.OTHER,
+      value: asset?.value?.toString() || '0',
+      currencyId: asset?.currencyId || 'usd',
+      date: asset?.date || getTodayDate(),
+      notes: asset?.notes || '',
+    });
+  }, [asset]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -99,6 +112,7 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({ asset, onSubmi
         helperText={errors.name}
         margin="normal"
         required
+        disabled={updateValueOnly}
       />
 
       <TextField
@@ -111,6 +125,7 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({ asset, onSubmi
         helperText={errors.type}
         margin="normal"
         required
+        disabled={updateValueOnly}
       >
         {Object.values(AssetType).map((type) => (
           <MenuItem key={type} value={type}>
@@ -142,6 +157,7 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({ asset, onSubmi
         helperText={errors.currencyId}
         margin="normal"
         required
+        disabled={updateValueOnly}
       >
         {currencies.map((currency) => (
           <MenuItem key={currency.id} value={currency.id}>

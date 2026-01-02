@@ -97,7 +97,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
 
     onSubmit({
       date: formData.date,
-      description: formData.description.trim(),
+      description: formData.description.trim() || undefined,
       amount: parseFloat(formData.amount),
       transactionTypeId: formData.transactionTypeId,
       fromAccountId: formData.fromAccountId || undefined,
@@ -156,7 +156,6 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         onChange={handleChange('description')}
         error={!!errors.description}
         helperText={errors.description}
-        required
       />
 
       <FormTextField
@@ -179,16 +178,18 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         helperText={errors.transactionTypeId}
         required
       >
-        {groupedTransactionTypes.map(({ category, types }) => [
-          <MenuItem key={`group-${category.id}`} disabled>
-            <strong>{category.name}</strong>
-          </MenuItem>,
-          ...types.map((type) => (
-            <MenuItem key={type.id} value={type.id} sx={{ pl: 4 }}>
-              {type.name}
-            </MenuItem>
-          )),
-        ])}
+        {groupedTransactionTypes.flatMap(({ category, types }) => 
+          types.length > 0 ? [
+            <MenuItem key={`header-${category.id}`} disabled>
+              <strong>{category.name}</strong>
+            </MenuItem>,
+            ...types.map((type) => (
+              <MenuItem key={type.id} value={type.id} sx={{ pl: 4 }}>
+                {type.name}
+              </MenuItem>
+            )),
+          ] : []
+        )}
       </FormTextField>
 
       {showFromAccount && (

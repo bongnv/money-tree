@@ -61,7 +61,7 @@ export interface TransactionType {
 export interface Transaction {
   id: string;
   date: string; // ISO date string
-  description: string;
+  description?: string;
   amount: number; // Positive value, always
   transactionTypeId: string;
   fromAccountId?: string; // For expenses and transfers

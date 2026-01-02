@@ -184,6 +184,16 @@ This plan implements all requirements from REQUIREMENTS.md.
 - [x] **Write tests**: Test save/load UI interactions, unsaved changes detection, error handling, auto-save prompts, periodic auto-save
 - [x] **Test**: Click "Load" → file picker opens → select file → data appears; Click "Save" → file picker opens → save file; Make changes → see unsaved indicator → wait 5 minutes → auto-saved; close browser → get warning; Make changes → load different file → prompted to save first
 
+### 2.5 Add Auto-Load on Page Reload
+- [ ] Store last loaded file path/handle in localStorage (in storage.service.ts)
+- [ ] Add `getLastFilePath()` and `setLastFilePath()` methods to storage.service.ts
+- [ ] Update `syncService.loadDataFile()` to save file path/reference after successful load
+- [ ] Add `loadLastFile()` method to sync.service.ts that attempts to reload the last file
+- [ ] Update `App.tsx` to call `syncService.loadLastFile()` on mount (useEffect)
+- [ ] Handle case where file no longer exists or is inaccessible (show error, prompt to load new file)
+- [ ] **Write tests**: Test auto-load on mount, test file not found handling, test no previous file case
+- [ ] **Test**: Load a file → reload page → data automatically loads; Delete file → reload page → see error message
+
 ## Phase 3: Account Management Feature (MVP)
 
 **Requirements**: FR-3 (Account Management)
@@ -259,13 +269,13 @@ This plan implements all requirements from REQUIREMENTS.md.
 - [x] **Test**: Form shows correct fields based on transaction type, validates required fields
 
 #### 5.2.3 Create Transaction Dialog and Page with Route
-- [ ] Create `src/components/transactions/TransactionDialog.tsx`:
-  - [ ] Wraps TransactionForm in MUI Dialog
-  - [ ] Dynamic title (Add/Edit Transaction)
-  - [ ] Submit and cancel handlers
-- [ ] Create `src/components/transactions/TransactionsPage.tsx` with "New Transaction" button
-- [ ] Add route `/transactions` in App.tsx
-- [ ] **Write tests**: TransactionDialog.test.tsx
+- [x] Create `src/components/transactions/TransactionDialog.tsx`:
+  - [x] Wraps TransactionForm in MUI Dialog
+  - [x] Dynamic title (Add/Edit Transaction)
+  - [x] Submit and cancel handlers
+- [x] Create `src/components/transactions/TransactionsPage.tsx` with "New Transaction" button
+- [x] Add route `/transactions` in App.tsx
+- [x] **Write tests**: TransactionDialog.test.tsx
 **Manual Verification (User):** Navigate to /transactions, click "New Transaction": dialog opens, conditional fields appear based on transaction type, validation errors display, submit creates transaction, dialog closes.
 
 #### 5.2.4 Add Transaction List to Page

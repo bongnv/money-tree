@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TransactionForm } from './TransactionForm';
@@ -160,7 +159,7 @@ describe('TransactionForm', () => {
     await user.click(screen.getByRole('button', { name: /create/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/description is required/i)).toBeInTheDocument();
+      expect(screen.getByText(/amount must be greater than 0/i)).toBeInTheDocument();
     });
   });
 
@@ -383,13 +382,13 @@ describe('TransactionForm', () => {
     await user.click(screen.getByRole('button', { name: /create/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/description is required/i)).toBeInTheDocument();
+      expect(screen.getByText(/amount must be greater than 0/i)).toBeInTheDocument();
     });
 
-    await user.type(screen.getByLabelText(/description/i), 'Test');
+    await user.type(screen.getByLabelText(/amount/i), '100');
 
     await waitFor(() => {
-      expect(screen.queryByText(/description is required/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/amount must be greater than 0/i)).not.toBeInTheDocument();
     });
   });
 });

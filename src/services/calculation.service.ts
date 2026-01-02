@@ -100,13 +100,13 @@ class CalculationService {
 
   /**
    * Calculate total for specific category
-   * @param categoryId Category ID
+   * @param _categoryId Category ID (not used in calculation, only for identification)
    * @param transactions All transactions
    * @param transactionTypeIds Transaction type IDs in the category
    * @returns Total amount for the category
    */
   calculateTotalByCategory(
-    categoryId: string,
+    _categoryId: string,
     transactions: Transaction[],
     transactionTypeIds: string[]
   ): number {

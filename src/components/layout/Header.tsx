@@ -15,6 +15,7 @@ import {
   Home as HomeIcon,
   AccountBalance as AccountsIcon,
   Category as CategoryIcon,
+  ReceiptLong as TransactionsIcon,
 } from '@mui/icons-material';
 import { useAppStore } from '../../stores/useAppStore';
 import { syncService } from '../../services/sync.service';
@@ -100,6 +101,16 @@ export const Header: React.FC = () => {
             }}
           >
             Categories
+          </Button>
+          <Button
+            color="inherit"
+            startIcon={<TransactionsIcon />}
+            onClick={() => navigate('/transactions')}
+            sx={{
+              backgroundColor: location.pathname === '/transactions' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+            }}
+          >
+            Transactions
           </Button>
         </Box>
 

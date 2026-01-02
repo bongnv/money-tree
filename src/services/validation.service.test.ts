@@ -13,17 +13,6 @@ const mockAccount1: Account = {
   updatedAt: '2024-01-01T00:00:00.000Z',
 };
 
-const mockAccount2: Account = {
-  id: 'acc-2',
-  name: 'Savings',
-  type: AccountType.BANK_ACCOUNT,
-  currencyId: 'usd',
-  initialBalance: 5000,
-  isActive: true,
-  createdAt: '2024-01-01T00:00:00.000Z',
-  updatedAt: '2024-01-01T00:00:00.000Z',
-};
-
 const inactiveAccount: Account = {
   ...mockAccount1,
   id: 'acc-3',
@@ -78,9 +67,8 @@ describe('ValidationService', () => {
 
       const errors = validationService.validateTransaction(transaction);
 
-      expect(errors).toHaveLength(4);
+      expect(errors).toHaveLength(3);
       expect(errors.find((e) => e.field === 'date')).toBeDefined();
-      expect(errors.find((e) => e.field === 'description')).toBeDefined();
       expect(errors.find((e) => e.field === 'amount')).toBeDefined();
       expect(errors.find((e) => e.field === 'transactionTypeId')).toBeDefined();
     });
@@ -96,19 +84,6 @@ describe('ValidationService', () => {
       const errors = validationService.validateTransaction(transaction);
 
       expect(errors.find((e) => e.field === 'amount')).toBeDefined();
-    });
-
-    it('should validate description is not empty', () => {
-      const transaction: Partial<Transaction> = {
-        date: '2024-03-15T00:00:00.000Z',
-        description: '   ',
-        amount: 100,
-        transactionTypeId: 'type-1',
-      };
-
-      const errors = validationService.validateTransaction(transaction);
-
-      expect(errors.find((e) => e.field === 'description')).toBeDefined();
     });
 
     describe('Expense validation', () => {

@@ -58,7 +58,7 @@ export const TransactionTypeSchema = z.object({
 export const TransactionSchema = z.object({
   id: z.string().min(1, 'ID is required'),
   date: z.string().datetime(),
-  description: z.string().min(1, 'Description is required'),
+  description: z.string().optional(),
   amount: z.number().positive('Amount must be positive'),
   transactionTypeId: z.string().min(1, 'Transaction type ID is required'),
   fromAccountId: z.string().optional(),

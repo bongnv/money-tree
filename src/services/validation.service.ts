@@ -33,10 +33,6 @@ class ValidationService {
       errors.push({ field: 'date', message: 'Date is required' });
     }
 
-    if (!transaction.description || !transaction.description.trim()) {
-      errors.push({ field: 'description', message: 'Description is required' });
-    }
-
     if (!transaction.amount || transaction.amount <= 0) {
       errors.push({ field: 'amount', message: 'Amount must be greater than 0' });
     }

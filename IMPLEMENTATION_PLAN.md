@@ -279,16 +279,16 @@ This plan implements all requirements from REQUIREMENTS.md.
 **Manual Verification (User):** Navigate to /transactions, click "New Transaction": dialog opens, conditional fields appear based on transaction type, validation errors display, submit creates transaction, dialog closes.
 
 #### 5.2.4 Add Transaction List to Page
-- [ ] Create `src/components/transactions/TransactionList.tsx`:
-  - [ ] Integrate @mui/x-data-grid
-  - [ ] Define columns: Date, Description, Category, Amount, From/To Accounts
-  - [ ] Add edit and delete action buttons
-  - [ ] Handle row click for editing
-  - [ ] Empty state message
-- [ ] Add TransactionList to TransactionsPage below the button
-- [ ] Connect edit button to open dialog with transaction data
-- [ ] Add delete confirmation
-- [ ] **Write tests**: TransactionList.test.tsx
+- [x] Create `src/components/transactions/TransactionList.tsx`:
+  - [x] Integrate @mui/x-data-grid
+  - [x] Define columns: Date, Description, Category, Amount, From/To Accounts
+  - [x] Add edit and delete action buttons
+  - [x] Handle row click for editing
+  - [x] Empty state message
+- [x] Add TransactionList to TransactionsPage below the button
+- [x] Connect edit button to open dialog with transaction data
+- [x] Add delete confirmation
+- [x] **Write tests**: TransactionList.test.tsx (15 tests)
 **Manual Verification (User):** Create transactions and see them in the list, click edit to open dialog with data, delete transaction, verify empty state.
 
 #### 5.2.5 Add Transaction Filters to Page

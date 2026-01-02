@@ -15,6 +15,9 @@ module.exports = (env, argv) => {
     },
   resolve: {
     extensions: ['.tsx', '.ts', '.js', '.jsx'],
+    extensionAlias: {
+      '.js': ['.ts', '.tsx', '.js', '.jsx'],
+    },
     alias: {
       '@': path.resolve(__dirname, 'src'),
       '@components': path.resolve(__dirname, 'src/components'),
@@ -33,6 +36,16 @@ module.exports = (env, argv) => {
         test: /\.tsx?$/,
         use: 'ts-loader',
         exclude: /node_modules/,
+      },
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader'],
+      },
+      {
+        test: /\.m?js$/,
+        resolve: {
+          fullySpecified: false,
+        },
       },
     ],
   },

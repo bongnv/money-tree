@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TransactionsPage } from './TransactionsPage';
 import { useTransactionStore } from '../../stores/useTransactionStore';
@@ -300,5 +300,172 @@ describe('TransactionsPage', () => {
     // Should show Add Transaction (not Edit)
     expect(screen.getByText('Add Transaction')).toBeInTheDocument();
     expect(screen.queryByText('Edit Transaction')).not.toBeInTheDocument();
+  });
+
+  it('renders TransactionList when transactions exist', () => {
+    mockUseTransactionStore.mockReturnValue({
+      transactions: mockTransactions,
+      addTransaction: mockAddTransaction,
+      updateTransaction: mockUpdateTransaction,
+      deleteTransaction: mockDeleteTransaction,
+      getTransactionsByAccount: jest.fn(),
+      getTransactionsByType: jest.fn(),
+      getTransactionsByDateRange: jest.fn(),
+    });
+
+    render(<TransactionsPage />);
+
+    // Should show DataGrid
+    expect(screen.getByRole('grid')).toBeInTheDocument();
+    expect(screen.getByText('Grocery shopping')).toBeInTheDocument();
+  });
+
+  it('opens edit dialog when edit button is clicked', async () => {
+    mockUseTransactionStore.mockReturnValue({
+      transactions: mockTransactions,
+      addTransaction: mockAddTransaction,
+      updateTransaction: mockUpdateTransaction,
+      deleteTransaction: mockDeleteTransaction,
+      getTransactionsByAccount: jest.fn(),
+      getTransactionsByType: jest.fn(),
+      getTransactionsByDateRange: jest.fn(),
+    });
+
+    const user = userEvent.setup();
+    render(<TransactionsPage />);
+
+    // Click edit button
+    const editButton = screen.getByLabelText(/edit transaction/i);
+    await user.click(editButton);
+
+    // Should show Edit Transaction dialog
+    expect(screen.getByText('Edit Transaction')).toBeInTheDocument();
+  });
+
+  it('opens delete confirmation when delete button is clicked', async () => {
+    mockUseTransactionStore.mockReturnValue({
+      transactions: mockTransactions,
+      addTransaction: mockAddTransaction,
+      updateTransaction: mockUpdateTransaction,
+      deleteTransaction: mockDeleteTransaction,
+      getTransactionsByAccount: jest.fn(),
+      getTransactionsByType: jest.fn(),
+      getTransactionsByDateRange: jest.fn(),
+    });
+
+    const user = userEvent.setup();
+    render(<TransactionsPage />);
+
+    // Click delete button
+    const deleteButton = screen.getByLabelText(/delete transaction/i);
+    await user.click(deleteButton);
+
+    // Should show delete confirmation dialog
+    expect(screen.getByText(/are you sure you want to delete this transaction/i)).toBeInTheDocument();
+  });
+
+  it('cancels delete when cancel button is clicked', async () => {
+    mockUseTransactionStore.mockReturnValue({
+      transactions: mockTransactions,
+      addTransaction: mockAddTransaction,
+      updateTransaction: mockUpdateTransaction,
+      deleteTransaction: mockDeleteTransaction,
+      getTransactionsByAccount: jest.fn(),
+      getTransactionsByType: jest.fn(),
+      getTransactionsByDateRange: jest.fn(),
+    });
+
+    const user = userEvent.setup();
+    render(<TransactionsPage />);
+
+    // Open delete confirmation
+    const deleteButton = screen.getByLabelText(/delete transaction/i);
+    await user.click(deleteButton);
+
+    // Cancel delete
+    const cancelButton = screen.getByRole('button', { name: /cancel/i });
+    await user.click(cancelButton);
+
+    // Dialog should close
+    await waitFor(() => {
+      expect(screen.queryByText(/are you sure you want to delete this transaction/i)).not.toBeInTheDocument();
+    });
+
+    expect(mockDeleteTransaction).not.toHaveBeenCalled();
+  });
+
+  it('deletes transaction when delete is confirmed', async () => {
+    mockUseTransactionStore.mockReturnValue({
+      transactions: mockTransactions,
+      addTransaction: mockAddTransaction,
+      updateTransaction: mockUpdateTransaction,
+      deleteTransaction: mockDeleteTransaction,
+      getTransactionsByAccount: jest.fn(),
+      getTransactionsByType: jest.fn(),
+      getTransactionsByDateRange: jest.fn(),
+    });
+
+    const user = userEvent.setup();
+    render(<TransactionsPage />);
+
+    // Open delete confirmation
+    const deleteButton = screen.getByLabelText(/delete transaction/i);
+    await user.click(deleteButton);
+
+    // Confirm delete
+    const confirmButton = screen.getByRole('button', { name: /^delete$/i });
+    await user.click(confirmButton);
+
+    // Should call deleteTransaction
+    await waitFor(() => {
+      expect(mockDeleteTransaction).toHaveBeenCalledTimes(1);
+    });
+
+    expect(mockDeleteTransaction).toHaveBeenCalledWith('txn-1');
+  });
+
+  it('calls updateTransaction when editing existing transaction', async () => {
+    mockUseTransactionStore.mockReturnValue({
+      transactions: mockTransactions,
+      addTransaction: mockAddTransaction,
+      updateTransaction: mockUpdateTransaction,
+      deleteTransaction: mockDeleteTransaction,
+      getTransactionsByAccount: jest.fn(),
+      getTransactionsByType: jest.fn(),
+      getTransactionsByDateRange: jest.fn(),
+    });
+
+    const user = userEvent.setup();
+    render(<TransactionsPage />);
+
+    // Click edit button
+    const editButton = screen.getByLabelText(/edit transaction/i);
+    await user.click(editButton);
+
+    // Get the dialog and scope queries to it
+    const dialog = screen.getByRole('dialog');
+
+    // Update description - query within the dialog only
+    const descriptionInput = within(dialog).getByLabelText(/description/i);
+    await user.clear(descriptionInput);
+    await user.type(descriptionInput, 'Updated shopping');
+
+    // Submit
+    const updateButton = within(dialog).getByRole('button', { name: /update/i });
+    await user.click(updateButton);
+
+    await waitFor(() => {
+      expect(mockUpdateTransaction).toHaveBeenCalledTimes(1);
+    });
+
+    expect(mockUpdateTransaction).toHaveBeenCalledWith(
+      'txn-1',
+      expect.objectContaining({
+        description: 'Updated shopping',
+        amount: 50.25,
+        transactionTypeId: 'tt-1',
+        fromAccountId: 'acc-1',
+      })
+    );
   });
 });

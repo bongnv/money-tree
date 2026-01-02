@@ -17,6 +17,16 @@ The MVP focuses on core personal finance tracking functionality with local file 
   - [ ] Inline form always visible on the starting page (no button click required)
   - [ ] Enter essential details (amount, date, type, account) and submit
   - [ ] Form clears automatically after submission for quick consecutive entries
+- [ ] **Bulk Transaction Entry (Post-MVP):**
+  - [ ] Alternative spreadsheet-like grid view for entering multiple transactions
+  - [ ] Tab through cells to enter data quickly (similar to Excel/Google Sheets)
+  - [ ] Inline editing with auto-complete for accounts and categories
+  - [ ] Validation happens in real-time as you type
+  - [ ] Add/remove rows dynamically
+  - [ ] Copy/paste support from external sources (bank statements, Excel)
+  - [ ] Save entire batch at once
+  - [ ] Undo/redo support for batch operations
+  - [ ] Quick fill-down for repeated values (same date, same account)
 - [ ] Each transaction includes the following details:
   - [ ] **Transaction Type**: Defines the specific classification (e.g., "Groceries", "Salary", "Stock Purchase")
     - [ ] The Transaction Type automatically determines its parent Category and Group through the hierarchy

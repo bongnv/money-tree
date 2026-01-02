@@ -712,18 +712,6 @@ These features will be implemented after the MVP is validated by users.
 - [ ] **Write tests**: Historical analysis queries
 - [ ] **Test**: Search across years, view long-term trends
 
-## Phase 12: Settings & Data Management (Post-MVP)
-
-**Requirements**: Data Import/Export
-
-**Goal**: Users can manage app settings and advanced data operations
-
-### 12.1 Build Settings UI
-- [ ] Create `src/components/settings/DataManagement.tsx` with import/export
-- [ ] Create `src/components/settings/SettingsPage.tsx`
-- [ ] Add route `/settings`
-- [ ] **Test**: Export all data, import data, clear data
-
 ## Phase 13: Conflict Detection & Auto-Merge (Post-MVP)
 - [ ] Test complete user workflows end-to-end
 - [ ] Test data flow between stores and components
@@ -807,13 +795,86 @@ These features will be implemented after the MVP is validated by users.
 
 These features will be implemented after the MVP is validated by users.
 
-## Phase 12: Budget Planning Feature (Post-MVP)
+## Phase 12: Bulk Transaction Entry (Post-MVP)
+
+**Requirements**: FR-1 (Transaction Management - Bulk Entry)
+
+**Goal**: Enhance existing TransactionsPage to support efficient bulk entry directly in the transaction list
+
+### 12.1 Enhance Transaction List for Inline Editing
+- [ ] Update `src/components/transactions/TransactionList.tsx` to support inline editing mode
+- [ ] Add "Edit Mode" toggle button to TransactionsPage header
+- [ ] Convert list items to editable cells when in edit mode
+- [ ] Add inline cell editors for each field:
+  - [ ] Date cell with date picker
+  - [ ] Amount cell with numeric input
+  - [ ] Type cell with auto-complete dropdown
+  - [ ] Account cells with auto-complete dropdown
+  - [ ] Description cell with text input
+- [ ] Tab/Enter navigation between cells
+- [ ] **Write tests**: Edit mode toggle, inline editing
+- [ ] **Test**: Toggle edit mode, tab through cells, edit values
+
+### 12.2 Add Quick Entry Row
+- [ ] Add "New Transaction" row at top of list (always visible in edit mode)
+- [ ] Pre-filled with smart defaults (today's date, last used account)
+- [ ] Submit adds transaction and clears row for next entry
+- [ ] Enter key in description field submits and focuses on amount for next
+- [ ] Support rapid entry without leaving keyboard
+- [ ] **Write tests**: Quick entry row, keyboard workflow
+- [ ] **Test**: Enter 5+ transactions rapidly using only keyboard
+
+### 12.3 Add Inline Validation and Auto-Complete
+- [ ] Real-time validation as user types (same as TransactionForm)
+- [ ] Auto-complete for accounts and transaction types
+- [ ] Visual validation indicators (red border for errors)
+- [ ] Prevent save of invalid transactions
+- [ ] **Write tests**: Validation rules, auto-complete
+- [ ] **Test**: Trigger validation errors, use auto-complete
+
+### 12.4 Add Fill-Down and Duplicate Features
+- [ ] Right-click context menu on transaction rows:
+  - [ ] "Duplicate" - copy transaction to new row
+  - [ ] "Fill Down Date" - copy date from row above
+  - [ ] "Fill Down Account" - copy account from row above
+- [ ] Keyboard shortcuts:
+  - [ ] Ctrl+D to duplicate selected transaction
+  - [ ] Ctrl+Shift+D to fill down from previous row
+- [ ] **Write tests**: Context menu, keyboard shortcuts
+- [ ] **Test**: Duplicate transactions, fill down common fields
+
+### 12.5 Add Paste from Clipboard
+- [ ] Detect when user pastes into description field
+- [ ] Parse common bank statement formats (tab/comma delimited)
+- [ ] Show preview dialog with column mapping:
+  - [ ] Auto-detect date, amount, description columns
+  - [ ] User confirms/adjusts mapping
+  - [ ] Preview parsed transactions
+- [ ] Bulk import parsed transactions
+- [ ] Handle various date and amount formats
+- [ ] **Write tests**: Clipboard parsing, column detection
+- [ ] **Test**: Copy from Excel/bank PDF, paste into list
+
+### 12.6 Add Batch Operations
+- [ ] Multi-select transactions (Shift+Click, Ctrl+Click)
+- [ ] Batch actions in edit mode:
+  - [ ] Delete selected (with confirmation)
+  - [ ] Change category for selected
+  - [ ] Change account for selected
+- [ ] Undo/redo for batch operations (Ctrl+Z / Ctrl+Y)
+- [ ] Unsaved changes indicator in edit mode
+- [ ] **Write tests**: Multi-select, batch operations, undo
+- [ ] **Test**: Select multiple transactions, batch delete, undo
+
+**Manual Verification (User):** Enable edit mode on transactions page, use quick entry row to add 10+ transactions rapidly, duplicate transactions, paste from bank statement, batch edit categories, verify all changes saved correctly when exiting edit mode.
+
+## Phase 13: Budget Planning Feature (Post-MVP)
 
 **Requirements**: FR-8 (Budget Planning)
 
 **Goal**: Users can create budgets and track spending against them
 
-### 12.1 Implement Budget Data Layer
+### 13.1 Implement Budget Data Layer
 - [ ] Create `src/stores/useBudgetStore.ts` with budget and budget items
 - [ ] Add budget vs actual calculation functions to calculation service
 
@@ -827,18 +888,18 @@ These features will be implemented after the MVP is validated by users.
 - [ ] Add route `/budgets`
 - [ ] **Test**: Create budget with items, set as active, view budget vs actual, edit budget, delete budget
 
-### 12.3 Add Budget Widget to Dashboard
+### 13.3 Add Budget Widget to Dashboard
 - [ ] Create `src/components/dashboard/BudgetWidget.tsx`
 - [ ] Integrate into Dashboard page
 - [ ] **Test**: Dashboard shows budget tracking status
 
-## Phase 13: Financial Reports Feature (Post-MVP)
+## Phase 14: Financial Reports Feature (Post-MVP)
 
 **Requirements**: FR-9 (Financial Reports)
 
 **Goal**: Users can view financial reports and analytics
 
-### 13.1 Setup Chart Library
+### 14.1 Setup Chart Library
 - [ ] Install charting library (recharts or nivo)
 - [ ] Create `src/components/charts/LineChart.tsx`
 - [ ] Create `src/components/charts/BarChart.tsx`
@@ -850,42 +911,42 @@ These features will be implemented after the MVP is validated by users.
 - [ ] Add date range selector and period grouping
 - [ ] **Test**: View cash flow for different date ranges, verify calculations match transactions
 
-### 13.3 Build Balance Sheet Report
+### 14.3 Build Balance Sheet Report
 - [ ] Create `src/components/reports/BalanceSheet.tsx`
 - [ ] Show accounts grouped by type with balances
 - [ ] Calculate and display net worth
 - [ ] **Test**: Verify balance sheet shows correct account balances and net worth
 
-### 13.4 Build Budget Analysis Report
+### 14.4 Build Budget Analysis Report
 - [ ] Create `src/components/reports/BudgetAnalysis.tsx`
 - [ ] Show budget vs actual with progress bars and color coding
 - [ ] **Test**: Verify budget analysis matches budget and transactions
 
-### 13.5 Build Account Overview Report
+### 14.5 Build Account Overview Report
 - [ ] Create `src/components/reports/AccountOverview.tsx`
 - [ ] Show account transactions and balance over time
 - [ ] **Test**: View individual account history and balance chart
 
-### 13.6 Create Reports Page
+### 14.6 Create Reports Page
 - [ ] Create `src/components/reports/ReportsPage.tsx` with tab navigation
 - [ ] Add export buttons for each report
 - [ ] Create `src/utils/export.utils.ts` for CSV/JSON export
 - [ ] Add route `/reports`
 - [ ] **Test**: Switch between reports, export data
 
-## Phase 14: Settings & Data Management Feature (Post-MVP)
+## Phase 15: Settings & Data Management Feature (Post-MVP)
 
 **Requirements**: Data Import/Export
 
 **Goal**: Users can manage app settings and advanced data operations
 
-### 14.1 Build Settings UI
+### 15.1 Build Settings UI
 - [ ] Create `src/components/settings/DataManagement.tsx` with import/export
 - [ ] Create `src/components/settings/SettingsPage.tsx`
 - [ ] Add route `/settings`
 - [ ] **Test**: Export all data, import data, clear data
 
-## Phase 13: Conflict Detection & Auto-Merge (Post-MVP)
+## Phase 16: Conflict Detection & Auto-Merge (Post-MVP)
 
 **Requirements**: FR-10 (Advanced Data Management), NFR-9 (Advanced Reliability)
 
@@ -954,39 +1015,39 @@ These features will be implemented after the MVP is validated by users.
 - [ ] Test conflict detection and resolution
 - [ ] Integration tests with concurrent modifications
 
-## Phase 14: User Documentation (Post-MVP)
+## Phase 17: User Documentation (Post-MVP)
 
 **Requirements**: NFR-4 (Usability)
 
 **Goal**: Complete user documentation
 
-### 16.1 Add User Documentation
+### 17.1 Add User Documentation
 - [ ] Add help tooltips in UI for complex features
 - [ ] Create FAQ section in settings or help page
 - [ ] Create user guide (optional) with screenshots
 - [ ] **Test**: New user can understand how to use each feature
 
-## Phase 15: Advanced Error Handling & Validation (Post-MVP)
+## Phase 18: Advanced Error Handling & Validation (Post-MVP)
 
 **Requirements**: NFR-6 (Reliability), NFR-4 (Usability)
 
 **Goal**: Enhanced error handling and validation
 
-### 17.1 Add Error Boundary
+### 18.1 Add Error Boundary
 - [ ] Create `src/components/common/ErrorBoundary.tsx`
 - [ ] Create `src/components/common/ErrorMessage.tsx`
 - [ ] Create `src/components/common/NotificationSnackbar.tsx`
 - [ ] Wrap major sections in error boundaries
 - [ ] **Test**: Simulate errors, verify user sees helpful messages
 
-### 17.2 Enhanced Validation
+### 18.2 Enhanced Validation
 - [ ] Add comprehensive Zod validation to all forms
 - [ ] Validate business rules
 - [ ] Prevent deletion of referenced entities
 - [ ] Add user-friendly error messages
 - [ ] **Test**: Try to submit invalid data, try to delete referenced entities
 
-## Phase 16: Cloud Storage Integration (Post-MVP, Optional)
+## Phase 19: Cloud Storage Integration (Post-MVP, Optional)
 
 **Requirements**: FR-11 (Cloud Storage Integration), NFR-8 (Cloud Security)
 
@@ -996,7 +1057,7 @@ These features will be implemented after the MVP is validated by users.
 
 **Note on Authentication**: Authentication is NOT implemented by Money Tree. It is provided by the cloud storage provider's SDK. Money Tree simply integrates these SDKs to enable file access.
 
-### 18.1 Implement OneDrive Storage Provider
+### 19.1 Implement OneDrive Storage Provider
 - [ ] Install dependencies: `@azure/msal-browser`, `@microsoft/microsoft-graph-client`
 - [ ] Create `src/services/storage/OneDriveStorageProvider.ts` implementing IStorageProvider
 - [ ] Integrate `@azure/msal-browser` for authentication (handled by Microsoft's SDK)

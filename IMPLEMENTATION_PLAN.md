@@ -235,22 +235,22 @@ This plan implements all requirements from REQUIREMENTS.md.
 ### 5.2 Build Transaction Management UI
 
 #### 5.2.1 Install Dependencies and Create Common Components
-- [ ] Install `@mui/x-data-grid` for transaction list
-- [ ] Create `src/components/common/FormTextField.tsx` - reusable text field wrapper
-- [ ] **Write tests**: FormTextField.test.tsx
-- [ ] **Test**: FormTextField renders and handles validation errors
+- [x] Install `@mui/x-data-grid` for transaction list
+- [x] Create `src/components/common/FormTextField.tsx` - reusable text field wrapper
+- [x] **Write tests**: FormTextField.test.tsx
+- [x] **Test**: FormTextField renders and handles validation errors
 
 #### 5.2.2 Create Transaction Form Component
-- [ ] Create `src/components/transactions/TransactionForm.tsx`:
-  - [ ] Amount field with validation
-  - [ ] Date picker
-  - [ ] Transaction type dropdown (grouped by category)
-  - [ ] Conditional "From Account" field (for expense, transfer)
-  - [ ] Conditional "To Account" field (for income, transfer, investment)
-  - [ ] Notes field (optional)
-  - [ ] Form validation logic
-- [ ] **Write tests**: TransactionForm.test.tsx with conditional field rendering
-- [ ] **Test**: Form shows correct fields based on transaction type, validates required fields
+- [x] Create `src/components/transactions/TransactionForm.tsx`:
+  - [x] Amount field with validation
+  - [x] Date picker
+  - [x] Transaction type dropdown (grouped by category)
+  - [x] Conditional "From Account" field (for expense, transfer)
+  - [x] Conditional "To Account" field (for income, transfer, investment)
+  - [x] Notes field (optional)
+  - [x] Form validation logic
+- [x] **Write tests**: TransactionForm.test.tsx with conditional field rendering
+- [x] **Test**: Form shows correct fields based on transaction type, validates required fields
 
 #### 5.2.3 Create Transaction Dialog Component
 - [ ] Create `src/components/transactions/TransactionDialog.tsx`:

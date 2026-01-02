@@ -408,24 +408,51 @@ This plan implements all requirements from REQUIREMENTS.md.
 **Manual Verification (User):** Navigate to /budgets, click "Add Budget", select Groceries, enter $400, select Monthly, save. Verify item appears in list. Add more budgets (Rent $1,500/month, Car Insurance $600/quarter). Edit a budget amount. Delete a budget. Verify all CRUD operations work.
 
 ### 7.2 Add Progress Tracking with Actual Spending
-- [ ] Add proration and progress calculation functions to `calculation.service.ts`:
-  - [ ] `prorateBudget(amount, fromPeriod, toPeriod)` - convert between periods
-  - [ ] `calculateActualAmount(transactionTypeId, startDate, endDate)` - sum transactions
-- [ ] Update BudgetsPage to show progress for current month:
-  - [ ] Display budget amount and actual spending/income for each budget item
-  - [ ] Add progress bar with context-aware color coding:
-    - [ ] Expenses: green < 80%, yellow 80-100%, red > 100%
-    - [ ] Income: green ≥ 100%, yellow 60-99%, red < 60%
-  - [ ] Show percentage (actual / budget × 100%)
-  - [ ] Group budget items by category with context-aware labels:
-    - [ ] Income section header: "Income Targets"
-    - [ ] Expense section headers: "[Category Name] Budgets"
-  - [ ] Add total rows per section (total budget vs total actual)
-- [ ] Automatically prorate budgets to monthly for display (e.g., $600 quarterly → $200/month)
-- [ ] **Write tests**: Calculation functions, progress display, context-aware color coding for income vs expenses
+- [x] Add proration and progress calculation functions to `calculation.service.ts`:
+  - [x] `prorateBudget(amount, fromPeriod, toPeriod)` - convert between periods
+  - [x] `calculateActualAmount(transactionTypeId, startDate, endDate)` - sum transactions
+- [x] Update BudgetsPage to show progress for current month:
+  - [x] Display budget amount and actual spending/income for each budget item
+  - [x] Add progress bar with context-aware color coding:
+    - [x] Expenses: green < 80%, yellow 80-100%, red > 100%
+    - [x] Income: green ≥ 100%, yellow 60-99%, red < 60%
+  - [x] Show percentage (actual / budget × 100%)
+  - [x] Group budget items by category with context-aware labels:
+    - [x] Income section header: "Income Targets"
+    - [x] Expense section headers: "[Category Name] Budgets"
+  - [x] Add total rows per section (total budget vs total actual)
+- [x] Automatically prorate budgets to monthly for display (e.g., $600 quarterly → $200/month)
+- [x] **Write tests**: Calculation functions, progress display, context-aware color coding for income vs expenses
 **Manual Verification (User):** With budgets from 7.1, add transactions for both income (Salary) and expenses (Groceries, Rent). Navigate to /budgets and verify: (1) Income section shows "Income Targets" with green bars when meeting target, (2) Expense sections show "Budgets" with green bars when under budget, (3) Progress bars and colors invert correctly for income vs expenses, (4) $600 quarterly budget displays as $200 for current month. Add more transactions and verify real-time updates.
 
-### 7.3 Add Period Selector for Flexible Viewing
+### 7.3 Add Date Ranges for Budget Validity Periods
+- [ ] Update `src/types/models.ts` Budget model:
+  - [ ] Add `startDate?: string` - optional start date (YYYY-MM-DD format)
+  - [ ] Add `endDate?: string` - optional end date (YYYY-MM-DD format)
+  - [ ] If both null/undefined, budget is active year-round
+  - [ ] Allows multiple budgets for same transaction type with different date ranges (e.g., Rent $1500 Jan-Jun, Rent $1600 Jul-Dec)
+- [ ] Update `src/schemas/models.schema.ts`:
+  - [ ] Add optional startDate and endDate to BudgetSchema with date format validation
+  - [ ] Add validation: if both provided, endDate must be >= startDate
+- [ ] Update BudgetDialog:
+  - [ ] Add optional "Start Date" date picker
+  - [ ] Add optional "End Date" date picker
+  - [ ] Add validation: end date must be >= start date
+  - [ ] Show helper text: "Leave blank for year-round budget"
+- [ ] Update `calculation.service.ts`:
+  - [ ] Add `getActiveBudgetForPeriod(budgets, transactionTypeId, date)` - finds budget active on a specific date
+  - [ ] Update `calculateActualAmount` to respect budget date ranges when matching transactions
+- [ ] Update BudgetsPage display:
+  - [ ] Show date range if set: "Jan 1 - Jun 30, 2026" or "Year-round" if not set
+  - [ ] Filter budgets by selected view period (only show budgets active during that period)
+  - [ ] Allow multiple budgets for same transaction type if date ranges don't overlap
+- [ ] Update useBudgetStore validation:
+  - [ ] Check for overlapping date ranges when adding/editing budgets for same transaction type
+  - [ ] Prevent saving if date ranges overlap
+- [ ] **Write tests**: Date range validation, overlapping detection, active budget selection, display with date ranges
+**Manual Verification (User):** Navigate to /budgets. Add budget for Rent $1500/month with start date Jan 1, 2026 and end date Jun 30, 2026. Add another budget for Rent $1600/month with start date Jul 1, 2026 and end date Dec 31, 2026. Verify both appear in list with date ranges shown. Verify progress tracking uses correct budget based on transaction dates. Try to add overlapping budget and verify validation error. Add year-round budget for Groceries (no dates) and verify it shows "Year-round".
+
+### 7.4 Add Period Selector for Flexible Viewing
 - [ ] Create `src/components/budgets/PeriodSelector.tsx`:
   - [ ] Dropdown with options: specific months (Jan 2026, Feb 2026), quarters (Q1 2026), years (2026), custom date range
   - [ ] Default to current month
@@ -433,13 +460,15 @@ This plan implements all requirements from REQUIREMENTS.md.
   - [ ] Pass selected period to progress calculations
   - [ ] Prorate all budgets based on selected period length
   - [ ] Calculate actual spending for selected period only
+  - [ ] Filter and show only budgets active during selected period
 - [ ] Update progress display logic:
   - [ ] Monthly budget viewed as quarterly → multiply by 3
   - [ ] Quarterly budget viewed as monthly → divide by 3
   - [ ] Yearly budget viewed as monthly → divide by 12
   - [ ] Show prorated amount with period indicator
-- [ ] **Write tests**: PeriodSelector.test.tsx, proration for different period combinations
-**Manual Verification (User):** With existing budgets and transactions, navigate to /budgets. Use period selector to switch between January 2026, Q1 2026, and 2026. Verify budget amounts prorate correctly (e.g., Groceries $400/month shows as $1,200 for Q1, $4,800 for year). Verify actual spending updates based on selected period. Switch to different months with different transaction amounts and verify progress updates correctly.
+  - [ ] Handle partial overlaps: if budget is only active for 2 months of Q1, prorate accordingly
+- [ ] **Write tests**: PeriodSelector.test.tsx, proration for different period combinations, partial period calculations
+**Manual Verification (User):** With existing budgets (including date-ranged ones), navigate to /budgets. Use period selector to switch between January 2026, Q1 2026, and 2026. Verify budget amounts prorate correctly (e.g., Groceries $400/month shows as $1,200 for Q1, $4,800 for year). Verify only relevant budgets show (Rent $1500 shows in Jan-Jun view, Rent $1600 shows in Jul-Dec view). Verify partial overlaps calculate correctly (budget active 2 of 3 months in quarter shows 2/3 of prorated amount).
 
 ## Phase 8: Dashboard with Quick Transaction Entry (MVP)
 

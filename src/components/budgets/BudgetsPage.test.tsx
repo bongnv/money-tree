@@ -3,18 +3,27 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import { BudgetsPage } from './BudgetsPage';
 import { useBudgetStore } from '../../stores/useBudgetStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
-import type { Budget } from '../../types/models';
+import { useTransactionStore } from '../../stores/useTransactionStore';
+import type { Budget, Transaction } from '../../types/models';
 import { Group } from '../../types/enums';
 
 // Mock the stores
 jest.mock('../../stores/useBudgetStore');
 jest.mock('../../stores/useCategoryStore');
+jest.mock('../../stores/useTransactionStore');
 
 const mockCategories = [
   {
     id: 'cat1',
     name: 'Housing',
     group: Group.EXPENSE,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'cat2',
+    name: 'Income',
+    group: Group.INCOME,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   },
@@ -27,6 +36,36 @@ const mockTransactionTypes = [
     categoryId: 'cat1',
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'tt2',
+    name: 'Salary',
+    categoryId: 'cat2',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+];
+
+const mockTransactions: Transaction[] = [
+  {
+    id: 'txn1',
+    date: '2026-01-05',
+    description: 'Rent payment',
+    amount: 1200,
+    transactionTypeId: 'tt1',
+    fromAccountId: 'acc1',
+    createdAt: '2026-01-05T00:00:00.000Z',
+    updatedAt: '2026-01-05T00:00:00.000Z',
+  },
+  {
+    id: 'txn2',
+    date: '2026-01-15',
+    description: 'Salary',
+    amount: 4000,
+    transactionTypeId: 'tt2',
+    toAccountId: 'acc1',
+    createdAt: '2026-01-15T00:00:00.000Z',
+    updatedAt: '2026-01-15T00:00:00.000Z',
   },
 ];
 
@@ -58,6 +97,10 @@ describe('BudgetsPage', () => {
       categories: mockCategories,
       transactionTypes: mockTransactionTypes,
       getCategoryById: mockGetCategoryById,
+    });
+
+    (useTransactionStore as unknown as jest.Mock).mockReturnValue({
+      transactions: mockTransactions,
     });
   });
 
@@ -103,9 +146,10 @@ describe('BudgetsPage', () => {
 
     render(<BudgetsPage />);
 
-    expect(screen.getByText('Housing')).toBeInTheDocument();
+    expect(screen.getByText('Housing Budgets')).toBeInTheDocument();
     expect(screen.getByText('Rent')).toBeInTheDocument();
-    expect(screen.getByText(/\$1,?500\.00 per month/)).toBeInTheDocument();
+    const amountTexts = screen.getAllByText(/\$1,?200\.00 of \$1,?500\.00/);
+    expect(amountTexts.length).toBeGreaterThanOrEqual(1);
   });
 
   it('should open dialog when Add Budget button is clicked', () => {
@@ -183,9 +227,19 @@ describe('BudgetsPage', () => {
   });
 
   it('should display correct period labels', () => {
+    // Create separate transaction types for each budget to avoid duplicates
+    const tt2 = { ...mockTransactionTypes[0], id: 'tt1-q', name: 'Rent Quarterly' };
+    const tt3 = { ...mockTransactionTypes[0], id: 'tt1-y', name: 'Rent Yearly' };
+
+    (useCategoryStore as unknown as jest.Mock).mockReturnValue({
+      categories: mockCategories,
+      transactionTypes: [...mockTransactionTypes, tt2, tt3],
+      getCategoryById: mockGetCategoryById,
+    });
+
     const monthlyBudget = { ...mockBudget, id: '1', period: 'monthly' as const };
-    const quarterlyBudget = { ...mockBudget, id: '2', period: 'quarterly' as const, transactionTypeId: 'tt1' };
-    const yearlyBudget = { ...mockBudget, id: '3', period: 'yearly' as const, transactionTypeId: 'tt1' };
+    const quarterlyBudget = { ...mockBudget, id: '2', period: 'quarterly' as const, amount: 4500, transactionTypeId: 'tt1-q' };
+    const yearlyBudget = { ...mockBudget, id: '3', period: 'yearly' as const, amount: 18000, transactionTypeId: 'tt1-y' };
 
     (useBudgetStore as unknown as jest.Mock).mockReturnValue({
       budgets: [monthlyBudget, quarterlyBudget, yearlyBudget],
@@ -197,8 +251,103 @@ describe('BudgetsPage', () => {
 
     render(<BudgetsPage />);
 
-    expect(screen.getByText(/\$1,?500\.00 per month/)).toBeInTheDocument();
-    expect(screen.getByText(/\$1,?500\.00 per quarter/)).toBeInTheDocument();
-    expect(screen.getByText(/\$1,?500\.00 per year/)).toBeInTheDocument();
+    // Should show original budget with period
+    expect(screen.getByText(/Original: \$1,?500\.00 monthly/)).toBeInTheDocument();
+    expect(screen.getByText(/Original: \$4,?500\.00 quarterly/)).toBeInTheDocument();
+    expect(screen.getByText(/Original: \$18,?000\.00 yearly/)).toBeInTheDocument();
+  });
+
+  it('should display progress bars with actual spending', () => {
+    (useBudgetStore as unknown as jest.Mock).mockReturnValue({
+      budgets: [mockBudget],
+      addBudget: mockAddBudget,
+      updateBudget: mockUpdateBudget,
+      deleteBudget: mockDeleteBudget,
+      getBudgetByTransactionTypeId: mockGetBudgetByTransactionTypeId,
+    });
+
+    render(<BudgetsPage />);
+
+    // Should show actual spending vs budget ($1200 of $1500 = 80%)
+    const amountTexts = screen.getAllByText(/\$1,?200\.00 of \$1,?500\.00/);
+    expect(amountTexts.length).toBeGreaterThanOrEqual(1);
+    const percentTexts = screen.getAllByText(/80%/);
+    expect(percentTexts.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('should prorate quarterly budgets to monthly', () => {
+    const quarterlyBudget = { ...mockBudget, amount: 4500, period: 'quarterly' as const };
+
+    (useBudgetStore as unknown as jest.Mock).mockReturnValue({
+      budgets: [quarterlyBudget],
+      addBudget: mockAddBudget,
+      updateBudget: mockUpdateBudget,
+      deleteBudget: mockDeleteBudget,
+      getBudgetByTransactionTypeId: mockGetBudgetByTransactionTypeId,
+    });
+
+    render(<BudgetsPage />);
+
+    // $4500 quarterly = $1500 monthly
+    const amountTexts = screen.getAllByText(/\$1,?200\.00 of \$1,?500\.00/);
+    expect(amountTexts.length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/Original: \$4,?500\.00 quarterly/)).toBeInTheDocument();
+  });
+
+  it('should prorate yearly budgets to monthly', () => {
+    const yearlyBudget = { ...mockBudget, amount: 18000, period: 'yearly' as const };
+
+    (useBudgetStore as unknown as jest.Mock).mockReturnValue({
+      budgets: [yearlyBudget],
+      addBudget: mockAddBudget,
+      updateBudget: mockUpdateBudget,
+      deleteBudget: mockDeleteBudget,
+      getBudgetByTransactionTypeId: mockGetBudgetByTransactionTypeId,
+    });
+
+    render(<BudgetsPage />);
+
+    // $18000 yearly = $1500 monthly
+    const amountTexts = screen.getAllByText(/\$1,?200\.00 of \$1,?500\.00/);
+    expect(amountTexts.length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/Original: \$18,?000\.00 yearly/)).toBeInTheDocument();
+  });
+
+  it('should show context-aware section titles for income vs expenses', () => {
+    const incomeBudget = { ...mockBudget, id: '2', transactionTypeId: 'tt2', amount: 5000 };
+
+    (useBudgetStore as unknown as jest.Mock).mockReturnValue({
+      budgets: [mockBudget, incomeBudget],
+      addBudget: mockAddBudget,
+      updateBudget: mockUpdateBudget,
+      deleteBudget: mockDeleteBudget,
+      getBudgetByTransactionTypeId: mockGetBudgetByTransactionTypeId,
+    });
+
+    render(<BudgetsPage />);
+
+    // Expense category should show "Budgets"
+    expect(screen.getByText('Housing Budgets')).toBeInTheDocument();
+    
+    // Income category should show "Income Targets"
+    expect(screen.getByText('Income Targets')).toBeInTheDocument();
+  });
+
+  it('should display total row per category', () => {
+    (useBudgetStore as unknown as jest.Mock).mockReturnValue({
+      budgets: [mockBudget],
+      addBudget: mockAddBudget,
+      updateBudget: mockUpdateBudget,
+      deleteBudget: mockDeleteBudget,
+      getBudgetByTransactionTypeId: mockGetBudgetByTransactionTypeId,
+    });
+
+    render(<BudgetsPage />);
+
+    // Should show total row
+    expect(screen.getByText('Total')).toBeInTheDocument();
+    // Total should match the budget item totals
+    const totalTexts = screen.getAllByText(/\$1,?200\.00 of \$1,?500\.00/);
+    expect(totalTexts.length).toBeGreaterThanOrEqual(2); // One for item, one for total
   });
 });

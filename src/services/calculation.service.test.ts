@@ -324,4 +324,153 @@ describe('CalculationService', () => {
       expect(balances[1].balance).toBe(4000); // Only income counted
     });
   });
+
+  describe('prorateBudget', () => {
+    it('should return same amount when periods are equal', () => {
+      expect(calculationService.prorateBudget(100, 'monthly', 'monthly')).toBe(100);
+      expect(calculationService.prorateBudget(300, 'quarterly', 'quarterly')).toBe(300);
+      expect(calculationService.prorateBudget(1200, 'yearly', 'yearly')).toBe(1200);
+    });
+
+    it('should convert monthly to quarterly', () => {
+      expect(calculationService.prorateBudget(100, 'monthly', 'quarterly')).toBe(300);
+      expect(calculationService.prorateBudget(400, 'monthly', 'quarterly')).toBe(1200);
+    });
+
+    it('should convert monthly to yearly', () => {
+      expect(calculationService.prorateBudget(100, 'monthly', 'yearly')).toBe(1200);
+      expect(calculationService.prorateBudget(500, 'monthly', 'yearly')).toBe(6000);
+    });
+
+    it('should convert quarterly to monthly', () => {
+      expect(calculationService.prorateBudget(300, 'quarterly', 'monthly')).toBe(100);
+      expect(calculationService.prorateBudget(600, 'quarterly', 'monthly')).toBe(200);
+    });
+
+    it('should convert quarterly to yearly', () => {
+      expect(calculationService.prorateBudget(300, 'quarterly', 'yearly')).toBe(1200);
+      expect(calculationService.prorateBudget(900, 'quarterly', 'yearly')).toBe(3600);
+    });
+
+    it('should convert yearly to monthly', () => {
+      expect(calculationService.prorateBudget(1200, 'yearly', 'monthly')).toBe(100);
+      expect(calculationService.prorateBudget(2400, 'yearly', 'monthly')).toBe(200);
+    });
+
+    it('should convert yearly to quarterly', () => {
+      expect(calculationService.prorateBudget(1200, 'yearly', 'quarterly')).toBe(300);
+      expect(calculationService.prorateBudget(3600, 'yearly', 'quarterly')).toBe(900);
+    });
+
+    it('should handle decimal results', () => {
+      expect(calculationService.prorateBudget(100, 'monthly', 'yearly')).toBe(1200);
+      expect(calculationService.prorateBudget(1000, 'yearly', 'monthly')).toBeCloseTo(83.33, 2);
+      expect(calculationService.prorateBudget(500, 'quarterly', 'monthly')).toBeCloseTo(166.67, 2);
+    });
+  });
+
+  describe('calculateActualAmount', () => {
+    const transactions: Transaction[] = [
+      {
+        id: 'txn-1',
+        date: '2026-01-05',
+        description: 'Groceries',
+        amount: 100,
+        transactionTypeId: 'type-1',
+        fromAccountId: 'acc-1',
+        createdAt: '2026-01-05T00:00:00.000Z',
+        updatedAt: '2026-01-05T00:00:00.000Z',
+      },
+      {
+        id: 'txn-2',
+        date: '2026-01-15',
+        description: 'Groceries',
+        amount: 150,
+        transactionTypeId: 'type-1',
+        fromAccountId: 'acc-1',
+        createdAt: '2026-01-15T00:00:00.000Z',
+        updatedAt: '2026-01-15T00:00:00.000Z',
+      },
+      {
+        id: 'txn-3',
+        date: '2026-01-20',
+        description: 'Restaurant',
+        amount: 50,
+        transactionTypeId: 'type-2',
+        fromAccountId: 'acc-1',
+        createdAt: '2026-01-20T00:00:00.000Z',
+        updatedAt: '2026-01-20T00:00:00.000Z',
+      },
+      {
+        id: 'txn-4',
+        date: '2026-02-05',
+        description: 'Groceries',
+        amount: 120,
+        transactionTypeId: 'type-1',
+        fromAccountId: 'acc-1',
+        createdAt: '2026-02-05T00:00:00.000Z',
+        updatedAt: '2026-02-05T00:00:00.000Z',
+      },
+    ];
+
+    it('should calculate total for transaction type in date range', () => {
+      const total = calculationService.calculateActualAmount(
+        'type-1',
+        transactions,
+        '2026-01-01',
+        '2026-01-31'
+      );
+      expect(total).toBe(250); // 100 + 150
+    });
+
+    it('should exclude transactions outside date range', () => {
+      const total = calculationService.calculateActualAmount(
+        'type-1',
+        transactions,
+        '2026-01-01',
+        '2026-01-10'
+      );
+      expect(total).toBe(100); // Only first transaction
+    });
+
+    it('should return 0 for transaction type with no transactions in range', () => {
+      const total = calculationService.calculateActualAmount(
+        'type-3',
+        transactions,
+        '2026-01-01',
+        '2026-01-31'
+      );
+      expect(total).toBe(0);
+    });
+
+    it('should include transactions on boundary dates', () => {
+      const total = calculationService.calculateActualAmount(
+        'type-1',
+        transactions,
+        '2026-01-05',
+        '2026-01-15'
+      );
+      expect(total).toBe(250); // Both boundary transactions included
+    });
+
+    it('should work across multiple months', () => {
+      const total = calculationService.calculateActualAmount(
+        'type-1',
+        transactions,
+        '2026-01-01',
+        '2026-02-28'
+      );
+      expect(total).toBe(370); // 100 + 150 + 120
+    });
+
+    it('should filter by transaction type', () => {
+      const total = calculationService.calculateActualAmount(
+        'type-2',
+        transactions,
+        '2026-01-01',
+        '2026-01-31'
+      );
+      expect(total).toBe(50); // Only type-2 transaction
+    });
+  });
 });

@@ -162,6 +162,71 @@ class CalculationService {
 
     return balances;
   }
+
+  /**
+   * Prorate a budget amount from one period to another
+   * @param amount Original budget amount
+   * @param fromPeriod Source period ('monthly' | 'quarterly' | 'yearly')
+   * @param toPeriod Target period ('monthly' | 'quarterly' | 'yearly')
+   * @returns Prorated amount
+   */
+  prorateBudget(
+    amount: number,
+    fromPeriod: 'monthly' | 'quarterly' | 'yearly',
+    toPeriod: 'monthly' | 'quarterly' | 'yearly'
+  ): number {
+    if (fromPeriod === toPeriod) {
+      return amount;
+    }
+
+    // Convert to monthly first
+    let monthlyAmount: number;
+    switch (fromPeriod) {
+      case 'monthly':
+        monthlyAmount = amount;
+        break;
+      case 'quarterly':
+        monthlyAmount = amount / 3;
+        break;
+      case 'yearly':
+        monthlyAmount = amount / 12;
+        break;
+    }
+
+    // Convert from monthly to target period
+    switch (toPeriod) {
+      case 'monthly':
+        return monthlyAmount;
+      case 'quarterly':
+        return monthlyAmount * 3;
+      case 'yearly':
+        return monthlyAmount * 12;
+    }
+  }
+
+  /**
+   * Calculate actual amount (income or expenses) for a transaction type within a date range
+   * @param transactionTypeId Transaction type ID
+   * @param transactions All transactions
+   * @param startDate Start date (YYYY-MM-DD format)
+   * @param endDate End date (YYYY-MM-DD format)
+   * @returns Total amount for the transaction type in the period
+   */
+  calculateActualAmount(
+    transactionTypeId: string,
+    transactions: Transaction[],
+    startDate: string,
+    endDate: string
+  ): number {
+    return transactions
+      .filter(
+        (t) =>
+          t.transactionTypeId === transactionTypeId &&
+          t.date >= startDate &&
+          t.date <= endDate
+      )
+      .reduce((sum, t) => sum + t.amount, 0);
+  }
 }
 
 export const calculationService = new CalculationService();

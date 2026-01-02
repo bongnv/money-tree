@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -9,6 +9,7 @@ import {
   ListItemText,
   IconButton,
   Divider,
+  LinearProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -17,16 +18,33 @@ import {
 } from '@mui/icons-material';
 import { useBudgetStore } from '../../stores/useBudgetStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
+import { useTransactionStore } from '../../stores/useTransactionStore';
 import { BudgetDialog } from './BudgetDialog';
 import type { Budget } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
+import { calculationService } from '../../services/calculation.service';
+import { Group } from '../../types/enums';
 
 export const BudgetsPage: React.FC = () => {
   const { budgets, addBudget, updateBudget, deleteBudget, getBudgetByTransactionTypeId } = useBudgetStore();
   const { transactionTypes, getCategoryById } = useCategoryStore();
+  const { transactions } = useTransactionStore();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | undefined>(undefined);
+
+  // Get current month's date range
+  const { startDate, endDate } = useMemo(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const lastDay = new Date(year, month, 0).getDate();
+    
+    return {
+      startDate: `${year}-${String(month).padStart(2, '0')}-01`,
+      endDate: `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`,
+    };
+  }, []);
 
   const handleAdd = () => {
     setEditingBudget(undefined);
@@ -70,41 +88,80 @@ export const BudgetsPage: React.FC = () => {
     }
   };
 
-  const getPeriodLabel = (period: string): string => {
-    switch (period) {
-      case 'monthly':
-        return 'per month';
-      case 'quarterly':
-        return 'per quarter';
-      case 'yearly':
-        return 'per year';
-      default:
-        return '';
+  const getProgressColor = (percentage: number, isIncome: boolean): string => {
+    if (isIncome) {
+      // Income: green when meeting/exceeding target
+      if (percentage >= 100) return 'success';
+      if (percentage >= 60) return 'warning';
+      return 'error';
+    } else {
+      // Expenses: green when under budget
+      if (percentage < 80) return 'success';
+      if (percentage <= 100) return 'warning';
+      return 'error';
     }
   };
 
-  // Group budget items by category
-  const groupedBudgets = budgets.reduce((acc, budget) => {
-    const transactionType = transactionTypes.find((tt) => tt.id === budget.transactionTypeId);
-    if (!transactionType) return acc;
+  // Group budget items by category with progress data
+  const groupedBudgets = useMemo(() => {
+    return budgets.reduce((acc, budget) => {
+      const transactionType = transactionTypes.find((tt) => tt.id === budget.transactionTypeId);
+      if (!transactionType) return acc;
 
-    const category = getCategoryById(transactionType.categoryId);
-    if (!category) return acc;
+      const category = getCategoryById(transactionType.categoryId);
+      if (!category) return acc;
 
-    if (!acc[category.id]) {
-      acc[category.id] = {
-        category,
-        items: [],
-      };
-    }
+      // Prorate budget to monthly
+      const monthlyBudget = calculationService.prorateBudget(budget.amount, budget.period, 'monthly');
+      
+      // Calculate actual amount for current month
+      const actualAmount = calculationService.calculateActualAmount(
+        budget.transactionTypeId,
+        transactions,
+        startDate,
+        endDate
+      );
 
-    acc[category.id].items.push({
-      budget,
-      transactionType,
-    });
+      const percentage = monthlyBudget > 0 ? (actualAmount / monthlyBudget) * 100 : 0;
 
-    return acc;
-  }, {} as Record<string, { category: any; items: { budget: Budget; transactionType: any }[] }>);
+      if (!acc[category.id]) {
+        acc[category.id] = {
+          category,
+          items: [],
+          totalBudget: 0,
+          totalActual: 0,
+        };
+      }
+
+      acc[category.id].items.push({
+        budget,
+        transactionType,
+        monthlyBudget,
+        actualAmount,
+        percentage,
+      });
+
+      acc[category.id].totalBudget += monthlyBudget;
+      acc[category.id].totalActual += actualAmount;
+
+      return acc;
+    }, {} as Record<string, { 
+      category: any; 
+      items: { 
+        budget: Budget; 
+        transactionType: any; 
+        monthlyBudget: number;
+        actualAmount: number;
+        percentage: number;
+      }[];
+      totalBudget: number;
+      totalActual: number;
+    }>);
+  }, [budgets, transactionTypes, transactions, startDate, endDate, getCategoryById]);
+
+  const getSectionTitle = (categoryGroup: Group): string => {
+    return categoryGroup === Group.INCOME ? 'Targets' : 'Budgets';
+  };
 
   return (
     <Box>
@@ -135,46 +192,90 @@ export const BudgetsPage: React.FC = () => {
         </Paper>
       ) : (
         <Box>
-          {Object.values(groupedBudgets).map(({ category, items }) => (
-            <Paper key={category.id} sx={{ mb: 2 }}>
-              <Box sx={{ p: 2, backgroundColor: 'grey.100' }}>
-                <Typography variant="h6">{category.name}</Typography>
-              </Box>
-              <List disablePadding>
-                {items.map(({ budget, transactionType }, index) => (
-                  <React.Fragment key={budget.id}>
-                    {index > 0 && <Divider />}
-                    <ListItem
-                      secondaryAction={
-                        <Box>
-                          <IconButton
-                            edge="end"
-                            aria-label="edit"
-                            onClick={() => handleEdit(budget)}
-                            sx={{ mr: 1 }}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                          <IconButton
-                            edge="end"
-                            aria-label="delete"
-                            onClick={() => handleDelete(budget)}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
+          {Object.values(groupedBudgets).map(({ category, items, totalBudget, totalActual }) => {
+            const isIncome = category.group === Group.INCOME;
+            const totalPercentage = totalBudget > 0 ? (totalActual / totalBudget) * 100 : 0;
+
+            return (
+              <Paper key={category.id} sx={{ mb: 2 }}>
+                <Box sx={{ p: 2, backgroundColor: 'grey.100' }}>
+                  <Typography variant="h6">
+                    {category.name} {getSectionTitle(category.group)}
+                  </Typography>
+                </Box>
+                <List disablePadding>
+                  {items.map(({ budget, transactionType, monthlyBudget, actualAmount, percentage }, index) => (
+                    <React.Fragment key={budget.id}>
+                      {index > 0 && <Divider />}
+                      <ListItem
+                        sx={{ flexDirection: 'column', alignItems: 'stretch', py: 2 }}
+                      >
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                          <ListItemText
+                            primary={transactionType.name}
+                            secondary={
+                              <Box component="span">
+                                <Box component="span" sx={{ display: 'block' }}>
+                                  {formatCurrency(actualAmount, 'usd')} of {formatCurrency(monthlyBudget, 'usd')} 
+                                  {' '}({percentage.toFixed(0)}%)
+                                </Box>
+                                <Box component="span" sx={{ display: 'block', fontSize: '0.75rem', color: 'text.secondary' }}>
+                                  Original: {formatCurrency(budget.amount, 'usd')} {budget.period}
+                                </Box>
+                              </Box>
+                            }
+                          />
+                          <Box>
+                            <IconButton
+                              edge="end"
+                              aria-label="edit"
+                              onClick={() => handleEdit(budget)}
+                              sx={{ mr: 1 }}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                            <IconButton
+                              edge="end"
+                              aria-label="delete"
+                              onClick={() => handleDelete(budget)}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Box>
                         </Box>
-                      }
-                    >
-                      <ListItemText
-                        primary={transactionType.name}
-                        secondary={`${formatCurrency(budget.amount, 'usd')} ${getPeriodLabel(budget.period)}`}
+                        <LinearProgress
+                          variant="determinate"
+                          value={Math.min(percentage, 100)}
+                          color={getProgressColor(percentage, isIncome) as any}
+                          sx={{ height: 8, borderRadius: 1 }}
+                        />
+                      </ListItem>
+                    </React.Fragment>
+                  ))}
+                  <Divider />
+                  <ListItem sx={{ backgroundColor: 'grey.50', py: 2 }}>
+                    <Box sx={{ width: '100%' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography variant="subtitle1" fontWeight="bold">
+                          Total
+                        </Typography>
+                        <Typography variant="subtitle1" fontWeight="bold">
+                          {formatCurrency(totalActual, 'usd')} of {formatCurrency(totalBudget, 'usd')}
+                          {' '}({totalPercentage.toFixed(0)}%)
+                        </Typography>
+                      </Box>
+                      <LinearProgress
+                        variant="determinate"
+                        value={Math.min(totalPercentage, 100)}
+                        color={getProgressColor(totalPercentage, isIncome) as any}
+                        sx={{ height: 8, borderRadius: 1 }}
                       />
-                    </ListItem>
-                  </React.Fragment>
-                ))}
-              </List>
-            </Paper>
-          ))}
+                    </Box>
+                  </ListItem>
+                </List>
+              </Paper>
+            );
+          })}
         </Box>
       )}
 

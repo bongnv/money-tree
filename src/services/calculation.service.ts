@@ -1,4 +1,4 @@
-import type { Transaction, Account, Budget } from '../types/models';
+import type { Transaction, Account, Budget, ManualAsset } from '../types/models';
 
 /**
  * Calculation service for account balances and transaction totals
@@ -329,6 +329,47 @@ class CalculationService {
     }
 
     return proratedAmount;
+  }
+
+  /**
+   * Calculate net worth (sum of all account balances + manual assets)
+   * @param accounts All accounts
+   * @param transactions All transactions
+   * @param manualAssets All manual assets
+   * @returns Total net worth
+   */
+  calculateNetWorth(accounts: Account[], transactions: Transaction[], manualAssets: ManualAsset[]): number {
+    const accountBalances = this.calculateAccountBalances(accounts, transactions);
+    const totalAccountBalance = Array.from(accountBalances.values()).reduce((sum, balance) => sum + balance, 0);
+    const totalAssets = manualAssets.reduce((sum, asset) => sum + asset.value, 0);
+    return totalAccountBalance + totalAssets;
+  }
+
+  /**
+   * Calculate cash flow (income - expenses) for a period
+   * @param transactions Transactions within the period
+   * @param startDate Start date (YYYY-MM-DD)
+   * @param endDate End date (YYYY-MM-DD)
+   * @returns Cash flow amount
+   */
+  calculateCashFlow(transactions: Transaction[], startDate: string, endDate: string): number {
+    const periodTransactions = transactions.filter(
+      (t) => t.date >= startDate && t.date <= endDate
+    );
+    return this.calculateNetIncome(periodTransactions);
+  }
+
+  /**
+   * Calculate savings rate ((income - expenses) / income × 100%)
+   * @param income Total income
+   * @param expenses Total expenses
+   * @returns Savings rate as percentage (0-100)
+   */
+  calculateSavingsRate(income: number, expenses: number): number {
+    if (income === 0) {
+      return 0;
+    }
+    return ((income - expenses) / income) * 100;
   }
 }
 

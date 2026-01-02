@@ -846,4 +846,130 @@ describe('CalculationService', () => {
       expect(prorated).toBe(0);
     });
   });
+
+  describe('Dashboard Calculations', () => {
+    const mockAssets = [
+      {
+        id: 'asset-1',
+        name: 'House',
+        type: 'real-estate' as const,
+        value: 500000,
+        date: '2026-01-01',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+      {
+        id: 'asset-2',
+        name: 'Car',
+        type: 'vehicle' as const,
+        value: 25000,
+        date: '2026-01-01',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ];
+
+    describe('calculateNetWorth', () => {
+      it('should calculate net worth from accounts and assets', () => {
+        const netWorth = calculationService.calculateNetWorth(
+          [mockAccount1, mockAccount2],
+          [incomeTransaction, expenseTransaction, transferTransaction],
+          mockAssets
+        );
+        // acc-1: 1000 + 3000 - 200 - 500 = 3300
+        // acc-2: 5000 + 500 = 5500
+        // assets: 500000 + 25000 = 525000
+        // total: 3300 + 5500 + 525000 = 533800
+        expect(netWorth).toBe(533800);
+      });
+
+      it('should handle empty assets', () => {
+        const netWorth = calculationService.calculateNetWorth(
+          [mockAccount1],
+          [incomeTransaction, expenseTransaction],
+          []
+        );
+        // acc-1: 1000 + 3000 - 200 = 3800
+        expect(netWorth).toBe(3800);
+      });
+
+      it('should handle empty accounts', () => {
+        const netWorth = calculationService.calculateNetWorth(
+          [],
+          [],
+          mockAssets
+        );
+        // assets only: 500000 + 25000 = 525000
+        expect(netWorth).toBe(525000);
+      });
+    });
+
+    describe('calculateCashFlow', () => {
+      it('should calculate cash flow for a period', () => {
+        const transactions = [
+          { ...incomeTransaction, date: '2026-01-15' },
+          { ...expenseTransaction, date: '2026-01-20' },
+        ];
+        const cashFlow = calculationService.calculateCashFlow(
+          transactions,
+          '2026-01-01',
+          '2026-01-31'
+        );
+        // income - expenses: 3000 - 200 = 2800
+        expect(cashFlow).toBe(2800);
+      });
+
+      it('should exclude transactions outside period', () => {
+        const transactions = [
+          { ...incomeTransaction, date: '2026-01-15' },
+          { ...expenseTransaction, date: '2026-02-20' },
+        ];
+        const cashFlow = calculationService.calculateCashFlow(
+          transactions,
+          '2026-01-01',
+          '2026-01-31'
+        );
+        // only income in period: 3000 - 0 = 3000
+        expect(cashFlow).toBe(3000);
+      });
+
+      it('should handle negative cash flow', () => {
+        const transactions = [
+          { ...incomeTransaction, date: '2026-01-15', amount: 100 },
+          { ...expenseTransaction, date: '2026-01-20', amount: 500 },
+        ];
+        const cashFlow = calculationService.calculateCashFlow(
+          transactions,
+          '2026-01-01',
+          '2026-01-31'
+        );
+        // income - expenses: 100 - 500 = -400
+        expect(cashFlow).toBe(-400);
+      });
+    });
+
+    describe('calculateSavingsRate', () => {
+      it('should calculate savings rate', () => {
+        const rate = calculationService.calculateSavingsRate(3000, 2000);
+        // (3000 - 2000) / 3000 * 100 = 33.33%
+        expect(rate).toBeCloseTo(33.33, 2);
+      });
+
+      it('should handle zero income', () => {
+        const rate = calculationService.calculateSavingsRate(0, 100);
+        expect(rate).toBe(0);
+      });
+
+      it('should handle negative savings rate', () => {
+        const rate = calculationService.calculateSavingsRate(1000, 1500);
+        // (1000 - 1500) / 1000 * 100 = -50%
+        expect(rate).toBe(-50);
+      });
+
+      it('should handle 100% savings rate', () => {
+        const rate = calculationService.calculateSavingsRate(1000, 0);
+        expect(rate).toBe(100);
+      });
+    });
+  });
 });

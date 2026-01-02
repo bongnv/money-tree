@@ -478,57 +478,116 @@ This plan implements all requirements from REQUIREMENTS.md.
 
 **Requirements**: FR-5 (Dashboard & Quick Entry), FR-1 (Transaction Management)
 
-**Goal**: Users see a summary dashboard with inline transaction entry
+**Goal**: Users see a summary dashboard with financial overview, budget tracking, and inline transaction entry
 
-### 8.1 Build Dashboard Widgets
-- [ ] Create `src/components/dashboard/StatsCard.tsx`
-- [ ] Create `src/components/dashboard/RecentTransactions.tsx`
-- [ ] Create `src/components/dashboard/AccountSummary.tsx`
-- [ ] Create `src/components/dashboard/QuickAddTransaction.tsx` - Inline transaction entry form:
-  - [ ] Always visible at top of dashboard (no button click required)
-  - [ ] Essential fields: Amount, Date, Transaction Type, Account(s)
-  - [ ] Auto-save on submit or Enter key
-  - [ ] Clears form after successful submission
-  - [ ] Optional: "More Details" link to open full TransactionDialog for complex transactions
-- [ ] **Write tests**: Dashboard widget component tests
-**Manual Verification (User):** Test each widget individually with sample data, verify stats display correctly, check recent transactions list updates, test account summary shows all accounts.
+### 8.1 Build Financial Summary Section
+- [x] Create `src/components/dashboard/PeriodSelector.tsx`:
+  - [x] Dropdown with options: This Month, Last Month, This Quarter, This Year, Year to Date
+  - [x] Default to "This Month"
+  - [x] Returns date range {startDate, endDate} for filtering
+- [x] Create `src/components/dashboard/FinancialSummaryCard.tsx` - reusable card component
+- [x] Add calculation functions to `src/services/calculation.service.ts`:
+  - [x] `calculateNetWorth(accounts, manualAssets)` - sum all account balances + manual assets
+  - [x] `calculateCashFlow(transactions, startDate, endDate)` - income - expenses for period
+  - [x] `calculateSavingsRate(income, expenses)` - (income - expenses) / income × 100%
+- [x] Create `src/components/dashboard/FinancialSummary.tsx`:
+  - [x] Display 3 cards in responsive grid (row on desktop, stack on mobile)
+  - [x] Net Worth card: total amount with up/down indicator
+  - [x] Cash Flow card: income - expenses with percentage vs last period
+  - [x] Savings Rate card: percentage with color coding (green ≥ 20%, yellow 10-19%, red < 10%)
+- [x] **Write tests**: Period selector, calculation functions, financial summary cards (10 tests)
+**Manual Verification (User):** View dashboard with accounts and transactions, verify net worth calculation is correct, check cash flow shows correct income/expense difference, verify savings rate calculates properly, switch period selector to see values update.
 
-### 8.2 Create Dashboard Page
-- [ ] Create `src/components/dashboard/DashboardPage.tsx`
-- [ ] Place QuickAddTransaction form prominently at the top
-- [ ] Integrate remaining widgets below in responsive grid
-- [ ] Add route `/` (Dashboard)
-- [ ] Update navigation to default to dashboard
-- [ ] **Write tests**: Dashboard page integration tests
-**Manual Verification (User):** Open dashboard at /, immediately start typing in quick add form, add transaction using Enter key, verify form clears and transaction appears in recent list, check all widgets display with proper layout, test responsive grid on mobile.
+### 8.2 Build Budget Overview Section
+- [ ] Create `src/components/dashboard/BudgetProgressBar.tsx`:
+  - [ ] Show budget name, spent/budget amounts, progress bar
+  - [ ] Color coding: green < 80%, yellow 80-100%, red > 100% (expenses)
+  - [ ] Color coding inverted for income: green ≥ 100%, yellow 60-99%, red < 60%
+- [ ] Create `src/components/dashboard/BudgetOverview.tsx`:
+  - [ ] Display top 5 budget categories sorted by usage percentage (highest first)
+  - [ ] Use `calculateActualAmount()` from calculation.service for actual spending
+  - [ ] Prorate budgets to match selected period (use existing proration logic)
+  - [ ] Show "View All Budgets" link to /budgets page
+  - [ ] Empty state: "Set up budgets to track spending" with link to /budgets
+- [ ] Update based on period selector from 8.1
+- [ ] **Write tests**: Budget progress bars, budget overview with different periods, empty state (8 tests)
+**Manual Verification (User):** With budgets and transactions set up, verify top 5 budgets appear sorted by % spent, check progress bars show correct colors, verify actual amounts match transaction totals, switch period to see prorated values, test empty state when no budgets exist.
+
+### 8.3 Build Recent Transactions with Quick Add
+- [ ] Create `src/components/dashboard/RecentTransactionsList.tsx`:
+  - [ ] Display last 10 transactions with date, description, category/type, amount
+  - [ ] Color code amounts (green for income, default for expense)
+  - [ ] Add quick edit/delete actions (reuse from TransactionList)
+  - [ ] Show "View All Transactions" link to /transactions page
+  - [ ] Real-time updates when new transaction added
+- [ ] Integrate QuickEntryRow component (reuse from Phase 12):
+  - [ ] Import existing `src/components/transactions/QuickEntryRow.tsx`
+  - [ ] Place at top of Recent Transactions section
+  - [ ] After submit, transaction appears immediately in list below
+  - [ ] Focus returns to quick entry for next transaction
+- [ ] **Write tests**: Recent transactions list, integration with QuickEntryRow, real-time updates (6 tests)
+**Manual Verification (User):** View dashboard recent transactions, add a transaction using quick entry row, verify it appears at top of list immediately, edit a transaction inline, delete a transaction, verify "View All" link navigates to /transactions page.
+
+### 8.4 Create Dashboard Page
+- [ ] Create `src/components/dashboard/DashboardPage.tsx`:
+  - [ ] Layout with 3 sections: Financial Summary (top), Budget Overview (middle), Recent Transactions + Quick Add (bottom)
+  - [ ] Pass selected period from PeriodSelector to all sections
+  - [ ] Responsive grid: 3-column on desktop, 1-column on mobile
+  - [ ] Update route `/` to use DashboardPage (already exists in App.tsx, replace placeholder)
+- [ ] **Write tests**: Dashboard page layout, period selector integration, responsive behavior (5 tests)
+**Manual Verification (User):** Open dashboard at /, see all three sections populated with data, change period selector and verify all sections update, add transaction via quick entry and see it in recent list, test on mobile to verify single-column layout, check all "View All" links navigate correctly.
 
 ## Phase 9: Navigation & Routing (MVP)
 
 **Requirements**: NFR-4 (Usability - navigation), NFR-5 (Compatibility - responsive)
 
-**Goal**: Complete navigation experience
+**Goal**: Complete navigation experience with Settings organization
 
 ### 9.1 Complete Routing Setup
 - [ ] Install `react-router-dom`
-- [ ] Create `src/routes.tsx` with route definitions for all MVP pages:
+- [ ] Create `src/routes.tsx` with route definitions:
   - [ ] `/` - Dashboard
-  - [ ] `/accounts` - Accounts
-  - [ ] `/categories` - Categories
   - [ ] `/transactions` - Transactions
   - [ ] `/reports` - Reports
   - [ ] `/budgets` - Budgets
+  - [ ] `/settings` - Settings (main page with sidebar)
+  - [ ] `/settings/accounts` - Accounts management
+  - [ ] `/settings/categories` - Categories & Transaction Types
+  - [ ] `/settings/preferences` - App preferences (placeholder for post-MVP)
 - [ ] Wrap app with BrowserRouter
 - [ ] Create 404 page
-- [ ] **Write tests**: Route navigation tests
-**Manual Verification (User):** Navigate directly to each URL (/, /accounts, /categories, etc.), verify correct page loads, test 404 page with invalid URL, check browser back/forward buttons work correctly.
+- [ ] **Write tests**: Route navigation tests, nested routes
+**Manual Verification (User):** Navigate directly to each URL, verify correct page loads including nested settings routes, test 404 page with invalid URL, check browser back/forward buttons work correctly.
 
-### 9.2 Complete Navigation
-- [ ] Update Header with navigation links for all MVP pages
+### 9.2 Update Header Navigation
+- [ ] Make "Money Tree" logo/title clickable → navigate to Dashboard (/)
+- [ ] Update Header with simplified navigation (4 main items):
+  - [ ] Transactions (icon: receipt/list)
+  - [ ] Reports (icon: chart/analytics)
+  - [ ] Budgets (icon: savings/piggy bank)
+  - [ ] Settings (icon: gear/cog)
+- [ ] Remove Dashboard button from navigation (logo serves this purpose)
 - [ ] Add icons for each section
-- [ ] Add active state styling
+- [ ] Add active state styling (highlight current section)
 - [ ] Add mobile responsive menu (drawer)
-- [ ] **Write tests**: Header navigation tests
-**Manual Verification (User):** Click each navigation link in Header, verify active state highlights current page, test on mobile to see drawer menu, verify all icons display correctly, check keyboard navigation works.
+- [ ] **Write tests**: Header navigation tests, logo click navigation, active states
+**Manual Verification (User):** Click "Money Tree" logo to return to dashboard, click each navigation link in Header, verify active state highlights current page, test on mobile to see drawer menu, verify all icons display correctly, check keyboard navigation works.
+
+### 9.3 Create Settings Page Structure
+- [ ] Create `src/components/settings/SettingsLayout.tsx`:
+  - [ ] Sidebar navigation for desktop (always visible)
+  - [ ] Drawer navigation for mobile (collapsible)
+  - [ ] Sidebar items: Accounts, Categories, Preferences
+  - [ ] Active state highlighting for current sub-page
+  - [ ] Content area for nested routes (Outlet from react-router)
+- [ ] Create `src/components/settings/SettingsPage.tsx`:
+  - [ ] Default landing page when visiting /settings
+  - [ ] Shows overview: "Configure your accounts, categories, and preferences"
+  - [ ] Quick links to each settings section with icons and descriptions
+- [ ] Update AccountsPage to work within Settings layout
+- [ ] Update CategoriesPage to work within Settings layout
+- [ ] **Write tests**: Settings layout, sidebar navigation, nested route rendering
+**Manual Verification (User):** Navigate to /settings, see overview with quick links, click Accounts in sidebar to go to /settings/accounts, click Categories to go to /settings/categories, verify active state in sidebar highlights current section, test on mobile to see drawer navigation.
 
 ## Phase 10: Production Build, Testing & Polish (MVP)
 
@@ -763,7 +822,7 @@ These features will be implemented after the MVP is validated by users.
 - [ ] **Write tests**: Historical analysis queries
 - [ ] **Test**: Search across years, view long-term trends
 
-## Phase 13: Conflict Detection & Auto-Merge (Post-MVP)
+### 10.1 Integration Testing
 - [ ] Test complete user workflows end-to-end
 - [ ] Test data flow between stores and components
 - [ ] Test interactions between different features
@@ -880,105 +939,21 @@ These features will be implemented after the MVP is validated by users.
 - [x] **Write tests**: Enter key submit, Tab navigation, Escape clear, focus management, arrow key navigation, dropdown search
 - [x] **Test**: Add 10+ transactions using only keyboard (Tab + Enter), verify rapid entry flow
 
-### 12.3 Add Smart Defaults and Memory
-- [ ] Remember last used transaction type per session (localStorage)
-- [ ] Remember last used account per transaction type
-- [ ] Show placeholder text: "Enter amount to start..."
-- [ ] After submit, immediately ready for next transaction
-- [ ] Add "More Details" link to open full TransactionDialog for complex transactions
-- [ ] **Write tests**: Default memory, localStorage persistence, dialog link
-- [ ] **Test**: Add multiple similar transactions, verify smart defaults speed up entry
+**Manual Verification (User):** Navigate to /transactions, see quick entry row at top, add 10+ transactions using only Enter key for rapid entry, verify form clears after submit, press Escape to clear form, use Tab/Arrow keys to navigate between fields, verify all transactions saved correctly, test search in dropdowns by typing letters.
 
-### 12.4 Polish Quick Entry UX
-- [ ] Visual separation from transaction list (subtle border/background)
-- [ ] Compact design (doesn't take too much space)
-- [ ] Clear visual feedback during validation
-- [ ] Disabled state while transaction is being saved
-- [ ] Error messages appear inline near field (not blocking)
-- [ ] **Write tests**: Visual states, error display
-- [ ] **Test**: Verify professional appearance, error handling
-
-**Manual Verification (User):** Navigate to /transactions, see quick entry row at top, add 10+ transactions using only Enter key for rapid entry, verify smart defaults remember last used type/account, press Escape to clear form, use Tab to navigate between fields, verify all transactions saved correctly, check that opening "More Details" shows full dialog for complex transactions.
-
-## Phase 13: Budget Planning Feature (Post-MVP)
-
-**Requirements**: FR-8 (Budget Planning)
-
-**Goal**: Users can create budgets and track spending against them
-
-### 13.1 Implement Budget Data Layer
-- [ ] Create `src/stores/useBudgetStore.ts` with budget and budget items
-- [ ] Add budget vs actual calculation functions to calculation service
-
-### 12.2 Build Budget Management UI
-- [ ] Create `src/components/budgets/BudgetForm.tsx`
-- [ ] Create `src/components/budgets/BudgetItemsGrid.tsx`
-- [ ] Create `src/components/budgets/BudgetDialog.tsx` with stepper
-- [ ] Create `src/components/budgets/BudgetList.tsx`
-- [ ] Create `src/components/budgets/BudgetOverview.tsx` with progress bars
-- [ ] Create `src/components/budgets/BudgetsPage.tsx`
-- [ ] Add route `/budgets`
-- [ ] **Test**: Create budget with items, set as active, view budget vs actual, edit budget, delete budget
-
-### 13.3 Add Budget Widget to Dashboard
-- [ ] Create `src/components/dashboard/BudgetWidget.tsx`
-- [ ] Integrate into Dashboard page
-- [ ] **Test**: Dashboard shows budget tracking status
-
-## Phase 14: Financial Reports Feature (Post-MVP)
-
-**Requirements**: FR-9 (Financial Reports)
-
-**Goal**: Users can view financial reports and analytics
-
-### 14.1 Setup Chart Library
-- [ ] Install charting library (recharts or nivo)
-- [ ] Create `src/components/charts/LineChart.tsx`
-- [ ] Create `src/components/charts/BarChart.tsx`
-- [ ] Create `src/components/charts/PieChart.tsx`
-
-### 13.2 Build Cash Flow Report
-- [ ] Create `src/components/reports/CashFlowReport.tsx`
-- [ ] Implement cash flow calculations
-- [ ] Add date range selector and period grouping
-- [ ] **Test**: View cash flow for different date ranges, verify calculations match transactions
-
-### 14.3 Build Balance Sheet Report
-- [ ] Create `src/components/reports/BalanceSheet.tsx`
-- [ ] Show accounts grouped by type with balances
-- [ ] Calculate and display net worth
-- [ ] **Test**: Verify balance sheet shows correct account balances and net worth
-
-### 14.4 Build Budget Analysis Report
-- [ ] Create `src/components/reports/BudgetAnalysis.tsx`
-- [ ] Show budget vs actual with progress bars and color coding
-- [ ] **Test**: Verify budget analysis matches budget and transactions
-
-### 14.5 Build Account Overview Report
-- [ ] Create `src/components/reports/AccountOverview.tsx`
-- [ ] Show account transactions and balance over time
-- [ ] **Test**: View individual account history and balance chart
-
-### 14.6 Create Reports Page
-- [ ] Create `src/components/reports/ReportsPage.tsx` with tab navigation
-- [ ] Add export buttons for each report
-- [ ] Create `src/utils/export.utils.ts` for CSV/JSON export
-- [ ] Add route `/reports`
-- [ ] **Test**: Switch between reports, export data
-
-## Phase 15: Settings & Data Management Feature (Post-MVP)
+## Phase 13: Settings & Data Management Feature (Post-MVP)
 
 **Requirements**: Data Import/Export
 
 **Goal**: Users can manage app settings and advanced data operations
 
-### 15.1 Build Settings UI
+### 13.1 Build Settings UI
 - [ ] Create `src/components/settings/DataManagement.tsx` with import/export
 - [ ] Create `src/components/settings/SettingsPage.tsx`
 - [ ] Add route `/settings`
 - [ ] **Test**: Export all data, import data, clear data
 
-## Phase 16: Conflict Detection & Auto-Merge (Post-MVP)
+## Phase 14: Conflict Detection & Auto-Merge (Post-MVP)
 
 **Requirements**: FR-10 (Advanced Data Management), NFR-9 (Advanced Reliability)
 
@@ -1047,39 +1022,39 @@ These features will be implemented after the MVP is validated by users.
 - [ ] Test conflict detection and resolution
 - [ ] Integration tests with concurrent modifications
 
-## Phase 17: User Documentation (Post-MVP)
+## Phase 15: User Documentation (Post-MVP)
 
 **Requirements**: NFR-4 (Usability)
 
 **Goal**: Complete user documentation
 
-### 17.1 Add User Documentation
+### 15.1 Add User Documentation
 - [ ] Add help tooltips in UI for complex features
 - [ ] Create FAQ section in settings or help page
 - [ ] Create user guide (optional) with screenshots
 - [ ] **Test**: New user can understand how to use each feature
 
-## Phase 18: Advanced Error Handling & Validation (Post-MVP)
+## Phase 16: Advanced Error Handling & Validation (Post-MVP)
 
 **Requirements**: NFR-6 (Reliability), NFR-4 (Usability)
 
 **Goal**: Enhanced error handling and validation
 
-### 18.1 Add Error Boundary
+### 16.1 Add Error Boundary
 - [ ] Create `src/components/common/ErrorBoundary.tsx`
 - [ ] Create `src/components/common/ErrorMessage.tsx`
 - [ ] Create `src/components/common/NotificationSnackbar.tsx`
 - [ ] Wrap major sections in error boundaries
 - [ ] **Test**: Simulate errors, verify user sees helpful messages
 
-### 18.2 Enhanced Validation
+### 16.2 Enhanced Validation
 - [ ] Add comprehensive Zod validation to all forms
 - [ ] Validate business rules
 - [ ] Prevent deletion of referenced entities
 - [ ] Add user-friendly error messages
 - [ ] **Test**: Try to submit invalid data, try to delete referenced entities
 
-## Phase 19: Cloud Storage Integration (Post-MVP, Optional)
+## Phase 17: Cloud Storage Integration (Post-MVP, Optional)
 
 **Requirements**: FR-11 (Cloud Storage Integration), NFR-8 (Cloud Security)
 

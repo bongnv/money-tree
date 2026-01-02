@@ -18,19 +18,18 @@ describe('App', () => {
     stopAutoSaveSpy.mockRestore();
   });
 
-  it('should render the app with Header', () => {
+  it('should render the app with Header and Dashboard', () => {
     render(<App />);
-    // "Money Tree" appears in both Header and main content
-    const moneyTreeElements = screen.getAllByText('Money Tree');
-    expect(moneyTreeElements.length).toBe(2);
-
+    
     // Check for Header elements
+    expect(screen.getByText('Money Tree')).toBeInTheDocument();
     expect(screen.getByText('Load')).toBeInTheDocument();
     expect(screen.getByText('Save')).toBeInTheDocument();
 
-    // Check for main content
-    expect(screen.getByText('Personal Finance Manager')).toBeInTheDocument();
-    expect(screen.getByText('Manage Accounts')).toBeInTheDocument();
+    // Check for Dashboard - use getAllByText since it appears in nav and heading
+    const dashboardElements = screen.getAllByText('Dashboard');
+    expect(dashboardElements.length).toBeGreaterThan(0);
+    expect(screen.getByText('Financial Summary')).toBeInTheDocument();
   });
 
   it('should start auto-save on mount', () => {

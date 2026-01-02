@@ -39,8 +39,8 @@ This plan implements all requirements from REQUIREMENTS.md.
 **Post-MVP Functional Requirements:**
 - **FR-9**: Year Management & Multi-Year Support → Phase 11 (Post-MVP)
   - Account Overview Report (multi-year view)
-- **FR-10**: Advanced Data Management → Phase 13 (Post-MVP)
-- **FR-11**: Cloud Storage Integration → Phase 16+ (Post-MVP, Optional)
+- **FR-10**: Advanced Data Management → Phase 17 (Post-MVP)
+- **FR-11**: Cloud Storage Integration → Phase 18+ (Post-MVP, Optional)
 
 **MVP Non-Functional Requirements:**
 - **NFR-1**: Architecture → Phase 1, 9
@@ -52,8 +52,8 @@ This plan implements all requirements from REQUIREMENTS.md.
 - **NFR-7**: Maintainability → Phase 1, 10
 
 **Post-MVP Non-Functional Requirements:**
-- **NFR-8**: Cloud Security → Phase 16+ (Post-MVP, Optional)
-- **NFR-9**: Advanced Reliability → Phase 13 (Post-MVP)
+- **NFR-8**: Cloud Security → Phase 18+ (Post-MVP, Optional)
+- **NFR-9**: Advanced Reliability → Phase 17 (Post-MVP)
 
 ---
 
@@ -842,50 +842,152 @@ These features will be implemented after the MVP is validated by users.
 
 ## Phase 11: Year Management & Multi-Year Support (Post-MVP)
 
-**Requirements**: FR-9 (Year Management & Multi-Year Support)
+**Requirements**: FR-6.10 (Auto-archive), FR-9.1-9.6 (Year Management & Multi-Year Support)
 
-**Goal**: Users can manage multiple years and analyze data across years
+**Goal**: Implement auto-archive strategy to maintain optimal performance (~900 KB main file) while supporting decades of data through efficient multi-year architecture
 
-### 11.1 Implement Year Switching
-- [ ] Create `src/components/common/YearSelector.tsx`
+**Architecture Context**: 
+- Main file contains 2 most recent years (~900 KB with ~2000 transactions/year)
+- Archive files created automatically for older years (user confirmation required)
+- Archive references with year-end summaries stored in main file
+- Quick trends use summaries (instant, no file loading)
+- Detailed analysis loads archive files on-demand
+
+### 11.1 Data Model Updates for Multi-Year Support (FR-6.10)
+- [ ] Update `src/types/models.ts`:
+  - [ ] Add `years` object structure: `{ "2025": { transactions, budgets, manualAssets }, "2026": {...} }`
+  - [ ] Add `ArchivedYearReference` type: `{ year: number, fileName: string, archivedDate: string, summary: YearEndSummary }`
+  - [ ] Add `YearEndSummary` type: `{ transactionCount: number, closingNetWorth: number, closingBalances: Record<string, number> }`
+  - [ ] Add `archivedYears` array to main data structure
+  - [ ] Add `ArchiveFile` type for self-contained archive structure
+- [ ] Update `src/schemas/models.schema.ts`:
+  - [ ] Add Zod schemas for new types
+  - [ ] Validate years structure
+  - [ ] Validate archive references
+- [ ] **Write tests**: Schema validation for multi-year structure
+- [ ] **Test**: Validate main file structure, archive reference structure
+
+### 11.2 Archive Detection & Year-End Summary Service (FR-6.10, FR-9.2)
+- [ ] Create `src/services/archive.service.ts`:
+  - [ ] `detectArchiveTrigger()`: Check if 3+ years exist in main file
+  - [ ] `calculateYearEndSummary(year)`: Compute transaction count, closing net worth, closing balances
+  - [ ] `identifyArchivableYears()`: Return oldest years to archive (keep 2 most recent)
+  - [ ] `shouldPromptArchive()`: Check archive trigger and user postpone preference
+- [ ] Store postpone state in preferences
+- [ ] **Write tests**: Archive detection, year-end summary calculations
+- [ ] **Test**: Correct archive trigger with 3+ years, accurate summary calculations
+
+### 11.3 Archive File Creation & Main File Update (FR-6.10, FR-9.2, FR-9.3)
+- [ ] Implement `createArchiveFile(year)` in archive service:
+  - [ ] Extract year data from main file
+  - [ ] Create snapshot of accounts, categories, transaction types (state at archive time)
+  - [ ] Build self-contained archive file structure
+  - [ ] Generate archive file JSON
+- [ ] Implement `updateMainFileAfterArchive(year, archiveReference)`:
+  - [ ] Remove archived year from years object
+  - [ ] Add archive reference to archivedYears array
+  - [ ] Maintain data integrity
+- [ ] Use File System Access API to save archive file (user selects location)
+- [ ] **Write tests**: Archive file creation, main file update
+- [ ] **Test**: Archive file is self-contained, main file correctly updated
+
+### 11.4 Seamless Year Switching UI (FR-9.1)
+- [ ] Create `src/components/common/YearSelector.tsx`:
+  - [ ] Dropdown showing years in main file (instant switch)
+  - [ ] Option to load archived years (file picker)
+  - [ ] Badge indicating archived vs active years
+  - [ ] Auto-switch to current year on app open
 - [ ] Add to header/navigation
-- [ ] Connect to app store
-- [ ] Implement year switching logic (load different file)
-- [ ] Handle year transitions (carry forward balances)
-- [ ] **Write tests**: Year switching and data isolation
-- [ ] **Test**: Switch years, add transactions in different years, verify data isolation
+- [ ] Connect to app store (current year state)
+- [ ] Implement instant year switching (in-memory, no file I/O)
+- [ ] **Write tests**: Year selector component, switching logic
+- [ ] **Test**: Switch between years instantly, UI updates correctly
 
-### 11.2 Multi-Year Data Loading
-- [ ] Implement multi-year file loading
-- [ ] Create aggregation service for cross-year data
-- [ ] Memory-efficient handling of large datasets
-- [ ] **Write tests**: Multi-year data loading and aggregation
-- [ ] **Test**: Load multiple year files, aggregate data
+### 11.5 Archive Workflow UI (FR-9.2)
+- [ ] Create `src/components/common/ArchivePrompt.tsx`:
+  - [ ] Dialog prompting to archive oldest year
+  - [ ] Show year to archive and file size impact
+  - [ ] "Archive Now", "Remind Later", "Don't Ask Again" options
+  - [ ] File picker integration for archive save location
+- [ ] Create banner reminder for postponed archives
+- [ ] Trigger prompt on app load when archive conditions met
+- [ ] Show success message with archive file name after creation
+- [ ] **Write tests**: Archive prompt component, workflow states
+- [ ] **Test**: Prompt appears correctly, postpone works, archive creation flow
 
-### 11.3 Cross-Year Analysis Features
-- [ ] Create `src/components/reports/MultiYearComparison.tsx`
-- [ ] Year-over-year comparison charts
-- [ ] Long-term trend analysis
-- [ ] Net worth progression over years
-- [ ] **Write tests**: Cross-year calculations
-- [ ] **Test**: View trends across multiple years
+### 11.6 Archive Loading & Management (FR-9.3)
+- [ ] Implement `loadArchiveFile()` in archive service:
+  - [ ] File picker to select archive file
+  - [ ] Validate archive file structure
+  - [ ] Load into temporary store (separate from main data)
+  - [ ] Handle missing files gracefully (show error, allow browsing)
+- [ ] Create `src/stores/useArchiveStore.ts`:
+  - [ ] Store loaded archive data temporarily
+  - [ ] Track which archives are currently loaded
+  - [ ] Unload archives method (free memory)
+- [ ] **Write tests**: Archive loading, validation, store management
+- [ ] **Test**: Load archive file, validate structure, unload successfully
 
-### 11.4 Account Overview Report (Multi-Year)
-- [ ] Create `src/components/reports/AccountOverview.tsx`:
-  - [ ] Account transaction history
-  - [ ] Balance over time chart (multi-year)
-  - [ ] Filter and search transactions
-  - [ ] Export account statement
+### 11.7 Quick Trends Dashboard (FR-9.4)
+- [ ] Update `src/components/dashboard/Dashboard.tsx`:
+  - [ ] Add "Year-over-Year Trends" section
+  - [ ] Display net worth progression using archive summaries
+  - [ ] Show "2023: $40k → 2024: $45k → 2025: $52k → 2026: $58k"
+  - [ ] Use archivedYears array from main file (instant, no loading)
+- [ ] Create `src/services/trend.service.ts`:
+  - [ ] `calculateYearOverYearTrends()`: Use archive summaries
+  - [ ] `getClosingBalanceTrends()`: Per-account trends
+  - [ ] All calculations from summaries (no archive file loading)
+- [ ] **Write tests**: Trend calculations from summaries
+- [ ] **Test**: Dashboard shows trends instantly, no archive loading required
+
+### 11.8 Detailed Multi-Year Analysis (FR-9.5)
+- [ ] Create `src/components/reports/MultiYearAnalysis.tsx`:
+  - [ ] "Load Archives" button to prompt for files
+  - [ ] File picker to select multiple archive files
+  - [ ] Load archives into temporary store
+  - [ ] Generate comprehensive reports:
+    - [ ] Month-by-month trends across all loaded years
+    - [ ] Category breakdown spanning years
+    - [ ] Account history with full transaction details
+  - [ ] "Unload Archives" button to free memory
+- [ ] Integrate with archive store
 - [ ] Add to Reports page
-- [ ] **Write tests**: Account overview with multi-year data
-- [ ] **Test**: View individual account history across years
+- [ ] **Write tests**: Multi-year report generation, archive integration
+- [ ] **Test**: Load multiple archives, generate detailed reports, unload successfully
 
-### 11.5 Historical Analysis
-- [ ] Search transactions across all years
-- [ ] Category spending trends over multiple years
-- [ ] Income and expense patterns year-over-year
-- [ ] **Write tests**: Historical analysis queries
-- [ ] **Test**: Search across years, view long-term trends
+### 11.9 Archive Utilities (FR-9.6)
+- [ ] Create `src/components/settings/ArchiveManager.tsx`:
+  - [ ] List archived years from archivedYears array
+  - [ ] "Export Year" button (save current year as standalone archive)
+  - [ ] "Import Year" button (load archive back into main file)
+  - [ ] "Browse Archives" button (view available archive files)
+  - [ ] User preference: years to keep in main file (default: 2)
+- [ ] Implement export/import functionality in archive service
+- [ ] Add to Settings page
+- [ ] **Write tests**: Export year, import year, preferences
+- [ ] **Test**: Export single year, import archived year, adjust preferences
+
+### 11.10 Integration Testing
+- [ ] Test complete archive workflow end-to-end:
+  - [ ] Create 3 years of data
+  - [ ] Trigger archive prompt
+  - [ ] Archive oldest year
+  - [ ] Verify main file size reduced (~900 KB)
+  - [ ] Verify quick trends work without loading
+  - [ ] Load archive for detailed analysis
+  - [ ] Unload archive
+- [ ] Test year switching with archived years
+- [ ] Test data integrity across main file and archives
+- [ ] **Test**: All workflows complete successfully, no data loss
+
+### 11.11 Performance Validation
+- [ ] Measure auto-save performance with 2-year main file (~900 KB)
+- [ ] Verify auto-save completes under 200ms
+- [ ] Test with 10+ archived years (simulating long-term use)
+- [ ] Verify quick trends remain instant regardless of archive count
+- [ ] Validate memory usage during archive loading/unloading
+- [ ] **Test**: Performance targets met, scalable to decades of data
 
 ### 10.1 Integration Testing
 - [ ] Test complete user workflows end-to-end
@@ -1006,13 +1108,189 @@ These features will be implemented after the MVP is validated by users.
 
 **Manual Verification (User):** Add 10+ transactions using only Enter key for rapid entry, verify form clears after submit, press Escape to clear form, use Tab/Arrow keys to navigate between fields, verify all transactions saved correctly, test search in dropdowns by typing letters.
 
-## Phase 14: App Preferences & Settings (Post-MVP)
+## Phase 13: Manual Asset Value Tracking (Post-MVP)
+
+**Requirements**: FR-3.6 (Manual asset value tracking over time)
+
+**Goal**: Track and visualize manual asset values over time to monitor growth and depreciation
+
+**Note**: Transactional account balances are automatically calculated from transaction history, so no separate balance tracking is needed for accounts (FR-3.4). This phase focuses only on manual assets.
+
+### 13.1 Update Asset Value Workflow
+- [ ] Update `src/types/models.ts`:
+  - [ ] Add `AssetValueHistory` type: `{ date: string, value: number, notes?: string }`
+  - [ ] Add `valueHistory?: AssetValueHistory[]` to ManualAsset type
+  - [ ] Keep existing `value` and `valuationDate` fields as "current value"
+- [ ] Update `src/schemas/models.schema.ts`:
+  - [ ] Add Zod schema for AssetValueHistory
+  - [ ] Validate history entries (dates in chronological order, non-negative values)
+  - [ ] Ensure history dates are before or equal to current valuationDate
+- [ ] Create `src/services/history.service.ts`:
+  - [ ] `updateAssetValue(assetId, newValue, newDate, notes)`: 
+    - [ ] Move current value/date to valueHistory array
+    - [ ] Set new value as current value/valuationDate
+    - [ ] Return updated asset
+- [ ] Update `useAssetStore`:
+  - [ ] Add `updateAssetValue` action that calls history service
+  - [ ] Maintain valueHistory array when updating values
+- [ ] Update `ManualAssetDialog.tsx` to show "Update Value" workflow:
+  - [ ] Add checkbox/toggle: "Update existing value" vs "Create new asset"
+  - [ ] When updating: show current value and date (read-only)
+  - [ ] Input for new value, new date (defaults to today), optional notes
+  - [ ] On submit: old value moves to history, new value becomes current
+  - [ ] Show confirmation message: "Value updated. Previous value ($X on DATE) saved to history."
+- [ ] Update `ManualAssetCard.tsx`:
+  - [ ] Add "Update Value" button next to "Edit" button
+  - [ ] Opens ManualAssetDialog in "update value" mode
+- [ ] **Write tests**: Schema validation, updateAssetValue service, store action, dialog update mode
+- [ ] **Test**: Create asset with $500k value, click "Update Value", enter $510k → verify current value is $510k, old $500k in valueHistory
+
+**Manual Verification (User):** Create manual asset "House - $500,000" on Jan 1, 2026. Click "Update Value" button on the card, enter new value $510,000 with date Apr 1, 2026, add note "Market appraisal". Submit and verify card now shows $510,000 as current value. Verify confirmation message mentions old value saved to history.
+
+### 13.2 Asset Value History in Reports
+- [ ] Add to `src/services/history.service.ts`:
+  - [ ] `getCompleteValueHistory(assetId)`: Get all values including current (for charts)
+  - [ ] `recordHistoricalValue(assetId, date, value, notes)`: Add historical value directly (for backdating)
+  - [ ] `editHistoricalValue(assetId, historyIndex, date, value, notes)`: Edit specific historical entry
+  - [ ] `deleteHistoricalValue(assetId, historyIndex)`: Remove specific historical entry
+  - [ ] `calculateAssetValueGrowth(assetId, startDate, endDate)`: Calculate growth percentage
+- [ ] Update `useAssetStore`:
+  - [ ] Add actions for managing historical values
+  - [ ] Ensure history array stays sorted by date
+- [ ] Update `src/components/reports/BalanceSheet.tsx`:
+  - [ ] Make manual asset items clickable
+  - [ ] Add expand/collapse indicator icon
+  - [ ] On click, expand inline to show:
+    - [ ] Line chart showing value over time (valueHistory + current value)
+    - [ ] Compact date range selector (Last 3 months, 6 months, 1 year, All time)
+    - [ ] Growth percentage badge (total growth since first value)
+    - [ ] "Manage History" button to open detailed dialog
+  - [ ] Collapse other expanded assets when opening new one
+- [ ] Create `src/components/assets/AssetValueHistoryDialog.tsx`:
+  - [ ] Opens from "Manage History" button in Balance Sheet
+  - [ ] Header showing asset name and current value prominently
+  - [ ] Full-size line chart with complete timeline
+  - [ ] Date range selector for chart
+  - [ ] Growth metrics section:
+    - [ ] Total growth percentage (first value to current)
+    - [ ] Year-over-year growth (if applicable)
+  - [ ] "Historical Values" table:
+    - [ ] Columns: Date, Value, Change, Notes, Actions
+    - [ ] Show value changes between entries
+    - [ ] Edit/delete buttons for each historical entry
+    - [ ] Current value shown in table header (not editable here)
+  - [ ] "Add Historical Value" button:
+    - [ ] Opens form to add backdated value
+    - [ ] Date picker, value input, notes
+    - [ ] Validation: date must be before current valuationDate
+- [ ] **Write tests**: Expandable asset items in Balance Sheet, inline chart rendering, dialog with full history management, add/edit/delete historical values
+- [ ] **Test**: Click asset in Balance Sheet to see inline chart, verify growth percentage, click "Manage History" to open full dialog, add backdated value, edit/delete entries
+
+**Manual Verification (User):** With asset from 13.1 (now has Jan $500k in history, current Apr $510k), navigate to Reports → Balance Sheet. Click on "House" asset item in manual assets section. Verify: (1) Inline chart expands showing 2 points (Jan: $500k, Apr: $510k), (2) Growth badge shows +2% or $10k, (3) Click "Manage History" button to open full dialog, (4) Dialog shows complete chart and historical table, (5) Click "Add Historical Value", enter Feb 15, 2026 with $505,000 → verify chart in both inline view and dialog updates to show 3 points. Edit Jan value to $495,000 in the dialog → verify changes reflected everywhere. Close dialog and collapse inline chart → click asset again to verify chart still shows updated data.
+
+### 13.3 Account Balance Chart (Optional UI Enhancement)
+- [ ] Add to `src/services/history.service.ts`:
+  - [ ] `calculateAccountBalanceHistory(accountId, startDate, endDate)`: Calculate daily/monthly balances from transactions
+  - [ ] `getAccountBalanceAtDate(accountId, date)`: Get balance at specific date
+- [ ] Create `src/components/accounts/AccountBalanceChart.tsx`:
+  - [ ] Line chart showing balance over time calculated from transactions
+  - [ ] Date range selector (Last 30 days, 3 months, 6 months, 1 year, All time)
+  - [ ] Read-only view (no manual entries - calculated from transactions)
+  - [ ] Show transaction markers on hover
+  - [ ] Growth/change metrics (start balance → end balance)
+- [ ] Create `src/components/accounts/AccountHistoryDialog.tsx`:
+  - [ ] Wrapper dialog for AccountBalanceChart
+  - [ ] Shows account name and current balance
+  - [ ] Note explaining balance is calculated from transactions
+- [ ] Update `AccountCard.tsx`:
+  - [ ] Add "View Balance History" button
+  - [ ] Opens AccountHistoryDialog
+- [ ] **Write tests**: Balance calculation from transactions, chart rendering, date range filtering
+- [ ] **Test**: Create account, add multiple transactions over time, view balance chart, verify calculations match expected balances
+
+**Manual Verification (User):** With existing account that has multiple transactions, click "View Balance History" button. Verify: (1) Chart shows balance progression over time, (2) Balance matches what you expect from transactions, (3) Date range selector changes chart view, (4) Current balance at top matches account card. Add new transaction → verify balance chart updates automatically (no manual history entry needed).
+
+### 13.4 Net Worth History Dashboard Widget
+- [ ] Create `src/components/charts/NetWorthHistoryChart.tsx`:
+  - [ ] Combined chart showing total net worth over time
+  - [ ] Stacked area chart option breaking down by asset type
+  - [ ] Account balances calculated from transactions
+  - [ ] Manual asset values from recorded history (valueHistory + current)
+  - [ ] Interactive tooltips showing breakdown at each date
+  - [ ] Date range selector
+  - [ ] Toggle between total line chart and stacked area chart
+- [ ] Update `src/components/dashboard/DashboardPage.tsx`:
+  - [ ] Add "Net Worth History" section (below financial summary)
+  - [ ] Optional: collapsible or toggle to show/hide
+  - [ ] Integrate NetWorthHistoryChart component
+- [ ] **Write tests**: Chart data aggregation (accounts + manual assets), stacking, date filtering, tooltip data
+- [ ] **Test**: View dashboard net worth chart, verify it combines account balances and manual asset values correctly
+
+**Manual Verification (User):** With accounts (with transactions) and manual assets (with value history), view dashboard. Verify: (1) Net Worth History chart appears, (2) Chart shows progression over time, (3) Stacked view shows breakdown by asset types, (4) Hover tooltips show account balances + manual asset values at that date, (5) Date range selector works, (6) Total matches current net worth shown in summary card.
+
+### 13.5 Historical Balance Sheet Comparison
+- [ ] Update `src/services/history.service.ts`:
+  - [ ] `getBalanceSheetAtDate(date)`: Calculate complete balance sheet for specific date
+    - [ ] Account balances from transaction history up to that date
+    - [ ] Manual asset values from history at that date
+  - [ ] `compareBalanceSheets(date1, date2)`: Return changes between two dates
+- [ ] Update `src/components/reports/BalanceSheet.tsx`:
+  - [ ] Add "Compare with Previous Period" toggle/checkbox
+  - [ ] When enabled, show second date picker
+  - [ ] Display both columns: "As of [Date1]" and "As of [Date2]"
+  - [ ] Add "Change" column showing:
+    - [ ] Absolute change ($)
+    - [ ] Percentage change (%)
+    - [ ] Color coding: green for positive, red for negative
+  - [ ] Highlight significant changes (>10% or >$1,000)
+  - [ ] Show net worth change at bottom
+- [ ] **Write tests**: Historical balance calculation, comparison logic, change highlighting, rendering
+- [ ] **Test**: View balance sheet, enable comparison, select two dates, verify changes calculated correctly
+
+**Manual Verification (User):** Navigate to Reports → Balance Sheet. Select date "January 1, 2026", enable "Compare with Previous Period", select second date "April 1, 2026". Verify: (1) Two columns appear with balances at each date, (2) Change column shows differences, (3) Account balances match transaction history at each date, (4) Manual asset values match recorded values at each date, (5) Net worth change is correct, (6) Large changes are highlighted. Try comparing month-over-month, quarter-over-quarter.
+
+### 13.6 Integration Testing & Polish
+- [ ] Test complete asset value tracking workflow:
+  - [ ] Create manual asset
+  - [ ] Update value multiple times
+  - [ ] View history dialog with chart
+  - [ ] Add backdated historical value
+  - [ ] Edit and delete historical values
+  - [ ] Verify chart updates correctly
+  - [ ] Calculate growth percentages
+- [ ] Test account balance history (optional):
+  - [ ] Create account, add transactions
+  - [ ] View balance chart
+  - [ ] Verify calculations match transaction history
+- [ ] Test net worth history dashboard:
+  - [ ] Verify combines accounts and manual assets
+  - [ ] Test with multiple asset types
+  - [ ] Verify date range filtering
+- [ ] Test historical balance sheet:
+  - [ ] Compare different time periods
+  - [ ] Verify account balances calculated correctly
+  - [ ] Verify manual asset values retrieved correctly
+  - [ ] Test highlighting and change calculations
+- [ ] Test with large datasets:
+  - [ ] Manual asset with 50+ historical values
+  - [ ] Account with 100+ transactions
+  - [ ] Verify chart performance
+- [ ] Polish and error handling:
+  - [ ] Add loading states for chart rendering
+  - [ ] Handle edge cases (no history, single value)
+  - [ ] Add helpful empty states
+  - [ ] Ensure date validations work
+- [ ] **Test**: All history features work end-to-end, no data loss, charts perform well
+
+**Manual Verification (User):** Perform complete workflow: (1) Create house asset $500k Jan 1, (2) Update to $510k Apr 1, (3) View history and add backdated Feb value $505k, (4) Edit Jan value to $495k, (5) View dashboard net worth history showing progression, (6) Create bank account and add transactions, (7) View account balance chart, (8) Go to balance sheet and compare Jan 1 vs Apr 1, (9) Verify all values match expectations across all features. Test with real data for several months to verify production readiness.
+
+## Phase 15: App Preferences & Settings (Post-MVP)
 
 **Requirements**: User preferences and app configuration
 
 **Goal**: Users can customize app settings and preferences
 
-### 14.1 Create Preferences Page
+### 15.1 Create Preferences Page
 - [ ] Create `src/components/settings/PreferencesPage.tsx`:
   - [ ] Default currency selection
   - [ ] Date format preferences (MM/DD/YYYY vs DD/MM/YYYY)
@@ -1027,19 +1305,19 @@ These features will be implemented after the MVP is validated by users.
 - [ ] **Write tests**: Preferences page, store, localStorage persistence
 - [ ] **Test**: Change preferences and verify they persist across page reloads
 
-## Phase 15: Settings & Data Management Feature (Post-MVP)
+## Phase 16: Settings & Data Management Feature (Post-MVP)
 
 **Requirements**: Data Import/Export
 
 **Goal**: Users can manage app settings and advanced data operations
 
-### 13.1 Build Settings UI
+### 16.1 Build Settings UI
 - [ ] Create `src/components/settings/DataManagement.tsx` with import/export
 - [ ] Create `src/components/settings/SettingsPage.tsx`
 - [ ] Add route `/settings`
 - [ ] **Test**: Export all data, import data, clear data
 
-## Phase 14: Conflict Detection & Auto-Merge (Post-MVP)
+## Phase 17: Conflict Detection & Auto-Merge (Post-MVP)
 
 **Requirements**: FR-10 (Advanced Data Management), NFR-9 (Advanced Reliability)
 

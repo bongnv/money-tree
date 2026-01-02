@@ -124,7 +124,10 @@ The MVP focuses on core personal finance tracking functionality with local file 
 
 **FR-6.2** [x] Save and load data files - *Phase 2*
 
-**FR-6.3** [x] One JSON file per calendar year - *Phase 2*
+**FR-6.3** [x] Single JSON file with multi-year support - *Phase 2*
+- Main file contains: accounts, categories, transaction types, preferences
+- Main file contains years data structure with 2 most recent years
+- Archive references with year-end summaries for quick trends
 
 **FR-6.4** [x] Data includes transactions, accounts, categories, budgets, manual assets - *Phase 2-6*
 
@@ -134,15 +137,27 @@ The MVP focuses on core personal finance tracking functionality with local file 
 
 **FR-6.7** [x] Extensible storage adapter pattern - *Phase 2*
 
-**FR-6.8** [ ] Auto-save: Detect data changes
+**FR-6.8** [x] Auto-save with unsaved changes tracking - *Phase 2*
+- Track changes across all stores
+- Periodic auto-save (1 minute interval)
+- Auto-save only when there are unsaved changes
+- Prompt before destructive actions (load different file, close browser)
 
-**FR-6.9** [ ] Auto-save: Prompt on browser close/navigation
+**FR-6.9** [x] Auto-save integration - *Phase 2*
+- Save silently without user prompts
+- Unsaved changes indicator in UI
+- Manual save option always available
+- Window beforeunload handler for unsaved changes warning
 
-**FR-6.10** [ ] Auto-save: Periodic background save (configurable interval, default 5 minutes)
+**FR-6.10** [ ] Auto-archive old years (Post-MVP - Phase 11)
+- Keep 2 most recent years in main file for optimal performance
+- Automatically detect when new year starts
+- Prompt user to archive oldest year when 3+ years in main file
+- Create separate archive file for old year with snapshot of accounts/categories
+- Store archive reference and year-end summary in main file
+- Archive files are self-contained and can be loaded independently
 
-**FR-6.11** [ ] Unsaved changes indicator in UI
-
-**FR-6.12** [ ] Manual save option always available
+**Performance rationale:** With ~2000 transactions/year (~450 KB per year), keeping 2 years in main file (~900 KB) ensures fast auto-save while recent data remains instantly accessible. Older years archived separately for long-term scalability.
 
 ### FR-7: Budget Management
 
@@ -214,39 +229,60 @@ These features will be implemented after the MVP is complete and validated by us
 
 ### FR-9: Year Management & Multi-Year Support (Post-MVP)
 
-**FR-9.1** [ ] Year switching and management
-- Switch between different years
-- Create new year files
-- Year selector visible in interface
+**FR-9.1** [ ] Seamless year handling in UI - *Phase 11*
+- Year selector in header showing current year
+- Switch between years in main file (instant)
+- Load archived years on-demand (file picker)
+- Auto-switch to current year when app opens
 
-**FR-9.2** [ ] Multi-year data loading
-- Load multiple year files simultaneously
-- Aggregate data from multiple years for reporting
-- Memory-efficient handling of large datasets
+**FR-9.2** [ ] Auto-archive workflow - *Phase 11*
+- Detect when 3+ years exist in main file
+- Prompt user: "Archive [year] to keep performance optimal?"
+- User can postpone archiving (show reminder banner)
+- Create archive file with full year data + account/category snapshots
+- Update main file with archive reference and year-end summary
+- Remove archived year from main file (keeps 2 most recent)
 
-**FR-9.3** [ ] Cross-year analysis
-- View reports spanning multiple years
-- Compare data year-over-year
-- Track long-term trends across years
-- Net worth progression over multiple years
+**FR-9.3** [ ] Archive file management - *Phase 11*
+- Self-contained archive files (include account/category definitions from that period)
+- Archive reference tracking in main file (year, filename, summary)
+- Year-end summaries: closing net worth, closing balances, transaction count
+- Load archived year for detailed viewing (read-only recommended)
+- Handle missing archive files gracefully (allow browsing)
 
-**FR-9.4** [ ] Year transitions
-- Carry forward account balances to new year
-- Copy categories and budgets to new year
-- Archive old year files
+**FR-9.4** [ ] Cross-year analysis with quick trends - *Phase 11*
+- Dashboard shows year-over-year net worth trend using summaries (instant, no file loading)
+- Use archive references for quick multi-year comparisons
+- Example: "2023: $40k → 2024: $45k → 2025: $52k → 2026: $58k"
+- Access without loading full archive files
 
-**FR-9.5** [ ] Historical analysis
-- View transaction history across all years
-- Search transactions across multiple years
-- Category spending trends over multiple years
-- Income and expense patterns year-over-year
+**FR-9.5** [ ] Detailed multi-year analysis (optional) - *Phase 11*
+- "Detailed Multi-Year Analysis" feature
+- Prompt user to load multiple archive files
+- Load full transaction data from archives into memory
+- Generate comprehensive reports spanning all loaded years
+- Month-by-month trends, category breakdowns, account history
+- Unload archives after analysis to free memory
 
-**FR-9.6** [ ] Account overview report
-- Individual account details and transaction history
-- Account balance over time chart
-- Multi-year account history view
-- Filter and search transactions
-- Export account statement
+**FR-9.6** [ ] Archive utilities - *Phase 11*
+- Export single year to standalone file (for accountant)
+- Import archived year back into main file (if needed)
+- Archive file browser showing available years
+- Compact main file (force archive old years)
+- User preference: number of years to keep in main file (default: 2)
+
+**Architecture Note:** Main file structure supports efficient multi-year operations:
+- Years stored in `years: { "2025": {...}, "2026": {...} }` object
+- Archive references in `archivedYears: [{year, fileName, summary}, ...]` array
+- Quick trends use summaries (no file loading)
+- Detailed analysis loads archives on-demand
+- Auto-save always fast (~900 KB with 2 years)
+
+**Performance Note:** With ~2000 transactions/year (~450 KB per year):
+- Main file (2 years): ~900 KB → fast auto-save
+- 5 years in single file: ~2.25 MB → slower auto-save
+- 10 years in single file: ~4.5 MB → poor performance
+- Auto-archiving ensures app stays fast for decades
 
 ### FR-10: Advanced Data Management (Post-MVP)
 
@@ -333,14 +369,34 @@ These features will be implemented after the MVP is complete and validated by us
 ### NFR-3: Performance (MVP)
 
 **NFR-3.1** [ ] Application loads quickly - *Phase 10*
+- Initial load under 3 seconds on modern browsers
+- Code splitting for lazy-loaded routes
 
 **NFR-3.2** [ ] Responsive user interface - *Phase 10*
+- UI interactions respond within 100ms
+- Smooth scrolling and animations at 60fps
 
 **NFR-3.3** [ ] Smooth transitions between views - *Phase 9, 10*
 
-**NFR-3.4** [ ] Efficient data loading and saving - *Phase 10*
+**NFR-3.4** [x] Efficient data operations - *Phase 2, 10*
+- Auto-save optimized for ~900 KB files (2 years of data)
+- File writes complete within 200ms for typical data size
+- Year filtering and queries execute instantly (in-memory operations)
 
 **NFR-3.5** [ ] Optimized bundle size through code splitting - *Phase 10*
+- Main bundle under 500 KB
+- Lazy load route components
+
+**NFR-3.6** [ ] Scalable data architecture (Post-MVP - Phase 11)
+- Auto-archive keeps main file under 1 MB for optimal performance
+- Support decades of data without performance degradation
+- Archive files loaded on-demand for historical analysis
+- Memory-efficient handling of large datasets
+
+**Performance Baseline:** Assuming ~2000 transactions/year (~450 KB per year):
+- Main file with 2 years: ~900 KB (fast auto-save, instant queries)
+- Main file with 5 years: ~2.25 MB (slower auto-save, larger memory footprint)
+- Archive strategy prevents performance issues as data accumulates
 
 ### NFR-4: Usability (MVP)
 
@@ -415,11 +471,135 @@ These features will be implemented after the MVP is complete and validated by us
 **TC-1** [x] No backend infrastructure required - *Phase 1*
 
 **TC-2** [x] Limited by browser File System Access API capabilities - *Phase 2*
+- File save/load requires user interaction (file picker dialog)
+- Cannot auto-save to multiple files simultaneously
+- Archive workflow requires user to save each archive file
 
 **TC-3** [x] Limited by browser storage for local caching - *Phase 2*
+- localStorage used for preferences and last file reference
+- IndexedDB available for future backup strategy
+
+**TC-4** [ ] Performance scales with data volume
+- With ~2000 transactions/year, main file grows ~450 KB per year
+- Auto-save performance degrades beyond ~2 MB file size
+- Solution: Auto-archive strategy keeps main file at ~900 KB (2 years)
+- Archive files loaded on-demand for historical analysis
 
 ### Post-MVP Constraints (Cloud Storage)
 
-**TC-4** [ ] Depends on cloud storage provider availability
+**TC-5** [ ] Depends on cloud storage provider availability
 
-**TC-5** [ ] Requires internet connection for cloud synchronization
+**TC-6** [ ] Requires internet connection for cloud synchronization
+
+**TC-7** [ ] Cloud storage syncing one main file is straightforward
+- Archive files must be managed separately
+- User controls archive creation/loading through UI
+
+---
+
+## Data Architecture & File Strategy
+
+### File Size Projections
+
+**Baseline:** ~2000 transactions per year
+
+**Per-year data size:**
+- 2000 transactions × 200 bytes = 400 KB
+- Budgets, manual assets, metadata = 50 KB
+- **Total per year: ~450 KB**
+
+**Projected growth:**
+- 2 years: 900 KB (optimal for auto-save)
+- 5 years: 2.25 MB (slower auto-save, larger memory)
+- 10 years: 4.5 MB (poor performance)
+- 20 years: 9 MB (unacceptable for browser operations)
+
+### Multi-Year Strategy
+
+**MVP (Phases 1-10):** Single file with all years
+- Start simple, no premature optimization
+- File grows naturally as years accumulate
+- Sufficient for first 2-3 years of usage
+- Auto-save remains fast (under 1 MB)
+
+**Post-MVP (Phase 11):** Auto-archive with rolling window
+- Automatically archive years beyond the 2 most recent
+- Main file always contains: current year + previous year
+- Archive files created automatically with user confirmation
+- Archive references stored in main file with year-end summaries
+
+### File Structure
+
+**Main File (my-finances.json):**
+```json
+{
+  "version": "1.0",
+  "accounts": [...],
+  "categories": [...],
+  "transactionTypes": [...],
+  "preferences": {...},
+  "years": {
+    "2025": {
+      "transactions": [...],
+      "budgets": [...],
+      "manualAssets": [...]
+    },
+    "2026": {
+      "transactions": [...],
+      "budgets": [...],
+      "manualAssets": [...]
+    }
+  },
+  "archivedYears": [
+    {
+      "year": 2024,
+      "fileName": "my-finances-2024.json",
+      "archivedDate": "2026-01-15T10:30:00Z",
+      "summary": {
+        "transactionCount": 2047,
+        "closingNetWorth": 52000,
+        "closingBalances": {"acc-1": 5000, "acc-2": 15000}
+      }
+    }
+  ]
+}
+```
+
+**Archive File (my-finances-2024.json):**
+```json
+{
+  "year": 2024,
+  "archivedFrom": "my-finances.json",
+  "archivedDate": "2026-01-15T10:30:00Z",
+  "accounts": [...],       // Snapshot at archive time
+  "categories": [...],     // Snapshot at archive time
+  "transactionTypes": [...], // Snapshot at archive time
+  "transactions": [...],   // Full year transactions
+  "budgets": [...],       // Full year budgets
+  "manualAssets": [...]   // Year-end manual assets
+}
+```
+
+### Cross-Year Analysis
+
+**Quick Trends (No File Loading):**
+- Use archive summaries from main file
+- Display year-over-year net worth, closing balances
+- Instant dashboard trends spanning all years
+- No performance impact
+
+**Detailed Analysis (Load Archives):**
+- User explicitly requests detailed multi-year reports
+- App prompts to load specific archive files
+- Full transaction-level analysis across loaded years
+- Archives unloaded after analysis (memory management)
+
+### Benefits of This Approach
+
+1. **Fast auto-save:** Main file always ~900 KB (2 years)
+2. **Instant recent data:** Current + previous year immediately accessible
+3. **Quick trends:** Year-end summaries enable overview without file loading
+4. **Scalable:** Supports decades of data without performance degradation
+5. **Simple MVP:** Start with single file, add archiving later when needed
+6. **User control:** Archive prompts give visibility and control
+7. **Portable archives:** Each archive is self-contained and shareable

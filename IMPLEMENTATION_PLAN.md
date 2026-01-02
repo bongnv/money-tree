@@ -227,10 +227,10 @@ This plan implements all requirements from REQUIREMENTS.md.
 **Goal**: Users can add, view, edit, and delete transactions
 
 ### 5.1 Implement Transaction Data Layer
-- [ ] Create `src/stores/useTransactionStore.ts` with transaction CRUD
-- [ ] Create `src/services/calculation.service.ts` for balance calculations
-- [ ] Create `src/services/validation.service.ts` for transaction validation
-- [ ] Create `src/utils/date.utils.ts` for date formatting
+- [x] Create `src/stores/useTransactionStore.ts` with transaction CRUD
+- [x] Create `src/services/calculation.service.ts` for balance calculations
+- [x] Create `src/services/validation.service.ts` for transaction validation
+- [x] Create `src/utils/date.utils.ts` for date formatting
 
 ### 5.2 Build Transaction Management UI
 

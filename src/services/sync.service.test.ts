@@ -218,7 +218,6 @@ describe('SyncService', () => {
         categories: [],
         transactionTypes: [],
         transactions: [],
-        budgets: [],
         manualAssets: [],
         lastModified: new Date().toISOString(),
       };

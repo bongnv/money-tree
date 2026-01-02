@@ -1,4 +1,4 @@
-import { AccountType, BudgetPeriod, Group, AssetType } from './enums';
+import { AccountType, Group, AssetType } from './enums';
 
 /**
  * Currency model
@@ -71,28 +71,14 @@ export interface Transaction {
 }
 
 /**
- * Budget Item model
- * Represents a single line item in a budget
- */
-export interface BudgetItem {
-  id: string;
-  transactionTypeId: string;
-  plannedAmount: number;
-  notes?: string;
-}
-
-/**
  * Budget model
- * Represents a budget plan for a specific period
+ * Represents a budget for a specific transaction type with flexible period
  */
 export interface Budget {
   id: string;
-  name: string;
-  period: BudgetPeriod;
-  startDate: string; // Date string in YYYY-MM-DD format
-  endDate: string; // Date string in YYYY-MM-DD format
-  items: BudgetItem[];
-  isActive: boolean; // Only one budget can be active per period
+  transactionTypeId: string;
+  amount: number; // Budget amount
+  period: 'monthly' | 'quarterly' | 'yearly'; // Period type for this budget
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }

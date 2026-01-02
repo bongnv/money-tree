@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AccountType, BudgetPeriod, Group, AssetType } from '../types/enums';
+import { AccountType, Group, AssetType } from '../types/enums';
 
 /**
  * Zod schema for Currency
@@ -69,26 +69,13 @@ export const TransactionSchema = z.object({
 });
 
 /**
- * Zod schema for BudgetItem
- */
-export const BudgetItemSchema = z.object({
-  id: z.string().min(1, 'ID is required'),
-  transactionTypeId: z.string().min(1, 'Transaction type ID is required'),
-  plannedAmount: z.number().nonnegative('Planned amount cannot be negative'),
-  notes: z.string().optional(),
-});
-
-/**
- * Zod schema for Budget
+ * Zod schema for Budget (Simplified for MVP Phase 7)
  */
 export const BudgetSchema = z.object({
   id: z.string().min(1, 'ID is required'),
-  name: z.string().min(1, 'Budget name is required'),
-  period: z.nativeEnum(BudgetPeriod),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
-  items: z.array(BudgetItemSchema),
-  isActive: z.boolean(),
+  transactionTypeId: z.string().min(1, 'Transaction type ID is required'),
+  amount: z.number().positive('Amount must be greater than 0'),
+  period: z.enum(['monthly', 'quarterly', 'yearly']),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });

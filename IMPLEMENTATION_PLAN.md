@@ -384,26 +384,26 @@ This plan implements all requirements from REQUIREMENTS.md.
 **Goal**: Users can set budgets per transaction type and track spending progress
 
 ### 7.1 Create Basic Budget Page with Add/Edit/Delete
-- [ ] Update `src/types/models.ts` to add `BudgetItem` model:
-  - [ ] `id: string` - unique identifier
-  - [ ] `transactionTypeId: string` - which transaction type
-  - [ ] `amount: number` - budget amount
-  - [ ] `period: 'monthly' | 'quarterly' | 'yearly'` - period type
-- [ ] Create `src/stores/useBudgetStore.ts` with budget items CRUD operations
-- [ ] Create `src/components/budgets/BudgetItemDialog.tsx`:
-  - [ ] Transaction type selector (grouped by category, dropdown)
-  - [ ] Amount input field with validation
-  - [ ] Period selector dropdown (Monthly/Quarterly/Yearly)
-  - [ ] Save and cancel buttons
-  - [ ] Form validation (amount > 0, transaction type required)
-- [ ] Create `src/components/budgets/BudgetsPage.tsx`:
-  - [ ] "Add Budget" button (opens BudgetItemDialog)
-  - [ ] Simple list of budget items showing: transaction type, amount, period
-  - [ ] Edit and delete buttons for each item
-  - [ ] Empty state: "No budgets set. Click Add Budget to get started."
-- [ ] Add route `/budgets` in App.tsx
-- [ ] Add "Budgets" navigation button to Header with icon
-- [ ] **Write tests**: useBudgetStore.test.ts, BudgetItemDialog.test.tsx, BudgetsPage.test.tsx
+- [x] Update `src/types/models.ts` to add `Budget` model:
+  - [x] `id: string` - unique identifier
+  - [x] `transactionTypeId: string` - which transaction type
+  - [x] `amount: number` - budget amount
+  - [x] `period: 'monthly' | 'quarterly' | 'yearly'` - period type
+- [x] Create `src/stores/useBudgetStore.ts` with budgets CRUD operations
+- [x] Create `src/components/budgets/BudgetDialog.tsx`:
+  - [x] Transaction type selector (grouped by category, dropdown)
+  - [x] Amount input field with validation
+  - [x] Period selector dropdown (Monthly/Quarterly/Yearly)
+  - [x] Save and cancel buttons
+  - [x] Form validation (amount > 0, transaction type required)
+- [x] Create `src/components/budgets/BudgetsPage.tsx`:
+  - [x] "Add Budget" button (opens BudgetDialog)
+  - [x] Simple list of budgets showing: transaction type, amount, period
+  - [x] Edit and delete buttons for each item
+  - [x] Empty state: "No budgets set. Click Add Budget to get started."
+- [x] Add route `/budgets` in App.tsx
+- [x] Add "Budgets" navigation button to Header with icon
+- [x] **Write tests**: useBudgetStore.test.ts, BudgetDialog.test.tsx, BudgetsPage.test.tsx
 **Manual Verification (User):** Navigate to /budgets, click "Add Budget", select Groceries, enter $400, select Monthly, save. Verify item appears in list. Add more budgets (Rent $1,500/month, Car Insurance $600/quarter). Edit a budget amount. Delete a budget. Verify all CRUD operations work.
 
 ### 7.2 Add Progress Tracking with Actual Spending

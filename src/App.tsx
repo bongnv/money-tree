@@ -11,6 +11,7 @@ import { CategoriesPage } from './components/categories/CategoriesPage';
 import { TransactionsPage } from './components/transactions/TransactionsPage';
 import { ManualAssetsPage } from './components/assets/ManualAssetsPage';
 import { ReportsPage } from './components/reports/ReportsPage';
+import { BudgetsPage } from './components/budgets/BudgetsPage';
 import { useAppStore } from './stores/useAppStore';
 import { syncService } from './services/sync.service';
 
@@ -70,6 +71,7 @@ const App: React.FC = () => {
             <Route path="/transactions" element={<TransactionsPage />} />
             <Route path="/assets" element={<ManualAssetsPage />} />
             <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/budgets" element={<BudgetsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </MainLayout>

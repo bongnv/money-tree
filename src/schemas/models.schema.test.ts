@@ -4,12 +4,11 @@ import {
   CategorySchema,
   TransactionTypeSchema,
   TransactionSchema,
-  BudgetItemSchema,
   BudgetSchema,
   ManualAssetSchema,
   DataFileSchema,
 } from './models.schema';
-import { AccountType, BudgetPeriod, Group, AssetType } from '../types/enums';
+import { AccountType, Group, AssetType } from '../types/enums';
 
 // Helper to get date in YYYY-MM-DD format
 const getDateString = () => new Date().toISOString().split('T')[0];
@@ -228,84 +227,39 @@ describe('Model Schemas', () => {
     });
   });
 
-  describe('BudgetItemSchema', () => {
-    it('should validate a valid budget item', () => {
-      const validBudgetItem = {
-        id: 'bi1',
-        transactionTypeId: 'tt1',
-        plannedAmount: 200.0,
-      };
-      expect(() => BudgetItemSchema.parse(validBudgetItem)).not.toThrow();
-    });
-
-    it('should validate budget item with notes', () => {
-      const validBudgetItem = {
-        id: 'bi1',
-        transactionTypeId: 'tt1',
-        plannedAmount: 200.0,
-        notes: 'Monthly grocery budget',
-      };
-      expect(() => BudgetItemSchema.parse(validBudgetItem)).not.toThrow();
-    });
-
-    it('should reject budget item with negative amount', () => {
-      const invalidBudgetItem = {
-        id: 'bi1',
-        transactionTypeId: 'tt1',
-        plannedAmount: -200.0,
-      };
-      expect(() => BudgetItemSchema.parse(invalidBudgetItem)).toThrow();
-    });
-  });
-
   describe('BudgetSchema', () => {
-    it('should validate a valid budget', () => {
+    it('should validate a valid budget item', () => {
       const validBudget = {
-        id: 'b1',
-        name: 'January 2026 Budget',
-        period: BudgetPeriod.MONTHLY,
-        startDate: '2026-01-01',
-        endDate: '2026-01-31',
-        items: [
-          {
-            id: 'bi1',
-            transactionTypeId: 'tt1',
-            plannedAmount: 200.0,
-          },
-        ],
-        isActive: true,
-        createdAt: getDateTimeString(),
-        updatedAt: getDateTimeString(),
+        id: 'bi1',
+        transactionTypeId: 'tt1',
+        amount: 200.0,
+        period: 'monthly',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
       };
       expect(() => BudgetSchema.parse(validBudget)).not.toThrow();
     });
 
-    it('should validate budget with empty items', () => {
+    it('should validate budget item with quarterly period', () => {
       const validBudget = {
-        id: 'b1',
-        name: 'January 2026 Budget',
-        period: BudgetPeriod.MONTHLY,
-        startDate: '2026-01-01',
-        endDate: '2026-01-31',
-        items: [],
-        isActive: true,
-        createdAt: getDateTimeString(),
-        updatedAt: getDateTimeString(),
+        id: 'bi1',
+        transactionTypeId: 'tt1',
+        amount: 600.0,
+        period: 'quarterly',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
       };
       expect(() => BudgetSchema.parse(validBudget)).not.toThrow();
     });
 
-    it('should reject budget with invalid period', () => {
+    it('should reject budget item with zero or negative amount', () => {
       const invalidBudget = {
-        id: 'b1',
-        name: 'January 2026 Budget',
-        period: 'invalid_period',
-        startDate: new Date('2026-01-01').toISOString(),
-        endDate: new Date('2026-01-31').toISOString(),
-        items: [],
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        id: 'bi1',
+        transactionTypeId: 'tt1',
+        amount: 0,
+        period: 'monthly',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
       };
       expect(() => BudgetSchema.parse(invalidBudget)).toThrow();
     });

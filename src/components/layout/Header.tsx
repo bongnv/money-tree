@@ -18,6 +18,7 @@ import {
   ReceiptLong as TransactionsIcon,
   BusinessCenter as AssetsIcon,
   Assessment as ReportsIcon,
+  AccountBalanceWallet as BudgetIcon,
 } from '@mui/icons-material';
 import { useAppStore } from '../../stores/useAppStore';
 import { syncService } from '../../services/sync.service';
@@ -133,6 +134,16 @@ export const Header: React.FC = () => {
             }}
           >
             Reports
+          </Button>
+          <Button
+            color="inherit"
+            startIcon={<BudgetIcon />}
+            onClick={() => navigate('/budgets')}
+            sx={{
+              backgroundColor: location.pathname === '/budgets' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+            }}
+          >
+            Budgets
           </Button>
         </Box>
 

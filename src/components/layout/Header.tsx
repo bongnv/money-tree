@@ -1,17 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, Box, CircularProgress } from '@mui/material';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Box,
+  CircularProgress,
+  IconButton,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  useTheme,
+  useMediaQuery,
+} from '@mui/material';
 import {
   Save as SaveIcon,
   FolderOpen as FolderOpenIcon,
   FiberManualRecord as DotIcon,
-  Home as HomeIcon,
-  AccountBalance as AccountsIcon,
-  Category as CategoryIcon,
   ReceiptLong as TransactionsIcon,
-  BusinessCenter as AssetsIcon,
   Assessment as ReportsIcon,
   AccountBalanceWallet as BudgetIcon,
+  Settings as SettingsIcon,
+  Menu as MenuIcon,
 } from '@mui/icons-material';
 import { useAppStore } from '../../stores/useAppStore';
 import { syncService } from '../../services/sync.service';
@@ -20,6 +34,9 @@ import { formatDistance } from 'date-fns';
 export const Header: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { fileName, lastSaved, hasUnsavedChanges, isLoading, currentYear } = useAppStore();
 
   const handleLoad = async () => {
@@ -54,92 +71,82 @@ export const Header: React.FC = () => {
     }
   };
 
+  const navItems = [
+    { label: 'Transactions', path: '/transactions', icon: <TransactionsIcon /> },
+    { label: 'Reports', path: '/reports', icon: <ReportsIcon /> },
+    { label: 'Budgets', path: '/budgets', icon: <BudgetIcon /> },
+    { label: 'Settings', path: '/settings', icon: <SettingsIcon /> },
+  ];
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    setMobileMenuOpen(false);
+  };
+
+  const isActive = (path: string) => {
+    if (path === '/settings') {
+      return location.pathname.startsWith('/settings') ||
+             location.pathname === '/accounts' ||
+             location.pathname === '/categories' ||
+             location.pathname === '/assets';
+    }
+    return location.pathname === path;
+  };
+
   return (
     <AppBar position="static">
       <Toolbar>
-        <Typography variant="h6" component="div" sx={{ mr: 4 }}>
+        <Typography
+          variant="h6"
+          component="div"
+          onClick={() => navigate('/')}
+          sx={{
+            mr: 4,
+            cursor: 'pointer',
+            '&:hover': {
+              opacity: 0.8,
+            },
+          }}
+        >
           Money Tree
         </Typography>
 
-        <Box sx={{ flexGrow: 1, display: 'flex', gap: 1 }}>
-          <Button
-            color="inherit"
-            startIcon={<HomeIcon />}
-            onClick={() => navigate('/')}
-            sx={{
-              backgroundColor:
-                location.pathname === '/' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-            }}
-          >
-            Dashboard
-          </Button>
-          <Button
-            color="inherit"
-            startIcon={<AccountsIcon />}
-            onClick={() => navigate('/accounts')}
-            sx={{
-              backgroundColor:
-                location.pathname === '/accounts' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-            }}
-          >
-            Accounts
-          </Button>
-          <Button
-            color="inherit"
-            startIcon={<CategoryIcon />}
-            onClick={() => navigate('/categories')}
-            sx={{
-              backgroundColor:
-                location.pathname === '/categories' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-            }}
-          >
-            Categories
-          </Button>
-          <Button
-            color="inherit"
-            startIcon={<TransactionsIcon />}
-            onClick={() => navigate('/transactions')}
-            sx={{
-              backgroundColor:
-                location.pathname === '/transactions' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-            }}
-          >
-            Transactions
-          </Button>
-          <Button
-            color="inherit"
-            startIcon={<AssetsIcon />}
-            onClick={() => navigate('/assets')}
-            sx={{
-              backgroundColor:
-                location.pathname === '/assets' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-            }}
-          >
-            Assets
-          </Button>
-          <Button
-            color="inherit"
-            startIcon={<ReportsIcon />}
-            onClick={() => navigate('/reports')}
-            sx={{
-              backgroundColor:
-                location.pathname === '/reports' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-            }}
-          >
-            Reports
-          </Button>
-          <Button
-            color="inherit"
-            startIcon={<BudgetIcon />}
-            onClick={() => navigate('/budgets')}
-            sx={{
-              backgroundColor:
-                location.pathname === '/budgets' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-            }}
-          >
-            Budgets
-          </Button>
-        </Box>
+        {/* Desktop Navigation */}
+        {!isMobile && (
+          <Box sx={{ flexGrow: 1, display: 'flex', gap: 1 }}>
+            {navItems.map((item) => (
+              <Button
+                key={item.path}
+                color="inherit"
+                startIcon={item.icon}
+                onClick={() => handleNavigation(item.path)}
+                sx={{
+                  backgroundColor: isActive(item.path)
+                    ? 'rgba(255, 255, 255, 0.1)'
+                    : 'transparent',
+                }}
+              >
+                {item.label}
+              </Button>
+            ))}
+          </Box>
+        )}
+
+        {/* Mobile Menu Button */}
+        {isMobile && (
+          <>
+            <Box sx={{ flexGrow: 1 }} />
+            <IconButton
+              color="inherit"
+              aria-label="menu"
+              edge="start"
+              onClick={() => setMobileMenuOpen(true)}
+              sx={{ mr: 2 }}
+            >
+              <MenuIcon />
+            </IconButton>
+          </>
+        )}
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {fileName && (
@@ -172,6 +179,34 @@ export const Header: React.FC = () => {
           </Button>
         </Box>
       </Toolbar>
+
+      {/* Mobile Drawer */}
+      <Drawer
+        anchor="right"
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+      >
+        <Box
+          sx={{ width: 250 }}
+          role="presentation"
+          onClick={() => setMobileMenuOpen(false)}
+          onKeyDown={() => setMobileMenuOpen(false)}
+        >
+          <List>
+            {navItems.map((item) => (
+              <ListItem key={item.path} disablePadding>
+                <ListItemButton
+                  onClick={() => handleNavigation(item.path)}
+                  selected={isActive(item.path)}
+                >
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.label} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      </Drawer>
     </AppBar>
   );
 };

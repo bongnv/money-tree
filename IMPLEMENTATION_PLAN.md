@@ -563,18 +563,20 @@ This plan implements all requirements from REQUIREMENTS.md.
 **Manual Verification (User):** Navigate directly to each URL, verify correct page loads, test /404 page with invalid URL (e.g., /xyz), check browser back/forward buttons work correctly.
 
 ### 9.2 Update Header Navigation
-- [ ] Make "Money Tree" logo/title clickable → navigate to Dashboard (/)
-- [ ] Update Header with simplified navigation (4 main items):
-  - [ ] Transactions (icon: receipt/list)
-  - [ ] Reports (icon: chart/analytics)
-  - [ ] Budgets (icon: savings/piggy bank)
-  - [ ] Settings (icon: gear/cog)
-- [ ] Remove Dashboard button from navigation (logo serves this purpose)
-- [ ] Add icons for each section
-- [ ] Add active state styling (highlight current section)
-- [ ] Add mobile responsive menu (drawer)
-- [ ] **Write tests**: Header navigation tests, logo click navigation, active states
-**Manual Verification (User):** Click "Money Tree" logo to return to dashboard, click each navigation link in Header, verify active state highlights current page, test on mobile to see drawer menu, verify all icons display correctly, check keyboard navigation works.
+- [x] Make "Money Tree" logo/title clickable → navigate to Dashboard (/)
+- [x] Update Header with simplified navigation (4 main items):
+  - [x] Transactions (icon: receipt/list)
+  - [x] Reports (icon: chart/analytics)
+  - [x] Budgets (icon: savings/piggy bank)
+  - [x] Settings (icon: gear/cog)
+- [x] Remove Dashboard button from navigation (logo serves this purpose)
+- [x] Remove Accounts, Categories, Assets buttons (will be under Settings in Phase 9.3)
+- [x] Add icons for each section
+- [x] Add active state styling (highlight current section)
+- [x] Settings button highlights for /settings/* and temporary routes (/accounts, /categories, /assets)
+- [x] Add mobile responsive menu (drawer)
+- [x] **Write tests**: Header navigation tests, logo click navigation, active states, mobile menu (25 tests total, 14 new)
+**Manual Verification (User):** Click "Money Tree" logo to return to dashboard, click each navigation link in Header, verify active state highlights current page, test on mobile to see drawer menu open/close, verify all icons display correctly, check keyboard navigation works.
 
 ### 9.3 Create Settings Page Structure
 - [ ] Create `src/components/settings/SettingsLayout.tsx`:

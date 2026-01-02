@@ -1,4 +1,4 @@
-import { AccountType, BudgetPeriod, Group } from './enums';
+import { AccountType, BudgetPeriod, Group, AssetType } from './enums';
 
 /**
  * Currency model
@@ -98,6 +98,22 @@ export interface Budget {
 }
 
 /**
+ * Manual Asset model
+ * Represents manually tracked assets and liabilities (not connected to accounts)
+ */
+export interface ManualAsset {
+  id: string;
+  name: string;
+  type: AssetType;
+  value: number; // Current value (can be negative for liabilities)
+  currencyId: string;
+  date: string; // ISO date string - date of valuation
+  notes?: string;
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+}
+
+/**
  * Data File model
  * Represents the complete data structure for a year
  * Note: Currencies are not stored in the data file as they are fixed defaults
@@ -110,6 +126,7 @@ export interface DataFile {
   transactionTypes: TransactionType[];
   transactions: Transaction[];
   budgets: Budget[];
+  manualAssets: ManualAsset[];
   lastModified: string; // ISO date string
 }
 

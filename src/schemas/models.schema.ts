@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AccountType, BudgetPeriod, Group } from '../types/enums';
+import { AccountType, BudgetPeriod, Group, AssetType } from '../types/enums';
 
 /**
  * Zod schema for Currency
@@ -94,6 +94,25 @@ export const BudgetSchema = z.object({
 });
 
 /**
+ * Zod schema for ManualAsset
+ */
+export const ManualAssetSchema = z.object({
+  id: z.string().min(1, 'ID is required'),
+  name: z.string().min(1, 'Asset name is required'),
+  type: z.nativeEnum(AssetType),
+  value: z.number(),
+  currencyId: z.string().min(1, 'Currency ID is required'),
+  date: z.string().datetime(),
+  notes: z.string().optional(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+/**
+ * Zod schema for DataFile
+ * Note: Currencies are not stored in the data file as they are fixed defaults
+ */
+/**
  * Zod schema for DataFile
  * Note: Currencies are not stored in the data file as they are fixed defaults
  */
@@ -105,6 +124,7 @@ export const DataFileSchema = z.object({
   transactionTypes: z.array(TransactionTypeSchema),
   transactions: z.array(TransactionSchema),
   budgets: z.array(BudgetSchema),
+  manualAssets: z.array(ManualAssetSchema),
   lastModified: z.string().datetime(),
 });
 

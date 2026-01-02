@@ -13,12 +13,13 @@ Read `REQUIREMENTS.md` and `IMPLEMENTATION_PLAN.md` before making changes.
 - Build features incrementally with routes added early for UI testing
 - Integrate components with actual features, not in isolation
 - Avoid temporary/throwaway code (demos, test pages)
-- Each step: implementation tasks + automated tests + manual verification
+- Each step: implementation tasks + automated tests
 
-**Manual Verification Format:**
-- Label: "**Manual Verification (User):**"
-- Describe: browser actions + expected outcomes
-- Example: "Navigate to /reports, select date range, verify chart displays"
+**Manual Verification:**
+- Include steps in plan for user to test themselves
+- Skip by default (user tests manually when ready)
+- Do not start dev server or wait for browser testing
+- Proceed to next phase immediately after tests pass
 
 ## Code Style
 

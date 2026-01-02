@@ -18,6 +18,7 @@ describe('LocalStorageProvider', () => {
       transactionTypes: [],
       transactions: [],
       budgets: [],
+      manualAssets: [],
       lastModified: new Date().toISOString(),
     };
   });

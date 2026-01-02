@@ -16,6 +16,7 @@ import {
   AccountBalance as AccountsIcon,
   Category as CategoryIcon,
   ReceiptLong as TransactionsIcon,
+  BusinessCenter as AssetsIcon,
 } from '@mui/icons-material';
 import { useAppStore } from '../../stores/useAppStore';
 import { syncService } from '../../services/sync.service';
@@ -111,6 +112,16 @@ export const Header: React.FC = () => {
             }}
           >
             Transactions
+          </Button>
+          <Button
+            color="inherit"
+            startIcon={<AssetsIcon />}
+            onClick={() => navigate('/assets')}
+            sx={{
+              backgroundColor: location.pathname === '/assets' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+            }}
+          >
+            Assets
           </Button>
         </Box>
 

@@ -32,3 +32,15 @@ export enum BudgetPeriod {
   YEARLY = 'yearly',
 }
 
+/**
+ * Asset type enum
+ * Defines different types of manual assets and liabilities
+ */
+export enum AssetType {
+  REAL_ESTATE = 'real_estate',
+  SUPERANNUATION = 'superannuation',
+  INVESTMENT = 'investment',
+  LIABILITY = 'liability',
+  OTHER = 'other',
+}
+

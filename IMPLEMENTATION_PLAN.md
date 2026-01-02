@@ -326,14 +326,14 @@ This plan implements all requirements from REQUIREMENTS.md.
 
 **Goal**: Users can view balance sheet and cash flow reports
 
-### 6.1 Implement Manual Assets Feature
-- [ ] Create `src/types/models.ts` interface for ManualAsset (name, type, value, date, notes)
-- [ ] Create `src/stores/useAssetStore.ts` for manual assets and liabilities
-- [ ] Add Zod schemas for asset validation
-- [ ] Create `src/components/assets/ManualAssetForm.tsx`
-- [ ] Create `src/components/assets/ManualAssetDialog.tsx`
-- [ ] Create `src/components/assets/ManualAssetList.tsx`
-- [ ] **Write tests**: Asset store and component tests
+### 6.1 Implement Manual Assets Feature ✅
+- [x] Create `src/types/models.ts` interface for ManualAsset (name, type, value, date, notes)
+- [x] Create `src/stores/useAssetStore.ts` for manual assets and liabilities
+- [x] Add Zod schemas for asset validation
+- [x] Create `src/components/assets/ManualAssetForm.tsx`
+- [x] Create `src/components/assets/ManualAssetDialog.tsx`
+- [x] Create `src/components/assets/ManualAssetList.tsx`
+- [x] **Write tests**: Asset store and component tests
 **Manual Verification (User):** Add various manual assets (house, car, investments), edit asset values, delete assets, verify all CRUD operations work correctly.
 
 ### 6.2 Build Balance Sheet Report with Charts

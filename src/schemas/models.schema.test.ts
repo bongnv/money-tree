@@ -6,9 +6,10 @@ import {
   TransactionSchema,
   BudgetItemSchema,
   BudgetSchema,
+  ManualAssetSchema,
   DataFileSchema,
 } from './models.schema';
-import { AccountType, BudgetPeriod, Group } from '../types/enums';
+import { AccountType, BudgetPeriod, Group, AssetType } from '../types/enums';
 
 describe('Model Schemas', () => {
   describe('CurrencySchema', () => {
@@ -306,6 +307,94 @@ describe('Model Schemas', () => {
     });
   });
 
+  describe('ManualAssetSchema', () => {
+    it('should validate a valid manual asset', () => {
+      const validAsset = {
+        id: 'asset-1',
+        name: 'House',
+        type: AssetType.REAL_ESTATE,
+        value: 500000,
+        currencyId: 'usd',
+        date: new Date().toISOString(),
+        notes: 'Primary residence',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      expect(() => ManualAssetSchema.parse(validAsset)).not.toThrow();
+    });
+
+    it('should validate asset without optional notes', () => {
+      const validAsset = {
+        id: 'asset-1',
+        name: 'Super Fund',
+        type: AssetType.SUPERANNUATION,
+        value: 25000,
+        currencyId: 'usd',
+        date: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      expect(() => ManualAssetSchema.parse(validAsset)).not.toThrow();
+    });
+
+    it('should reject asset with missing id', () => {
+      const invalidAsset = {
+        name: 'House',
+        type: AssetType.REAL_ESTATE,
+        value: 500000,
+        currencyId: 'usd',
+        date: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      expect(() => ManualAssetSchema.parse(invalidAsset)).toThrow();
+    });
+
+    it('should reject asset with empty name', () => {
+      const invalidAsset = {
+        id: 'asset-1',
+        name: '',
+        type: AssetType.REAL_ESTATE,
+        value: 500000,
+        currencyId: 'usd',
+        date: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      expect(() => ManualAssetSchema.parse(invalidAsset)).toThrow();
+    });
+
+    it('should reject asset with invalid type', () => {
+      const invalidAsset = {
+        id: 'asset-1',
+        name: 'House',
+        type: 'invalid_type',
+        value: 500000,
+        currencyId: 'usd',
+        date: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      expect(() => ManualAssetSchema.parse(invalidAsset)).toThrow();
+    });
+
+    it('should validate all asset types', () => {
+      Object.values(AssetType).forEach(type => {
+        const asset = {
+          id: 'asset-1',
+          name: 'Test Asset',
+          type,
+          value: 10000,
+          currencyId: 'usd',
+          date: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        expect(() => ManualAssetSchema.parse(asset)).not.toThrow();
+      });
+    });
+  });
+
   describe('DataFileSchema', () => {
     it('should validate a valid data file', () => {
       const validDataFile = {
@@ -316,6 +405,33 @@ describe('Model Schemas', () => {
         transactionTypes: [],
         transactions: [],
         budgets: [],
+        manualAssets: [],
+        lastModified: new Date().toISOString(),
+      };
+      expect(() => DataFileSchema.parse(validDataFile)).not.toThrow();
+    });
+
+    it('should validate data file with manual assets', () => {
+      const validDataFile = {
+        version: '1.0.0',
+        year: 2026,
+        accounts: [],
+        categories: [],
+        transactionTypes: [],
+        transactions: [],
+        budgets: [],
+        manualAssets: [
+          {
+            id: 'asset-1',
+            name: 'House',
+            type: AssetType.REAL_ESTATE,
+            value: 500000,
+            currencyId: 'usd',
+            date: new Date().toISOString(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ],
         lastModified: new Date().toISOString(),
       };
       expect(() => DataFileSchema.parse(validDataFile)).not.toThrow();
@@ -330,6 +446,7 @@ describe('Model Schemas', () => {
         transactionTypes: [],
         transactions: [],
         budgets: [],
+        manualAssets: [],
         lastModified: new Date().toISOString(),
       };
       expect(() => DataFileSchema.parse(invalidDataFile)).toThrow();
@@ -343,10 +460,26 @@ describe('Model Schemas', () => {
         transactionTypes: [],
         transactions: [],
         budgets: [],
+        manualAssets: [],
+        lastModified: new Date().toISOString(),
+      };
+      expect(() => DataFileSchema.parse(invalidDataFile)).toThrow();
+    });
+
+    it('should reject data file with missing manualAssets', () => {
+      const invalidDataFile = {
+        version: '1.0.0',
+        year: 2026,
+        accounts: [],
+        categories: [],
+        transactionTypes: [],
+        transactions: [],
+        budgets: [],
         lastModified: new Date().toISOString(),
       };
       expect(() => DataFileSchema.parse(invalidDataFile)).toThrow();
     });
   });
 });
+
 

@@ -38,6 +38,7 @@ describe('IStorageProvider', () => {
       transactionTypes: [],
       transactions: [],
       budgets: [],
+      manualAssets: [],
       lastModified: new Date().toISOString(),
     };
   });

@@ -133,8 +133,10 @@ The MVP focuses on core personal finance tracking functionality with local file 
 #### Budget Allocation
 - [ ] **Transaction Type-Level Budgets:**
   - [ ] Set budget amount for each transaction type (e.g., Groceries, Utilities, Salary)
-  - [ ] Support both expense and income transaction types
-  - [ ] Group budgets by category for summary view
+  - [ ] Support both expense and income transaction types with context-aware labels:
+    - [ ] Expense types: Display as "Budget" (spending limit)
+    - [ ] Income types: Display as "Target" or "Expected Income" (income goal)
+  - [ ] Group budgets by category for summary view (Income section, Expense sections)
   - [ ] Allocate remaining budget across transaction types
   - [ ] Show total budget vs available funds
 - [ ] **Budget Templates:**
@@ -145,9 +147,11 @@ The MVP focuses on core personal finance tracking functionality with local file 
 #### Budget Tracking & Review
 - [ ] **Real-Time Budget Status:**
   - [ ] Show budget vs actual for each transaction type
-  - [ ] Display spent amount, remaining amount, and percentage used
+  - [ ] Display spent/earned amount, remaining amount, and percentage used
   - [ ] Visual progress bars for each transaction type
-  - [ ] Color coding: Green (on track), Yellow (warning), Red (over budget)
+  - [ ] Context-aware color coding:
+    - [ ] Expenses: Green (under budget), Yellow (80-100%), Red (over budget)
+    - [ ] Income: Green (meeting/exceeding target), Yellow (60-80%), Red (under 60%)
   - [ ] Roll up transaction types into category summaries
 - [ ] **Budget Dashboard:**
   - [ ] Overall budget status (total budgeted vs actual)

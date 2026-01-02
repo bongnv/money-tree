@@ -399,6 +399,7 @@ This plan implements all requirements from REQUIREMENTS.md.
 - [x] Create `src/components/budgets/BudgetsPage.tsx`:
   - [x] "Add Budget" button (opens BudgetDialog)
   - [x] Simple list of budgets showing: transaction type, amount, period
+  - [x] Group by category (Income section shows "Income Targets", Expense sections show "Budgets")
   - [x] Edit and delete buttons for each item
   - [x] Empty state: "No budgets set. Click Add Budget to get started."
 - [x] Add route `/budgets` in App.tsx
@@ -409,16 +410,20 @@ This plan implements all requirements from REQUIREMENTS.md.
 ### 7.2 Add Progress Tracking with Actual Spending
 - [ ] Add proration and progress calculation functions to `calculation.service.ts`:
   - [ ] `prorateBudget(amount, fromPeriod, toPeriod)` - convert between periods
-  - [ ] `calculateActualSpending(transactionTypeId, startDate, endDate)` - sum transactions
+  - [ ] `calculateActualAmount(transactionTypeId, startDate, endDate)` - sum transactions
 - [ ] Update BudgetsPage to show progress for current month:
-  - [ ] Display budget amount and actual spending for each budget item
-  - [ ] Add progress bar with color coding (green < 80%, yellow 80-100%, red > 100%)
+  - [ ] Display budget amount and actual spending/income for each budget item
+  - [ ] Add progress bar with context-aware color coding:
+    - [ ] Expenses: green < 80%, yellow 80-100%, red > 100%
+    - [ ] Income: green ≥ 100%, yellow 60-99%, red < 60%
   - [ ] Show percentage (actual / budget × 100%)
-  - [ ] Group budget items by category
-  - [ ] Add total row at bottom (total budget vs total actual)
+  - [ ] Group budget items by category with context-aware labels:
+    - [ ] Income section header: "Income Targets"
+    - [ ] Expense section headers: "[Category Name] Budgets"
+  - [ ] Add total rows per section (total budget vs total actual)
 - [ ] Automatically prorate budgets to monthly for display (e.g., $600 quarterly → $200/month)
-- [ ] **Write tests**: Calculation functions, progress display, color coding
-**Manual Verification (User):** With budgets from 7.1, add some transactions (groceries, rent). Navigate to /budgets and verify progress bars show actual spending vs budget. Check that $600 quarterly budget displays as $200 for current month. Add more transactions and verify progress bars update in real-time. Verify color coding: green when under 80%, yellow when 80-100%, red when over 100%.
+- [ ] **Write tests**: Calculation functions, progress display, context-aware color coding for income vs expenses
+**Manual Verification (User):** With budgets from 7.1, add transactions for both income (Salary) and expenses (Groceries, Rent). Navigate to /budgets and verify: (1) Income section shows "Income Targets" with green bars when meeting target, (2) Expense sections show "Budgets" with green bars when under budget, (3) Progress bars and colors invert correctly for income vs expenses, (4) $600 quarterly budget displays as $200 for current month. Add more transactions and verify real-time updates.
 
 ### 7.3 Add Period Selector for Flexible Viewing
 - [ ] Create `src/components/budgets/PeriodSelector.tsx`:

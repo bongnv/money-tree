@@ -122,5 +122,14 @@ describe('Header', () => {
 
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
+
+  it('should render all navigation buttons', () => {
+    renderWithRouter(<Header />);
+
+    expect(screen.getByRole('button', { name: /dashboard/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /accounts/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /categories/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /transactions/i })).toBeInTheDocument();
+  });
 });
 

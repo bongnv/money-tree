@@ -2,7 +2,12 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AccountCard } from './AccountCard';
 import { AccountType } from '../../types/enums';
-import type { Account } from '../../types/models';
+import type { Account, Transaction } from '../../types/models';
+import { useTransactionStore } from '../../stores/useTransactionStore';
+
+jest.mock('../../stores/useTransactionStore');
+
+const mockUseTransactionStore = useTransactionStore as jest.MockedFunction<typeof useTransactionStore>;
 
 describe('AccountCard', () => {
   const mockAccount: Account = {
@@ -22,6 +27,17 @@ describe('AccountCard', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Default mock: no transactions
+    mockUseTransactionStore.mockReturnValue({
+      transactions: [],
+      addTransaction: jest.fn(),
+      updateTransaction: jest.fn(),
+      deleteTransaction: jest.fn(),
+      getTransactionsByAccount: jest.fn(),
+      getTransactionsByType: jest.fn(),
+      getTransactionsByDateRange: jest.fn(),
+    });
   });
 
   it('should render account information', () => {
@@ -98,5 +114,51 @@ describe('AccountCard', () => {
     );
 
     expect(screen.getByText('BANK ACCOUNT')).toBeInTheDocument();
+  });
+
+  it('should display calculated balance with transactions', () => {
+    const mockTransactions: Transaction[] = [
+      {
+        id: 'txn-1',
+        date: '2024-01-15',
+        amount: 200,
+        transactionTypeId: 'tt-1',
+        toAccountId: 'acc-1', // Money coming in
+        fromAccountId: '',
+        createdAt: '2024-01-15T00:00:00.000Z',
+        updatedAt: '2024-01-15T00:00:00.000Z',
+      },
+      {
+        id: 'txn-2',
+        date: '2024-01-16',
+        amount: 50,
+        transactionTypeId: 'tt-2',
+        fromAccountId: 'acc-1', // Money going out
+        toAccountId: '',
+        createdAt: '2024-01-16T00:00:00.000Z',
+        updatedAt: '2024-01-16T00:00:00.000Z',
+      },
+    ];
+
+    mockUseTransactionStore.mockReturnValue({
+      transactions: mockTransactions,
+      addTransaction: jest.fn(),
+      updateTransaction: jest.fn(),
+      deleteTransaction: jest.fn(),
+      getTransactionsByAccount: jest.fn(),
+      getTransactionsByType: jest.fn(),
+      getTransactionsByDateRange: jest.fn(),
+    });
+
+    render(
+      <AccountCard
+        account={mockAccount}
+        onEdit={mockOnEdit}
+        onDelete={mockOnDelete}
+      />
+    );
+
+    // Initial balance: $1000 + $200 (in) - $50 (out) = $1150
+    expect(screen.getByText('$1150.00')).toBeInTheDocument();
   });
 });

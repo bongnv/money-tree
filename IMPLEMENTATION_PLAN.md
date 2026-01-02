@@ -295,30 +295,30 @@ This plan implements all requirements from REQUIREMENTS.md.
 **Manual Verification (User):** Create transactions and see them in the list, click edit to open dialog with data, delete transaction, verify empty state.
 
 #### 5.2.5 Add Transaction Filters to Page
-- [ ] Create `src/components/transactions/TransactionFilters.tsx`:
-  - [ ] Date range filter (from/to)
-  - [ ] Account filter (multi-select)
-  - [ ] Category/group filter
-  - [ ] Transaction type filter
-  - [ ] Search by description
-  - [ ] Clear filters button
-- [ ] Add TransactionFilters to TransactionsPage at top
-- [ ] Connect filters to filter transaction list
-- [ ] **Write tests**: TransactionFilters.test.tsx
+- [x] Create `src/components/transactions/TransactionFilters.tsx`:
+  - [x] Date range filter (from/to)
+  - [x] Account filter (multi-select)
+  - [x] Category/group filter
+  - [x] Transaction type filter
+  - [x] Search by description
+  - [x] Clear filters button
+- [x] Add TransactionFilters to TransactionsPage at top
+- [x] Connect filters to filter transaction list
+- [x] **Write tests**: TransactionFilters.test.tsx
 **Manual Verification (User):** Create diverse transactions, test each filter independently and in combination, verify clear filters button works.
 
 #### 5.2.6 Add Navigation and Polish
-- [ ] Add "Transactions" button to Header navigation with icon
-- [ ] Update Header.test.tsx for new navigation button
-- [ ] Add page title and layout refinements to TransactionsPage
-- [ ] **Write tests**: TransactionsPage.test.tsx with full CRUD workflow
+- [x] Add "Transactions" button to Header navigation with icon
+- [x] Update Header.test.tsx for new navigation button
+- [x] Add page title and layout refinements to TransactionsPage
+- [x] **Write tests**: TransactionsPage.test.tsx with full CRUD workflow
 **Manual Verification (User):** Complete end-to-end workflow - add expense/income/transfer/investment transactions, filter by date/account/category, edit and delete transactions, verify unsaved changes indicator, save file and verify persistence.
 
 #### 5.2.7 (Removed - merged into 5.2.3 and 5.2.6)
 
 ### 5.3 Verify Account Balance Updates
-- [ ] Update AccountCard to show calculated balance
-- [ ] **Test**: Add transactions and verify account balances update correctly
+- [x] Update AccountCard to show calculated balance
+- [x] **Test**: Add transactions and verify account balances update correctly
 
 ## Phase 6: Dashboard with Quick Transaction Entry (MVP)
 

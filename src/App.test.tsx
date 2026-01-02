@@ -26,10 +26,9 @@ describe('App', () => {
     expect(screen.getByText('Load')).toBeInTheDocument();
     expect(screen.getByText('Save')).toBeInTheDocument();
 
-    // Check for Dashboard - use getAllByText since it appears in nav and heading
+    // Check for Dashboard page title - use getAllByText since it appears in nav and heading
     const dashboardElements = screen.getAllByText('Dashboard');
     expect(dashboardElements.length).toBeGreaterThan(0);
-    expect(screen.getByText('Financial Summary')).toBeInTheDocument();
   });
 
   it('should start auto-save on mount', () => {

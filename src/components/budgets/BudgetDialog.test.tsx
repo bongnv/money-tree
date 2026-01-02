@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BudgetDialog } from './BudgetDialog';
@@ -67,6 +66,8 @@ describe('BudgetDialog', () => {
       transactionTypeId: 'tt1',
       amount: 500,
       period: 'monthly',
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
     };
@@ -84,6 +85,8 @@ describe('BudgetDialog', () => {
       transactionTypeId: 'tt1',
       amount: 500,
       period: 'monthly',
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
     };
@@ -138,6 +141,8 @@ describe('BudgetDialog', () => {
       transactionTypeId: 'tt1',
       amount: 500,
       period: 'monthly',
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
     };

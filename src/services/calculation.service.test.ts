@@ -1,6 +1,6 @@
 import { calculationService } from './calculation.service';
-import type { Transaction, Account } from '../types/models';
-import { AccountType } from '../types/enums';
+import type { Transaction, Account, ManualAsset } from '../types/models';
+import { AccountType, AssetType } from '../types/enums';
 
 const mockAccount1: Account = {
   id: 'acc-1',
@@ -848,12 +848,13 @@ describe('CalculationService', () => {
   });
 
   describe('Dashboard Calculations', () => {
-    const mockAssets = [
+    const mockAssets: ManualAsset[] = [
       {
         id: 'asset-1',
         name: 'House',
-        type: 'real-estate' as const,
+        type: AssetType.REAL_ESTATE,
         value: 500000,
+        currencyId: 'usd',
         date: '2026-01-01',
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
@@ -861,8 +862,9 @@ describe('CalculationService', () => {
       {
         id: 'asset-2',
         name: 'Car',
-        type: 'vehicle' as const,
+        type: AssetType.OTHER,
         value: 25000,
+        currencyId: 'usd',
         date: '2026-01-01',
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',

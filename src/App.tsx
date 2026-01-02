@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { Box, Typography, Container } from '@mui/material';
+import { Box, Typography, Container, Paper } from '@mui/material';
 import theme from './theme';
 import { MainLayout } from './components/layout/MainLayout';
 import { FileLoadErrorDialog } from './components/common/FileLoadErrorDialog';
@@ -15,6 +15,8 @@ import { BudgetsPage } from './components/budgets/BudgetsPage';
 import { PeriodSelector, PeriodOption } from './components/dashboard/PeriodSelector';
 import { FinancialSummary } from './components/dashboard/FinancialSummary';
 import { BudgetOverview } from './components/dashboard/BudgetOverview';
+import { RecentTransactionsList } from './components/dashboard/RecentTransactionsList';
+import { QuickEntryContainer } from './components/dashboard/QuickEntryContainer';
 import { useAppStore } from './stores/useAppStore';
 import { syncService } from './services/sync.service';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
@@ -47,6 +49,16 @@ const DashboardPage: React.FC = () => {
           Budget Overview
         </Typography>
         <BudgetOverview period={selectedPeriod} />
+      </Box>
+
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" gutterBottom>
+          Recent Transactions
+        </Typography>
+        <Paper sx={{ p: 2, mb: 2 }}>
+          <QuickEntryContainer />
+        </Paper>
+        <RecentTransactionsList limit={10} />
       </Box>
     </Container>
   );

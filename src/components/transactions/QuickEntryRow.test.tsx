@@ -1,5 +1,4 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QuickEntryRow } from './QuickEntryRow';
 import type { Account, Category, TransactionType } from '../../types/models';
@@ -10,8 +9,9 @@ describe('QuickEntryRow', () => {
     {
       id: 'acc-1',
       name: 'Checking',
-      type: AccountType.CHECKING,
-      currency: 'USD',
+      type: AccountType.BANK_ACCOUNT,
+      currencyId: 'usd',
+      initialBalance: 0,
       isActive: true,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
@@ -19,8 +19,9 @@ describe('QuickEntryRow', () => {
     {
       id: 'acc-2',
       name: 'Savings',
-      type: AccountType.SAVINGS,
-      currency: 'USD',
+      type: AccountType.BANK_ACCOUNT,
+      currencyId: 'usd',
+      initialBalance: 0,
       isActive: true,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
@@ -29,7 +30,8 @@ describe('QuickEntryRow', () => {
       id: 'acc-3',
       name: 'Credit Card',
       type: AccountType.CREDIT_CARD,
-      currency: 'USD',
+      currencyId: 'usd',
+      initialBalance: 0,
       isActive: true,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',

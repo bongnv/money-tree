@@ -514,19 +514,19 @@ This plan implements all requirements from REQUIREMENTS.md.
 **Manual Verification (User):** With budgets and transactions set up, verify top 5 budgets appear sorted by % spent, check progress bars show correct colors, verify actual amounts match transaction totals, switch period to see prorated values, test empty state when no budgets exist.
 
 ### 8.3 Build Recent Transactions with Quick Add
-- [ ] Create `src/components/dashboard/RecentTransactionsList.tsx`:
-  - [ ] Display last 10 transactions with date, description, category/type, amount
-  - [ ] Color code amounts (green for income, default for expense)
-  - [ ] Add quick edit/delete actions (reuse from TransactionList)
-  - [ ] Show "View All Transactions" link to /transactions page
-  - [ ] Real-time updates when new transaction added
-- [ ] Integrate QuickEntryRow component (reuse from Phase 12):
-  - [ ] Import existing `src/components/transactions/QuickEntryRow.tsx`
-  - [ ] Place at top of Recent Transactions section
-  - [ ] After submit, transaction appears immediately in list below
-  - [ ] Focus returns to quick entry for next transaction
-- [ ] **Write tests**: Recent transactions list, integration with QuickEntryRow, real-time updates (6 tests)
-**Manual Verification (User):** View dashboard recent transactions, add a transaction using quick entry row, verify it appears at top of list immediately, edit a transaction inline, delete a transaction, verify "View All" link navigates to /transactions page.
+- [x] Create `src/components/dashboard/RecentTransactionsList.tsx`:
+  - [x] Display last 10 transactions with date, description, category/type, amount
+  - [x] Color code amounts (green for income, default for expense)
+  - [x] Add quick edit/delete actions (optional callbacks for onEdit/onDelete)
+  - [x] Show "View All Transactions" link to /transactions page
+  - [x] Real-time updates when new transaction added
+- [x] Integrate QuickEntryRow component (reuse from Phase 12):
+  - [x] Create `src/components/dashboard/QuickEntryContainer.tsx` to connect stores to QuickEntryRow
+  - [x] Place at top of Recent Transactions section in DashboardPage
+  - [x] After submit, transaction appears immediately in list below
+  - [x] Transactions sorted by date (newest first)
+- [x] **Write tests**: Recent transactions list, sorting, empty state, edit/delete callbacks, view all link (8 tests)
+**Manual Verification (User):** View dashboard recent transactions, add a transaction using quick entry row, verify it appears at top of list immediately, verify "View All" link navigates to /transactions page, check color coding for income vs expenses.
 
 ### 8.4 Create Dashboard Page
 - [ ] Create `src/components/dashboard/DashboardPage.tsx`:

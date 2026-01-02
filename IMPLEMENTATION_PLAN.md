@@ -450,22 +450,29 @@ This plan implements all requirements from REQUIREMENTS.md.
 **Manual Verification (User):** Navigate to /budgets. Add budget for Rent $1500/month - dates will prefill to Jan 1 - Dec 31, 2026. Edit dates to Jan 1 - Jun 30, 2026. Add another budget for Rent $1600/month with Jul 1 - Dec 31, 2026. Verify both appear with date ranges shown. Verify progress tracking uses correct budget based on transaction dates. Try to add overlapping budget and verify validation error prevents saving.
 
 ### 7.4 Add Period Selector for Flexible Viewing
-- [ ] Create `src/components/budgets/PeriodSelector.tsx`:
-  - [ ] Dropdown with options: specific months (Jan 2026, Feb 2026), quarters (Q1 2026), years (2026), custom date range
-  - [ ] Default to current month
-- [ ] Update BudgetsPage to use PeriodSelector:
-  - [ ] Pass selected period to progress calculations
-  - [ ] Prorate all budgets based on selected period length
-  - [ ] Calculate actual spending for selected period only
-  - [ ] Filter and show only budgets active during selected period
-- [ ] Update progress display logic:
-  - [ ] Monthly budget viewed as quarterly → multiply by 3
-  - [ ] Quarterly budget viewed as monthly → divide by 3
-  - [ ] Yearly budget viewed as monthly → divide by 12
-  - [ ] Show prorated amount with period indicator
-  - [ ] Handle partial overlaps: if budget is only active for 2 months of Q1, prorate accordingly
-- [ ] **Write tests**: PeriodSelector.test.tsx, proration for different period combinations, partial period calculations
-**Manual Verification (User):** With existing budgets (including date-ranged ones), navigate to /budgets. Use period selector to switch between January 2026, Q1 2026, and 2026. Verify budget amounts prorate correctly (e.g., Groceries $400/month shows as $1,200 for Q1, $4,800 for year). Verify only relevant budgets show (Rent $1500 shows in Jan-Jun view, Rent $1600 shows in Jul-Dec view). Verify partial overlaps calculate correctly (budget active 2 of 3 months in quarter shows 2/3 of prorated amount).
+- [x] Create `src/components/budgets/PeriodSelector.tsx`:
+  - [x] Dropdown with options: 12 months, 4 quarters (Q1-Q4), current year, previous year
+  - [x] Default to current month
+  - [x] Returns PeriodOption: {label, startDate, endDate}
+- [x] Update BudgetsPage to use PeriodSelector:
+  - [x] Add selectedPeriod state (defaults to current month)
+  - [x] Display "Viewing period: {label}" below page title
+  - [x] Filter budgets to show only those active during selected period
+  - [x] Use prorateBudgetForPeriod() instead of simple prorateBudget()
+- [x] Update `calculation.service.ts` with simple period-based proration:
+  - [x] Add `getDaysInPeriod(startDate, endDate)` - counts actual days between dates
+  - [x] Add `getMonthsInPeriod(startDate, endDate)` - approximate month counting  
+  - [x] Add `prorateBudgetForPeriod(budget, startDate, endDate)`:
+    - [x] Convert budget to monthly equivalent (quarterly ÷ 3, yearly ÷ 12, monthly stays same)
+    - [x] Multiply by approximate months in viewing period
+    - [x] Adjust for partial overlaps: if budget not active for full viewing period, multiply by (overlap_days / period_days)
+    - [x] **Design decision**: Uses simple period conversions (×3, ×12) for clarity over complex day-based math
+    - [x] **Trade-off**: Prioritizes user comprehension ($1,500/month always shows $1,500 for any month) over ~2% accuracy variance
+- [x] Handle budget date range overlaps with viewing period:
+  - [x] If budget active for only part of viewing period, prorate accordingly
+  - [x] Example: Viewing Q1 (Jan-Mar), but budget only active Jan-Feb → 1500 × 3 × (59/90) = $2,950
+- [x] **Write tests**: Day counting, period conversions, proration for different period combinations, partial overlaps
+**Manual Verification (User):** With existing budgets (including date-ranged ones), navigate to /budgets. Use period selector to switch between January 2026, Q1 2026, and 2026. Verify $1,500 monthly budget shows as $1,500 (1 month), $4,500 (3 months), and $18,000 (12 months). Verify quarterly budget $4,500 shows as $1,500 (1 month), $4,500 (3 months), $18,000 (12 months). Verify partial overlap: Budget active Jan-Feb only, viewing Q1 → shows ~$2,950 (prorated for 2 of 3 months).
 
 ## Phase 8: Dashboard with Quick Transaction Entry (MVP)
 

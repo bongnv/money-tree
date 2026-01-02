@@ -258,6 +258,84 @@ class CalculationService {
       return true;
     });
   }
+
+  /**
+   * Count the number of days between two dates (inclusive)
+   * @param startDate Start date (YYYY-MM-DD format)
+   * @param endDate End date (YYYY-MM-DD format)
+   * @returns Number of days between dates
+   */
+  getDaysInPeriod(startDate: string, endDate: string): number {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays + 1; // +1 to include both start and end dates
+  }
+
+  /**
+   * Count the number of months between two dates (inclusive, approximate)
+   * @param startDate Start date (YYYY-MM-DD format)
+   * @param endDate End date (YYYY-MM-DD format)
+   * @returns Number of months between dates (rounded)
+   */
+  private getMonthsInPeriod(startDate: string, endDate: string): number {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const monthsDiff = (end.getFullYear() - start.getFullYear()) * 12 + 
+                       (end.getMonth() - start.getMonth()) + 1;
+    return monthsDiff;
+  }
+
+  /**
+   * Prorate a budget for a specific period using simple period conversions
+   * Uses straightforward multiplication: quarterly = monthly × 3, yearly = monthly × 12
+   * @param budget Budget to prorate
+   * @param startDate Start of viewing period (YYYY-MM-DD format)
+   * @param endDate End of viewing period (YYYY-MM-DD format)
+   * @returns Prorated budget amount for the period
+   */
+  prorateBudgetForPeriod(budget: Budget, startDate: string, endDate: string): number {
+    // Calculate overlap between budget date range and viewing period
+    const overlapStart = budget.startDate > startDate ? budget.startDate : startDate;
+    const overlapEnd = budget.endDate < endDate ? budget.endDate : endDate;
+
+    // If no overlap, return 0
+    if (overlapStart > overlapEnd) {
+      return 0;
+    }
+
+    // Calculate months in viewing period (approximate)
+    const monthsInPeriod = this.getMonthsInPeriod(startDate, endDate);
+    
+    // Convert budget amount to monthly equivalent
+    let monthlyAmount: number;
+    switch (budget.period) {
+      case 'monthly':
+        monthlyAmount = budget.amount;
+        break;
+      case 'quarterly':
+        monthlyAmount = budget.amount / 3;
+        break;
+      case 'yearly':
+        monthlyAmount = budget.amount / 12;
+        break;
+    }
+
+    // Calculate prorated amount based on viewing period
+    const proratedAmount = monthlyAmount * monthsInPeriod;
+
+    // Handle partial overlaps by calculating the ratio
+    const totalPeriodDays = this.getDaysInPeriod(startDate, endDate);
+    const overlapDays = this.getDaysInPeriod(overlapStart, overlapEnd);
+    
+    if (overlapDays < totalPeriodDays) {
+      // Budget is only active for part of the viewing period
+      return proratedAmount * (overlapDays / totalPeriodDays);
+    }
+
+    return proratedAmount;
+  }
 }
 
 export const calculationService = new CalculationService();

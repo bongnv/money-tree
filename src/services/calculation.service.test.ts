@@ -627,5 +627,216 @@ describe('CalculationService', () => {
       expect(budget?.id).toBe('1');
     });
   });
-});
 
+  describe('getDaysInPeriod', () => {
+    it('should count days correctly for same day', () => {
+      const days = calculationService.getDaysInPeriod('2026-01-01', '2026-01-01');
+      expect(days).toBe(1);
+    });
+
+    it('should count days correctly for a month', () => {
+      const days = calculationService.getDaysInPeriod('2026-01-01', '2026-01-31');
+      expect(days).toBe(31);
+    });
+
+    it('should count days correctly for February (non-leap year)', () => {
+      const days = calculationService.getDaysInPeriod('2026-02-01', '2026-02-28');
+      expect(days).toBe(28);
+    });
+
+    it('should count days correctly for February (leap year)', () => {
+      const days = calculationService.getDaysInPeriod('2024-02-01', '2024-02-29');
+      expect(days).toBe(29);
+    });
+
+    it('should count days correctly for a quarter', () => {
+      const days = calculationService.getDaysInPeriod('2026-01-01', '2026-03-31');
+      expect(days).toBe(90);
+    });
+
+    it('should count days correctly for a full year (non-leap)', () => {
+      const days = calculationService.getDaysInPeriod('2026-01-01', '2026-12-31');
+      expect(days).toBe(365);
+    });
+
+    it('should count days correctly for a full year (leap)', () => {
+      const days = calculationService.getDaysInPeriod('2024-01-01', '2024-12-31');
+      expect(days).toBe(366);
+    });
+
+    it('should handle date ranges in reverse order', () => {
+      const days = calculationService.getDaysInPeriod('2026-01-31', '2026-01-01');
+      expect(days).toBe(31); // Uses absolute difference
+    });
+  });
+
+  describe('prorateBudgetForPeriod', () => {
+    it('should show monthly budget as-is for single month', () => {
+      const budget = {
+        id: '1',
+        transactionTypeId: 'type-1',
+        amount: 1500,
+        period: 'monthly' as const,
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-01-01', '2026-01-31');
+      expect(prorated).toBe(1500); // 1 month
+    });
+
+    it('should convert monthly budget to quarterly (3 months)', () => {
+      const budget = {
+        id: '1',
+        transactionTypeId: 'type-1',
+        amount: 1500,
+        period: 'monthly' as const,
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-01-01', '2026-03-31');
+      expect(prorated).toBe(4500); // 1500 * 3
+    });
+
+    it('should convert monthly budget to yearly (12 months)', () => {
+      const budget = {
+        id: '1',
+        transactionTypeId: 'type-1',
+        amount: 1500,
+        period: 'monthly' as const,
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-01-01', '2026-12-31');
+      expect(prorated).toBe(18000); // 1500 * 12
+    });
+
+    it('should show quarterly budget as-is for single quarter', () => {
+      const budget = {
+        id: '1',
+        transactionTypeId: 'type-1',
+        amount: 4500,
+        period: 'quarterly' as const,
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-01-01', '2026-03-31');
+      expect(prorated).toBe(4500); // 3 months
+    });
+
+    it('should convert quarterly budget to monthly', () => {
+      const budget = {
+        id: '1',
+        transactionTypeId: 'type-1',
+        amount: 4500,
+        period: 'quarterly' as const,
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-01-01', '2026-01-31');
+      expect(prorated).toBe(1500); // 4500 / 3
+    });
+
+    it('should convert quarterly budget to yearly (4 quarters)', () => {
+      const budget = {
+        id: '1',
+        transactionTypeId: 'type-1',
+        amount: 4500,
+        period: 'quarterly' as const,
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-01-01', '2026-12-31');
+      expect(prorated).toBe(18000); // 4500 * 4
+    });
+
+    it('should show yearly budget as-is for full year', () => {
+      const budget = {
+        id: '1',
+        transactionTypeId: 'type-1',
+        amount: 18000,
+        period: 'yearly' as const,
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-01-01', '2026-12-31');
+      expect(prorated).toBe(18000); // 12 months
+    });
+
+    it('should convert yearly budget to monthly', () => {
+      const budget = {
+        id: '1',
+        transactionTypeId: 'type-1',
+        amount: 18000,
+        period: 'yearly' as const,
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-01-01', '2026-01-31');
+      expect(prorated).toBe(1500); // 18000 / 12
+    });
+
+    it('should convert yearly budget to quarterly', () => {
+      const budget = {
+        id: '1',
+        transactionTypeId: 'type-1',
+        amount: 18000,
+        period: 'yearly' as const,
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-01-01', '2026-03-31');
+      expect(prorated).toBe(4500); // 18000 / 4
+    });
+
+    it('should handle partial overlap - budget active for part of viewing period', () => {
+      const budget = {
+        id: '1',
+        transactionTypeId: 'type-1',
+        amount: 1500,
+        period: 'monthly' as const,
+        startDate: '2026-01-01',
+        endDate: '2026-02-28', // Only Jan-Feb (59 days)
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+      // Viewing Q1 (90 days), but budget only active Jan-Feb (59 days)
+      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-01-01', '2026-03-31');
+      // 1500 * 3 months * (59 days / 90 days) = 4500 * 0.6556 = 2950
+      expect(prorated).toBeCloseTo(2950, 0);
+    });
+
+    it('should return 0 when budget and viewing period do not overlap', () => {
+      const budget = {
+        id: '1',
+        transactionTypeId: 'type-1',
+        amount: 1500,
+        period: 'monthly' as const,
+        startDate: '2026-01-01',
+        endDate: '2026-06-30',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+      // Viewing period is after budget ends
+      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-07-01', '2026-07-31');
+      expect(prorated).toBe(0);
+    });
+  });
+});

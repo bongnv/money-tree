@@ -20,6 +20,7 @@ import { useBudgetStore } from '../../stores/useBudgetStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import { useTransactionStore } from '../../stores/useTransactionStore';
 import { BudgetDialog } from './BudgetDialog';
+import { PeriodSelector, type PeriodOption } from './PeriodSelector';
 import type { Budget } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
 import { calculationService } from '../../services/calculation.service';
@@ -33,18 +34,26 @@ export const BudgetsPage: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | undefined>(undefined);
 
-  // Get current month's date range
-  const { startDate, endDate } = useMemo(() => {
+  // Initialize with current month
+  const getCurrentMonthPeriod = (): PeriodOption => {
     const now = new Date();
     const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    const lastDay = new Date(year, month, 0).getDate();
+    const month = now.getMonth();
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
+    ];
+    const monthStartDate = new Date(year, month, 1);
+    const monthEndDate = new Date(year, month + 1, 0);
     
     return {
-      startDate: `${year}-${String(month).padStart(2, '0')}-01`,
-      endDate: `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`,
+      label: `${monthNames[month]} ${year}`,
+      startDate: monthStartDate.toISOString().split('T')[0],
+      endDate: monthEndDate.toISOString().split('T')[0],
     };
-  }, []);
+  };
+
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodOption>(getCurrentMonthPeriod());
 
   const handleAdd = () => {
     setEditingBudget(undefined);
@@ -102,25 +111,35 @@ export const BudgetsPage: React.FC = () => {
 
   // Group budget items by category with progress data
   const groupedBudgets = useMemo(() => {
-    return budgets.reduce((acc, budget) => {
+    // Filter budgets that are active during the selected period
+    const activeBudgets = budgets.filter((budget) => {
+      // Check if budget overlaps with selected period
+      return budget.startDate <= selectedPeriod.endDate && budget.endDate >= selectedPeriod.startDate;
+    });
+
+    return activeBudgets.reduce((acc, budget) => {
       const transactionType = transactionTypes.find((tt) => tt.id === budget.transactionTypeId);
       if (!transactionType) return acc;
 
       const category = getCategoryById(transactionType.categoryId);
       if (!category) return acc;
 
-      // Prorate budget to monthly
-      const monthlyBudget = calculationService.prorateBudget(budget.amount, budget.period, 'monthly');
+      // Prorate budget for the selected period using day-based calculation
+      const proratedBudget = calculationService.prorateBudgetForPeriod(
+        budget,
+        selectedPeriod.startDate,
+        selectedPeriod.endDate
+      );
       
-      // Calculate actual amount for current month
+      // Calculate actual amount for selected period
       const actualAmount = calculationService.calculateActualAmount(
         budget.transactionTypeId,
         transactions,
-        startDate,
-        endDate
+        selectedPeriod.startDate,
+        selectedPeriod.endDate
       );
 
-      const percentage = monthlyBudget > 0 ? (actualAmount / monthlyBudget) * 100 : 0;
+      const percentage = proratedBudget > 0 ? (actualAmount / proratedBudget) * 100 : 0;
 
       if (!acc[category.id]) {
         acc[category.id] = {
@@ -134,12 +153,12 @@ export const BudgetsPage: React.FC = () => {
       acc[category.id].items.push({
         budget,
         transactionType,
-        monthlyBudget,
+        proratedBudget,
         actualAmount,
         percentage,
       });
 
-      acc[category.id].totalBudget += monthlyBudget;
+      acc[category.id].totalBudget += proratedBudget;
       acc[category.id].totalActual += actualAmount;
 
       return acc;
@@ -148,14 +167,14 @@ export const BudgetsPage: React.FC = () => {
       items: { 
         budget: Budget; 
         transactionType: any; 
-        monthlyBudget: number;
+        proratedBudget: number;
         actualAmount: number;
         percentage: number;
       }[];
       totalBudget: number;
       totalActual: number;
     }>);
-  }, [budgets, transactionTypes, transactions, startDate, endDate, getCategoryById]);
+  }, [budgets, transactionTypes, transactions, selectedPeriod, getCategoryById]);
 
   const getSectionTitle = (categoryGroup: Group): string => {
     return categoryGroup === Group.INCOME ? 'Targets' : 'Budgets';
@@ -176,14 +195,24 @@ export const BudgetsPage: React.FC = () => {
         <Typography variant="h4" component="h1">
           Budgets
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleAdd}
-        >
-          Add Budget
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <PeriodSelector
+            value={selectedPeriod.label}
+            onChange={setSelectedPeriod}
+          />
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleAdd}
+          >
+            Add Budget
+          </Button>
+        </Box>
       </Box>
+
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        Viewing period: {selectedPeriod.label}
+      </Typography>
 
       {budgets.length === 0 ? (
         <Paper sx={{ p: 4, textAlign: 'center' }}>
@@ -211,7 +240,7 @@ export const BudgetsPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <List disablePadding>
-                  {items.map(({ budget, transactionType, monthlyBudget, actualAmount, percentage }, index) => (
+                  {items.map(({ budget, transactionType, proratedBudget, actualAmount, percentage }, index) => (
                     <React.Fragment key={budget.id}>
                       {index > 0 && <Divider />}
                       <ListItem
@@ -223,7 +252,7 @@ export const BudgetsPage: React.FC = () => {
                             secondary={
                               <Box component="span">
                                 <Box component="span" sx={{ display: 'block' }}>
-                                  {formatCurrency(actualAmount, 'usd')} of {formatCurrency(monthlyBudget, 'usd')} 
+                                  {formatCurrency(actualAmount, 'usd')} of {formatCurrency(proratedBudget, 'usd')} 
                                   {' '}({percentage.toFixed(0)}%)
                                 </Box>
                                 <Box component="span" sx={{ display: 'block', fontSize: '0.75rem', color: 'text.secondary' }}>

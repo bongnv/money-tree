@@ -14,6 +14,7 @@ import { ReportsPage } from './components/reports/ReportsPage';
 import { BudgetsPage } from './components/budgets/BudgetsPage';
 import { PeriodSelector, PeriodOption } from './components/dashboard/PeriodSelector';
 import { FinancialSummary } from './components/dashboard/FinancialSummary';
+import { BudgetOverview } from './components/dashboard/BudgetOverview';
 import { useAppStore } from './stores/useAppStore';
 import { syncService } from './services/sync.service';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
@@ -33,12 +34,19 @@ const DashboardPage: React.FC = () => {
         </Typography>
         <PeriodSelector value={selectedPeriod} onChange={setSelectedPeriod} />
       </Box>
-      
+
       <Box sx={{ mb: 4 }}>
         <Typography variant="h6" gutterBottom>
           Financial Summary
         </Typography>
         <FinancialSummary period={selectedPeriod} />
+      </Box>
+
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" gutterBottom>
+          Budget Overview
+        </Typography>
+        <BudgetOverview period={selectedPeriod} />
       </Box>
     </Container>
   );

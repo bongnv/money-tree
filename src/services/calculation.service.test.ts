@@ -894,11 +894,7 @@ describe('CalculationService', () => {
       });
 
       it('should handle empty accounts', () => {
-        const netWorth = calculationService.calculateNetWorth(
-          [],
-          [],
-          mockAssets
-        );
+        const netWorth = calculationService.calculateNetWorth([], [], mockAssets);
         // assets only: 500000 + 25000 = 525000
         expect(netWorth).toBe(525000);
       });

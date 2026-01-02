@@ -338,9 +338,16 @@ class CalculationService {
    * @param manualAssets All manual assets
    * @returns Total net worth
    */
-  calculateNetWorth(accounts: Account[], transactions: Transaction[], manualAssets: ManualAsset[]): number {
+  calculateNetWorth(
+    accounts: Account[],
+    transactions: Transaction[],
+    manualAssets: ManualAsset[]
+  ): number {
     const accountBalances = this.calculateAccountBalances(accounts, transactions);
-    const totalAccountBalance = Array.from(accountBalances.values()).reduce((sum, balance) => sum + balance, 0);
+    const totalAccountBalance = Array.from(accountBalances.values()).reduce(
+      (sum, balance) => sum + balance,
+      0
+    );
     const totalAssets = manualAssets.reduce((sum, asset) => sum + asset.value, 0);
     return totalAccountBalance + totalAssets;
   }
@@ -353,9 +360,7 @@ class CalculationService {
    * @returns Cash flow amount
    */
   calculateCashFlow(transactions: Transaction[], startDate: string, endDate: string): number {
-    const periodTransactions = transactions.filter(
-      (t) => t.date >= startDate && t.date <= endDate
-    );
+    const periodTransactions = transactions.filter((t) => t.date >= startDate && t.date <= endDate);
     return this.calculateNetIncome(periodTransactions);
   }
 

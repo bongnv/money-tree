@@ -499,18 +499,18 @@ This plan implements all requirements from REQUIREMENTS.md.
 **Manual Verification (User):** View dashboard with accounts and transactions, verify net worth calculation is correct, check cash flow shows correct income/expense difference, verify savings rate calculates properly, switch period selector to see values update.
 
 ### 8.2 Build Budget Overview Section
-- [ ] Create `src/components/dashboard/BudgetProgressBar.tsx`:
-  - [ ] Show budget name, spent/budget amounts, progress bar
-  - [ ] Color coding: green < 80%, yellow 80-100%, red > 100% (expenses)
-  - [ ] Color coding inverted for income: green ≥ 100%, yellow 60-99%, red < 60%
-- [ ] Create `src/components/dashboard/BudgetOverview.tsx`:
-  - [ ] Display top 5 budget categories sorted by usage percentage (highest first)
-  - [ ] Use `calculateActualAmount()` from calculation.service for actual spending
-  - [ ] Prorate budgets to match selected period (use existing proration logic)
-  - [ ] Show "View All Budgets" link to /budgets page
-  - [ ] Empty state: "Set up budgets to track spending" with link to /budgets
-- [ ] Update based on period selector from 8.1
-- [ ] **Write tests**: Budget progress bars, budget overview with different periods, empty state (8 tests)
+- [x] Create `src/components/dashboard/BudgetProgressBar.tsx`:
+  - [x] Show budget name, spent/budget amounts, progress bar
+  - [x] Color coding: green < 80%, yellow 80-100%, red > 100% (expenses)
+  - [x] Color coding inverted for income: green ≥ 100%, yellow 60-99%, red < 60%
+- [x] Create `src/components/dashboard/BudgetOverview.tsx`:
+  - [x] Display top 5 budget categories sorted by usage percentage (highest first)
+  - [x] Use `calculateActualAmount()` from calculation.service for actual spending
+  - [x] Prorate budgets to match selected period (use existing proration logic)
+  - [x] Show "View All Budgets" link to /budgets page
+  - [x] Empty state: "Set up budgets to track spending" with link to /budgets
+- [x] Update based on period selector from 8.1
+- [x] **Write tests**: Budget progress bars, budget overview with different periods, empty state (8 tests)
 **Manual Verification (User):** With budgets and transactions set up, verify top 5 budgets appear sorted by % spent, check progress bars show correct colors, verify actual amounts match transaction totals, switch period to see prorated values, test empty state when no budgets exist.
 
 ### 8.3 Build Recent Transactions with Quick Add

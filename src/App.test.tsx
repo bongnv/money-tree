@@ -20,7 +20,7 @@ describe('App', () => {
 
   it('should render the app with Header and Dashboard', () => {
     render(<App />);
-    
+
     // Check for Header elements
     expect(screen.getByText('Money Tree')).toBeInTheDocument();
     expect(screen.getByText('Load')).toBeInTheDocument();

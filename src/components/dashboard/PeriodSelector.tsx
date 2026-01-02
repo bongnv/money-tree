@@ -1,6 +1,15 @@
 import React from 'react';
 import { FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
-import { startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subMonths, format } from 'date-fns';
+import {
+  startOfMonth,
+  endOfMonth,
+  startOfQuarter,
+  endOfQuarter,
+  startOfYear,
+  endOfYear,
+  subMonths,
+  format,
+} from 'date-fns';
 
 export interface PeriodOption {
   label: string;
@@ -15,7 +24,7 @@ export interface PeriodSelectorProps {
 
 const getPeriodOptions = (): PeriodOption[] => {
   const now = new Date();
-  
+
   return [
     {
       label: 'This Month',

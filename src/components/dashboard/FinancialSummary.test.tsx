@@ -213,15 +213,9 @@ describe('FinancialSummary', () => {
   });
 
   it('handles empty data', () => {
-    mockUseAccountStore.mockImplementation((selector: any) =>
-      selector({ accounts: [] })
-    );
-    mockUseTransactionStore.mockImplementation((selector: any) =>
-      selector({ transactions: [] })
-    );
-    mockUseAssetStore.mockImplementation((selector: any) =>
-      selector({ manualAssets: [] })
-    );
+    mockUseAccountStore.mockImplementation((selector: any) => selector({ accounts: [] }));
+    mockUseTransactionStore.mockImplementation((selector: any) => selector({ transactions: [] }));
+    mockUseAssetStore.mockImplementation((selector: any) => selector({ manualAssets: [] }));
 
     render(<FinancialSummary period={mockPeriod} />);
 

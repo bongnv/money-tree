@@ -590,7 +590,7 @@ describe('QuickEntryRow', () => {
       const descriptionInput = screen.getByPlaceholderText('Description (optional)');
       descriptionInput.focus();
       await user.keyboard('{ArrowRight}');
-      
+
       const dateInput = screen.getByDisplayValue(/2026-01-02/);
       expect(dateInput).toHaveFocus();
 
@@ -614,7 +614,7 @@ describe('QuickEntryRow', () => {
       // Click on type select to open dropdown
       const typeInputs = screen.getAllByPlaceholderText('Type');
       const typeCombobox = typeInputs.find((input) => input.getAttribute('role') === 'combobox');
-      
+
       await user.click(typeCombobox!);
 
       // Type to search

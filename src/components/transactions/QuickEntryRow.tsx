@@ -170,7 +170,7 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
     const target = e.target as HTMLElement;
     const isCombobox = target.getAttribute('role') === 'combobox';
     const isDropdownOpen = target.getAttribute('aria-expanded') === 'true';
-    
+
     if (e.key === 'Enter' && !e.shiftKey) {
       // Don't submit if dropdown is open - let Autocomplete handle it
       if (isCombobox && isDropdownOpen) {
@@ -189,20 +189,22 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
 
   const handleArrowNavigation = (e: React.KeyboardEvent) => {
     const fieldRefs = [dateRef, amountRef, typeRef];
-    
+
     if (showFromAccount) fieldRefs.push(fromAccountRef);
     if (showToAccount) fieldRefs.push(toAccountRef);
     fieldRefs.push(descriptionRef);
 
     // Find which field is currently focused by checking which ref contains the active element
-    const currentIndex = fieldRefs.findIndex(ref => {
+    const currentIndex = fieldRefs.findIndex((ref) => {
       const element = ref.current;
       if (!element) return false;
       // Check if this element is focused or contains the focused element
-      return element === document.activeElement || 
-             (element.contains && element.contains(document.activeElement));
+      return (
+        element === document.activeElement ||
+        (element.contains && element.contains(document.activeElement))
+      );
     });
-    
+
     if (currentIndex === -1) return;
 
     if (e.key === 'ArrowRight') {
@@ -304,7 +306,7 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
       <Autocomplete
         ref={typeRef}
         options={transactionTypes}
-        value={transactionTypes.find(tt => tt.id === formData.transactionTypeId) || null}
+        value={transactionTypes.find((tt) => tt.id === formData.transactionTypeId) || null}
         onChange={(_, newValue) => {
           setFormData({
             ...formData,
@@ -316,7 +318,7 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
         }}
         getOptionLabel={(option) => option.name}
         groupBy={(option) => {
-          const category = categories.find(c => c.id === option.categoryId);
+          const category = categories.find((c) => c.id === option.categoryId);
           return category?.name || '';
         }}
         disableClearable={false}
@@ -337,7 +339,7 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
         <Autocomplete
           ref={fromAccountRef}
           options={activeAccounts}
-          value={activeAccounts.find(a => a.id === formData.fromAccountId) || null}
+          value={activeAccounts.find((a) => a.id === formData.fromAccountId) || null}
           onChange={(_, newValue) => {
             setFormData({
               ...formData,
@@ -367,7 +369,7 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
         <Autocomplete
           ref={toAccountRef}
           options={activeAccounts}
-          value={activeAccounts.find(a => a.id === formData.toAccountId) || null}
+          value={activeAccounts.find((a) => a.id === formData.toAccountId) || null}
           onChange={(_, newValue) => {
             setFormData({
               ...formData,

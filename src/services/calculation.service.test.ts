@@ -473,4 +473,159 @@ describe('CalculationService', () => {
       expect(total).toBe(50); // Only type-2 transaction
     });
   });
+
+  describe('getActiveBudgetForPeriod', () => {
+    const budgets = [
+      {
+        id: '1',
+        transactionTypeId: 'type-1',
+        amount: 500,
+        period: 'monthly' as const,
+        startDate: '2026-01-01',
+        endDate: '2026-06-30',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+      {
+        id: '2',
+        transactionTypeId: 'type-1',
+        amount: 600,
+        period: 'monthly' as const,
+        startDate: '2026-07-01',
+        endDate: '2026-12-31',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+      {
+        id: '3',
+        transactionTypeId: 'type-2',
+        amount: 300,
+        period: 'monthly' as const,
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ];
+
+    it('should return budget active on given date', () => {
+      const budget = calculationService.getActiveBudgetForPeriod(
+        budgets,
+        'type-1',
+        '2026-03-15'
+      );
+      expect(budget?.id).toBe('1');
+      expect(budget?.amount).toBe(500);
+    });
+
+    it('should return second budget when date is in second range', () => {
+      const budget = calculationService.getActiveBudgetForPeriod(
+        budgets,
+        'type-1',
+        '2026-09-15'
+      );
+      expect(budget?.id).toBe('2');
+      expect(budget?.amount).toBe(600);
+    });
+
+    it('should return year-round budget for any date', () => {
+      const budget = calculationService.getActiveBudgetForPeriod(
+        budgets,
+        'type-2',
+        '2026-03-15'
+      );
+      expect(budget?.id).toBe('3');
+      expect(budget?.amount).toBe(300);
+    });
+
+    it('should return undefined when date is before start date', () => {
+      const budget = calculationService.getActiveBudgetForPeriod(
+        budgets,
+        'type-1',
+        '2025-12-15'
+      );
+      expect(budget).toBeUndefined();
+    });
+
+    it('should return undefined when date is after end date', () => {
+      const budget = calculationService.getActiveBudgetForPeriod(
+        budgets,
+        'type-1',
+        '2027-01-15'
+      );
+      expect(budget).toBeUndefined();
+    });
+
+    it('should return undefined for non-existent transaction type', () => {
+      const budget = calculationService.getActiveBudgetForPeriod(
+        budgets,
+        'type-3',
+        '2026-03-15'
+      );
+      expect(budget).toBeUndefined();
+    });
+
+    it('should handle date on start boundary', () => {
+      const budget = calculationService.getActiveBudgetForPeriod(
+        budgets,
+        'type-1',
+        '2026-01-01'
+      );
+      expect(budget?.id).toBe('1');
+    });
+
+    it('should handle date on end boundary', () => {
+      const budget = calculationService.getActiveBudgetForPeriod(
+        budgets,
+        'type-1',
+        '2026-06-30'
+      );
+      expect(budget?.id).toBe('1');
+    });
+
+    it('should return budget when date is within range', () => {
+      const yearRoundBudget = [
+        {
+          id: '1',
+          transactionTypeId: 'type-1',
+          amount: 500,
+          period: 'monthly' as const,
+          startDate: '2026-01-01',
+          endDate: '2026-12-31',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ];
+
+      const budget = calculationService.getActiveBudgetForPeriod(
+        yearRoundBudget,
+        'type-1',
+        '2026-12-31'
+      );
+      expect(budget?.id).toBe('1');
+    });
+
+    it('should return budget when date is in middle of range', () => {
+      const midYearBudget = [
+        {
+          id: '1',
+          transactionTypeId: 'type-1',
+          amount: 500,
+          period: 'monthly' as const,
+          startDate: '2026-01-01',
+          endDate: '2026-12-31',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ];
+
+      const budget = calculationService.getActiveBudgetForPeriod(
+        midYearBudget,
+        'type-1',
+        '2026-06-15'
+      );
+      expect(budget?.id).toBe('1');
+    });
+  });
 });
+

@@ -26,7 +26,7 @@ import { calculationService } from '../../services/calculation.service';
 import { Group } from '../../types/enums';
 
 export const BudgetsPage: React.FC = () => {
-  const { budgets, addBudget, updateBudget, deleteBudget, getBudgetByTransactionTypeId } = useBudgetStore();
+  const { budgets, addBudget, updateBudget, deleteBudget } = useBudgetStore();
   const { transactionTypes, getCategoryById } = useCategoryStore();
   const { transactions } = useTransactionStore();
 
@@ -66,25 +66,23 @@ export const BudgetsPage: React.FC = () => {
   };
 
   const handleSubmit = (budgetData: Omit<Budget, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (editingBudget) {
-      // Update existing budget item
-      updateBudget(editingBudget.id, budgetData);
-    } else {
-      // Check if budget already exists for this transaction type
-      const existing = getBudgetByTransactionTypeId(budgetData.transactionTypeId);
-      if (existing) {
-        alert('A budget already exists for this transaction type. Please edit the existing budget instead.');
-        return;
+    try {
+      if (editingBudget) {
+        // Update existing budget item
+        updateBudget(editingBudget.id, budgetData);
+      } else {
+        // Add new budget item
+        const newBudget: Budget = {
+          id: `budget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          ...budgetData,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        addBudget(newBudget);
       }
-
-      // Add new budget item
-      const newBudget: Budget = {
-        id: `budget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        ...budgetData,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      addBudget(newBudget);
+      setDialogOpen(false);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to save budget');
     }
   };
 
@@ -163,6 +161,15 @@ export const BudgetsPage: React.FC = () => {
     return categoryGroup === Group.INCOME ? 'Targets' : 'Budgets';
   };
 
+  const formatDateRange = (budget: Budget): string => {
+    const formatDate = (dateStr: string) => {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    return `${formatDate(budget.startDate)} - ${formatDate(budget.endDate)}`;
+  };
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -221,6 +228,8 @@ export const BudgetsPage: React.FC = () => {
                                 </Box>
                                 <Box component="span" sx={{ display: 'block', fontSize: '0.75rem', color: 'text.secondary' }}>
                                   Original: {formatCurrency(budget.amount, 'usd')} {budget.period}
+                                  {' • '}
+                                  {formatDateRange(budget)}
                                 </Box>
                               </Box>
                             }

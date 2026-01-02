@@ -79,6 +79,8 @@ export interface Budget {
   transactionTypeId: string;
   amount: number; // Budget amount
   period: 'monthly' | 'quarterly' | 'yearly'; // Period type for this budget
+  startDate: string; // Start date (YYYY-MM-DD)
+  endDate: string; // End date (YYYY-MM-DD)
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }

@@ -234,6 +234,8 @@ describe('Model Schemas', () => {
         transactionTypeId: 'tt1',
         amount: 200.0,
         period: 'monthly',
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       };
@@ -246,6 +248,8 @@ describe('Model Schemas', () => {
         transactionTypeId: 'tt1',
         amount: 600.0,
         period: 'quarterly',
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       };
@@ -258,6 +262,8 @@ describe('Model Schemas', () => {
         transactionTypeId: 'tt1',
         amount: 0,
         period: 'monthly',
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       };

@@ -43,6 +43,8 @@ describe('useBudgetStore', () => {
           transactionTypeId: 'tt1',
           amount: 500,
           period: 'monthly',
+          startDate: '2026-01-01',
+          endDate: '2026-12-31',
           createdAt: '2026-01-01T00:00:00.000Z',
           updatedAt: '2026-01-01T00:00:00.000Z',
         },
@@ -64,6 +66,8 @@ describe('useBudgetStore', () => {
         transactionTypeId: 'tt1',
         amount: 500,
         period: 'monthly',
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
@@ -85,6 +89,8 @@ describe('useBudgetStore', () => {
         transactionTypeId: 'tt1',
         amount: 500,
         period: 'monthly',
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
@@ -110,6 +116,8 @@ describe('useBudgetStore', () => {
         transactionTypeId: 'tt1',
         amount: 500,
         period: 'monthly',
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
         createdAt: originalDate,
         updatedAt: originalDate,
       };
@@ -135,6 +143,8 @@ describe('useBudgetStore', () => {
         transactionTypeId: 'tt1',
         amount: 500,
         period: 'monthly',
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
@@ -160,6 +170,8 @@ describe('useBudgetStore', () => {
         transactionTypeId: 'tt1',
         amount: 500,
         period: 'monthly',
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
@@ -187,6 +199,8 @@ describe('useBudgetStore', () => {
         transactionTypeId: 'tt1',
         amount: 500,
         period: 'monthly',
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
@@ -214,6 +228,8 @@ describe('useBudgetStore', () => {
         transactionTypeId: 'tt1',
         amount: 500,
         period: 'monthly',
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
@@ -227,6 +243,171 @@ describe('useBudgetStore', () => {
       });
 
       expect(result.current.budgets).toEqual([]);
+    });
+  });
+
+  describe('date range validation', () => {
+    it('should allow adding budgets with non-overlapping date ranges', () => {
+      const { result } = renderHook(() => useBudgetStore());
+      const budget1: Budget = {
+        id: '1',
+        transactionTypeId: 'tt1',
+        amount: 500,
+        period: 'monthly',
+        startDate: '2026-01-01',
+        endDate: '2026-06-30',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+      const budget2: Budget = {
+        id: '2',
+        transactionTypeId: 'tt1',
+        amount: 600,
+        period: 'monthly',
+        startDate: '2026-07-01',
+        endDate: '2026-12-31',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+
+      act(() => {
+        result.current.addBudget(budget1);
+      });
+
+      act(() => {
+        result.current.addBudget(budget2);
+      });
+
+      expect(result.current.budgets).toHaveLength(2);
+    });
+
+    it('should prevent adding budgets with overlapping date ranges', () => {
+      const { result } = renderHook(() => useBudgetStore());
+      const budget1: Budget = {
+        id: '1',
+        transactionTypeId: 'tt1',
+        amount: 500,
+        period: 'monthly',
+        startDate: '2026-01-01',
+        endDate: '2026-06-30',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+      const budget2: Budget = {
+        id: '2',
+        transactionTypeId: 'tt1',
+        amount: 600,
+        period: 'monthly',
+        startDate: '2026-06-01',
+        endDate: '2026-12-31',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+
+      act(() => {
+        result.current.addBudget(budget1);
+      });
+
+      expect(() => {
+        act(() => {
+          result.current.addBudget(budget2);
+        });
+      }).toThrow('A budget with overlapping dates already exists for this transaction type');
+    });
+
+    it('should allow budgets with same date range for different transaction types', () => {
+      const { result } = renderHook(() => useBudgetStore());
+      const budget1: Budget = {
+        id: '1',
+        transactionTypeId: 'tt1',
+        amount: 500,
+        period: 'monthly',
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+      const budget2: Budget = {
+        id: '2',
+        transactionTypeId: 'tt2',
+        amount: 600,
+        period: 'monthly',
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+
+      act(() => {
+        result.current.addBudget(budget1);
+      });
+
+      act(() => {
+        result.current.addBudget(budget2);
+      });
+
+      expect(result.current.budgets).toHaveLength(2);
+    });
+
+    it('should validate date ranges when updating budgets', () => {
+      const { result } = renderHook(() => useBudgetStore());
+      const budget1: Budget = {
+        id: '1',
+        transactionTypeId: 'tt1',
+        amount: 500,
+        period: 'monthly',
+        startDate: '2026-01-01',
+        endDate: '2026-06-30',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+      const budget2: Budget = {
+        id: '2',
+        transactionTypeId: 'tt1',
+        amount: 600,
+        period: 'monthly',
+        startDate: '2026-07-01',
+        endDate: '2026-12-31',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+
+      act(() => {
+        result.current.addBudget(budget1);
+        result.current.addBudget(budget2);
+      });
+
+      // Try to update budget2 to overlap with budget1
+      expect(() => {
+        act(() => {
+          result.current.updateBudget('2', { startDate: '2026-06-01' });
+        });
+      }).toThrow('A budget with overlapping dates already exists for this transaction type');
+    });
+
+    it('should allow updating budget without changing dates', () => {
+      const { result } = renderHook(() => useBudgetStore());
+      const budget: Budget = {
+        id: '1',
+        transactionTypeId: 'tt1',
+        amount: 500,
+        period: 'monthly',
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      };
+
+      act(() => {
+        result.current.addBudget(budget);
+      });
+
+      act(() => {
+        result.current.updateBudget('1', { amount: 600 });
+      });
+
+      const updated = result.current.budgets.find((b) => b.id === '1');
+      expect(updated?.amount).toBe(600);
     });
   });
 });

@@ -30,6 +30,8 @@ export const BudgetDialog: React.FC<BudgetDialogProps> = ({
     transactionTypeId: budget?.transactionTypeId || '',
     amount: budget?.amount?.toString() || '',
     period: budget?.period || 'monthly' as 'monthly' | 'quarterly' | 'yearly',
+    startDate: budget?.startDate || new Date().getFullYear() + '-01-01',
+    endDate: budget?.endDate || new Date().getFullYear() + '-12-31',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -56,6 +58,18 @@ export const BudgetDialog: React.FC<BudgetDialogProps> = ({
       newErrors.period = 'Period is required';
     }
 
+    if (!formData.startDate) {
+      newErrors.startDate = 'Start date is required';
+    }
+
+    if (!formData.endDate) {
+      newErrors.endDate = 'End date is required';
+    }
+
+    if (formData.startDate && formData.endDate && formData.endDate < formData.startDate) {
+      newErrors.endDate = 'End date must be on or after start date';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -71,6 +85,8 @@ export const BudgetDialog: React.FC<BudgetDialogProps> = ({
       transactionTypeId: formData.transactionTypeId,
       amount: parseFloat(formData.amount),
       period: formData.period,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
     });
     onClose();
   };
@@ -146,6 +162,32 @@ export const BudgetDialog: React.FC<BudgetDialogProps> = ({
             <MenuItem value="quarterly">Quarterly</MenuItem>
             <MenuItem value="yearly">Yearly</MenuItem>
           </TextField>
+
+          <TextField
+            fullWidth
+            label="Start Date"
+            type="date"
+            value={formData.startDate}
+            onChange={handleChange('startDate')}
+            error={!!errors.startDate}
+            helperText={errors.startDate}
+            margin="normal"
+            required
+            InputLabelProps={{ shrink: true }}
+          />
+
+          <TextField
+            fullWidth
+            label="End Date"
+            type="date"
+            value={formData.endDate}
+            onChange={handleChange('endDate')}
+            error={!!errors.endDate}
+            helperText={errors.endDate}
+            margin="normal"
+            required
+            InputLabelProps={{ shrink: true }}
+          />
 
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
             <Button onClick={onClose}>Cancel</Button>

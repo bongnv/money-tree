@@ -426,31 +426,28 @@ This plan implements all requirements from REQUIREMENTS.md.
 **Manual Verification (User):** With budgets from 7.1, add transactions for both income (Salary) and expenses (Groceries, Rent). Navigate to /budgets and verify: (1) Income section shows "Income Targets" with green bars when meeting target, (2) Expense sections show "Budgets" with green bars when under budget, (3) Progress bars and colors invert correctly for income vs expenses, (4) $600 quarterly budget displays as $200 for current month. Add more transactions and verify real-time updates.
 
 ### 7.3 Add Date Ranges for Budget Validity Periods
-- [ ] Update `src/types/models.ts` Budget model:
-  - [ ] Add `startDate?: string` - optional start date (YYYY-MM-DD format)
-  - [ ] Add `endDate?: string` - optional end date (YYYY-MM-DD format)
-  - [ ] If both null/undefined, budget is active year-round
-  - [ ] Allows multiple budgets for same transaction type with different date ranges (e.g., Rent $1500 Jan-Jun, Rent $1600 Jul-Dec)
-- [ ] Update `src/schemas/models.schema.ts`:
-  - [ ] Add optional startDate and endDate to BudgetSchema with date format validation
-  - [ ] Add validation: if both provided, endDate must be >= startDate
-- [ ] Update BudgetDialog:
-  - [ ] Add optional "Start Date" date picker
-  - [ ] Add optional "End Date" date picker
-  - [ ] Add validation: end date must be >= start date
-  - [ ] Show helper text: "Leave blank for year-round budget"
-- [ ] Update `calculation.service.ts`:
-  - [ ] Add `getActiveBudgetForPeriod(budgets, transactionTypeId, date)` - finds budget active on a specific date
-  - [ ] Update `calculateActualAmount` to respect budget date ranges when matching transactions
-- [ ] Update BudgetsPage display:
-  - [ ] Show date range if set: "Jan 1 - Jun 30, 2026" or "Year-round" if not set
-  - [ ] Filter budgets by selected view period (only show budgets active during that period)
-  - [ ] Allow multiple budgets for same transaction type if date ranges don't overlap
-- [ ] Update useBudgetStore validation:
-  - [ ] Check for overlapping date ranges when adding/editing budgets for same transaction type
-  - [ ] Prevent saving if date ranges overlap
-- [ ] **Write tests**: Date range validation, overlapping detection, active budget selection, display with date ranges
-**Manual Verification (User):** Navigate to /budgets. Add budget for Rent $1500/month with start date Jan 1, 2026 and end date Jun 30, 2026. Add another budget for Rent $1600/month with start date Jul 1, 2026 and end date Dec 31, 2026. Verify both appear in list with date ranges shown. Verify progress tracking uses correct budget based on transaction dates. Try to add overlapping budget and verify validation error. Add year-round budget for Groceries (no dates) and verify it shows "Year-round".
+- [x] Update `src/types/models.ts` Budget model:
+  - [x] Add `startDate: string` - required start date (YYYY-MM-DD format)
+  - [x] Add `endDate: string` - required end date (YYYY-MM-DD format)
+  - [x] Allows multiple budgets for same transaction type with different date ranges (e.g., Rent $1500 Jan-Jun, Rent $1600 Jul-Dec)
+- [x] Update `src/schemas/models.schema.ts`:
+  - [x] Add required startDate and endDate to BudgetSchema with date format validation
+  - [x] Add validation: endDate must be >= startDate
+- [x] Update BudgetDialog:
+  - [x] Add "Start Date" and "End Date" date pickers (required)
+  - [x] Prefill with current year start (Jan 1) and end (Dec 31)
+  - [x] Add validation: end date must be >= start date
+- [x] Update `calculation.service.ts`:
+  - [x] Add `getActiveBudgetForPeriod(budgets, transactionTypeId, date)` - finds budget active on a specific date
+- [x] Update BudgetsPage display:
+  - [x] Show date range: "Jan 1 - Jun 30, 2026"
+  - [x] Display date range next to budget amount in secondary text
+  - [x] Allow multiple budgets for same transaction type if date ranges don't overlap
+- [x] Update useBudgetStore validation:
+  - [x] Check for overlapping date ranges when adding/editing budgets for same transaction type
+  - [x] Prevent saving if date ranges overlap with error message
+- [x] **Write tests**: Date range validation, overlapping detection, active budget selection, display with date ranges (16 new tests added)
+**Manual Verification (User):** Navigate to /budgets. Add budget for Rent $1500/month - dates will prefill to Jan 1 - Dec 31, 2026. Edit dates to Jan 1 - Jun 30, 2026. Add another budget for Rent $1600/month with Jul 1 - Dec 31, 2026. Verify both appear with date ranges shown. Verify progress tracking uses correct budget based on transaction dates. Try to add overlapping budget and verify validation error prevents saving.
 
 ### 7.4 Add Period Selector for Flexible Viewing
 - [ ] Create `src/components/budgets/PeriodSelector.tsx`:

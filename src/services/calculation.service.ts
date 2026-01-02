@@ -1,4 +1,4 @@
-import type { Transaction, Account } from '../types/models';
+import type { Transaction, Account, Budget } from '../types/models';
 
 /**
  * Calculation service for account balances and transaction totals
@@ -226,6 +226,37 @@ class CalculationService {
           t.date <= endDate
       )
       .reduce((sum, t) => sum + t.amount, 0);
+  }
+
+  /**
+   * Get the active budget for a transaction type on a specific date
+   * @param budgets All budgets for a transaction type
+   * @param transactionTypeId Transaction type ID to filter by
+   * @param date Date to check (YYYY-MM-DD format)
+   * @returns Active budget or undefined if no active budget found
+   */
+  getActiveBudgetForPeriod(
+    budgets: Budget[],
+    transactionTypeId: string,
+    date: string
+  ): Budget | undefined {
+    return budgets.find((budget) => {
+      if (budget.transactionTypeId !== transactionTypeId) {
+        return false;
+      }
+
+      // Check start date constraint
+      if (budget.startDate && date < budget.startDate) {
+        return false;
+      }
+
+      // Check end date constraint
+      if (budget.endDate && date > budget.endDate) {
+        return false;
+      }
+
+      return true;
+    });
   }
 }
 

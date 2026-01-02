@@ -74,6 +74,8 @@ const mockBudget: Budget = {
   transactionTypeId: 'tt1',
   amount: 1500,
   period: 'monthly',
+  startDate: '2026-01-01',
+  endDate: '2026-12-31',
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };

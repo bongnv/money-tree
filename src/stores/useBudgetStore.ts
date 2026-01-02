@@ -16,6 +16,17 @@ interface BudgetActions {
   resetBudgets: () => void;
 }
 
+/**
+ * Check if two budget date ranges overlap
+ * @param budget1 First budget
+ * @param budget2 Second budget
+ * @returns true if date ranges overlap
+ */
+function dateRangesOverlap(budget1: Budget, budget2: Budget): boolean {
+  // Check if ranges overlap: start1 <= end2 AND start2 <= end1
+  return budget1.startDate <= budget2.endDate && budget2.startDate <= budget1.endDate;
+}
+
 export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => ({
   budgets: [],
 
@@ -24,6 +35,21 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
   },
 
   addBudget: (budget) => {
+    // Check for overlapping budgets with the same transaction type
+    const existingBudgets = get().budgets.filter(
+      (b) => b.transactionTypeId === budget.transactionTypeId
+    );
+
+    const hasOverlap = existingBudgets.some((existing) =>
+      dateRangesOverlap(budget, existing)
+    );
+
+    if (hasOverlap) {
+      throw new Error(
+        'A budget with overlapping dates already exists for this transaction type'
+      );
+    }
+
     set((state) => ({
       budgets: [...state.budgets, budget],
     }));
@@ -31,6 +57,28 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
   },
 
   updateBudget: (id, updates) => {
+    const currentBudget = get().getBudgetById(id);
+    if (!currentBudget) {
+      throw new Error('Budget not found');
+    }
+
+    const updatedBudget = { ...currentBudget, ...updates };
+
+    // Check for overlapping budgets with the same transaction type (excluding current budget)
+    const existingBudgets = get().budgets.filter(
+      (b) => b.transactionTypeId === updatedBudget.transactionTypeId && b.id !== id
+    );
+
+    const hasOverlap = existingBudgets.some((existing) =>
+      dateRangesOverlap(updatedBudget as Budget, existing)
+    );
+
+    if (hasOverlap) {
+      throw new Error(
+        'A budget with overlapping dates already exists for this transaction type'
+      );
+    }
+
     set((state) => ({
       budgets: state.budgets.map((item) =>
         item.id === id

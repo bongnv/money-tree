@@ -69,16 +69,24 @@ export const TransactionSchema = z.object({
 });
 
 /**
- * Zod schema for Budget (Simplified for MVP Phase 7)
+ * Zod schema for Budget
  */
 export const BudgetSchema = z.object({
   id: z.string().min(1, 'ID is required'),
   transactionTypeId: z.string().min(1, 'Transaction type ID is required'),
   amount: z.number().positive('Amount must be greater than 0'),
   period: z.enum(['monthly', 'quarterly', 'yearly']),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Start date must be in YYYY-MM-DD format'),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'End date must be in YYYY-MM-DD format'),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
-});
+}).refine(
+  (data) => data.endDate >= data.startDate,
+  {
+    message: 'End date must be on or after start date',
+    path: ['endDate'],
+  }
+);
 
 /**
  * Zod schema for ManualAsset

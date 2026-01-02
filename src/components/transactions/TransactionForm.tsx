@@ -3,7 +3,7 @@ import { Box, Button, MenuItem } from '@mui/material';
 import { FormTextField } from '../common/FormTextField';
 import type { Transaction, Account, TransactionType, Category } from '../../types/models';
 import { Group } from '../../types/enums';
-import { formatDateForInput, toISODate, getTodayISO } from '../../utils/date.utils';
+import { toDateString, getTodayDate } from '../../utils/date.utils';
 import { validationService, ValidationError } from '../../services/validation.service';
 
 interface TransactionFormProps {
@@ -24,7 +24,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   onCancel,
 }) => {
   const [formData, setFormData] = useState({
-    date: transaction?.date || getTodayISO(),
+    date: transaction?.date || getTodayDate(),
     description: transaction?.description || '',
     amount: transaction?.amount?.toString() || '',
     transactionTypeId: transaction?.transactionTypeId || '',
@@ -136,10 +136,10 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
       <FormTextField
         label="Date"
         type="date"
-        value={formatDateForInput(formData.date)}
+        value={formData.date}
         onChange={(e) => {
-          const isoDate = toISODate(e.target.value);
-          setFormData({ ...formData, date: isoDate });
+          const dateStr = toDateString(e.target.value);
+          setFormData({ ...formData, date: dateStr });
           if (errors.date) {
             setErrors({ ...errors, date: '' });
           }

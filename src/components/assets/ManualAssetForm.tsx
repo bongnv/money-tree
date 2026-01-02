@@ -8,6 +8,7 @@ import {
 import type { ManualAsset } from '../../types/models';
 import { AssetType } from '../../types/enums';
 import { getAllCurrencies } from '../../utils/currency.utils';
+import { getTodayDate, toDateString } from '../../utils/date.utils';
 
 interface ManualAssetFormProps {
   asset?: ManualAsset;
@@ -26,7 +27,7 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
     type: asset?.type || AssetType.OTHER,
     value: asset?.value?.toString() || '0',
     currencyId: asset?.currencyId || 'usd',
-    date: asset?.date ? asset.date.split('T')[0] : new Date().toISOString().split('T')[0],
+    date: asset?.date || getTodayDate(),
     notes: asset?.notes || '',
   });
 
@@ -72,7 +73,7 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
       type: formData.type,
       value: parseFloat(formData.value),
       currencyId: formData.currencyId,
-      date: new Date(formData.date).toISOString(),
+      date: toDateString(formData.date),
       notes: formData.notes.trim() || undefined,
     });
   };

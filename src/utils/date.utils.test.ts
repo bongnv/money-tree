@@ -1,8 +1,7 @@
 import {
   formatDate,
-  formatDateForInput,
-  getTodayISO,
-  toISODate,
+  getTodayDate,
+  toDateString,
   isDateInRange,
   sortDatesAsc,
   sortDatesDesc,
@@ -26,42 +25,31 @@ describe('date.utils', () => {
     });
   });
 
-  describe('formatDateForInput', () => {
-    it('should format ISO date for input field', () => {
-      const result = formatDateForInput('2024-03-15T00:00:00.000Z');
-      expect(result).toBe('2024-03-15');
-    });
 
-    it('should handle dates with time components', () => {
-      const result = formatDateForInput('2024-03-15T14:30:00.000Z');
-      expect(result).toBe('2024-03-15');
-    });
-  });
-
-  describe('getTodayISO', () => {
-    it('should return today date as ISO string', () => {
-      const result = getTodayISO();
+  describe('getTodayDate', () => {
+    it('should return today date in YYYY-MM-DD format', () => {
+      const result = getTodayDate();
       const today = new Date().toISOString().split('T')[0];
-      expect(result).toContain(today);
-      expect(result).toContain('T00:00:00.000Z');
+      expect(result).toBe(today);
+      expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     });
   });
 
-  describe('toISODate', () => {
-    it('should convert date string to ISO', () => {
-      const result = toISODate('2024-03-15');
-      expect(result).toBe('2024-03-15T00:00:00.000Z');
+  describe('toDateString', () => {
+    it('should convert date string to YYYY-MM-DD', () => {
+      const result = toDateString('2024-03-15');
+      expect(result).toBe('2024-03-15');
     });
 
-    it('should convert Date object to ISO', () => {
+    it('should convert Date object to YYYY-MM-DD', () => {
       const date = new Date('2024-03-15T14:30:00.000Z');
-      const result = toISODate(date);
-      expect(result).toBe('2024-03-15T00:00:00.000Z');
+      const result = toDateString(date);
+      expect(result).toBe('2024-03-15');
     });
 
     it('should normalize time to start of day', () => {
-      const result = toISODate('2024-03-15T23:59:59.999Z');
-      expect(result).toBe('2024-03-15T00:00:00.000Z');
+      const result = toDateString('2024-03-15T23:59:59.999Z');
+      expect(result).toBe('2024-03-15');
     });
   });
 

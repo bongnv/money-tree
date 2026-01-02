@@ -60,7 +60,7 @@ export interface TransactionType {
  */
 export interface Transaction {
   id: string;
-  date: string; // ISO date string
+  date: string; // Date string in YYYY-MM-DD format
   description?: string;
   amount: number; // Positive value, always
   transactionTypeId: string;
@@ -89,8 +89,8 @@ export interface Budget {
   id: string;
   name: string;
   period: BudgetPeriod;
-  startDate: string; // ISO date string
-  endDate: string; // ISO date string
+  startDate: string; // Date string in YYYY-MM-DD format
+  endDate: string; // Date string in YYYY-MM-DD format
   items: BudgetItem[];
   isActive: boolean; // Only one budget can be active per period
   createdAt: string; // ISO date string
@@ -107,7 +107,7 @@ export interface ManualAsset {
   type: AssetType;
   value: number; // Current value (can be negative for liabilities)
   currencyId: string;
-  date: string; // ISO date string - date of valuation
+  date: string; // Date string in YYYY-MM-DD format - date of valuation
   notes?: string;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string

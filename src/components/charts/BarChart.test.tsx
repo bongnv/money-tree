@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { BarChart, BarChartProps } from './BarChart';
 
@@ -35,8 +35,8 @@ describe('BarChart', () => {
 
   it('should use custom xAxisKey', () => {
     const customData = [
-      { category: 'A', value: 100 },
-      { category: 'B', value: 200 },
+      { name: 'A', category: 'A', value: 100 },
+      { name: 'B', category: 'B', value: 200 },
     ];
     const { container } = render(
       <BarChart

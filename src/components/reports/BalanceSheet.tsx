@@ -64,15 +64,25 @@ export const BalanceSheet: React.FC = () => {
 
   // Calculate net worth trend for the past year
   const trendData = useMemo(() => {
-    const endDate = new Date(selectedDate);
+    // Parse date components to avoid timezone issues
+    const [year, month, day] = selectedDate.split('-').map(Number);
+    const endDate = new Date(year, month - 1, day);
     const startDate = new Date(endDate);
     startDate.setFullYear(startDate.getFullYear() - 1);
+
+    // Format dates as YYYY-MM-DD in local timezone
+    const formatLocalDate = (date: Date): string => {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    };
 
     const trend = reportService.calculateNetWorthTrend(
       accounts,
       manualAssets,
       transactions,
-      startDate.toISOString().split('T')[0],
+      formatLocalDate(startDate),
       selectedDate,
       30 // Monthly data points
     );

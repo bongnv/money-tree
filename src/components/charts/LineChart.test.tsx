@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { LineChart, LineChartProps } from './LineChart';
 
@@ -36,8 +36,8 @@ describe('LineChart', () => {
 
   it('should use custom xAxisKey', () => {
     const customData = [
-      { date: '2024-01', value: 100 },
-      { date: '2024-02', value: 200 },
+      { name: '2024-01', date: '2024-01', value: 100 },
+      { name: '2024-02', date: '2024-02', value: 200 },
     ];
     const { container } = render(
       <LineChart

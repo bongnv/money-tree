@@ -57,7 +57,7 @@ export const TransactionTypeSchema = z.object({
  */
 export const TransactionSchema = z.object({
   id: z.string().min(1, 'ID is required'),
-  date: z.string().datetime(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
   description: z.string().optional(),
   amount: z.number().positive('Amount must be positive'),
   transactionTypeId: z.string().min(1, 'Transaction type ID is required'),
@@ -85,8 +85,8 @@ export const BudgetSchema = z.object({
   id: z.string().min(1, 'ID is required'),
   name: z.string().min(1, 'Budget name is required'),
   period: z.nativeEnum(BudgetPeriod),
-  startDate: z.string().datetime(),
-  endDate: z.string().datetime(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
   items: z.array(BudgetItemSchema),
   isActive: z.boolean(),
   createdAt: z.string().datetime(),
@@ -102,7 +102,7 @@ export const ManualAssetSchema = z.object({
   type: z.nativeEnum(AssetType),
   value: z.number(),
   currencyId: z.string().min(1, 'Currency ID is required'),
-  date: z.string().datetime(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
   notes: z.string().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),

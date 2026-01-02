@@ -89,12 +89,12 @@ class ReportService {
   ): AssetGroup[] {
     const groups: Map<string, AssetItem[]> = new Map();
 
-    // Add account assets (positive balance accounts)
+    // Add account assets (positive balance accounts, excluding credit cards and loans)
     accounts
       .filter((a) => a.type !== AccountType.CREDIT_CARD && a.type !== AccountType.LOAN)
       .forEach((account) => {
         const balance = calculationService.calculateAccountBalance(account, transactions);
-        if (balance >= 0) {
+        if (balance > 0) {
           const groupName = this.getAccountGroupName(account.type);
           if (!groups.has(groupName)) {
             groups.set(groupName, []);
@@ -142,7 +142,7 @@ class ReportService {
   ): AssetGroup[] {
     const groups: Map<string, AssetItem[]> = new Map();
 
-    // Add credit cards and loans
+    // Add credit cards and loans (always show as liabilities)
     accounts
       .filter((a) => a.type === AccountType.CREDIT_CARD || a.type === AccountType.LOAN)
       .forEach((account) => {
@@ -158,6 +158,25 @@ class ReportService {
             id: account.id,
             name: account.name,
             value: liability,
+            type: account.type,
+          });
+        }
+      });
+
+    // Add other accounts with negative balances (e.g., overdrafts)
+    accounts
+      .filter((a) => a.type !== AccountType.CREDIT_CARD && a.type !== AccountType.LOAN)
+      .forEach((account) => {
+        const balance = calculationService.calculateAccountBalance(account, transactions);
+        if (balance < 0) {
+          const groupName = this.getAccountGroupName(account.type);
+          if (!groups.has(groupName)) {
+            groups.set(groupName, []);
+          }
+          groups.get(groupName)!.push({
+            id: account.id,
+            name: account.name,
+            value: Math.abs(balance),
             type: account.type,
           });
         }
@@ -244,12 +263,16 @@ class ReportService {
     interval: number = 30
   ): NetWorthTrendPoint[] {
     const trend: NetWorthTrendPoint[] = [];
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    // Parse dates as local dates to avoid timezone issues
+    const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
+    const [endYear, endMonth, endDay] = endDate.split('-').map(Number);
+    const start = new Date(startYear, startMonth - 1, startDay);
+    const end = new Date(endYear, endMonth - 1, endDay);
 
     let currentDate = new Date(start);
     while (currentDate <= end) {
-      const dateStr = currentDate.toISOString().split('T')[0];
+      // Format date in local timezone
+      const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
       const balanceSheet = this.calculateBalanceSheet(
         accounts,
         manualAssets,
@@ -265,6 +288,24 @@ class ReportService {
       });
 
       currentDate.setDate(currentDate.getDate() + interval);
+    }
+
+    // Always include the end date as the final data point if not already included
+    const lastPoint = trend[trend.length - 1];
+    if (lastPoint && lastPoint.date !== endDate) {
+      const balanceSheet = this.calculateBalanceSheet(
+        accounts,
+        manualAssets,
+        transactions,
+        endDate
+      );
+
+      trend.push({
+        date: endDate,
+        netWorth: balanceSheet.netWorth,
+        assets: balanceSheet.totalAssets,
+        liabilities: balanceSheet.totalLiabilities,
+      });
     }
 
     return trend;
@@ -286,10 +327,11 @@ class ReportService {
   } {
     const current = this.calculateBalanceSheet(accounts, manualAssets, transactions, currentDate);
 
-    // Calculate previous month date
-    const currentDateObj = new Date(currentDate);
+    // Calculate previous month date (parse as local date to avoid timezone issues)
+    const [year, month, day] = currentDate.split('-').map(Number);
+    const currentDateObj = new Date(year, month - 1, day);
     currentDateObj.setMonth(currentDateObj.getMonth() - 1);
-    const previousDate = currentDateObj.toISOString().split('T')[0];
+    const previousDate = `${currentDateObj.getFullYear()}-${String(currentDateObj.getMonth() + 1).padStart(2, '0')}-${String(currentDateObj.getDate()).padStart(2, '0')}`;
 
     const previous = this.calculateBalanceSheet(
       accounts,
@@ -325,10 +367,11 @@ class ReportService {
   } {
     const current = this.calculateBalanceSheet(accounts, manualAssets, transactions, currentDate);
 
-    // Calculate previous year date
-    const currentDateObj = new Date(currentDate);
+    // Calculate previous year date (parse as local date to avoid timezone issues)
+    const [year, month, day] = currentDate.split('-').map(Number);
+    const currentDateObj = new Date(year, month - 1, day);
     currentDateObj.setFullYear(currentDateObj.getFullYear() - 1);
-    const previousDate = currentDateObj.toISOString().split('T')[0];
+    const previousDate = `${currentDateObj.getFullYear()}-${String(currentDateObj.getMonth() + 1).padStart(2, '0')}-${String(currentDateObj.getDate()).padStart(2, '0')}`;
 
     const previous = this.calculateBalanceSheet(
       accounts,

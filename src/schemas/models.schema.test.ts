@@ -11,6 +11,10 @@ import {
 } from './models.schema';
 import { AccountType, BudgetPeriod, Group, AssetType } from '../types/enums';
 
+// Helper to get date in YYYY-MM-DD format
+const getDateString = () => new Date().toISOString().split('T')[0];
+const getDateTimeString = () => new Date().toISOString();
+
 describe('Model Schemas', () => {
   describe('CurrencySchema', () => {
     it('should validate a valid currency', () => {
@@ -155,13 +159,13 @@ describe('Model Schemas', () => {
     it('should validate a valid expense transaction', () => {
       const validTransaction = {
         id: 'tx1',
-        date: new Date().toISOString(),
+        date: getDateString(),
         description: 'Grocery store',
         amount: 50.0,
         transactionTypeId: 'tt1',
         fromAccountId: 'acc1',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: getDateTimeString(),
+        updatedAt: getDateTimeString(),
       };
       expect(() => TransactionSchema.parse(validTransaction)).not.toThrow();
     });
@@ -169,13 +173,13 @@ describe('Model Schemas', () => {
     it('should validate a valid income transaction', () => {
       const validTransaction = {
         id: 'tx2',
-        date: new Date().toISOString(),
+        date: getDateString(),
         description: 'Salary',
         amount: 3000.0,
         transactionTypeId: 'tt2',
         toAccountId: 'acc1',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: getDateTimeString(),
+        updatedAt: getDateTimeString(),
       };
       expect(() => TransactionSchema.parse(validTransaction)).not.toThrow();
     });
@@ -183,14 +187,14 @@ describe('Model Schemas', () => {
     it('should validate a valid transfer transaction', () => {
       const validTransaction = {
         id: 'tx3',
-        date: new Date().toISOString(),
+        date: getDateString(),
         description: 'Transfer to savings',
         amount: 500.0,
         transactionTypeId: 'tt3',
         fromAccountId: 'acc1',
         toAccountId: 'acc2',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: getDateTimeString(),
+        updatedAt: getDateTimeString(),
       };
       expect(() => TransactionSchema.parse(validTransaction)).not.toThrow();
     });
@@ -260,8 +264,8 @@ describe('Model Schemas', () => {
         id: 'b1',
         name: 'January 2026 Budget',
         period: BudgetPeriod.MONTHLY,
-        startDate: new Date('2026-01-01').toISOString(),
-        endDate: new Date('2026-01-31').toISOString(),
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
         items: [
           {
             id: 'bi1',
@@ -270,8 +274,8 @@ describe('Model Schemas', () => {
           },
         ],
         isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: getDateTimeString(),
+        updatedAt: getDateTimeString(),
       };
       expect(() => BudgetSchema.parse(validBudget)).not.toThrow();
     });
@@ -281,12 +285,12 @@ describe('Model Schemas', () => {
         id: 'b1',
         name: 'January 2026 Budget',
         period: BudgetPeriod.MONTHLY,
-        startDate: new Date('2026-01-01').toISOString(),
-        endDate: new Date('2026-01-31').toISOString(),
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
         items: [],
         isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: getDateTimeString(),
+        updatedAt: getDateTimeString(),
       };
       expect(() => BudgetSchema.parse(validBudget)).not.toThrow();
     });
@@ -315,10 +319,10 @@ describe('Model Schemas', () => {
         type: AssetType.REAL_ESTATE,
         value: 500000,
         currencyId: 'usd',
-        date: new Date().toISOString(),
+        date: getDateString(),
         notes: 'Primary residence',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: getDateTimeString(),
+        updatedAt: getDateTimeString(),
       };
       expect(() => ManualAssetSchema.parse(validAsset)).not.toThrow();
     });
@@ -330,9 +334,9 @@ describe('Model Schemas', () => {
         type: AssetType.SUPERANNUATION,
         value: 25000,
         currencyId: 'usd',
-        date: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        date: getDateString(),
+        createdAt: getDateTimeString(),
+        updatedAt: getDateTimeString(),
       };
       expect(() => ManualAssetSchema.parse(validAsset)).not.toThrow();
     });
@@ -343,9 +347,9 @@ describe('Model Schemas', () => {
         type: AssetType.REAL_ESTATE,
         value: 500000,
         currencyId: 'usd',
-        date: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        date: getDateString(),
+        createdAt: getDateTimeString(),
+        updatedAt: getDateTimeString(),
       };
       expect(() => ManualAssetSchema.parse(invalidAsset)).toThrow();
     });
@@ -357,9 +361,9 @@ describe('Model Schemas', () => {
         type: AssetType.REAL_ESTATE,
         value: 500000,
         currencyId: 'usd',
-        date: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        date: getDateString(),
+        createdAt: getDateTimeString(),
+        updatedAt: getDateTimeString(),
       };
       expect(() => ManualAssetSchema.parse(invalidAsset)).toThrow();
     });
@@ -371,9 +375,9 @@ describe('Model Schemas', () => {
         type: 'invalid_type',
         value: 500000,
         currencyId: 'usd',
-        date: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        date: getDateString(),
+        createdAt: getDateTimeString(),
+        updatedAt: getDateTimeString(),
       };
       expect(() => ManualAssetSchema.parse(invalidAsset)).toThrow();
     });
@@ -386,9 +390,9 @@ describe('Model Schemas', () => {
           type,
           value: 10000,
           currencyId: 'usd',
-          date: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          date: getDateString(),
+          createdAt: getDateTimeString(),
+          updatedAt: getDateTimeString(),
         };
         expect(() => ManualAssetSchema.parse(asset)).not.toThrow();
       });
@@ -427,12 +431,12 @@ describe('Model Schemas', () => {
             type: AssetType.REAL_ESTATE,
             value: 500000,
             currencyId: 'usd',
-            date: new Date().toISOString(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            date: getDateString(),
+            createdAt: getDateTimeString(),
+            updatedAt: getDateTimeString(),
           },
         ],
-        lastModified: new Date().toISOString(),
+        lastModified: getDateTimeString(),
       };
       expect(() => DataFileSchema.parse(validDataFile)).not.toThrow();
     });

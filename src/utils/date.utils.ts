@@ -1,5 +1,5 @@
 import { format, parseISO, startOfDay, endOfDay, isAfter, isBefore, isEqual } from 'date-fns';
-import { toZonedTime, fromZonedTime } from 'date-fns-tz';
+import { toZonedTime } from 'date-fns-tz';
 
 const UTC = 'UTC';
 
@@ -15,40 +15,35 @@ export const formatDate = (isoDate: string, formatString = 'MMM dd, yyyy'): stri
 };
 
 /**
- * Format ISO date string for input fields (yyyy-MM-dd)
- * @param isoDate ISO date string
- * @returns Date string in yyyy-MM-dd format
+ * Get current date in YYYY-MM-DD format
+ * @returns Date string in YYYY-MM-DD format
  */
-export const formatDateForInput = (isoDate: string): string => {
-  const date = toZonedTime(parseISO(isoDate), UTC);
-  return format(date, 'yyyy-MM-dd');
-};
-
-/**
- * Get current date as ISO string at start of day in UTC
- * @returns ISO date string
- */
-export const getTodayISO = (): string => {
+export const getTodayDate = (): string => {
   const now = new Date();
   const utcDate = toZonedTime(now, UTC);
-  return fromZonedTime(startOfDay(utcDate), UTC).toISOString();
+  return format(startOfDay(utcDate), 'yyyy-MM-dd');
 };
 
 /**
- * Convert date input value to ISO string
+ * Convert date input value to YYYY-MM-DD format
  * @param dateInput Date string in yyyy-MM-dd format or Date object
- * @returns ISO date string
+ * @returns Date string in YYYY-MM-DD format
  */
-export const toISODate = (dateInput: string | Date): string => {
+export const toDateString = (dateInput: string | Date): string => {
+  // If already in YYYY-MM-DD format, return as-is
+  if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+    return dateInput;
+  }
+  
   let date: Date;
   if (typeof dateInput === 'string') {
-    // Parse as UTC by appending timezone
+    // Parse ISO datetime or date string
     date = parseISO(dateInput.includes('T') ? dateInput : `${dateInput}T00:00:00.000Z`);
   } else {
     date = dateInput;
   }
   const utcDate = toZonedTime(date, UTC);
-  return fromZonedTime(startOfDay(utcDate), UTC).toISOString();
+  return format(startOfDay(utcDate), 'yyyy-MM-dd');
 };
 
 /**

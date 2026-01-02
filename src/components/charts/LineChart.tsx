@@ -41,7 +41,8 @@ export const LineChart: React.FC<LineChartProps> = ({
 }) => {
   const theme = useTheme();
 
-  const formatTooltip = (value: number) => {
+  const formatTooltip = (value: number | undefined): string => {
+    if (value === undefined) return '';
     return formatValue ? formatValue(value) : value.toLocaleString();
   };
 
@@ -70,7 +71,7 @@ export const LineChart: React.FC<LineChartProps> = ({
             }}
           />
           {showLegend && <Legend />}
-          {lines.map((line, index) => (
+          {lines.map((line) => (
             <Line
               key={line.dataKey}
               type="monotone"

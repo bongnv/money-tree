@@ -43,7 +43,8 @@ export const BarChart: React.FC<BarChartProps> = ({
 }) => {
   const theme = useTheme();
 
-  const formatTooltip = (value: number) => {
+  const formatTooltip = (value: number | undefined): string => {
+    if (value === undefined) return '';
     return formatValue ? formatValue(value) : value.toLocaleString();
   };
 
@@ -72,7 +73,7 @@ export const BarChart: React.FC<BarChartProps> = ({
             }}
           />
           {showLegend && <Legend />}
-          {bars.map((bar, index) => (
+          {bars.map((bar) => (
             <Bar
               key={bar.dataKey}
               dataKey={bar.dataKey}

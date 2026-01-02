@@ -17,6 +17,7 @@ import {
   Category as CategoryIcon,
   ReceiptLong as TransactionsIcon,
   BusinessCenter as AssetsIcon,
+  Assessment as ReportsIcon,
 } from '@mui/icons-material';
 import { useAppStore } from '../../stores/useAppStore';
 import { syncService } from '../../services/sync.service';
@@ -122,6 +123,16 @@ export const Header: React.FC = () => {
             }}
           >
             Assets
+          </Button>
+          <Button
+            color="inherit"
+            startIcon={<ReportsIcon />}
+            onClick={() => navigate('/reports')}
+            sx={{
+              backgroundColor: location.pathname === '/reports' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+            }}
+          >
+            Reports
           </Button>
         </Box>
 

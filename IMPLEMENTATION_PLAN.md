@@ -364,16 +364,21 @@ This plan implements all requirements from REQUIREMENTS.md.
   - [ ] Category breakdown charts using PieChart
   - [ ] Filtering options
 - [ ] Create `src/components/reports/CashFlowChart.tsx`
+- [ ] Integrate CashFlowReport into ReportsPage (enable Cash Flow tab)
 - [ ] **Write tests**: Cash flow calculations, verify transfers excluded, chart rendering
 **Manual Verification (User):** Create mix of income/expense/transfer transactions, view cash flow for monthly/quarterly/yearly periods, verify transfers don't appear in report, test category filters, check trend and pie charts display correctly.
 
+**Note**: After implementation, enable the Cash Flow tab in ReportsPage.tsx by removing the `disabled` prop.
+
 ### 6.4 Create Reports Page
-- [ ] Create `src/components/reports/ReportsPage.tsx` with tab navigation
+- [x] Create `src/components/reports/ReportsPage.tsx` with tab navigation
+- [x] Add route `/reports`
+- [x] Add "Reports" navigation button to Header
+- [x] **Write tests**: Reports page navigation (6 tests)
 - [ ] Add export buttons for each report (CSV/PDF)
 - [ ] Create `src/utils/export.utils.ts` for data export
-- [ ] Add route `/reports`
-- [ ] **Write tests**: Reports page navigation and export
-**Manual Verification (User):** Navigate to /reports, switch between Balance Sheet and Cash Flow tabs, export each report to CSV and verify data accuracy, check responsive layout on different screen sizes.
+- [ ] **Write tests**: Export functionality
+**Manual Verification (User):** Navigate to /reports, view Balance Sheet tab, verify tab navigation works, check responsive layout on different screen sizes. Export functionality pending section 6.3 completion.
 
 ## Phase 7: Budget Planning & Review (MVP)
 

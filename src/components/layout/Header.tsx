@@ -85,10 +85,12 @@ export const Header: React.FC = () => {
 
   const isActive = (path: string) => {
     if (path === '/settings') {
-      return location.pathname.startsWith('/settings') ||
-             location.pathname === '/accounts' ||
-             location.pathname === '/categories' ||
-             location.pathname === '/assets';
+      return (
+        location.pathname.startsWith('/settings') ||
+        location.pathname === '/accounts' ||
+        location.pathname === '/categories' ||
+        location.pathname === '/assets'
+      );
     }
     return location.pathname === path;
   };
@@ -121,9 +123,7 @@ export const Header: React.FC = () => {
                 startIcon={item.icon}
                 onClick={() => handleNavigation(item.path)}
                 sx={{
-                  backgroundColor: isActive(item.path)
-                    ? 'rgba(255, 255, 255, 0.1)'
-                    : 'transparent',
+                  backgroundColor: isActive(item.path) ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
                 }}
               >
                 {item.label}
@@ -181,11 +181,7 @@ export const Header: React.FC = () => {
       </Toolbar>
 
       {/* Mobile Drawer */}
-      <Drawer
-        anchor="right"
-        open={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
-      >
+      <Drawer anchor="right" open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)}>
         <Box
           sx={{ width: 250 }}
           role="presentation"

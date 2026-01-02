@@ -242,4 +242,24 @@ describe('CategoriesPage', () => {
       expect(screen.queryByText('Add Category')).not.toBeInTheDocument();
     });
   });
+
+  it('renders within Settings layout with Container', () => {
+    const { container } = render(<CategoriesPage />);
+    expect(container.querySelector('.MuiContainer-root')).toBeInTheDocument();
+  });
+
+  it('maintains existing functionality in Settings context', async () => {
+    const user = userEvent.setup();
+    render(<CategoriesPage />);
+
+    // Test tabs still work
+    const transactionTypesTab = screen.getByText('Transaction Types');
+    await user.click(transactionTypesTab);
+    expect(screen.getByText('Supermarket')).toBeInTheDocument();
+
+    // Test add button still works
+    const newButton = screen.getByRole('button', { name: /new transaction type/i });
+    await user.click(newButton);
+    expect(screen.getByText('Add Transaction Type')).toBeInTheDocument();
+  });
 });

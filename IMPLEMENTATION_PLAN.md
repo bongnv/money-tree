@@ -579,26 +579,80 @@ This plan implements all requirements from REQUIREMENTS.md.
 **Manual Verification (User):** Click "Money Tree" logo to return to dashboard, click each navigation link in Header, verify active state highlights current page, test on mobile to see drawer menu open/close, verify all icons display correctly, check keyboard navigation works.
 
 ### 9.3 Create Settings Page Structure
-- [ ] Create `src/components/settings/SettingsLayout.tsx`:
-  - [ ] Sidebar navigation for desktop (always visible)
-  - [ ] Drawer navigation for mobile (collapsible)
-  - [ ] Sidebar items: Assets, Categories
-  - [ ] Active state highlighting for current sub-page
-  - [ ] Content area for nested routes (Outlet from react-router)
-- [ ] Create `src/components/settings/SettingsPage.tsx`:
-  - [ ] Default landing page when visiting /settings
-  - [ ] Shows overview: "Configure your assets and categories"
-  - [ ] Quick links to each settings section with icons and descriptions
-- [ ] Create `src/components/settings/AssetsPage.tsx`:
-  - [ ] Tab navigation: "Transactional" and "Manual"
-  - [ ] Transactional tab: Displays AccountList (bank accounts, credit cards, cash)
-  - [ ] Manual tab: Displays ManualAssetList (properties, investments, vehicles)
-  - [ ] Both tabs use existing components (AccountsPage content and ManualAssetsPage content)
-  - [ ] Data remains in separate stores (useAccountStore and useAssetStore)
-- [ ] Update CategoriesPage to work within Settings layout
-- [ ] Update routes.tsx to enable /settings routes and remove temporary /accounts, /categories, /assets routes
-- [ ] **Write tests**: Settings layout, sidebar navigation, nested route rendering, Assets tab switching
-**Manual Verification (User):** Navigate to /settings, see overview with quick links, click Assets in sidebar to go to /settings/assets, verify two tabs (Transactional/Manual) appear, switch between tabs to see accounts and manual assets separately, click Categories to go to /settings/categories, verify active state in sidebar highlights current section, test on mobile to see drawer navigation.
+- [x] Create `src/components/settings/SettingsLayout.tsx`:
+  - [x] Use MUI Drawer with variant="permanent" for desktop (width: 240px)
+  - [x] Use MUI Drawer with variant="temporary" for mobile (with toggle button)
+  - [x] Sidebar navigation using MUI List with ListItemButton components
+  - [x] Navigation items: Assets, Categories
+  - [x] Active state highlighting using selected prop and primary color
+  - [x] Content area with Outlet from react-router-dom
+  - [x] Responsive layout: Box with flexbox (drawer + content area)
+  - [x] Mobile: Add IconButton (MenuIcon) in toolbar to toggle drawer
+  - [x] Use useMediaQuery with theme.breakpoints.down('md') for responsive behavior
+- [x] **Write tests**: SettingsLayout.test.tsx (6 tests)
+  - [x] Test navigation items render and active state highlighting
+  - [x] Test navigation onClick handlers
+  - [x] Test Outlet renders child routes
+- [x] Create `src/components/settings/SettingsPage.tsx`:
+  - [x] Default landing page when visiting /settings
+  - [x] Container with maxWidth="md" for centered layout
+  - [x] Typography variant="h4" for page title: "Settings"
+  - [x] Typography variant="body1" for description: "Configure your assets and categories"
+  - [x] Grid container with spacing={3} for quick link cards
+  - [x] Two MUI Cards (one for Assets, one for Categories)
+  - [x] Each card: CardActionArea with onClick navigation
+  - [x] Card content: Icon (AccountBalanceIcon, CategoryIcon), title, description
+  - [x] Assets card navigates to /settings/assets
+  - [x] Categories card navigates to /settings/categories
+- [x] **Write tests**: SettingsPage.test.tsx (5 tests)
+  - [x] Test cards render with correct titles
+  - [x] Test card navigation to /settings/assets and /settings/categories
+- [x] Create `src/components/settings/AssetsPage.tsx`:
+  - [x] Container with maxWidth="lg"
+  - [x] Typography variant="h4" for page title: "Assets"
+  - [x] MUI Tabs component with two tabs: "Transactional" and "Manual"
+  - [x] Tab state management: useState for activeTab (0 or 1)
+  - [x] Transactional tab (index 0):
+    - [x] Renders existing AccountsPage component
+    - [x] AccountsPage already has all CRUD operations (dialogs, forms)
+    - [x] Shows bank accounts, credit cards, cash accounts
+  - [x] Manual tab (index 1):
+    - [x] Renders existing ManualAssetsPage component
+    - [x] ManualAssetsPage already has all CRUD operations (dialogs, forms)
+    - [x] Shows properties, investments, vehicles, other assets
+  - [x] Both tabs use conditional rendering with hidden prop (like CategoriesPage pattern)
+  - [x] Data remains in separate stores (useAccountStore and useAssetStore)
+  - [x] No data migration or restructuring needed
+- [x] **Write tests**: AssetsPage.test.tsx (8 tests)
+  - [x] Test tabs render and switching works
+  - [x] Test AccountsPage renders in Transactional tab
+  - [x] Test ManualAssetsPage renders in Manual tab
+  - [x] Test only active tab content is visible
+- [x] Update CategoriesPage to work within Settings layout:
+  - [x] Add Container wrapper for consistent layout with AssetsPage
+  - [x] Keep existing tabs and all functionality
+  - [x] Ensure consistent styling with AssetsPage
+  - [x] No changes to CategoryList or TransactionTypeList components needed
+- [x] **Write tests**: CategoriesPage.test.tsx updates (2 tests)
+  - [x] Test CategoriesPage renders within Settings layout with existing functionality
+- [x] Update routes.tsx:
+  - [x] Remove temporary routes: /accounts, /categories, /assets
+  - [x] Add nested /settings routes:
+    ```tsx
+    <Route path="/settings" element={<SettingsLayout />}>
+      <Route index element={<SettingsPage />} />
+      <Route path="assets" element={<AssetsPage />} />
+      <Route path="categories" element={<CategoriesPage />} />
+    </Route>
+    ```
+  - [x] Verify Settings button in Header highlights for /settings/*
+  - [x] Test route navigation and nested routing
+- [x] **Write tests**: routes.test.tsx updates (6 tests)
+  - [x] Test /settings routes render correctly (index, assets, categories)
+  - [x] Test old temporary routes (/accounts, /categories, /assets) redirect to 404
+  - [x] Test nested route navigation
+- [x] **Total tests**: 27 new tests (6 + 5 + 8 + 2 + 6)
+**Manual Verification (User):** Navigate to /settings, see overview with two cards (Assets, Categories). Click Assets card → navigate to /settings/assets, see two tabs (Transactional, Manual), verify tab switching works. Click Transactional tab → see existing accounts with add/edit/delete functionality. Click Manual tab → see existing manual assets with add/edit/delete functionality. Click Categories in sidebar → navigate to /settings/categories, verify existing categories page works. Test on mobile → verify drawer opens/closes with menu button. Verify Settings button in Header highlights on all /settings/* routes. Try navigating to old routes /accounts, /categories, /assets → verify 404 page appears.
 
 ## Phase 10: Production Build, Testing & Polish (MVP)
 

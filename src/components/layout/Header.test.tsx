@@ -149,10 +149,10 @@ describe('Header', () => {
     it('should navigate to dashboard when logo is clicked', async () => {
       const user = userEvent.setup();
       renderWithRouter(<Header />, '/transactions');
-      
+
       const logo = screen.getByText('Money Tree');
       await user.click(logo);
-      
+
       // Would navigate but we're in a test environment, just verify it's clickable
       expect(logo).toBeInTheDocument();
     });
@@ -257,10 +257,10 @@ describe('Header', () => {
     it('should open drawer when menu icon is clicked', async () => {
       const user = userEvent.setup();
       renderWithRouter(<Header />);
-      
+
       const menuButton = screen.getByLabelText('menu');
       await user.click(menuButton);
-      
+
       // Drawer should be open, nav items visible
       const drawerTransactions = screen.getAllByText('Transactions');
       expect(drawerTransactions.length).toBeGreaterThan(0);
@@ -269,14 +269,14 @@ describe('Header', () => {
     it('should close drawer when item is clicked', async () => {
       const user = userEvent.setup();
       renderWithRouter(<Header />);
-      
+
       const menuButton = screen.getByLabelText('menu');
       await user.click(menuButton);
-      
+
       // Click a navigation item in the drawer
       const drawerItems = screen.getAllByText('Transactions');
       await user.click(drawerItems[drawerItems.length - 1]); // Click the drawer item
-      
+
       // Drawer should close (implementation closes on click)
       expect(menuButton).toBeInTheDocument();
     });
@@ -300,13 +300,13 @@ describe('Header', () => {
       });
 
       renderWithRouter(<Header />);
-      
+
       // Check that nav buttons have icons
       const transactionsButton = screen.getByRole('button', { name: /transactions/i });
       const reportsButton = screen.getByRole('button', { name: /reports/i });
       const budgetsButton = screen.getByRole('button', { name: /budgets/i });
       const settingsButton = screen.getByRole('button', { name: /settings/i });
-      
+
       expect(transactionsButton.querySelector('svg')).toBeInTheDocument();
       expect(reportsButton.querySelector('svg')).toBeInTheDocument();
       expect(budgetsButton.querySelector('svg')).toBeInTheDocument();

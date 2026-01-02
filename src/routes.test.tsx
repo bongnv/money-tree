@@ -19,16 +19,28 @@ jest.mock('./components/budgets/BudgetsPage', () => ({
   BudgetsPage: () => <div data-testid="budgets-page">Budgets Page</div>,
 }));
 
-jest.mock('./components/accounts/AccountsPage', () => ({
-  AccountsPage: () => <div data-testid="accounts-page">Accounts Page</div>,
+jest.mock('./components/settings/SettingsLayout', () => ({
+  SettingsLayout: () => {
+    const { Outlet } = require('react-router-dom');
+    return (
+      <div data-testid="settings-layout">
+        Settings Layout
+        <Outlet />
+      </div>
+    );
+  },
+}));
+
+jest.mock('./components/settings/SettingsPage', () => ({
+  SettingsPage: () => <div data-testid="settings-page">Settings Page</div>,
+}));
+
+jest.mock('./components/settings/AssetsPage', () => ({
+  AssetsPage: () => <div data-testid="settings-assets-page">Assets Page</div>,
 }));
 
 jest.mock('./components/categories/CategoriesPage', () => ({
   CategoriesPage: () => <div data-testid="categories-page">Categories Page</div>,
-}));
-
-jest.mock('./components/assets/ManualAssetsPage', () => ({
-  ManualAssetsPage: () => <div data-testid="assets-page">Manual Assets Page</div>,
 }));
 
 jest.mock('./components/common/NotFoundPage', () => ({
@@ -70,23 +82,46 @@ describe('AppRoutes', () => {
     });
   });
 
-  describe('Temporary Routes (Pre-Settings)', () => {
-    it('renders AccountsPage at /accounts route', () => {
-      renderWithRouter('/accounts');
-      expect(screen.getByTestId('accounts-page')).toBeInTheDocument();
-      expect(screen.getByText('Accounts Page')).toBeInTheDocument();
+  describe('Settings Routes', () => {
+    it('renders SettingsPage at /settings route', () => {
+      renderWithRouter('/settings');
+      expect(screen.getByTestId('settings-layout')).toBeInTheDocument();
+      expect(screen.getByTestId('settings-page')).toBeInTheDocument();
     });
 
-    it('renders CategoriesPage at /categories route', () => {
-      renderWithRouter('/categories');
+    it('renders AssetsPage at /settings/assets route', () => {
+      renderWithRouter('/settings/assets');
+      expect(screen.getByTestId('settings-layout')).toBeInTheDocument();
+      expect(screen.getByTestId('settings-assets-page')).toBeInTheDocument();
+    });
+
+    it('renders CategoriesPage at /settings/categories route', () => {
+      renderWithRouter('/settings/categories');
+      expect(screen.getByTestId('settings-layout')).toBeInTheDocument();
       expect(screen.getByTestId('categories-page')).toBeInTheDocument();
-      expect(screen.getByText('Categories Page')).toBeInTheDocument();
+    });
+  });
+
+  describe('Old Routes Removed', () => {
+    it('redirects /accounts to 404', async () => {
+      renderWithRouter('/accounts');
+      await waitFor(() => {
+        expect(screen.getByTestId('not-found-page')).toBeInTheDocument();
+      });
     });
 
-    it('renders ManualAssetsPage at /assets route', () => {
+    it('redirects /assets to 404', async () => {
       renderWithRouter('/assets');
-      expect(screen.getByTestId('assets-page')).toBeInTheDocument();
-      expect(screen.getByText('Manual Assets Page')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId('not-found-page')).toBeInTheDocument();
+      });
+    });
+
+    it('redirects /categories to 404 (now only at /settings/categories)', async () => {
+      renderWithRouter('/categories');
+      await waitFor(() => {
+        expect(screen.getByTestId('not-found-page')).toBeInTheDocument();
+      });
     });
   });
 
@@ -134,14 +169,7 @@ describe('AppRoutes', () => {
     it('renders only the matched route component', () => {
       renderWithRouter('/budgets');
 
-      const allTestIds = [
-        'dashboard-page',
-        'transactions-page',
-        'reports-page',
-        'accounts-page',
-        'categories-page',
-        'assets-page',
-      ];
+      const allTestIds = ['dashboard-page', 'transactions-page', 'reports-page', 'settings-layout'];
 
       allTestIds.forEach((testId) => {
         expect(screen.queryByTestId(testId)).not.toBeInTheDocument();

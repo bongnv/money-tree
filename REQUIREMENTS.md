@@ -12,183 +12,199 @@ The MVP focuses on core personal finance tracking functionality with local file 
 
 ### FR-1: Transaction Management
 
-- [ ] Users can add, edit, and delete transactions
-- [ ] Users can add transactions instantly from the dashboard:
-  - [ ] Inline form always visible on the starting page (no button click required)
-  - [ ] Enter essential details (amount, date, type, account) and submit
-  - [ ] Form clears automatically after submission for quick consecutive entries
-- [ ] **Bulk Transaction Entry (Post-MVP):**
-  - [ ] Alternative spreadsheet-like grid view for entering multiple transactions
-  - [ ] Tab through cells to enter data quickly (similar to Excel/Google Sheets)
-  - [ ] Inline editing with auto-complete for accounts and categories
-  - [ ] Validation happens in real-time as you type
-  - [ ] Add/remove rows dynamically
-  - [ ] Copy/paste support from external sources (bank statements, Excel)
-  - [ ] Save entire batch at once
-  - [ ] Undo/redo support for batch operations
-  - [ ] Quick fill-down for repeated values (same date, same account)
-- [ ] Each transaction includes the following details:
-  - [ ] **Transaction Type**: Defines the specific classification (e.g., "Groceries", "Salary", "Stock Purchase")
-    - [ ] The Transaction Type automatically determines its parent Category and Group through the hierarchy
-    - [ ] For Transfer transactions, no Transaction Type is needed (Transfer is a special group)
-  - [ ] **Amount**: The monetary value of the transaction
-  - [ ] **Date**: When the transaction occurred
-  - [ ] **Description**: Details about the transaction
-  - [ ] **From Account**: The source account
-  - [ ] **To Account**: The destination account
-- [ ] **Account requirements based on the transaction's group:**
-  - [ ] **Expense transactions**: Require From Account (money leaving)
-  - [ ] **Income transactions**: Require To Account (money entering)
-  - [ ] **Investment transactions**: 
-    - [ ] Buying: requires From Account (money leaving to purchase)
-    - [ ] Selling: requires To Account (money entering from sale)
-    - [ ] Dividends/Returns: requires To Account (money entering from returns)
-  - [ ] **Transfer transactions**: Require both From Account and To Account (money moving between accounts)
+**FR-1.1** [x] Basic transaction CRUD operations (add, edit, delete transactions) - *Phase 5*
+
+**FR-1.2** [x] Transaction data model with required fields - *Phase 5*
+- Transaction Type (defines classification)
+- Amount (monetary value)
+- Date (when transaction occurred)
+- Description (transaction details)
+- From Account (source account)
+- To Account (destination account)
+
+**FR-1.3** [x] Account requirements based on transaction group - *Phase 5*
+- Expense transactions: Require From Account (money leaving)
+- Income transactions: Require To Account (money entering)
+- Investment transactions: Buying requires From Account, Selling/Dividends require To Account
+- Transfer transactions: Require both From Account and To Account
+
+**FR-1.4** [x] Quick transaction entry on dashboard - *Phase 8, 12*
+- Inline form always visible on starting page (no button click required)
+- Enter essential details (amount, date, type, account) and submit
+- Form clears automatically after submission for quick consecutive entries
+
+**FR-1.5** [ ] Bulk transaction entry (Post-MVP)
+- Alternative spreadsheet-like grid view for entering multiple transactions
+- Tab through cells to enter data quickly (similar to Excel/Google Sheets)
+- Inline editing with auto-complete for accounts and categories
+- Real-time validation as you type
+- Add/remove rows dynamically
+- Copy/paste support from external sources
+- Save entire batch at once
+- Undo/redo support for batch operations
+- Quick fill-down for repeated values
 
 ### FR-2: Categorization System
 
-- [x] The application uses a three-level hierarchy to organize transactions
-- [x] **Hierarchy structure:**
-  - [x] **Group** (top level, static): Expense, Income, Investment, or Transfer
-  - [x] **Category** (middle level, user-customizable): e.g., "Food", "Salary", "Stocks"
-  - [x] **Transaction Type** (bottom level, user-customizable): e.g., "Groceries", "Bonus", "Dividend"
-- [x] **How it works:**
-  - [x] Each Transaction Type belongs to exactly one Category
-  - [x] Each Category belongs to exactly one Group
-  - [ ] When a user selects a Transaction Type, the system automatically knows its Category and Group
-  - [x] Example hierarchy: Expense → Food → Groceries
-  - [x] Transfer is a special Group that does not use the Category/Transaction Type hierarchy
-- [x] **Groups:**
-  - [x] **Expense**: Money going out (uses categories and transaction types)
-  - [x] **Income**: Money coming in (uses categories and transaction types)
-  - [x] **Investment**: Investment-related activities (uses categories and transaction types)
-  - [x] **Transfer**: Money moving between accounts (does not use categories or transaction types)
+**FR-2.1** [x] Three-level hierarchy (Group → Category → Transaction Type) - *Phase 2*
 
-### FR-3: Account Management
+**FR-2.2** [x] Four static Groups: Expense, Income, Investment, Transfer - *Phase 2*
 
-- [x] Users can create and manage multiple accounts (e.g., bank accounts, credit cards, cash)
-- [ ] Each account tracks its current balance
-- [ ] Account balances update automatically based on transactions
-- [x] Users can add, edit, and delete accounts
-- [ ] Users can view account history and balance changes over time
+**FR-2.3** [x] User-customizable Categories and Transaction Types - *Phase 4*
+- Each Transaction Type belongs to exactly one Category
+- Each Category belongs to exactly one Group
+- Transfer is special group without Category/Transaction Type hierarchy
+
+**FR-2.4** [x] Automatic Group/Category determination from Transaction Type - *Phase 5*
+
+### FR-3: Asset Management
+
+**FR-3.1** [x] Unified Assets section in Settings with tab navigation - *Phase 9*
+- Tab-based view: Transactional / Manual
+- Both types contribute to net worth calculations
+- Dashboard and reports show unified net worth
+
+**FR-3.2** [x] Transactional Assets (Accounts) - *Phase 3*
+- Create and manage multiple accounts (bank accounts, credit cards, cash)
+- Add, edit, and delete accounts
+- Account types: Bank Account, Credit Card, Cash, Investment
+
+**FR-3.3** [x] Account balance tracking - *Phase 5*
+- Each account tracks current balance
+- Balances update automatically based on transactions
+
+**FR-3.4** [ ] Account history and balance changes over time
+
+**FR-3.5** [x] Manual Assets - *Phase 6*
+- Track assets not connected to transactions (real estate, vehicles, investments)
+- Manually-updated value and valuation date
+- Types: Real Estate, Superannuation, Investment, Liability, Other
+- Add, edit, and delete manual assets
+
+**FR-3.6** [ ] Manual asset value tracking over time
+
+**Architecture Note:** Data models remain separate (Account and ManualAsset are distinct types with separate Zustand stores) for clear business logic separation. UI layer provides unified view through tabs and combined displays.
 
 ### FR-4: Category Customization
 
-- [ ] Users can fully customize the categorization structure within Expense, Income, and Investment groups:
-  - [ ] Add, remove, and rename categories within a group
-  - [ ] Add, remove, and rename transaction types within a category
-  - [ ] Each transaction type must belong to exactly one category
-  - [ ] Each category must belong to exactly one group
-  - [ ] Users can move transaction types between categories
-  - [ ] Users can move categories between groups
-  - [ ] Create custom hierarchies that fit their financial tracking needs
+**FR-4.1** [x] Full category management within Groups - *Phase 4*
+- Add, remove, and rename categories within a group
+- Add, remove, and rename transaction types within a category
+
+**FR-4.2** [x] Category hierarchy constraints - *Phase 4*
+- Each transaction type must belong to exactly one category
+- Each category must belong to exactly one group
+
+**FR-4.3** [ ] Move transaction types between categories
+
+**FR-4.4** [ ] Move categories between groups
 
 ### FR-5: Dashboard and Quick Entry
 
-- [ ] Users see a summary dashboard as the starting page:
-  - [ ] Inline transaction entry form at the top (always visible, ready for input)
-  - [ ] Summary statistics and key metrics
-  - [ ] Recent transaction activity
-  - [ ] Account balance overview
+**FR-5.1** [x] Dashboard as starting page - *Phase 8*
+
+**FR-5.2** [x] Inline transaction entry form at top - *Phase 8, 12*
+
+**FR-5.3** [x] Summary statistics and key metrics - *Phase 8*
+- Net Worth, Cash Flow, Savings Rate cards
+- Period selector (This Month, Last Month, This Quarter, This Year, YTD)
+
+**FR-5.4** [x] Budget overview on dashboard - *Phase 8*
+- Top 5 budgets with progress bars
+- Context-aware color coding
+
+**FR-5.5** [x] Recent transaction activity - *Phase 8*
+- Last 10 transactions with quick entry integration
+
+**FR-5.6** [ ] Account balance overview
 
 ### FR-6: Data Storage (Local Files - MVP)
 
-- [x] All data is stored on the user's local machine using browser's File System Access API
-- [x] Users can save data files to their local file system
-- [x] Users can load data files from their local file system
-- [x] Each calendar year's data is stored in a separate JSON file
-- [x] Data includes transactions, accounts, categories, and budgets
-- [x] Currencies are fixed defaults (not stored in data files)
-- [x] Data format is portable and readable (JSON)
-- [x] One file per year for better organization
+**FR-6.1** [x] File System Access API for local storage - *Phase 2*
 
-**Basic Auto-Save (MVP):**
-- [ ] Application automatically detects when data has changed
-- [ ] Users are prompted to save changes when:
-  - [ ] Closing the browser tab or window
-  - [ ] Navigating away from the page
-  - [ ] Loading a different year's data file
-- [ ] Periodic auto-save runs in the background:
-  - [ ] Automatically saves data at regular intervals when changes are detected
-  - [ ] Configurable save interval (default: every 5 minutes)
-  - [ ] Only saves when there are unsaved changes
-  - [ ] Non-intrusive - happens silently without user prompts
-- [ ] Unsaved changes indicator visible in the UI
-- [ ] Manual save option always available
+**FR-6.2** [x] Save and load data files - *Phase 2*
 
-**Architecture:**
-- [x] Storage system is designed with an extensible interface/adapter pattern
-- [x] Easy to add new storage providers in the future
-- [x] Core business logic is independent of storage implementation
+**FR-6.3** [x] One JSON file per calendar year - *Phase 2*
 
-### FR-7: Financial Reports (MVP)
+**FR-6.4** [x] Data includes transactions, accounts, categories, budgets, manual assets - *Phase 2-6*
 
-#### Budget Creation
-- [ ] Users can create budget plans with the following features:
-  - [ ] Set budget period type (Monthly, Quarterly, Yearly)
-  - [ ] Define start date and duration
-  - [ ] Create recurring budgets (e.g., same budget every month)
-  - [ ] Copy budget from previous period as template
-  
-#### Budget Allocation
-- [ ] **Transaction Type-Level Budgets:**
-  - [ ] Set budget amount for each transaction type (e.g., Groceries, Utilities, Salary)
-  - [ ] Support both expense and income transaction types with context-aware labels:
-    - [ ] Expense types: Display as "Budget" (spending limit)
-    - [ ] Income types: Display as "Target" or "Expected Income" (income goal)
-  - [ ] Group budgets by category for summary view (Income section, Expense sections)
-  - [ ] Allocate remaining budget across transaction types
-  - [ ] Show total budget vs available funds
-- [ ] **Budget Templates:**
-  - [ ] Save budget as template for reuse
-  - [ ] Apply template to new periods
-  - [ ] Modify template without affecting existing budgets
+**FR-6.5** [x] Fixed currency defaults (not stored in files) - *Phase 2*
 
-#### Budget Tracking & Review
-- [ ] **Real-Time Budget Status:**
-  - [ ] Show budget vs actual for each transaction type
-  - [ ] Display spent/earned amount, remaining amount, and percentage used
-  - [ ] Visual progress bars for each transaction type
-  - [ ] Context-aware color coding:
-    - [ ] Expenses: Green (under budget), Yellow (80-100%), Red (over budget)
-    - [ ] Income: Green (meeting/exceeding target), Yellow (60-80%), Red (under 60%)
-  - [ ] Roll up transaction types into category summaries
-- [ ] **Budget Dashboard:**
-  - [ ] Overall budget status (total budgeted vs actual)
-  - [ ] Transaction types closest to limit
-  - [ ] Transaction types over budget (with overage amount)
-  - [ ] Projected end-of-period status based on current spending rate
-- [ ] **Alerts & Notifications:**
-  - [ ] Warning when reaching 80% of budget
-  - [ ] Alert when exceeding budget
-  - [ ] Notification for unusual spending patterns
+**FR-6.6** [x] Portable JSON format - *Phase 2*
 
-#### Budget Analysis
-- [ ] **Variance Analysis:**
-  - [ ] Compare actual vs budgeted for completed periods
-  - [ ] Show variance amount and percentage
-  - [ ] Identify transaction types consistently over/under budget
-  - [ ] Trend analysis across multiple periods
-- [ ] **Budget vs Actual Report:**
-  - [ ] Side-by-side comparison table
-  - [ ] Visual charts (bar chart, waterfall chart)
-  - [ ] Drill down to transaction details for any category
-  - [ ] Filter by date range, category, account
-- [ ] **Historical Budget Performance:**
-  - [ ] View past budgets and their performance
-  - [ ] Compare budget adherence over time
-  - [ ] Success rate metrics (% of categories on budget)
-  - [ ] Recommend budget adjustments based on historical data
+**FR-6.7** [x] Extensible storage adapter pattern - *Phase 2*
 
-#### Budget Adjustment
-- [ ] **In-Period Adjustments:**
-  - [ ] Modify budget amounts during the period
-  - [ ] Reallocate funds between categories
-  - [ ] Track adjustment history
-  - [ ] Show adjusted vs original budget
-- [ ] **Rollover Options:**
-  - [ ] Option to rollover unused budget to next period
-  - [ ] Option to compensate overspending in next period
+**FR-6.8** [ ] Auto-save: Detect data changes
+
+**FR-6.9** [ ] Auto-save: Prompt on browser close/navigation
+
+**FR-6.10** [ ] Auto-save: Periodic background save (configurable interval, default 5 minutes)
+
+**FR-6.11** [ ] Unsaved changes indicator in UI
+
+**FR-6.12** [ ] Manual save option always available
+
+### FR-7: Budget Management
+
+**FR-7.1** [x] Create budgets with period types (Monthly, Quarterly, Yearly) - *Phase 7*
+
+**FR-7.2** [x] Budget start date and end date - *Phase 7*
+
+**FR-7.3** [ ] Recurring budgets
+
+**FR-7.4** [ ] Copy budget from previous period
+
+**FR-7.5** [x] Transaction Type-level budgets - *Phase 7*
+- Set budget amount for each transaction type
+- Support both expense and income transaction types
+- Context-aware labels (Budget for expenses, Target for income)
+
+**FR-7.6** [x] Budget grouping by category - *Phase 7*
+
+**FR-7.7** [ ] Budget templates (save, apply, modify)
+
+**FR-7.8** [x] Real-time budget status - *Phase 7, 8*
+- Budget vs actual for each transaction type
+- Spent/earned amount, remaining amount, percentage used
+- Visual progress bars
+- Context-aware color coding (Expenses: green/yellow/red based on usage; Income: green/yellow/red based on achievement)
+
+**FR-7.9** [x] Budget overview dashboard section - *Phase 8*
+- Overall budget status
+- Top budgets by usage
+- Prorated budget amounts based on period
+
+**FR-7.10** [ ] Budget alerts and notifications
+- Warning at 80% of budget
+- Alert when exceeding budget
+- Unusual spending pattern notifications
+
+**FR-7.11** [ ] Variance analysis for completed periods
+
+**FR-7.12** [ ] Budget vs Actual report with charts
+
+**FR-7.13** [ ] Historical budget performance tracking
+
+**FR-7.14** [ ] In-period budget adjustments with history
+
+**FR-7.15** [ ] Budget rollover options
+
+### FR-8: Financial Reports
+
+**FR-8.1** [x] Balance Sheet report - *Phase 6*
+- Assets section (accounts + manual assets grouped by type)
+- Net worth calculation and display
+- Date selector for historical data
+- Month-over-month comparison
+
+**FR-8.2** [x] Cash Flow report - *Phase 6*
+- Income and expense breakdown
+- Transfers excluded from calculations
+- Period filtering
+
+**FR-8.3** [ ] Transaction filtering and search
+
+**FR-8.4** [ ] Report export functionality
 
 ---
 
@@ -198,91 +214,81 @@ These features will be implemented after the MVP is complete and validated by us
 
 ### FR-9: Year Management & Multi-Year Support (Post-MVP)
 
-#### Year Management
-- [ ] Users can switch between different years
-- [ ] Each year's data is stored in a separate file
-- [ ] Users can create new year files
-- [ ] Year selector visible in the interface
+**FR-9.1** [ ] Year switching and management
+- Switch between different years
+- Create new year files
+- Year selector visible in interface
 
-#### Multi-Year Features
-- [ ] **Cross-Year Analysis:**
-  - [ ] View reports spanning multiple years
-  - [ ] Compare data year-over-year
-  - [ ] Track long-term trends across years
-  - [ ] Net worth progression over multiple years
-- [ ] **Multi-Year Data Loading:**
-  - [ ] Load multiple year files simultaneously
-  - [ ] Aggregate data from multiple years for reporting
-  - [ ] Memory-efficient handling of large datasets
-- [ ] **Year Transitions:**
-  - [ ] Carry forward account balances to new year
-  - [ ] Option to copy categories and budgets to new year
-  - [ ] Archive old year files
-- [ ] **Historical Analysis:**
-  - [ ] View transaction history across all years
-  - [ ] Search transactions across multiple years
-  - [ ] Category spending trends over multiple years
-  - [ ] Income and expense patterns year-over-year
-#### Account Overview Report
-- [ ] View individual account details and transaction history
-- [ ] Account balance over time chart
-- [ ] List of all transactions for the account
-- [ ] Filter and search transactions
-- [ ] Export account statement
-- [ ] Multi-year account history view
+**FR-9.2** [ ] Multi-year data loading
+- Load multiple year files simultaneously
+- Aggregate data from multiple years for reporting
+- Memory-efficient handling of large datasets
+
+**FR-9.3** [ ] Cross-year analysis
+- View reports spanning multiple years
+- Compare data year-over-year
+- Track long-term trends across years
+- Net worth progression over multiple years
+
+**FR-9.4** [ ] Year transitions
+- Carry forward account balances to new year
+- Copy categories and budgets to new year
+- Archive old year files
+
+**FR-9.5** [ ] Historical analysis
+- View transaction history across all years
+- Search transactions across multiple years
+- Category spending trends over multiple years
+- Income and expense patterns year-over-year
+
+**FR-9.6** [ ] Account overview report
+- Individual account details and transaction history
+- Account balance over time chart
+- Multi-year account history view
+- Filter and search transactions
+- Export account statement
+
 ### FR-10: Advanced Data Management (Post-MVP)
 
-**Conflict Detection & Auto-Merge:**
-- [ ] Application detects when files have been modified externally
-- [ ] Prevents data loss from concurrent modifications by:
-  - [ ] Another browser tab/window
-  - [ ] External text editor
-  - [ ] Cloud sync service (Dropbox, Google Drive, etc.)
-  - [ ] Another device editing the same file
-- [ ] **Auto-Merge:** Automatically merges non-conflicting changes
-  - [ ] When both versions have changes, intelligently combines them
-  - [ ] Preserves new accounts, transactions, categories from both versions
-  - [ ] Automatically merges changes to different records
-  - [ ] Automatically merges changes to different fields in same record
-  - [ ] Shows merge preview before applying
-  - [ ] Lists what will be auto-merged and what needs user decision
-- [ ] **User decides conflicts only when:**
-  - [ ] Same record modified in both versions with overlapping field changes
-  - [ ] Record deleted in one version but modified in the other
-  - [ ] Changes that could affect data consistency (balances, totals)
-- [ ] When conflict detected on save:
-  - [ ] Shows intelligent merge dialog with:
-    - [ ] **Auto-Merged Changes**: List of changes that can be safely merged
-    - [ ] **Conflicts Requiring Decision**: Side-by-side comparison
-    - [ ] Options for each conflict: Keep both, file version, your version
-    - [ ] Preview of final merged result
-  - [ ] Manual resolution options if user prefers:
-    - [ ] **Overwrite**: Replace file with current changes (loses external changes)
-    - [ ] **Reload**: Load latest file version (loses current unsaved changes)
-    - [ ] **Save As**: Save current changes to a new file
-    - [ ] **Cancel**: Return to editing without saving
-  - [ ] Displays when file was last modified
-  - [ ] Shows clear warning about data loss implications
-  - [ ] Validates data consistency after merge (account balances, etc.)
+**FR-10.1** [ ] Conflict detection
+- Detect when files modified externally
+- Detect concurrent modifications (other tabs, external editors, cloud sync, other devices)
+
+**FR-10.2** [ ] Auto-merge non-conflicting changes
+- Intelligently combine both versions when possible
+- Preserve new accounts, transactions, categories from both versions
+- Merge changes to different records automatically
+- Merge changes to different fields in same record
+- Show merge preview before applying
+
+**FR-10.3** [ ] User resolution for conflicts
+- Side-by-side comparison for overlapping changes
+- Options: Keep both, file version, your version
+- Handle deleted vs modified conflicts
+- Validate data consistency after merge
+
+**FR-10.4** [ ] Conflict resolution UI
+- Show auto-merged changes list
+- Show conflicts requiring decisions
+- Preview final merged result
+- Manual resolution options (Overwrite, Reload, Save As, Cancel)
+- Display file modification timestamps
+- Clear warnings about data loss
 
 ### FR-11: Cloud Storage Integration (Post-MVP, Optional)
 
-**Storage Options:**
-- [ ] **OneDrive Integration**: Full sync with Microsoft OneDrive
-- [ ] **Google Drive Integration**: Sync with Google Drive
-- [ ] **Dropbox Integration**: Sync with Dropbox
+**FR-11.1** [ ] OneDrive integration with full sync
 
-**Authentication (Cloud Providers Only):**
+**FR-11.2** [ ] Google Drive integration with full sync
 
-**Important**: Authentication is NOT a core application feature. It is only required by cloud storage providers to access their APIs. The authentication is handled by the storage provider's SDK, not by Money Tree.
+**FR-11.3** [ ] Dropbox integration with full sync
 
-- Authentication is provided by the cloud storage provider's SDK:
-  - **OneDrive**: Uses `@azure/msal-browser` (Microsoft's authentication library)
-  - **Google Drive**: Uses Google Sign-In SDK
-  - **Dropbox**: Uses Dropbox SDK authentication
-- Money Tree simply integrates these SDKs to enable cloud sync
-- Users choose whether to enable cloud storage (opt-in)
-- Local-only usage remains fully functional without any authentication
+**FR-11.4** [ ] OAuth authentication via provider SDKs
+- OneDrive: `@azure/msal-browser`
+- Google Drive: Google Sign-In SDK
+- Dropbox: Dropbox SDK authentication
+
+**FR-11.5** [ ] Opt-in cloud storage (local-only remains fully functional)
 
 ---
 
@@ -290,79 +296,91 @@ These features will be implemented after the MVP is complete and validated by us
 
 ### NFR-1: Architecture (MVP)
 
-- [x] Static web application (no backend server)
-- [x] Runs entirely in the browser
-- [x] All processing happens client-side
+**NFR-1.1** [x] Static web application (no backend server) - *Phase 1*
+
+**NFR-1.2** [x] Runs entirely in browser - *Phase 1*
+
+**NFR-1.3** [x] All client-side processing - *Phase 1*
 
 ### NFR-2: Technology Stack (MVP)
 
-**Core:**
-- [x] **TypeScript**: Primary programming language
-- [x] **React**: UI framework
-- [x] **Webpack**: Module bundling
+**NFR-2.1** [x] TypeScript as primary language - *Phase 1*
 
-**UI Components:**
-- [x] **Material-UI (MUI)**: Component library for building the interface
-  - [x] Provides comprehensive components (forms, tables, dialogs, date pickers)
-  - [x] Responsive design built-in
-  - [x] Strong TypeScript support
+**NFR-2.2** [x] React UI framework - *Phase 1*
 
-**State Management:**
-- [x] **Zustand**: Lightweight state management solution
-  - [ ] Manages application state (transactions, accounts, categories, budgets)
-  - [x] Currencies are fixed constants (not part of state)
-  - [x] Simple API with minimal boilerplate
-  - [x] Excellent TypeScript support
+**NFR-2.3** [x] Webpack module bundling - *Phase 1*
 
-**Code Quality:**
-- [x] **ESLint**: Linting with TypeScript support (`@typescript-eslint`)
-- [x] **Prettier**: Code formatting for consistent style
-- [x] **Jest**: Unit testing framework with React Testing Library
-- [x] **Test Coverage**: Maintain minimum 80% code coverage across the codebase
+**NFR-2.4** [x] Material-UI (MUI) component library - *Phase 1*
 
-**Utilities:**
-- [x] **date-fns**: Date manipulation and formatting
-- [x] **Zod**: Schema validation for data integrity
+**NFR-2.5** [x] Zustand state management - *Phase 2*
 
-**Storage (MVP):**
-- [x] **File System Access API**: Browser native API for reading/writing local files
-- [x] **localStorage**: For caching and app preferences
+**NFR-2.6** [x] ESLint with TypeScript support - *Phase 1*
+
+**NFR-2.7** [x] Prettier code formatting - *Phase 1*
+
+**NFR-2.8** [x] Jest with React Testing Library - *Phase 1*
+
+**NFR-2.9** [x] Minimum 80% test coverage - *All phases*
+
+**NFR-2.10** [x] date-fns for date utilities - *Phase 2*
+
+**NFR-2.11** [x] Zod for schema validation - *Phase 2*
+
+**NFR-2.12** [x] File System Access API for local storage - *Phase 2*
+
+**NFR-2.13** [x] localStorage for caching and preferences - *Phase 2*
 
 ### NFR-3: Performance (MVP)
 
-- [ ] Application loads quickly
-- [ ] Responsive user interface
-- [ ] Smooth transitions between views
-- [ ] Efficient data loading and saving
-- [ ] Optimized bundle size through code splitting
+**NFR-3.1** [ ] Application loads quickly - *Phase 10*
+
+**NFR-3.2** [ ] Responsive user interface - *Phase 10*
+
+**NFR-3.3** [ ] Smooth transitions between views - *Phase 9, 10*
+
+**NFR-3.4** [ ] Efficient data loading and saving - *Phase 10*
+
+**NFR-3.5** [ ] Optimized bundle size through code splitting - *Phase 10*
 
 ### NFR-4: Usability (MVP)
 
-- [ ] Intuitive user interface
-- [ ] Clear navigation structure
-- [ ] Helpful error messages
-- [ ] Responsive design for different screen sizes
+**NFR-4.1** [ ] Intuitive user interface - *Phase 10*
+
+**NFR-4.2** [x] Clear navigation structure - *Phase 9*
+
+**NFR-4.3** [ ] Helpful error messages - *Phase 10*
+
+**NFR-4.4** [ ] Responsive design for different screen sizes - *Phase 9, 10*
 
 ### NFR-5: Compatibility (MVP)
 
-- [ ] Works on modern web browsers (Chrome, Firefox, Safari, Edge)
-- [ ] Compatible with desktop and tablet devices
+**NFR-5.1** [ ] Works on modern web browsers (Chrome, Firefox, Safari, Edge) - *Phase 10*
+
+**NFR-5.2** [ ] Compatible with desktop and tablet devices - *Phase 10*
 
 ### NFR-6: Reliability (MVP)
 
-- [ ] Data integrity maintained during save operations
-- [ ] Proper error handling for file access issues
-- [ ] Graceful degradation when File System Access API not available
+**NFR-6.1** [x] Data integrity during save operations - *Phase 2*
+
+**NFR-6.2** [ ] Proper error handling for file access - *Phase 10*
+
+**NFR-6.3** [ ] Graceful degradation when File System Access API unavailable - *Phase 10*
 
 ### NFR-7: Maintainability (MVP)
 
-- [x] Clean, modular code structure
-- [ ] Well-documented codebase
-- [ ] Easy to update and extend features
-- [x] Clear separation of concerns
-- [x] Type-safe codebase with TypeScript
-- [x] Consistent code style enforced by ESLint and Prettier
-- [x] Comprehensive test coverage (minimum 80%) for all features and business logic
+**NFR-7.1** [x] Clean, modular code structure - *Phase 1*
+
+**NFR-7.2** [ ] Well-documented codebase - *Phase 10*
+
+**NFR-7.3** [ ] Easy to update and extend features - *All phases*
+
+**NFR-7.4** [x] Clear separation of concerns - *Phase 1*
+
+**NFR-7.5** [x] Type-safe codebase with TypeScript - *Phase 1*
+
+**NFR-7.6** [x] Consistent code style (ESLint + Prettier) - *Phase 1*
+
+**NFR-7.7** [x] Comprehensive test coverage (80%+) - *All phases*
 
 ---
 
@@ -370,17 +388,23 @@ These features will be implemented after the MVP is complete and validated by us
 
 ### NFR-8: Cloud Security (Post-MVP)
 
-- [ ] Secure authentication through OAuth providers
-- [ ] Data access limited to authenticated user
-- [ ] No data stored on third-party servers (only cloud storage providers)
-- [ ] All operations require valid session when using cloud storage
+**NFR-8.1** [ ] Secure OAuth authentication
+
+**NFR-8.2** [ ] Data access limited to authenticated user
+
+**NFR-8.3** [ ] No third-party server storage (only cloud providers)
+
+**NFR-8.4** [ ] Valid session required for cloud operations
 
 ### NFR-9: Advanced Reliability (Post-MVP)
 
-- [ ] Advanced conflict resolution with auto-merge
-- [ ] Data backup and recovery mechanisms
-- [ ] Graceful handling of cloud storage failures
-- [ ] Offline-first support with sync queue
+**NFR-9.1** [ ] Advanced conflict resolution with auto-merge
+
+**NFR-9.2** [ ] Data backup and recovery mechanisms
+
+**NFR-9.3** [ ] Graceful cloud storage failure handling
+
+**NFR-9.4** [ ] Offline-first support with sync queue
 
 ---
 
@@ -388,11 +412,14 @@ These features will be implemented after the MVP is complete and validated by us
 
 ### MVP Constraints
 
-- [x] No backend infrastructure required
-- [x] Limited by browser File System Access API capabilities
-- [x] Limited by browser storage capabilities for local caching
+**TC-1** [x] No backend infrastructure required - *Phase 1*
+
+**TC-2** [x] Limited by browser File System Access API capabilities - *Phase 2*
+
+**TC-3** [x] Limited by browser storage for local caching - *Phase 2*
 
 ### Post-MVP Constraints (Cloud Storage)
 
-- [ ] Depends on cloud storage provider availability
-- [ ] Requires internet connection for cloud synchronization
+**TC-4** [ ] Depends on cloud storage provider availability
+
+**TC-5** [ ] Requires internet connection for cloud synchronization

@@ -529,12 +529,12 @@ This plan implements all requirements from REQUIREMENTS.md.
 **Manual Verification (User):** View dashboard recent transactions, add a transaction using quick entry row, verify it appears at top of list immediately, verify "View All" link navigates to /transactions page, check color coding for income vs expenses.
 
 ### 8.4 Create Dashboard Page
-- [ ] Create `src/components/dashboard/DashboardPage.tsx`:
-  - [ ] Layout with 3 sections: Financial Summary (top), Budget Overview (middle), Recent Transactions + Quick Add (bottom)
-  - [ ] Pass selected period from PeriodSelector to all sections
-  - [ ] Responsive grid: 3-column on desktop, 1-column on mobile
-  - [ ] Update route `/` to use DashboardPage (already exists in App.tsx, replace placeholder)
-- [ ] **Write tests**: Dashboard page layout, period selector integration, responsive behavior (5 tests)
+- [x] Create `src/components/dashboard/DashboardPage.tsx`:
+  - [x] Layout with 3 sections: Financial Summary (top), Budget Overview (middle), Recent Transactions + Quick Add (bottom)
+  - [x] Pass selected period from PeriodSelector to all sections
+  - [x] Responsive grid: 3-column on desktop, 1-column on mobile
+  - [x] Update route `/` to use DashboardPage (already exists in App.tsx, replace placeholder)
+- [x] **Write tests**: Dashboard page layout, period selector integration, responsive behavior (16 tests)
 **Manual Verification (User):** Open dashboard at /, see all three sections populated with data, change period selector and verify all sections update, add transaction via quick entry and see it in recent list, test on mobile to verify single-column layout, check all "View All" links navigate correctly.
 
 ## Phase 9: Navigation & Routing (MVP)
@@ -551,7 +551,7 @@ This plan implements all requirements from REQUIREMENTS.md.
   - [ ] `/reports` - Reports
   - [ ] `/budgets` - Budgets
   - [ ] `/settings` - Settings (main page with sidebar)
-  - [ ] `/settings/accounts` - Accounts management
+  - [ ] `/settings/assets` - Assets (combines Accounts + Manual Assets with tabs)
   - [ ] `/settings/categories` - Categories & Transaction Types
   - [ ] `/settings/preferences` - App preferences (placeholder for post-MVP)
 - [ ] Wrap app with BrowserRouter
@@ -577,17 +577,22 @@ This plan implements all requirements from REQUIREMENTS.md.
 - [ ] Create `src/components/settings/SettingsLayout.tsx`:
   - [ ] Sidebar navigation for desktop (always visible)
   - [ ] Drawer navigation for mobile (collapsible)
-  - [ ] Sidebar items: Accounts, Categories, Preferences
+  - [ ] Sidebar items: Assets, Categories, Preferences
   - [ ] Active state highlighting for current sub-page
   - [ ] Content area for nested routes (Outlet from react-router)
 - [ ] Create `src/components/settings/SettingsPage.tsx`:
   - [ ] Default landing page when visiting /settings
-  - [ ] Shows overview: "Configure your accounts, categories, and preferences"
+  - [ ] Shows overview: "Configure your assets, categories, and preferences"
   - [ ] Quick links to each settings section with icons and descriptions
-- [ ] Update AccountsPage to work within Settings layout
+- [ ] Create `src/components/settings/AssetsPage.tsx`:
+  - [ ] Tab navigation: "Transactional" and "Manual"
+  - [ ] Transactional tab: Displays AccountList (bank accounts, credit cards, cash)
+  - [ ] Manual tab: Displays ManualAssetList (properties, investments, vehicles)
+  - [ ] Both tabs use existing components (AccountsPage content and ManualAssetsPage content)
+  - [ ] Data remains in separate stores (useAccountStore and useAssetStore)
 - [ ] Update CategoriesPage to work within Settings layout
-- [ ] **Write tests**: Settings layout, sidebar navigation, nested route rendering
-**Manual Verification (User):** Navigate to /settings, see overview with quick links, click Accounts in sidebar to go to /settings/accounts, click Categories to go to /settings/categories, verify active state in sidebar highlights current section, test on mobile to see drawer navigation.
+- [ ] **Write tests**: Settings layout, sidebar navigation, nested route rendering, Assets tab switching
+**Manual Verification (User):** Navigate to /settings, see overview with quick links, click Assets in sidebar to go to /settings/assets, verify two tabs (Transactional/Manual) appear, switch between tabs to see accounts and manual assets separately, click Categories to go to /settings/categories, verify active state in sidebar highlights current section, test on mobile to see drawer navigation.
 
 ## Phase 10: Production Build, Testing & Polish (MVP)
 

@@ -337,19 +337,19 @@ This plan implements all requirements from REQUIREMENTS.md.
 **Manual Verification (User):** Add various manual assets (house, car, investments), edit asset values, delete assets, verify all CRUD operations work correctly.
 
 ### 6.2 Build Balance Sheet Report with Charts
-- [ ] Install charting library (recharts or nivo)
-- [ ] Create `src/components/charts/LineChart.tsx` - reusable line chart component
-- [ ] Create `src/components/charts/BarChart.tsx` - reusable bar chart component
-- [ ] Create `src/services/report.service.ts` with balance calculations
-- [ ] Create `src/components/reports/BalanceSheet.tsx`:
-  - [ ] Assets section (accounts + manual assets grouped by type)
-  - [ ] Liabilities section (credit cards, loans, manual liabilities)
-  - [ ] Net worth calculation and trend
-  - [ ] Date selection for historical view
-  - [ ] Comparison features (month-over-month, year-over-year)
-  - [ ] Net worth trend chart using LineChart component
-- [ ] Create `src/components/reports/ManualAssetSection.tsx`
-- [ ] **Write tests**: Balance sheet calculations, rendering, and chart component tests
+- [x] Install charting library (recharts or nivo)
+- [x] Create `src/components/charts/LineChart.tsx` - reusable line chart component
+- [x] Create `src/components/charts/BarChart.tsx` - reusable bar chart component
+- [x] Create `src/services/report.service.ts` with balance calculations
+- [x] Create `src/components/reports/BalanceSheet.tsx`:
+  - [x] Assets section (accounts + manual assets grouped by type)
+  - [x] Liabilities section (credit cards, loans, manual liabilities)
+  - [x] Net worth calculation and trend
+  - [x] Date selection for historical view
+  - [x] Comparison features (month-over-month, year-over-year)
+  - [x] Net worth trend chart using LineChart component
+- [x] Create `src/components/reports/ManualAssetSection.tsx`
+- [x] **Write tests**: Balance sheet calculations, rendering, and chart component tests
 **Manual Verification (User):** View balance sheet with accounts and manual assets, select different dates and verify historical data, check net worth calculation and trend chart displays correctly, test month-over-month comparison, verify assets grouped correctly by type.
 
 ### 6.3 Build Cash Flow Report with Charts

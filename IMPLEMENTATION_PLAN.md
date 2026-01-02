@@ -233,15 +233,77 @@ This plan implements all requirements from REQUIREMENTS.md.
 - [ ] Create `src/utils/date.utils.ts` for date formatting
 
 ### 5.2 Build Transaction Management UI
+
+#### 5.2.1 Install Dependencies and Create Common Components
 - [ ] Install `@mui/x-data-grid` for transaction list
-- [ ] Create `src/components/common/FormTextField.tsx` and other form components
-- [ ] Create `src/components/transactions/TransactionForm.tsx` with conditional from/to accounts
-- [ ] Create `src/components/transactions/TransactionDialog.tsx`
-- [ ] Create `src/components/transactions/TransactionList.tsx` with DataGrid
-- [ ] Create `src/components/transactions/TransactionFilters.tsx`
-- [ ] Create `src/components/transactions/TransactionsPage.tsx`
-- [ ] Add route `/transactions`
-- [ ] **Test**: Add expense (from account), add income (to account), add transfer (both), add investment, filter, edit, delete
+- [ ] Create `src/components/common/FormTextField.tsx` - reusable text field wrapper
+- [ ] **Write tests**: FormTextField.test.tsx
+- [ ] **Test**: FormTextField renders and handles validation errors
+
+#### 5.2.2 Create Transaction Form Component
+- [ ] Create `src/components/transactions/TransactionForm.tsx`:
+  - [ ] Amount field with validation
+  - [ ] Date picker
+  - [ ] Transaction type dropdown (grouped by category)
+  - [ ] Conditional "From Account" field (for expense, transfer)
+  - [ ] Conditional "To Account" field (for income, transfer, investment)
+  - [ ] Notes field (optional)
+  - [ ] Form validation logic
+- [ ] **Write tests**: TransactionForm.test.tsx with conditional field rendering
+- [ ] **Test**: Form shows correct fields based on transaction type, validates required fields
+
+#### 5.2.3 Create Transaction Dialog Component
+- [ ] Create `src/components/transactions/TransactionDialog.tsx`:
+  - [ ] Wraps TransactionForm in MUI Dialog
+  - [ ] Dynamic title (Add/Edit Transaction)
+  - [ ] Submit and cancel handlers
+- [ ] **Write tests**: TransactionDialog.test.tsx
+- [ ] **Test**: Dialog opens/closes, passes data to form, handles submit
+
+#### 5.2.4 Create Transaction List Component
+- [ ] Create `src/components/transactions/TransactionList.tsx`:
+  - [ ] Integrate @mui/x-data-grid
+  - [ ] Define columns: Date, Description, Category, Amount, From/To Accounts
+  - [ ] Add edit and delete action buttons
+  - [ ] Handle row click for editing
+  - [ ] Empty state message
+- [ ] **Write tests**: TransactionList.test.tsx
+- [ ] **Test**: List displays transactions, edit/delete buttons work, shows empty state
+
+#### 5.2.5 Create Transaction Filters Component
+- [ ] Create `src/components/transactions/TransactionFilters.tsx`:
+  - [ ] Date range filter (from/to)
+  - [ ] Account filter (multi-select)
+  - [ ] Category/group filter
+  - [ ] Transaction type filter
+  - [ ] Search by description
+  - [ ] Clear filters button
+- [ ] **Write tests**: TransactionFilters.test.tsx
+- [ ] **Test**: Each filter works independently and in combination
+
+#### 5.2.6 Create Transactions Page
+- [ ] Create `src/components/transactions/TransactionsPage.tsx`:
+  - [ ] Integrate TransactionFilters at top
+  - [ ] Integrate TransactionList below filters
+  - [ ] "New Transaction" button
+  - [ ] Connect to useTransactionStore for CRUD operations
+  - [ ] Handle TransactionDialog open/close states
+  - [ ] Confirmation dialog for deletions
+- [ ] **Write tests**: TransactionsPage.test.tsx with full CRUD workflow
+- [ ] **Test**: Create, read, update, delete transactions through page UI
+
+#### 5.2.7 Add Routing and Final Integration
+- [ ] Add route `/transactions` in App.tsx
+- [ ] Add "Transactions" button to Header navigation
+- [ ] Update Header.test.tsx for new navigation button
+- [ ] **Test**: Navigate to /transactions, all features work end-to-end:
+  - [ ] Add expense (from account only)
+  - [ ] Add income (to account only)
+  - [ ] Add transfer (both from and to accounts)
+  - [ ] Add investment transaction
+  - [ ] Filter by date, account, category
+  - [ ] Edit existing transaction
+  - [ ] Delete transaction with confirmation
 
 ### 5.3 Verify Account Balance Updates
 - [ ] Update AccountCard to show calculated balance

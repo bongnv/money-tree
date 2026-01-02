@@ -8,11 +8,13 @@ jest.mock('./PeriodSelector', () => ({
     <select
       data-testid="period-selector"
       value={value.label}
-      onChange={(e) => onChange({ 
-        label: e.target.value,
-        startDate: value.startDate,
-        endDate: value.endDate
-      })}
+      onChange={(e) =>
+        onChange({
+          label: e.target.value,
+          startDate: value.startDate,
+          endDate: value.endDate,
+        })
+      }
     >
       <option value="This Month">This Month</option>
       <option value="Last Month">Last Month</option>
@@ -22,32 +24,24 @@ jest.mock('./PeriodSelector', () => ({
 
 jest.mock('./FinancialSummary', () => ({
   FinancialSummary: ({ period }: any) => (
-    <div data-testid="financial-summary">
-      Financial Summary: {period.label}
-    </div>
+    <div data-testid="financial-summary">Financial Summary: {period.label}</div>
   ),
 }));
 
 jest.mock('./BudgetOverview', () => ({
   BudgetOverview: ({ period }: any) => (
-    <div data-testid="budget-overview">
-      Budget Overview: {period.label}
-    </div>
+    <div data-testid="budget-overview">Budget Overview: {period.label}</div>
   ),
 }));
 
 jest.mock('./RecentTransactionsList', () => ({
   RecentTransactionsList: ({ limit }: any) => (
-    <div data-testid="recent-transactions">
-      Recent Transactions (limit: {limit})
-    </div>
+    <div data-testid="recent-transactions">Recent Transactions (limit: {limit})</div>
   ),
 }));
 
 jest.mock('./QuickEntryContainer', () => ({
-  QuickEntryContainer: () => (
-    <div data-testid="quick-entry">Quick Entry Form</div>
-  ),
+  QuickEntryContainer: () => <div data-testid="quick-entry">Quick Entry Form</div>,
 }));
 
 describe('DashboardPage', () => {
@@ -181,9 +175,7 @@ describe('DashboardPage', () => {
       const recentList = within(recentSection!).getByTestId('recent-transactions');
 
       // Quick entry should come before recent list in DOM order
-      expect(quickEntry.compareDocumentPosition(recentList)).toBe(
-        Node.DOCUMENT_POSITION_FOLLOWING
-      );
+      expect(quickEntry.compareDocumentPosition(recentList)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     });
 
     it('passes limit of 10 to RecentTransactionsList', () => {

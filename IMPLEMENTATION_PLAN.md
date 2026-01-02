@@ -544,20 +544,23 @@ This plan implements all requirements from REQUIREMENTS.md.
 **Goal**: Complete navigation experience with Settings organization
 
 ### 9.1 Complete Routing Setup
-- [ ] Install `react-router-dom`
-- [ ] Create `src/routes.tsx` with route definitions:
-  - [ ] `/` - Dashboard
-  - [ ] `/transactions` - Transactions
-  - [ ] `/reports` - Reports
-  - [ ] `/budgets` - Budgets
-  - [ ] `/settings` - Settings (main page with sidebar)
-  - [ ] `/settings/assets` - Assets (combines Accounts + Manual Assets with tabs)
-  - [ ] `/settings/categories` - Categories & Transaction Types
-  - [ ] `/settings/preferences` - App preferences (placeholder for post-MVP)
-- [ ] Wrap app with BrowserRouter
-- [ ] Create 404 page
-- [ ] **Write tests**: Route navigation tests, nested routes
-**Manual Verification (User):** Navigate directly to each URL, verify correct page loads including nested settings routes, test 404 page with invalid URL, check browser back/forward buttons work correctly.
+- [x] Install `react-router-dom` (already installed)
+- [x] Create `src/routes.tsx` with route definitions:
+  - [x] `/` - Dashboard
+  - [x] `/transactions` - Transactions
+  - [x] `/reports` - Reports
+  - [x] `/budgets` - Budgets
+  - [x] `/accounts` - Accounts (temporary, will move to /settings/assets in Phase 9.3)
+  - [x] `/categories` - Categories (temporary, will move to /settings/categories in Phase 9.3)
+  - [x] `/assets` - Manual Assets (temporary, will move to /settings/assets in Phase 9.3)
+  - [x] `/404` - Not Found page
+  - [x] Catch-all route redirects to /404
+  - [ ] `/settings/*` routes (to be implemented in Phase 9.3)
+- [x] Wrap app with BrowserRouter (already done)
+- [x] Create 404 page (NotFoundPage component)
+- [x] Update App.tsx to use routes.tsx
+- [x] **Write tests**: Route navigation tests (13 tests), NotFoundPage tests (9 tests)
+**Manual Verification (User):** Navigate directly to each URL, verify correct page loads, test /404 page with invalid URL (e.g., /xyz), check browser back/forward buttons work correctly.
 
 ### 9.2 Update Header Navigation
 - [ ] Make "Money Tree" logo/title clickable → navigate to Dashboard (/)
@@ -577,12 +580,12 @@ This plan implements all requirements from REQUIREMENTS.md.
 - [ ] Create `src/components/settings/SettingsLayout.tsx`:
   - [ ] Sidebar navigation for desktop (always visible)
   - [ ] Drawer navigation for mobile (collapsible)
-  - [ ] Sidebar items: Assets, Categories, Preferences
+  - [ ] Sidebar items: Assets, Categories
   - [ ] Active state highlighting for current sub-page
   - [ ] Content area for nested routes (Outlet from react-router)
 - [ ] Create `src/components/settings/SettingsPage.tsx`:
   - [ ] Default landing page when visiting /settings
-  - [ ] Shows overview: "Configure your assets, categories, and preferences"
+  - [ ] Shows overview: "Configure your assets and categories"
   - [ ] Quick links to each settings section with icons and descriptions
 - [ ] Create `src/components/settings/AssetsPage.tsx`:
   - [ ] Tab navigation: "Transactional" and "Manual"
@@ -591,6 +594,7 @@ This plan implements all requirements from REQUIREMENTS.md.
   - [ ] Both tabs use existing components (AccountsPage content and ManualAssetsPage content)
   - [ ] Data remains in separate stores (useAccountStore and useAssetStore)
 - [ ] Update CategoriesPage to work within Settings layout
+- [ ] Update routes.tsx to enable /settings routes and remove temporary /accounts, /categories, /assets routes
 - [ ] **Write tests**: Settings layout, sidebar navigation, nested route rendering, Assets tab switching
 **Manual Verification (User):** Navigate to /settings, see overview with quick links, click Assets in sidebar to go to /settings/assets, verify two tabs (Transactional/Manual) appear, switch between tabs to see accounts and manual assets separately, click Categories to go to /settings/categories, verify active state in sidebar highlights current section, test on mobile to see drawer navigation.
 
@@ -944,9 +948,30 @@ These features will be implemented after the MVP is validated by users.
 - [x] **Write tests**: Enter key submit, Tab navigation, Escape clear, focus management, arrow key navigation, dropdown search
 - [x] **Test**: Add 10+ transactions using only keyboard (Tab + Enter), verify rapid entry flow
 
-**Manual Verification (User):** Navigate to /transactions, see quick entry row at top, add 10+ transactions using only Enter key for rapid entry, verify form clears after submit, press Escape to clear form, use Tab/Arrow keys to navigate between fields, verify all transactions saved correctly, test search in dropdowns by typing letters.
+**Manual Verification (User):** Add 10+ transactions using only Enter key for rapid entry, verify form clears after submit, press Escape to clear form, use Tab/Arrow keys to navigate between fields, verify all transactions saved correctly, test search in dropdowns by typing letters.
 
-## Phase 13: Settings & Data Management Feature (Post-MVP)
+## Phase 14: App Preferences & Settings (Post-MVP)
+
+**Requirements**: User preferences and app configuration
+
+**Goal**: Users can customize app settings and preferences
+
+### 14.1 Create Preferences Page
+- [ ] Create `src/components/settings/PreferencesPage.tsx`:
+  - [ ] Default currency selection
+  - [ ] Date format preferences (MM/DD/YYYY vs DD/MM/YYYY)
+  - [ ] Number format (comma vs period separator)
+  - [ ] Theme selection (light/dark mode)
+  - [ ] Language selection (future internationalization)
+- [ ] Add preferences to useAppStore or create usePreferencesStore
+- [ ] Store preferences in localStorage
+- [ ] Apply preferences across the app
+- [ ] Add preferences route to /settings/preferences
+- [ ] Update SettingsLayout sidebar to include Preferences item
+- [ ] **Write tests**: Preferences page, store, localStorage persistence
+- [ ] **Test**: Change preferences and verify they persist across page reloads
+
+## Phase 15: Settings & Data Management Feature (Post-MVP)
 
 **Requirements**: Data Import/Export
 

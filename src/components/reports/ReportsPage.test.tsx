@@ -1,9 +1,13 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { ReportsPage } from './ReportsPage';
 
-// Mock the BalanceSheet component to avoid complex dependencies
+// Mock the report components to avoid complex dependencies
 jest.mock('./BalanceSheet', () => ({
   BalanceSheet: () => <div data-testid="balance-sheet">Balance Sheet Component</div>,
+}));
+
+jest.mock('./CashFlowReport', () => ({
+  CashFlowReport: () => <div data-testid="cash-flow-report">Cash Flow Report</div>,
 }));
 
 describe('ReportsPage', () => {
@@ -23,18 +27,20 @@ describe('ReportsPage', () => {
     expect(screen.getByTestId('balance-sheet')).toBeInTheDocument();
   });
 
-  it('Cash Flow tab is disabled', () => {
+  it('Cash Flow tab is enabled', () => {
     render(<ReportsPage />);
     const cashFlowTab = screen.getByRole('tab', { name: /cash flow/i });
-    expect(cashFlowTab).toBeDisabled();
+    expect(cashFlowTab).not.toBeDisabled();
   });
 
-  it('shows placeholder message for Cash Flow tab (disabled)', () => {
+  it('shows Cash Flow report when tab is clicked', () => {
     render(<ReportsPage />);
     
-    // Cash Flow tab is disabled, so we just verify the Balance Sheet is showing
-    expect(screen.getByTestId('balance-sheet')).toBeInTheDocument();
-    expect(screen.queryByText(/cash flow report coming soon/i)).not.toBeInTheDocument();
+    const cashFlowTab = screen.getByRole('tab', { name: /cash flow/i });
+    fireEvent.click(cashFlowTab);
+    
+    // Cash Flow report should be visible
+    expect(screen.getByTestId('cash-flow-report')).toBeInTheDocument();
   });
 
   it('Balance Sheet tab is selected by default', () => {

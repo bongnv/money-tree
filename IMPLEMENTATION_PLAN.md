@@ -353,22 +353,19 @@ This plan implements all requirements from REQUIREMENTS.md.
 **Manual Verification (User):** View balance sheet with accounts and manual assets, select different dates and verify historical data, check net worth calculation and trend chart displays correctly, test month-over-month comparison, verify assets grouped correctly by type.
 
 ### 6.3 Build Cash Flow Report with Charts
-- [ ] Create `src/components/charts/PieChart.tsx` - reusable pie chart component
-- [ ] Create cash flow calculation service (excludes transfers)
-- [ ] Create `src/components/reports/CashFlowReport.tsx`:
-  - [ ] Income section by category
-  - [ ] Expense section by category
-  - [ ] Net cash flow calculation
-  - [ ] Time period selection (monthly, quarterly, yearly, custom)
-  - [ ] Trend charts (income vs expenses over time) using LineChart
-  - [ ] Category breakdown charts using PieChart
-  - [ ] Filtering options
-- [ ] Create `src/components/reports/CashFlowChart.tsx`
-- [ ] Integrate CashFlowReport into ReportsPage (enable Cash Flow tab)
-- [ ] **Write tests**: Cash flow calculations, verify transfers excluded, chart rendering
+- [x] Create `src/components/charts/PieChart.tsx` - reusable pie chart component
+- [x] Create cash flow calculation service (excludes transfers)
+- [x] Create `src/components/reports/CashFlowReport.tsx`:
+  - [x] Income section by category
+  - [x] Expense section by category
+  - [x] Net cash flow calculation
+  - [x] Time period selection (monthly, quarterly, yearly, custom)
+  - [x] Trend charts (income vs expenses over time) using LineChart
+  - [x] Category breakdown charts using PieChart
+  - [x] Filtering options
+- [x] Integrate CashFlowReport into ReportsPage (enable Cash Flow tab)
+- [x] **Write tests**: Cash flow calculations, verify transfers excluded, chart rendering (31 tests)
 **Manual Verification (User):** Create mix of income/expense/transfer transactions, view cash flow for monthly/quarterly/yearly periods, verify transfers don't appear in report, test category filters, check trend and pie charts display correctly.
-
-**Note**: After implementation, enable the Cash Flow tab in ReportsPage.tsx by removing the `disabled` prop.
 
 ### 6.4 Create Reports Page
 - [x] Create `src/components/reports/ReportsPage.tsx` with tab navigation

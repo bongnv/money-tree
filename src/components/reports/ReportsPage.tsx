@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Container, Paper, Tabs, Tab, Typography } from '@mui/material';
 import { BalanceSheet } from './BalanceSheet';
+import { CashFlowReport } from './CashFlowReport';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -33,7 +34,7 @@ export const ReportsPage: React.FC = () => {
         <Paper sx={{ mt: 3 }}>
           <Tabs value={currentTab} onChange={handleTabChange} sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tab label="Balance Sheet" />
-            <Tab label="Cash Flow" disabled />
+            <Tab label="Cash Flow" />
           </Tabs>
 
           <TabPanel value={currentTab} index={0}>
@@ -41,11 +42,7 @@ export const ReportsPage: React.FC = () => {
           </TabPanel>
 
           <TabPanel value={currentTab} index={1}>
-            <Box sx={{ p: 3, textAlign: 'center' }}>
-              <Typography variant="body1" color="text.secondary">
-                Cash Flow report coming soon
-              </Typography>
-            </Box>
+            <CashFlowReport />
           </TabPanel>
         </Paper>
       </Box>

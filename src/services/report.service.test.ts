@@ -1,6 +1,6 @@
 import { reportService } from './report.service';
-import type { Account, ManualAsset, Transaction } from '../types/models';
-import { AccountType, AssetType } from '../types/enums';
+import type { Account, ManualAsset, Transaction, TransactionType, Category } from '../types/models';
+import { AccountType, AssetType, Group } from '../types/enums';
 
 describe('ReportService', () => {
   // Mock data
@@ -297,6 +297,309 @@ describe('ReportService', () => {
       );
 
       expect(result.changePercent).toBe(0);
+    });
+  });
+
+  describe('calculateCashFlow', () => {
+    const mockCategories: Category[] = [
+      {
+        id: 'cat1',
+        name: 'Salary',
+        group: Group.INCOME,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+      {
+        id: 'cat2',
+        name: 'Groceries',
+        group: Group.EXPENSE,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+      {
+        id: 'cat3',
+        name: 'Transfer',
+        group: Group.TRANSFER,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+    ];
+
+    const mockTypes: TransactionType[] = [
+      {
+        id: 'type1',
+        name: 'Salary',
+        categoryId: 'cat1',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+      {
+        id: 'type2',
+        name: 'Groceries',
+        categoryId: 'cat2',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+      {
+        id: 'type3',
+        name: 'Account Transfer',
+        categoryId: 'cat3',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+    ];
+
+    const mockCashFlowTransactions: Transaction[] = [
+      {
+        id: 'tx1',
+        date: '2024-01-15',
+        description: 'Salary',
+        amount: 3000,
+        transactionTypeId: 'type1',
+        toAccountId: 'acc1',
+        createdAt: '2024-01-15T00:00:00.000Z',
+        updatedAt: '2024-01-15T00:00:00.000Z',
+      },
+      {
+        id: 'tx2',
+        date: '2024-01-20',
+        description: 'Groceries',
+        amount: 500,
+        transactionTypeId: 'type2',
+        fromAccountId: 'acc1',
+        createdAt: '2024-01-20T00:00:00.000Z',
+        updatedAt: '2024-01-20T00:00:00.000Z',
+      },
+      {
+        id: 'tx3',
+        date: '2024-01-25',
+        description: 'Transfer',
+        amount: 200,
+        transactionTypeId: 'type3',
+        fromAccountId: 'acc1',
+        toAccountId: 'acc3',
+        createdAt: '2024-01-25T00:00:00.000Z',
+        updatedAt: '2024-01-25T00:00:00.000Z',
+      },
+      {
+        id: 'tx4',
+        date: '2024-02-01',
+        description: 'Out of range',
+        amount: 1000,
+        transactionTypeId: 'type2',
+        fromAccountId: 'acc1',
+        createdAt: '2024-02-01T00:00:00.000Z',
+        updatedAt: '2024-02-01T00:00:00.000Z',
+      },
+    ];
+
+    it('should calculate cash flow correctly', () => {
+      const result = reportService.calculateCashFlow(
+        mockCashFlowTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-01-31'
+      );
+
+      expect(result.totalIncome).toBe(3000);
+      expect(result.totalExpenses).toBe(500);
+      expect(result.netCashFlow).toBe(2500);
+      expect(result.income).toHaveLength(1);
+      expect(result.expenses).toHaveLength(1);
+    });
+
+    it('should exclude transfers from cash flow', () => {
+      const result = reportService.calculateCashFlow(
+        mockCashFlowTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-01-31'
+      );
+
+      // Transfer should not appear in income or expenses
+      expect(result.income.find((i) => i.categoryId === 'cat3')).toBeUndefined();
+      expect(result.expenses.find((e) => e.categoryId === 'cat3')).toBeUndefined();
+    });
+
+    it('should filter by date range', () => {
+      const result = reportService.calculateCashFlow(
+        mockCashFlowTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-01-31'
+      );
+
+      // Should not include February transaction
+      expect(result.totalExpenses).toBe(500);
+    });
+
+    it('should group by category', () => {
+      const result = reportService.calculateCashFlow(
+        mockCashFlowTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-01-31'
+      );
+
+      expect(result.income[0].categoryName).toBe('Salary');
+      expect(result.income[0].total).toBe(3000);
+      expect(result.income[0].transactionCount).toBe(1);
+      expect(result.expenses[0].categoryName).toBe('Groceries');
+      expect(result.expenses[0].total).toBe(500);
+      expect(result.expenses[0].transactionCount).toBe(1);
+    });
+
+    it('should handle empty transactions', () => {
+      const result = reportService.calculateCashFlow([], mockTypes, mockCategories, '2024-01-01', '2024-01-31');
+
+      expect(result.totalIncome).toBe(0);
+      expect(result.totalExpenses).toBe(0);
+      expect(result.netCashFlow).toBe(0);
+      expect(result.income).toHaveLength(0);
+      expect(result.expenses).toHaveLength(0);
+    });
+  });
+
+  describe('calculateCashFlowTrend', () => {
+    const mockCategories: Category[] = [
+      {
+        id: 'cat1',
+        name: 'Salary',
+        group: Group.INCOME,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+      {
+        id: 'cat2',
+        name: 'Groceries',
+        group: Group.EXPENSE,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+    ];
+
+    const mockTypes: TransactionType[] = [
+      {
+        id: 'type1',
+        name: 'Salary',
+        categoryId: 'cat1',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+      {
+        id: 'type2',
+        name: 'Groceries',
+        categoryId: 'cat2',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+    ];
+
+    const mockTrendTransactions: Transaction[] = [
+      {
+        id: 'tx1',
+        date: '2024-01-15',
+        description: 'Income 1',
+        amount: 3000,
+        transactionTypeId: 'type1',
+        toAccountId: 'acc1',
+        createdAt: '2024-01-15T00:00:00.000Z',
+        updatedAt: '2024-01-15T00:00:00.000Z',
+      },
+      {
+        id: 'tx2',
+        date: '2024-02-15',
+        description: 'Income 2',
+        amount: 3500,
+        transactionTypeId: 'type1',
+        toAccountId: 'acc1',
+        createdAt: '2024-02-15T00:00:00.000Z',
+        updatedAt: '2024-02-15T00:00:00.000Z',
+      },
+      {
+        id: 'tx3',
+        date: '2024-01-20',
+        description: 'Expense 1',
+        amount: 500,
+        transactionTypeId: 'type2',
+        fromAccountId: 'acc1',
+        createdAt: '2024-01-20T00:00:00.000Z',
+        updatedAt: '2024-01-20T00:00:00.000Z',
+      },
+      {
+        id: 'tx4',
+        date: '2024-02-20',
+        description: 'Expense 2',
+        amount: 600,
+        transactionTypeId: 'type2',
+        fromAccountId: 'acc1',
+        createdAt: '2024-02-20T00:00:00.000Z',
+        updatedAt: '2024-02-20T00:00:00.000Z',
+      },
+    ];
+
+    it('should calculate trend points over time', () => {
+      const result = reportService.calculateCashFlowTrend(
+        mockTrendTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-02-29',
+        30
+      );
+
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0]).toHaveProperty('date');
+      expect(result[0]).toHaveProperty('income');
+      expect(result[0]).toHaveProperty('expenses');
+      expect(result[0]).toHaveProperty('netCashFlow');
+    });
+
+    it('should respect interval parameter', () => {
+      const result = reportService.calculateCashFlowTrend(
+        mockTrendTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-01-31',
+        15
+      );
+
+      // Should have approximately 2 data points for 30-day period with 15-day intervals
+      expect(result.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should return empty array for invalid date range', () => {
+      const result = reportService.calculateCashFlowTrend(
+        mockTrendTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-02-01',
+        '2024-01-01', // End before start
+        30
+      );
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should calculate net cash flow correctly in each period', () => {
+      const result = reportService.calculateCashFlowTrend(
+        mockTrendTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-01-31',
+        30
+      );
+
+      // First period should have income 3000 and expense 500
+      expect(result[0].income).toBe(3000);
+      expect(result[0].expenses).toBe(500);
+      expect(result[0].netCashFlow).toBe(2500);
     });
   });
 });

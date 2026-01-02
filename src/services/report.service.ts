@@ -1,5 +1,5 @@
-import type { Account, ManualAsset, Transaction } from '../types/models';
-import { AccountType, AssetType } from '../types/enums';
+import type { Account, ManualAsset, Transaction, TransactionType, Category } from '../types/models';
+import { AccountType, AssetType, Group } from '../types/enums';
 import { calculationService } from './calculation.service';
 
 export interface BalanceSheetData {
@@ -29,6 +29,30 @@ export interface NetWorthTrendPoint {
   assets: number;
   liabilities: number;
 }
+
+export interface CashFlowData {
+  income: CategoryTotal[];
+  expenses: CategoryTotal[];
+  totalIncome: number;
+  totalExpenses: number;
+  netCashFlow: number;
+}
+
+export interface CategoryTotal {
+  categoryId: string;
+  categoryName: string;
+  total: number;
+  transactionCount: number;
+}
+
+export interface CashFlowTrendPoint {
+  date: string;
+  income: number;
+  expenses: number;
+  netCashFlow: number;
+}
+
+export type PeriodType = 'monthly' | 'quarterly' | 'yearly' | 'custom';
 
 /**
  * Report service for generating financial reports
@@ -389,6 +413,146 @@ class ReportService {
       change,
       changePercent,
     };
+  }
+
+  /**
+   * Calculate cash flow for a date range
+   * @param transactions All transactions
+   * @param transactionTypes All transaction types
+   * @param categories All categories
+   * @param startDate Start date (YYYY-MM-DD)
+   * @param endDate End date (YYYY-MM-DD)
+   * @returns Cash flow data grouped by category
+   */
+  calculateCashFlow(
+    transactions: Transaction[],
+    transactionTypes: TransactionType[],
+    categories: Category[],
+    startDate: string,
+    endDate: string
+  ): CashFlowData {
+    // Filter transactions in date range and exclude transfers
+    const filteredTransactions = transactions.filter(
+      (t) => t.date >= startDate && t.date <= endDate
+    );
+
+    // Create lookup maps
+    const typeToCategory = new Map(transactionTypes.map((t) => [t.id, t.categoryId]));
+    const categoryData = new Map(categories.map((c) => [c.id, c]));
+
+    // Group transactions by category
+    const incomeByCategory = new Map<string, { total: number; count: number }>();
+    const expensesByCategory = new Map<string, { total: number; count: number }>();
+
+    filteredTransactions.forEach((transaction) => {
+      const categoryId = typeToCategory.get(transaction.transactionTypeId);
+      if (!categoryId) return;
+
+      const category = categoryData.get(categoryId);
+      if (!category) return;
+
+      // Skip transfers
+      if (category.group === Group.TRANSFER) return;
+
+      const targetMap = category.group === Group.INCOME ? incomeByCategory : expensesByCategory;
+      const existing = targetMap.get(category.id) || { total: 0, count: 0 };
+      targetMap.set(category.id, {
+        total: existing.total + transaction.amount,
+        count: existing.count + 1,
+      });
+    });
+
+    // Convert to arrays
+    const income: CategoryTotal[] = Array.from(incomeByCategory.entries()).map(
+      ([categoryId, data]) => ({
+        categoryId,
+        categoryName: categoryData.get(categoryId)?.name || 'Unknown',
+        total: data.total,
+        transactionCount: data.count,
+      })
+    );
+
+    const expenses: CategoryTotal[] = Array.from(expensesByCategory.entries()).map(
+      ([categoryId, data]) => ({
+        categoryId,
+        categoryName: categoryData.get(categoryId)?.name || 'Unknown',
+        total: data.total,
+        transactionCount: data.count,
+      })
+    );
+
+    const totalIncome = income.reduce((sum, cat) => sum + cat.total, 0);
+    const totalExpenses = expenses.reduce((sum, cat) => sum + cat.total, 0);
+    const netCashFlow = totalIncome - totalExpenses;
+
+    return {
+      income,
+      expenses,
+      totalIncome,
+      totalExpenses,
+      netCashFlow,
+    };
+  }
+
+  /**
+   * Calculate cash flow trend over time
+   * @param transactions All transactions
+   * @param transactionTypes All transaction types
+   * @param categories All categories
+   * @param startDate Start date (YYYY-MM-DD)
+   * @param endDate End date (YYYY-MM-DD)
+   * @param intervalDays Interval between data points in days
+   * @returns Array of cash flow trend points
+   */
+  calculateCashFlowTrend(
+    transactions: Transaction[],
+    transactionTypes: TransactionType[],
+    categories: Category[],
+    startDate: string,
+    endDate: string,
+    intervalDays: number = 30
+  ): CashFlowTrendPoint[] {
+    // Parse dates
+    const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
+    const [endYear, endMonth, endDay] = endDate.split('-').map(Number);
+    const start = new Date(startYear, startMonth - 1, startDay);
+    const end = new Date(endYear, endMonth - 1, endDay);
+
+    if (start > end) return [];
+
+    const trendPoints: CashFlowTrendPoint[] = [];
+    let currentDate = new Date(start);
+
+    while (currentDate <= end) {
+      const periodEnd = new Date(currentDate);
+      periodEnd.setDate(periodEnd.getDate() + intervalDays - 1);
+      if (periodEnd > end) periodEnd.setTime(end.getTime());
+
+      // Format dates as YYYY-MM-DD
+      const periodStartStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
+      const periodEndStr = `${periodEnd.getFullYear()}-${String(periodEnd.getMonth() + 1).padStart(2, '0')}-${String(periodEnd.getDate()).padStart(2, '0')}`;
+
+      // Calculate cash flow for this period
+      const cashFlow = this.calculateCashFlow(
+        transactions,
+        transactionTypes,
+        categories,
+        periodStartStr,
+        periodEndStr
+      );
+
+      trendPoints.push({
+        date: periodStartStr,
+        income: cashFlow.totalIncome,
+        expenses: cashFlow.totalExpenses,
+        netCashFlow: cashFlow.netCashFlow,
+      });
+
+      // Move to next period
+      currentDate.setDate(currentDate.getDate() + intervalDays);
+    }
+
+    return trendPoints;
   }
 }
 

@@ -164,7 +164,7 @@ This plan implements all requirements from REQUIREMENTS.md.
 - [x] Create `src/services/sync.service.ts` with auto-save logic:
   - [x] Track unsaved changes across all stores
   - [x] Provide `promptSaveIfNeeded()` function to check and prompt before destructive actions
-  - [x] Implement periodic auto-save with configurable interval (default: 5 minutes)
+  - [x] Implement periodic auto-save with configurable interval (default: 1 minute)
   - [x] Auto-save timer starts when changes are detected
   - [x] Auto-save only runs when there are unsaved changes
   - [x] Auto-save saves silently without user prompts
@@ -185,7 +185,7 @@ This plan implements all requirements from REQUIREMENTS.md.
   - [x] Initialize periodic auto-save on mount
   - [x] Clean up auto-save timer on unmount
 - [x] **Write tests**: Test save/load UI interactions, unsaved changes detection, error handling, auto-save prompts, periodic auto-save
-- [x] **Test**: Click "Load" → file picker opens → select file → data appears; Click "Save" → file picker opens → save file; Make changes → see unsaved indicator → wait 5 minutes → auto-saved; close browser → get warning; Make changes → load different file → prompted to save first
+- [x] **Test**: Click "Load" → file picker opens → select file → data appears; Click "Save" → file picker opens → save file; Make changes → see unsaved indicator → wait 1 minute → auto-saved; close browser → get warning; Make changes → load different file → prompted to save first
 
 ### 2.5 Add Auto-Load on Page Reload
 - [ ] Store last loaded file path/handle in localStorage (in storage.service.ts)

@@ -112,19 +112,15 @@ export const ManualAssetSchema = z.object({
  * Zod schema for DataFile
  * Note: Currencies are not stored in the data file as they are fixed defaults
  */
-/**
- * Zod schema for DataFile
- * Note: Currencies are not stored in the data file as they are fixed defaults
- */
 export const DataFileSchema = z.object({
   version: z.string().min(1, 'Version is required'),
   year: z.number().int().min(1900).max(2100),
-  accounts: z.array(AccountSchema),
-  categories: z.array(CategorySchema),
-  transactionTypes: z.array(TransactionTypeSchema),
-  transactions: z.array(TransactionSchema),
-  budgets: z.array(BudgetSchema),
-  manualAssets: z.array(ManualAssetSchema),
+  accounts: z.array(AccountSchema).nullable().optional().transform(val => val ?? []),
+  categories: z.array(CategorySchema).nullable().optional().transform(val => val ?? []),
+  transactionTypes: z.array(TransactionTypeSchema).nullable().optional().transform(val => val ?? []),
+  transactions: z.array(TransactionSchema).nullable().optional().transform(val => val ?? []),
+  budgets: z.array(BudgetSchema).nullable().optional().transform(val => val ?? []),
+  manualAssets: z.array(ManualAssetSchema).nullable().optional().transform(val => val ?? []),
   lastModified: z.string().datetime(),
 });
 

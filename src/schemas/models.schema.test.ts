@@ -466,18 +466,40 @@ describe('Model Schemas', () => {
       expect(() => DataFileSchema.parse(invalidDataFile)).toThrow();
     });
 
-    it('should reject data file with missing manualAssets', () => {
-      const invalidDataFile = {
+    it('should accept data file with missing arrays and default to empty', () => {
+      const dataFileWithMissingArrays = {
         version: '1.0.0',
         year: 2026,
-        accounts: [],
-        categories: [],
-        transactionTypes: [],
-        transactions: [],
-        budgets: [],
         lastModified: new Date().toISOString(),
       };
-      expect(() => DataFileSchema.parse(invalidDataFile)).toThrow();
+      const result = DataFileSchema.parse(dataFileWithMissingArrays);
+      expect(result.accounts).toEqual([]);
+      expect(result.categories).toEqual([]);
+      expect(result.transactionTypes).toEqual([]);
+      expect(result.transactions).toEqual([]);
+      expect(result.budgets).toEqual([]);
+      expect(result.manualAssets).toEqual([]);
+    });
+
+    it('should accept data file with null arrays and default to empty', () => {
+      const dataFileWithNullArrays = {
+        version: '1.0.0',
+        year: 2026,
+        accounts: null,
+        categories: null,
+        transactionTypes: null,
+        transactions: null,
+        budgets: null,
+        manualAssets: null,
+        lastModified: new Date().toISOString(),
+      };
+      const result = DataFileSchema.parse(dataFileWithNullArrays);
+      expect(result.accounts).toEqual([]);
+      expect(result.categories).toEqual([]);
+      expect(result.transactionTypes).toEqual([]);
+      expect(result.transactions).toEqual([]);
+      expect(result.budgets).toEqual([]);
+      expect(result.manualAssets).toEqual([]);
     });
   });
 });

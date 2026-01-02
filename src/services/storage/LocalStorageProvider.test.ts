@@ -122,6 +122,70 @@ describe('LocalStorageProvider', () => {
       const years = await provider.listAvailableYears();
       expect(years).toContain(2024);
     });
+
+    it('should handle data file with null arrays', async () => {
+      const dataWithNulls = {
+        version: '1.0.0',
+        year: 2024,
+        accounts: null,
+        categories: null,
+        transactionTypes: null,
+        transactions: null,
+        budgets: null,
+        manualAssets: null,
+        lastModified: new Date().toISOString(),
+      };
+
+      const mockFile = {
+        text: jest.fn().mockResolvedValue(JSON.stringify(dataWithNulls)),
+      };
+
+      const mockFileHandle = {
+        getFile: jest.fn().mockResolvedValue(mockFile),
+      };
+
+      (window as any).showOpenFilePicker = jest
+        .fn()
+        .mockResolvedValue([mockFileHandle]);
+
+      const result = await provider.loadDataFile(2024);
+      expect(result).toBeDefined();
+      expect(result?.accounts).toEqual([]);
+      expect(result?.categories).toEqual([]);
+      expect(result?.transactionTypes).toEqual([]);
+      expect(result?.transactions).toEqual([]);
+      expect(result?.budgets).toEqual([]);
+      expect(result?.manualAssets).toEqual([]);
+    });
+
+    it('should handle data file with missing arrays', async () => {
+      const dataWithMissingArrays = {
+        version: '1.0.0',
+        year: 2024,
+        lastModified: new Date().toISOString(),
+      };
+
+      const mockFile = {
+        text: jest.fn().mockResolvedValue(JSON.stringify(dataWithMissingArrays)),
+      };
+
+      const mockFileHandle = {
+        getFile: jest.fn().mockResolvedValue(mockFile),
+      };
+
+      (window as any).showOpenFilePicker = jest
+        .fn()
+        .mockResolvedValue([mockFileHandle]);
+
+      const result = await provider.loadDataFile(2024);
+      expect(result).toBeDefined();
+      expect(result?.accounts).toEqual([]);
+      expect(result?.categories).toEqual([]);
+      expect(result?.transactionTypes).toEqual([]);
+      expect(result?.transactions).toEqual([]);
+      expect(result?.budgets).toEqual([]);
+      expect(result?.manualAssets).toEqual([]);
+    });
   });
 
   describe('saveDataFile', () => {

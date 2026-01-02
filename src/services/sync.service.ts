@@ -6,7 +6,7 @@ import { useAssetStore } from '../stores/useAssetStore';
 import { StorageFactory } from './storage/StorageFactory';
 import type { DataFile } from '../types/models';
 
-const AUTO_SAVE_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
+const AUTO_SAVE_INTERVAL = 1 * 60 * 1000; // 1 minute in milliseconds
 
 class SyncService {
   private autoSaveTimerId: NodeJS.Timeout | null = null;

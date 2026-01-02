@@ -868,15 +868,17 @@ These features will be implemented after the MVP is validated by users.
 - [x] **Test**: View transactions page, see quick entry row at top, verify fields show/hide based on type
 
 ### 12.2 Add Keyboard Support for Quick Entry
-- [ ] Enter key submits form and clears for next entry:
-  - [ ] Focus returns to amount field after submit
-  - [ ] Last used type and account remain selected for rapid similar entries
-  - [ ] Date increments to today if previously set to past date
-- [ ] Tab key navigates between fields (standard browser behavior)
-- [ ] Escape key clears the quick entry form
-- [ ] Show success snackbar on submit (brief, non-intrusive)
-- [ ] **Write tests**: Enter key submit, Tab navigation, Escape clear, focus management
-- [ ] **Test**: Add 10+ transactions using only keyboard (Tab + Enter), verify rapid entry flow
+- [x] Enter key submits form and clears for next entry:
+  - [x] Focus returns to amount field after submit
+  - [x] Last used type and account remain selected for rapid similar entries
+  - [x] Date increments to today if previously set to past date
+- [x] Tab key navigates between fields (standard browser behavior)
+- [x] Escape key clears the quick entry form
+- [x] Show success snackbar on submit (brief, non-intrusive)
+- [x] Arrow keys navigate between fields (up/down to move through form)
+- [x] Alphabetical keys start search in dropdown fields for quick selection
+- [x] **Write tests**: Enter key submit, Tab navigation, Escape clear, focus management, arrow key navigation, dropdown search
+- [x] **Test**: Add 10+ transactions using only keyboard (Tab + Enter), verify rapid entry flow
 
 ### 12.3 Add Smart Defaults and Memory
 - [ ] Remember last used transaction type per session (localStorage)

@@ -516,4 +516,115 @@ describe('QuickEntryRow', () => {
     expect(amountInput).toHaveValue(null);
     expect(descriptionInput).toHaveValue('');
   });
+
+  describe('Keyboard Navigation', () => {
+    it('should navigate right through fields with ArrowRight key', async () => {
+      const user = userEvent.setup();
+      render(
+        <QuickEntryRow
+          accounts={mockAccounts}
+          categories={mockCategories}
+          transactionTypes={mockTransactionTypes}
+          onSubmit={mockOnSubmit}
+          onOpenFullDialog={mockOnOpenFullDialog}
+        />
+      );
+
+      // Start at date field
+      const dateInput = screen.getByDisplayValue(/2026-01-02/);
+      dateInput.focus();
+      expect(dateInput).toHaveFocus();
+
+      // Press ArrowRight to move to amount
+      await user.keyboard('{ArrowRight}');
+      const amountInput = screen.getByPlaceholderText('Amount');
+      expect(amountInput).toHaveFocus();
+
+      // Press ArrowRight to move to type
+      await user.keyboard('{ArrowRight}');
+      const typeSelect = screen.getByRole('combobox', { name: '' });
+      expect(typeSelect).toHaveFocus();
+    });
+
+    it('should navigate left through fields with ArrowLeft key', async () => {
+      const user = userEvent.setup();
+      render(
+        <QuickEntryRow
+          accounts={mockAccounts}
+          categories={mockCategories}
+          transactionTypes={mockTransactionTypes}
+          onSubmit={mockOnSubmit}
+          onOpenFullDialog={mockOnOpenFullDialog}
+        />
+      );
+
+      // Start at amount field
+      const amountInput = screen.getByPlaceholderText('Amount');
+      amountInput.focus();
+      expect(amountInput).toHaveFocus();
+
+      // Press ArrowLeft to move to date
+      await user.keyboard('{ArrowLeft}');
+      const dateInput = screen.getByDisplayValue(/2026-01-02/);
+      expect(dateInput).toHaveFocus();
+
+      // Press ArrowLeft to wrap to description
+      await user.keyboard('{ArrowLeft}');
+      const descriptionInput = screen.getByPlaceholderText('Description (optional)');
+      expect(descriptionInput).toHaveFocus();
+    });
+
+    it('should wrap around when navigating with arrow keys', async () => {
+      const user = userEvent.setup();
+      render(
+        <QuickEntryRow
+          accounts={mockAccounts}
+          categories={mockCategories}
+          transactionTypes={mockTransactionTypes}
+          onSubmit={mockOnSubmit}
+          onOpenFullDialog={mockOnOpenFullDialog}
+        />
+      );
+
+      // Start at description field and press ArrowRight should wrap to date
+      const descriptionInput = screen.getByPlaceholderText('Description (optional)');
+      descriptionInput.focus();
+      await user.keyboard('{ArrowRight}');
+      
+      const dateInput = screen.getByDisplayValue(/2026-01-02/);
+      expect(dateInput).toHaveFocus();
+
+      // Press ArrowLeft should wrap to description
+      await user.keyboard('{ArrowLeft}');
+      expect(descriptionInput).toHaveFocus();
+    });
+
+    it('should support search in Autocomplete dropdowns', async () => {
+      const user = userEvent.setup();
+      render(
+        <QuickEntryRow
+          accounts={mockAccounts}
+          categories={mockCategories}
+          transactionTypes={mockTransactionTypes}
+          onSubmit={mockOnSubmit}
+          onOpenFullDialog={mockOnOpenFullDialog}
+        />
+      );
+
+      // Click on type select to open dropdown
+      const typeInputs = screen.getAllByPlaceholderText('Type');
+      const typeCombobox = typeInputs.find((input) => input.getAttribute('role') === 'combobox');
+      
+      await user.click(typeCombobox!);
+
+      // Type to search
+      await user.type(typeCombobox!, 'pay');
+
+      // Should filter and show only Paycheck
+      await waitFor(() => {
+        expect(screen.getByText('Paycheck')).toBeInTheDocument();
+        expect(screen.queryByText('Groceries')).not.toBeInTheDocument();
+      });
+    });
+  });
 });

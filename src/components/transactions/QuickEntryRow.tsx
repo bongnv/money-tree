@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, TextField, MenuItem, IconButton, Tooltip } from '@mui/material';
+import { Box, TextField, IconButton, Tooltip, Autocomplete } from '@mui/material';
 import { Add as AddIcon, Clear as ClearIcon, MoreHoriz as MoreIcon } from '@mui/icons-material';
 import type { Transaction, Account, TransactionType, Category } from '../../types/models';
 import { Group } from '../../types/enums';
@@ -48,6 +48,11 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const amountRef = useRef<HTMLInputElement>(null);
+  const dateRef = useRef<HTMLInputElement>(null);
+  const typeRef = useRef<HTMLInputElement>(null);
+  const fromAccountRef = useRef<HTMLInputElement>(null);
+  const toAccountRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLInputElement>(null);
 
   // Update selected group when transaction type changes
   useEffect(() => {
@@ -161,12 +166,71 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Check if the focused element is a combobox with an open dropdown
+    const target = e.target as HTMLElement;
+    const isCombobox = target.getAttribute('role') === 'combobox';
+    const isDropdownOpen = target.getAttribute('aria-expanded') === 'true';
+    
     if (e.key === 'Enter' && !e.shiftKey) {
+      // Don't submit if dropdown is open - let Autocomplete handle it
+      if (isCombobox && isDropdownOpen) {
+        return;
+      }
       e.preventDefault();
       handleSubmit();
     } else if (e.key === 'Escape') {
       e.preventDefault();
       handleClear();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      // Handle left/right arrow key navigation
+      handleArrowNavigation(e);
+    }
+  };
+
+  const handleArrowNavigation = (e: React.KeyboardEvent) => {
+    const fieldRefs = [dateRef, amountRef, typeRef];
+    
+    if (showFromAccount) fieldRefs.push(fromAccountRef);
+    if (showToAccount) fieldRefs.push(toAccountRef);
+    fieldRefs.push(descriptionRef);
+
+    // Find which field is currently focused by checking which ref contains the active element
+    const currentIndex = fieldRefs.findIndex(ref => {
+      const element = ref.current;
+      if (!element) return false;
+      // Check if this element is focused or contains the focused element
+      return element === document.activeElement || 
+             (element.contains && element.contains(document.activeElement));
+    });
+    
+    if (currentIndex === -1) return;
+
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      const nextIndex = (currentIndex + 1) % fieldRefs.length;
+      const nextElement = fieldRefs[nextIndex].current;
+      // For Autocomplete, focus the input inside
+      if (nextElement) {
+        const input = nextElement.querySelector('input');
+        if (input) {
+          input.focus();
+        } else {
+          nextElement.focus();
+        }
+      }
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const prevIndex = (currentIndex - 1 + fieldRefs.length) % fieldRefs.length;
+      const prevElement = fieldRefs[prevIndex].current;
+      // For Autocomplete, focus the input inside
+      if (prevElement) {
+        const input = prevElement.querySelector('input');
+        if (input) {
+          input.focus();
+        } else {
+          prevElement.focus();
+        }
+      }
     }
   };
 
@@ -180,12 +244,6 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
         setErrors({ ...errors, [field]: '' });
       }
     };
-
-  // Group transaction types by category
-  const groupedTransactionTypes = categories.map((category) => ({
-    category,
-    types: transactionTypes.filter((tt) => tt.categoryId === category.id),
-  }));
 
   const activeAccounts = accounts.filter((a) => a.isActive);
 
@@ -213,6 +271,7 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
       }}
     >
       <TextField
+        inputRef={dateRef}
         type="date"
         value={formData.date}
         onChange={(e) => {
@@ -242,80 +301,100 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
         sx={{ width: 120 }}
       />
 
-      <TextField
-        select
-        placeholder="Type"
-        value={formData.transactionTypeId}
-        onChange={handleChange('transactionTypeId')}
-        error={!!errors.transactionTypeId}
-        helperText={errors.transactionTypeId}
+      <Autocomplete
+        ref={typeRef}
+        options={transactionTypes}
+        value={transactionTypes.find(tt => tt.id === formData.transactionTypeId) || null}
+        onChange={(_, newValue) => {
+          setFormData({
+            ...formData,
+            transactionTypeId: newValue?.id || '',
+          });
+          if (errors.transactionTypeId) {
+            setErrors({ ...errors, transactionTypeId: '' });
+          }
+        }}
+        getOptionLabel={(option) => option.name}
+        groupBy={(option) => {
+          const category = categories.find(c => c.id === option.categoryId);
+          return category?.name || '';
+        }}
+        disableClearable={false}
+        openOnFocus
         size="small"
-        sx={{ minWidth: 180 }}
-      >
-        <MenuItem value="">
-          <em>Select type...</em>
-        </MenuItem>
-        {groupedTransactionTypes.flatMap(({ category, types }) =>
-          types.length > 0
-            ? [
-                <MenuItem key={`header-${category.id}`} disabled>
-                  <strong>{category.name}</strong>
-                </MenuItem>,
-                ...types.map((type) => (
-                  <MenuItem key={type.id} value={type.id} sx={{ pl: 4 }}>
-                    {type.name}
-                  </MenuItem>
-                )),
-              ]
-            : []
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            placeholder="Type"
+            error={!!errors.transactionTypeId}
+            helperText={errors.transactionTypeId}
+          />
         )}
-      </TextField>
+        sx={{ minWidth: 180 }}
+      />
 
       {showFromAccount && (
-        <TextField
-          select
-          placeholder="From"
-          value={formData.fromAccountId}
-          onChange={handleChange('fromAccountId')}
-          error={!!errors.fromAccountId}
-          helperText={errors.fromAccountId}
+        <Autocomplete
+          ref={fromAccountRef}
+          options={activeAccounts}
+          value={activeAccounts.find(a => a.id === formData.fromAccountId) || null}
+          onChange={(_, newValue) => {
+            setFormData({
+              ...formData,
+              fromAccountId: newValue?.id || '',
+            });
+            if (errors.fromAccountId) {
+              setErrors({ ...errors, fromAccountId: '' });
+            }
+          }}
+          getOptionLabel={(option) => option.name}
+          disableClearable={false}
+          openOnFocus
           size="small"
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              placeholder="From"
+              error={!!errors.fromAccountId}
+              helperText={errors.fromAccountId}
+            />
+          )}
           sx={{ minWidth: 150 }}
-        >
-          <MenuItem value="">
-            <em>From account...</em>
-          </MenuItem>
-          {activeAccounts.map((account) => (
-            <MenuItem key={account.id} value={account.id}>
-              {account.name}
-            </MenuItem>
-          ))}
-        </TextField>
+        />
       )}
 
       {showToAccount && (
-        <TextField
-          select
-          placeholder="To"
-          value={formData.toAccountId}
-          onChange={handleChange('toAccountId')}
-          error={!!errors.toAccountId}
-          helperText={errors.toAccountId}
+        <Autocomplete
+          ref={toAccountRef}
+          options={activeAccounts}
+          value={activeAccounts.find(a => a.id === formData.toAccountId) || null}
+          onChange={(_, newValue) => {
+            setFormData({
+              ...formData,
+              toAccountId: newValue?.id || '',
+            });
+            if (errors.toAccountId) {
+              setErrors({ ...errors, toAccountId: '' });
+            }
+          }}
+          getOptionLabel={(option) => option.name}
+          disableClearable={false}
+          openOnFocus
           size="small"
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              placeholder="To"
+              error={!!errors.toAccountId}
+              helperText={errors.toAccountId}
+            />
+          )}
           sx={{ minWidth: 150 }}
-        >
-          <MenuItem value="">
-            <em>To account...</em>
-          </MenuItem>
-          {activeAccounts.map((account) => (
-            <MenuItem key={account.id} value={account.id}>
-              {account.name}
-            </MenuItem>
-          ))}
-        </TextField>
+        />
       )}
 
       <TextField
+        inputRef={descriptionRef}
         placeholder="Description (optional)"
         value={formData.description}
         onChange={handleChange('description')}

@@ -40,14 +40,10 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
       (b) => b.transactionTypeId === budget.transactionTypeId
     );
 
-    const hasOverlap = existingBudgets.some((existing) =>
-      dateRangesOverlap(budget, existing)
-    );
+    const hasOverlap = existingBudgets.some((existing) => dateRangesOverlap(budget, existing));
 
     if (hasOverlap) {
-      throw new Error(
-        'A budget with overlapping dates already exists for this transaction type'
-      );
+      throw new Error('A budget with overlapping dates already exists for this transaction type');
     }
 
     set((state) => ({
@@ -74,16 +70,12 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
     );
 
     if (hasOverlap) {
-      throw new Error(
-        'A budget with overlapping dates already exists for this transaction type'
-      );
+      throw new Error('A budget with overlapping dates already exists for this transaction type');
     }
 
     set((state) => ({
       budgets: state.budgets.map((item) =>
-        item.id === id
-          ? { ...item, ...updates, updatedAt: new Date().toISOString() }
-          : item
+        item.id === id ? { ...item, ...updates, updatedAt: new Date().toISOString() } : item
       ),
     }));
     useAppStore.getState().setUnsavedChanges(true);

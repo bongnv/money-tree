@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent } from '@mui/material';
 import { ManualAssetForm } from './ManualAssetForm';
 import { useAssetStore } from '../../stores/useAssetStore';
 import type { ManualAsset } from '../../types/models';
@@ -14,11 +10,7 @@ interface ManualAssetDialogProps {
   onClose: () => void;
 }
 
-export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
-  open,
-  asset,
-  onClose,
-}) => {
+export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({ open, asset, onClose }) => {
   const { addManualAsset, updateManualAsset } = useAssetStore();
 
   const handleSubmit = (assetData: Omit<ManualAsset, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -39,15 +31,9 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {asset ? 'Edit Asset' : 'Add Manual Asset'}
-      </DialogTitle>
+      <DialogTitle>{asset ? 'Edit Asset' : 'Add Manual Asset'}</DialogTitle>
       <DialogContent>
-        <ManualAssetForm
-          asset={asset}
-          onSubmit={handleSubmit}
-          onCancel={onClose}
-        />
+        <ManualAssetForm asset={asset} onSubmit={handleSubmit} onCancel={onClose} />
       </DialogContent>
     </Dialog>
   );

@@ -190,9 +190,7 @@ describe('CategoriesPage', () => {
     const deleteButton = screen.getAllByLabelText(/delete groceries/i)[0];
     await user.click(deleteButton);
 
-    expect(global.alert).toHaveBeenCalledWith(
-      expect.stringContaining('Cannot delete category')
-    );
+    expect(global.alert).toHaveBeenCalledWith(expect.stringContaining('Cannot delete category'));
     expect(mockDeleteCategory).not.toHaveBeenCalled();
   });
 

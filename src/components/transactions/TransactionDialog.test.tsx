@@ -146,7 +146,7 @@ describe('TransactionDialog', () => {
 
   it('calls onClose when cancel button is clicked', async () => {
     const user = userEvent.setup();
-    
+
     render(
       <TransactionDialog
         open={true}
@@ -166,7 +166,7 @@ describe('TransactionDialog', () => {
 
   it('calls onSubmit and onClose when form is submitted', async () => {
     const user = userEvent.setup();
-    
+
     render(
       <TransactionDialog
         open={true}
@@ -218,7 +218,7 @@ describe('TransactionDialog', () => {
 
   it('closes dialog when clicking backdrop', async () => {
     const user = userEvent.setup();
-    
+
     render(
       <TransactionDialog
         open={true}

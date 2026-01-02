@@ -9,11 +9,7 @@ interface ManualAssetListProps {
   onDelete: (asset: ManualAsset) => void;
 }
 
-export const ManualAssetList: React.FC<ManualAssetListProps> = ({
-  assets,
-  onEdit,
-  onDelete,
-}) => {
+export const ManualAssetList: React.FC<ManualAssetListProps> = ({ assets, onEdit, onDelete }) => {
   if (assets.length === 0) {
     return (
       <Box sx={{ textAlign: 'center', py: 4 }}>

@@ -14,13 +14,7 @@ describe('FormTextField', () => {
   });
 
   it('should show error message', () => {
-    render(
-      <FormTextField
-        label="Test Field"
-        error
-        helperText="This field is required"
-      />
-    );
+    render(<FormTextField label="Test Field" error helperText="This field is required" />);
     expect(screen.getByText('This field is required')).toBeInTheDocument();
   });
 
@@ -61,13 +55,7 @@ describe('FormTextField', () => {
   });
 
   it('should accept custom props', () => {
-    render(
-      <FormTextField
-        label="Test Field"
-        placeholder="Enter text"
-        type="email"
-      />
-    );
+    render(<FormTextField label="Test Field" placeholder="Enter text" type="email" />);
     const input = screen.getByPlaceholderText('Enter text');
     expect(input).toHaveAttribute('type', 'email');
   });

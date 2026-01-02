@@ -36,40 +36,20 @@ describe('ManualAssetList', () => {
   });
 
   it('should render list of assets', () => {
-    render(
-      <ManualAssetList
-        assets={mockAssets}
-        onEdit={mockOnEdit}
-        onDelete={mockOnDelete}
-      />
-    );
+    render(<ManualAssetList assets={mockAssets} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 
     expect(screen.getByText('House')).toBeInTheDocument();
     expect(screen.getByText('Car')).toBeInTheDocument();
   });
 
   it('should render empty state when no assets', () => {
-    render(
-      <ManualAssetList
-        assets={[]}
-        onEdit={mockOnEdit}
-        onDelete={mockOnDelete}
-      />
-    );
+    render(<ManualAssetList assets={[]} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 
-    expect(
-      screen.getByText(/No manual assets yet/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/No manual assets yet/i)).toBeInTheDocument();
   });
 
   it('should pass callbacks to asset cards', () => {
-    render(
-      <ManualAssetList
-        assets={mockAssets}
-        onEdit={mockOnEdit}
-        onDelete={mockOnDelete}
-      />
-    );
+    render(<ManualAssetList assets={mockAssets} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 
     const editButtons = screen.getAllByLabelText('Edit asset');
     editButtons[0].click();

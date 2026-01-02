@@ -99,7 +99,10 @@ class ValidationService {
           errors.push({ field: 'fromAccountId', message: 'From account is required for expenses' });
         }
         if (toAccountId) {
-          errors.push({ field: 'toAccountId', message: 'To account should not be set for expenses' });
+          errors.push({
+            field: 'toAccountId',
+            message: 'To account should not be set for expenses',
+          });
         }
         break;
 
@@ -108,13 +111,19 @@ class ValidationService {
           errors.push({ field: 'toAccountId', message: 'To account is required for income' });
         }
         if (fromAccountId) {
-          errors.push({ field: 'fromAccountId', message: 'From account should not be set for income' });
+          errors.push({
+            field: 'fromAccountId',
+            message: 'From account should not be set for income',
+          });
         }
         break;
 
       case Group.TRANSFER:
         if (!fromAccountId) {
-          errors.push({ field: 'fromAccountId', message: 'From account is required for transfers' });
+          errors.push({
+            field: 'fromAccountId',
+            message: 'From account is required for transfers',
+          });
         }
         if (!toAccountId) {
           errors.push({ field: 'toAccountId', message: 'To account is required for transfers' });
@@ -144,9 +153,7 @@ class ValidationService {
    * @returns True if account has no transactions
    */
   canDeleteAccount(accountId: string, transactions: Transaction[]): boolean {
-    return !transactions.some(
-      (t) => t.fromAccountId === accountId || t.toAccountId === accountId
-    );
+    return !transactions.some((t) => t.fromAccountId === accountId || t.toAccountId === accountId);
   }
 
   /**

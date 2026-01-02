@@ -48,12 +48,9 @@ interface SaveFilePickerOptions {
 
 declare global {
   interface Window {
-    showOpenFilePicker(
-      options?: OpenFilePickerOptions
-    ): Promise<FileSystemFileHandle[]>;
+    showOpenFilePicker(options?: OpenFilePickerOptions): Promise<FileSystemFileHandle[]>;
     showSaveFilePicker(options?: SaveFilePickerOptions): Promise<FileSystemFileHandle>;
   }
 }
 
 export {};
-

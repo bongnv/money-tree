@@ -43,4 +43,3 @@ export enum AssetType {
   LIABILITY = 'liability',
   OTHER = 'other',
 }
-

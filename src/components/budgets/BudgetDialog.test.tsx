@@ -56,13 +56,7 @@ describe('BudgetDialog', () => {
   });
 
   it('should render with "Add Budget" title when creating new budget', () => {
-    render(
-      <BudgetDialog
-        open={true}
-        onClose={mockOnClose}
-        onSubmit={mockOnSubmit}
-      />
-    );
+    render(<BudgetDialog open={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />);
 
     expect(screen.getByText('Add Budget')).toBeInTheDocument();
   });
@@ -78,12 +72,7 @@ describe('BudgetDialog', () => {
     };
 
     render(
-      <BudgetDialog
-        open={true}
-        budget={budget}
-        onClose={mockOnClose}
-        onSubmit={mockOnSubmit}
-      />
+      <BudgetDialog open={true} budget={budget} onClose={mockOnClose} onSubmit={mockOnSubmit} />
     );
 
     expect(screen.getByText('Edit Budget')).toBeInTheDocument();
@@ -100,38 +89,21 @@ describe('BudgetDialog', () => {
     };
 
     render(
-      <BudgetDialog
-        open={true}
-        budget={budget}
-        onClose={mockOnClose}
-        onSubmit={mockOnSubmit}
-      />
+      <BudgetDialog open={true} budget={budget} onClose={mockOnClose} onSubmit={mockOnSubmit} />
     );
 
     expect(screen.getByDisplayValue('500')).toBeInTheDocument();
   });
 
   it('should call onClose when Cancel button is clicked', () => {
-    render(
-      <BudgetDialog
-        open={true}
-        onClose={mockOnClose}
-        onSubmit={mockOnSubmit}
-      />
-    );
+    render(<BudgetDialog open={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />);
 
     fireEvent.click(screen.getByText('Cancel'));
     expect(mockOnClose).toHaveBeenCalled();
   });
 
   it('should show validation error when transaction type is not selected', async () => {
-    render(
-      <BudgetDialog
-        open={true}
-        onClose={mockOnClose}
-        onSubmit={mockOnSubmit}
-      />
-    );
+    render(<BudgetDialog open={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />);
 
     const submitButton = screen.getByText('Add');
     fireEvent.click(submitButton);
@@ -144,13 +116,7 @@ describe('BudgetDialog', () => {
   });
 
   it('should show validation error when amount is invalid', async () => {
-    render(
-      <BudgetDialog
-        open={true}
-        onClose={mockOnClose}
-        onSubmit={mockOnSubmit}
-      />
-    );
+    render(<BudgetDialog open={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />);
 
     const amountInput = screen.getByLabelText(/Amount/i);
     await userEvent.clear(amountInput);
@@ -177,12 +143,7 @@ describe('BudgetDialog', () => {
     };
 
     render(
-      <BudgetDialog
-        open={true}
-        budget={budget}
-        onClose={mockOnClose}
-        onSubmit={mockOnSubmit}
-      />
+      <BudgetDialog open={true} budget={budget} onClose={mockOnClose} onSubmit={mockOnSubmit} />
     );
 
     const transactionTypeField = screen.getByLabelText(/Transaction Type/i).closest('div');
@@ -191,11 +152,7 @@ describe('BudgetDialog', () => {
 
   it('should render dialog when closed', () => {
     const { container } = render(
-      <BudgetDialog
-        open={false}
-        onClose={mockOnClose}
-        onSubmit={mockOnSubmit}
-      />
+      <BudgetDialog open={false} onClose={mockOnClose} onSubmit={mockOnSubmit} />
     );
 
     // Dialog should not be visible when open=false

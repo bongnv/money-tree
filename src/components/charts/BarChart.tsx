@@ -51,19 +51,10 @@ export const BarChart: React.FC<BarChartProps> = ({
   return (
     <Box sx={{ width: '100%', height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <RechartsBarChart
-          data={data}
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-        >
+        <RechartsBarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
           {showGrid && <CartesianGrid strokeDasharray="3 3" />}
-          <XAxis
-            dataKey={xAxisKey}
-            style={{ fontSize: '0.875rem' }}
-          />
-          <YAxis
-            style={{ fontSize: '0.875rem' }}
-            tickFormatter={formatValue}
-          />
+          <XAxis dataKey={xAxisKey} style={{ fontSize: '0.875rem' }} />
+          <YAxis style={{ fontSize: '0.875rem' }} tickFormatter={formatValue} />
           <Tooltip
             formatter={formatTooltip}
             contentStyle={{

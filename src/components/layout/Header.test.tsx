@@ -132,4 +132,3 @@ describe('Header', () => {
     expect(screen.getByRole('button', { name: /transactions/i })).toBeInTheDocument();
   });
 });
-

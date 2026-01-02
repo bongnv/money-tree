@@ -58,9 +58,7 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
                   <TableRow key={item.id}>
                     <TableCell></TableCell>
                     <TableCell>{item.name}</TableCell>
-                    <TableCell align="right">
-                      {formatCurrency(item.value, currencyId)}
-                    </TableCell>
+                    <TableCell align="right">{formatCurrency(item.value, currencyId)}</TableCell>
                   </TableRow>
                 ))}
                 <TableRow>

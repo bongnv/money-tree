@@ -98,7 +98,10 @@ export const BalanceSheet: React.FC = () => {
     }));
   }, [accounts, manualAssets, transactions, selectedDate]);
 
-  const handleComparisonChange = (_event: React.MouseEvent<HTMLElement>, newValue: ComparisonType | null) => {
+  const handleComparisonChange = (
+    _event: React.MouseEvent<HTMLElement>,
+    newValue: ComparisonType | null
+  ) => {
     if (newValue !== null) {
       setComparisonType(newValue);
     }
@@ -267,7 +270,9 @@ export const BalanceSheet: React.FC = () => {
             <Typography variant="caption">Total Assets - Total Liabilities</Typography>
           </Grid>
           <Grid item>
-            <Typography variant="h3">{formatCurrency(balanceSheet.netWorth, currencyId)}</Typography>
+            <Typography variant="h3">
+              {formatCurrency(balanceSheet.netWorth, currencyId)}
+            </Typography>
           </Grid>
         </Grid>
       </Paper>

@@ -31,10 +31,7 @@ class CalculationService {
    * @param transactions All transactions
    * @returns Map of account ID to balance
    */
-  calculateAccountBalances(
-    accounts: Account[],
-    transactions: Transaction[]
-  ): Map<string, number> {
+  calculateAccountBalances(accounts: Account[], transactions: Transaction[]): Map<string, number> {
     const balances = new Map<string, number>();
 
     accounts.forEach((account) => {
@@ -220,10 +217,7 @@ class CalculationService {
   ): number {
     return transactions
       .filter(
-        (t) =>
-          t.transactionTypeId === transactionTypeId &&
-          t.date >= startDate &&
-          t.date <= endDate
+        (t) => t.transactionTypeId === transactionTypeId && t.date >= startDate && t.date <= endDate
       )
       .reduce((sum, t) => sum + t.amount, 0);
   }
@@ -282,8 +276,8 @@ class CalculationService {
   private getMonthsInPeriod(startDate: string, endDate: string): number {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const monthsDiff = (end.getFullYear() - start.getFullYear()) * 12 + 
-                       (end.getMonth() - start.getMonth()) + 1;
+    const monthsDiff =
+      (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1;
     return monthsDiff;
   }
 
@@ -307,7 +301,7 @@ class CalculationService {
 
     // Calculate months in viewing period (approximate)
     const monthsInPeriod = this.getMonthsInPeriod(startDate, endDate);
-    
+
     // Convert budget amount to monthly equivalent
     let monthlyAmount: number;
     switch (budget.period) {
@@ -328,7 +322,7 @@ class CalculationService {
     // Handle partial overlaps by calculating the ratio
     const totalPeriodDays = this.getDaysInPeriod(startDate, endDate);
     const overlapDays = this.getDaysInPeriod(overlapStart, overlapEnd);
-    
+
     if (overlapDays < totalPeriodDays) {
       // Budget is only active for part of the viewing period
       return proratedAmount * (overlapDays / totalPeriodDays);

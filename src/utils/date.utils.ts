@@ -34,7 +34,7 @@ export const toDateString = (dateInput: string | Date): string => {
   if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
     return dateInput;
   }
-  
+
   let date: Date;
   if (typeof dateInput === 'string') {
     // Parse ISO datetime or date string
@@ -57,9 +57,11 @@ export const isDateInRange = (date: string, startDate: string, endDate: string):
   const checkDate = parseISO(date);
   const start = startOfDay(parseISO(startDate));
   const end = endOfDay(parseISO(endDate));
-  
-  return (isAfter(checkDate, start) || isEqual(checkDate, start)) &&
-         (isBefore(checkDate, end) || isEqual(checkDate, end));
+
+  return (
+    (isAfter(checkDate, start) || isEqual(checkDate, start)) &&
+    (isBefore(checkDate, end) || isEqual(checkDate, end))
+  );
 };
 
 /**

@@ -1,4 +1,3 @@
-
 import type { DataFile } from '../../types/models';
 import { DataFileSchema } from '../../schemas/models.schema';
 import type { IStorageProvider } from './IStorageProvider';
@@ -52,9 +51,7 @@ export class LocalStorageProvider implements IStorageProvider {
 
       // Verify year matches
       if (validatedData.year !== year) {
-        throw new Error(
-          `File year mismatch: expected ${year}, got ${validatedData.year}`
-        );
+        throw new Error(`File year mismatch: expected ${year}, got ${validatedData.year}`);
       }
 
       // Store file handle for future saves
@@ -136,4 +133,3 @@ export class LocalStorageProvider implements IStorageProvider {
     this.fileHandles.clear();
   }
 }
-

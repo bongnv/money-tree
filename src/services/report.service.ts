@@ -357,12 +357,7 @@ class ReportService {
     currentDateObj.setMonth(currentDateObj.getMonth() - 1);
     const previousDate = `${currentDateObj.getFullYear()}-${String(currentDateObj.getMonth() + 1).padStart(2, '0')}-${String(currentDateObj.getDate()).padStart(2, '0')}`;
 
-    const previous = this.calculateBalanceSheet(
-      accounts,
-      manualAssets,
-      transactions,
-      previousDate
-    );
+    const previous = this.calculateBalanceSheet(accounts, manualAssets, transactions, previousDate);
 
     const change = current.netWorth - previous.netWorth;
     const changePercent = previous.netWorth !== 0 ? (change / previous.netWorth) * 100 : 0;
@@ -397,12 +392,7 @@ class ReportService {
     currentDateObj.setFullYear(currentDateObj.getFullYear() - 1);
     const previousDate = `${currentDateObj.getFullYear()}-${String(currentDateObj.getMonth() + 1).padStart(2, '0')}-${String(currentDateObj.getDate()).padStart(2, '0')}`;
 
-    const previous = this.calculateBalanceSheet(
-      accounts,
-      manualAssets,
-      transactions,
-      previousDate
-    );
+    const previous = this.calculateBalanceSheet(accounts, manualAssets, transactions, previousDate);
 
     const change = current.netWorth - previous.netWorth;
     const changePercent = previous.netWorth !== 0 ? (change / previous.netWorth) * 100 : 0;

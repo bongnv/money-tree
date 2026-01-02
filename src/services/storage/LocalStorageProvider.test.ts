@@ -46,9 +46,9 @@ describe('LocalStorageProvider', () => {
   describe('loadDataFile', () => {
     it('should return null when user cancels file picker', async () => {
       // Mock showOpenFilePicker to throw AbortError
-      (window as any).showOpenFilePicker = jest.fn().mockRejectedValue(
-        new DOMException('User cancelled', 'AbortError')
-      );
+      (window as any).showOpenFilePicker = jest
+        .fn()
+        .mockRejectedValue(new DOMException('User cancelled', 'AbortError'));
 
       const result = await provider.loadDataFile(2024);
       expect(result).toBeNull();
@@ -63,9 +63,7 @@ describe('LocalStorageProvider', () => {
         getFile: jest.fn().mockResolvedValue(mockFile),
       };
 
-      (window as any).showOpenFilePicker = jest
-        .fn()
-        .mockResolvedValue([mockFileHandle]);
+      (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
 
       await expect(provider.loadDataFile(2024)).rejects.toThrow();
     });
@@ -80,9 +78,7 @@ describe('LocalStorageProvider', () => {
         getFile: jest.fn().mockResolvedValue(mockFile),
       };
 
-      (window as any).showOpenFilePicker = jest
-        .fn()
-        .mockResolvedValue([mockFileHandle]);
+      (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
 
       await expect(provider.loadDataFile(2024)).rejects.toThrow('File year mismatch');
     });
@@ -96,9 +92,7 @@ describe('LocalStorageProvider', () => {
         getFile: jest.fn().mockResolvedValue(mockFile),
       };
 
-      (window as any).showOpenFilePicker = jest
-        .fn()
-        .mockResolvedValue([mockFileHandle]);
+      (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
 
       const result = await provider.loadDataFile(2024);
       expect(result).toEqual(mockData);
@@ -113,9 +107,7 @@ describe('LocalStorageProvider', () => {
         getFile: jest.fn().mockResolvedValue(mockFile),
       };
 
-      (window as any).showOpenFilePicker = jest
-        .fn()
-        .mockResolvedValue([mockFileHandle]);
+      (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
 
       await provider.loadDataFile(2024);
 
@@ -144,9 +136,7 @@ describe('LocalStorageProvider', () => {
         getFile: jest.fn().mockResolvedValue(mockFile),
       };
 
-      (window as any).showOpenFilePicker = jest
-        .fn()
-        .mockResolvedValue([mockFileHandle]);
+      (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
 
       const result = await provider.loadDataFile(2024);
       expect(result).toBeDefined();
@@ -173,9 +163,7 @@ describe('LocalStorageProvider', () => {
         getFile: jest.fn().mockResolvedValue(mockFile),
       };
 
-      (window as any).showOpenFilePicker = jest
-        .fn()
-        .mockResolvedValue([mockFileHandle]);
+      (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
 
       const result = await provider.loadDataFile(2024);
       expect(result).toBeDefined();
@@ -196,9 +184,9 @@ describe('LocalStorageProvider', () => {
     });
 
     it('should return without error when user cancels file picker', async () => {
-      (window as any).showSaveFilePicker = jest.fn().mockRejectedValue(
-        new DOMException('User cancelled', 'AbortError')
-      );
+      (window as any).showSaveFilePicker = jest
+        .fn()
+        .mockRejectedValue(new DOMException('User cancelled', 'AbortError'));
 
       await expect(provider.saveDataFile(2024, mockData)).resolves.not.toThrow();
     });
@@ -217,9 +205,7 @@ describe('LocalStorageProvider', () => {
 
       await provider.saveDataFile(2024, mockData);
 
-      expect(mockWritable.write).toHaveBeenCalledWith(
-        JSON.stringify(mockData, null, 2)
-      );
+      expect(mockWritable.write).toHaveBeenCalledWith(JSON.stringify(mockData, null, 2));
       expect(mockWritable.close).toHaveBeenCalled();
     });
 
@@ -239,9 +225,7 @@ describe('LocalStorageProvider', () => {
       };
 
       // First load to cache the handle
-      (window as any).showOpenFilePicker = jest
-        .fn()
-        .mockResolvedValue([mockFileHandle]);
+      (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
       await provider.loadDataFile(2024);
 
       // Save without showing picker
@@ -316,9 +300,7 @@ describe('LocalStorageProvider', () => {
         getFile: jest.fn().mockResolvedValue(mockFile),
       };
 
-      (window as any).showOpenFilePicker = jest
-        .fn()
-        .mockResolvedValue([mockFileHandle]);
+      (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
 
       await provider.loadDataFile(2024);
       provider.clearFileHandle(2024);
@@ -366,4 +348,3 @@ describe('LocalStorageProvider', () => {
     });
   });
 });
-

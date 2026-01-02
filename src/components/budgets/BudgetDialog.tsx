@@ -18,18 +18,13 @@ interface BudgetDialogProps {
   onSubmit: (budget: Omit<Budget, 'id' | 'createdAt' | 'updatedAt'>) => void;
 }
 
-export const BudgetDialog: React.FC<BudgetDialogProps> = ({
-  open,
-  budget,
-  onClose,
-  onSubmit,
-}) => {
+export const BudgetDialog: React.FC<BudgetDialogProps> = ({ open, budget, onClose, onSubmit }) => {
   const { categories, transactionTypes } = useCategoryStore();
 
   const [formData, setFormData] = useState({
     transactionTypeId: budget?.transactionTypeId || '',
     amount: budget?.amount?.toString() || '',
-    period: budget?.period || 'monthly' as 'monthly' | 'quarterly' | 'yearly',
+    period: budget?.period || ('monthly' as 'monthly' | 'quarterly' | 'yearly'),
     startDate: budget?.startDate || new Date().getFullYear() + '-01-01',
     endDate: budget?.endDate || new Date().getFullYear() + '-12-31',
   });
@@ -37,10 +32,12 @@ export const BudgetDialog: React.FC<BudgetDialogProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Group transaction types by category
-  const groupedTransactionTypes = categories.map((category) => ({
-    category,
-    transactionTypes: transactionTypes.filter((tt) => tt.categoryId === category.id),
-  })).filter((group) => group.transactionTypes.length > 0);
+  const groupedTransactionTypes = categories
+    .map((category) => ({
+      category,
+      transactionTypes: transactionTypes.filter((tt) => tt.categoryId === category.id),
+    }))
+    .filter((group) => group.transactionTypes.length > 0);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -91,23 +88,20 @@ export const BudgetDialog: React.FC<BudgetDialogProps> = ({
     onClose();
   };
 
-  const handleChange = (field: string) => (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setFormData({
-      ...formData,
-      [field]: e.target.value,
-    });
-    if (errors[field]) {
-      setErrors({ ...errors, [field]: '' });
-    }
-  };
+  const handleChange =
+    (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setFormData({
+        ...formData,
+        [field]: e.target.value,
+      });
+      if (errors[field]) {
+        setErrors({ ...errors, [field]: '' });
+      }
+    };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {budget ? 'Edit Budget' : 'Add Budget'}
-      </DialogTitle>
+      <DialogTitle>{budget ? 'Edit Budget' : 'Add Budget'}</DialogTitle>
       <DialogContent>
         <Box component="form" onSubmit={handleSubmit} noValidate sx={{ pt: 1 }}>
           <TextField
@@ -123,7 +117,11 @@ export const BudgetDialog: React.FC<BudgetDialogProps> = ({
             disabled={!!budget} // Cannot change transaction type when editing
           >
             {groupedTransactionTypes.map((group) => [
-              <MenuItem key={`header-${group.category.id}`} disabled sx={{ fontWeight: 'bold', opacity: 1 }}>
+              <MenuItem
+                key={`header-${group.category.id}`}
+                disabled
+                sx={{ fontWeight: 'bold', opacity: 1 }}
+              >
                 {group.category.name}
               </MenuItem>,
               ...group.transactionTypes.map((tt) => (

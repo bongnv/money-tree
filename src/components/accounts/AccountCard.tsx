@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  Card,
-  CardContent,
-  CardActions,
-  Typography,
-  IconButton,
-  Box,
-  Chip,
-} from '@mui/material';
+import { Card, CardContent, CardActions, Typography, IconButton, Box, Chip } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import type { Account } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
@@ -20,11 +12,7 @@ interface AccountCardProps {
   onDelete: (account: Account) => void;
 }
 
-export const AccountCard: React.FC<AccountCardProps> = ({
-  account,
-  onEdit,
-  onDelete,
-}) => {
+export const AccountCard: React.FC<AccountCardProps> = ({ account, onEdit, onDelete }) => {
   const { transactions } = useTransactionStore();
   const currentBalance = calculationService.calculateAccountBalance(account, transactions);
 
@@ -39,7 +27,9 @@ export const AccountCard: React.FC<AccountCardProps> = ({
   return (
     <Card>
       <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+        <Box
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}
+        >
           <Typography variant="h6" component="h3">
             {account.name}
           </Typography>
@@ -59,11 +49,7 @@ export const AccountCard: React.FC<AccountCardProps> = ({
         )}
       </CardContent>
       <CardActions sx={{ justifyContent: 'flex-end' }}>
-        <IconButton
-          size="small"
-          onClick={handleEdit}
-          aria-label={`Edit ${account.name}`}
-        >
+        <IconButton size="small" onClick={handleEdit} aria-label={`Edit ${account.name}`}>
           <EditIcon />
         </IconButton>
         <IconButton

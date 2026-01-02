@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
-import {
-  TextField,
-  MenuItem,
-  Box,
-  Button,
-} from '@mui/material';
+import { TextField, MenuItem, Box, Button } from '@mui/material';
 import type { TransactionType, Category } from '../../types/models';
 
 interface TransactionTypeFormProps {
@@ -57,26 +52,28 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
     });
   };
 
-  const handleChange = (field: string) => (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setFormData({
-      ...formData,
-      [field]: e.target.value,
-    });
-    if (errors[field]) {
-      setErrors({ ...errors, [field]: '' });
-    }
-  };
+  const handleChange =
+    (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setFormData({
+        ...formData,
+        [field]: e.target.value,
+      });
+      if (errors[field]) {
+        setErrors({ ...errors, [field]: '' });
+      }
+    };
 
   // Group categories by group
-  const groupedCategories = categories.reduce((acc, category) => {
-    if (!acc[category.group]) {
-      acc[category.group] = [];
-    }
-    acc[category.group].push(category);
-    return acc;
-  }, {} as Record<string, Category[]>);
+  const groupedCategories = categories.reduce(
+    (acc, category) => {
+      if (!acc[category.group]) {
+        acc[category.group] = [];
+      }
+      acc[category.group].push(category);
+      return acc;
+    },
+    {} as Record<string, Category[]>
+  );
 
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate>
@@ -125,9 +122,7 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
       />
 
       <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
-        <Button onClick={onCancel}>
-          Cancel
-        </Button>
+        <Button onClick={onCancel}>Cancel</Button>
         <Button type="submit" variant="contained">
           {transactionType ? 'Update' : 'Create'}
         </Button>

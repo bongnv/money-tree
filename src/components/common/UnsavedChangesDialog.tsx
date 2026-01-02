@@ -43,4 +43,3 @@ export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
     </Dialog>
   );
 };
-

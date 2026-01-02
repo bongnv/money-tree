@@ -13,13 +13,7 @@ describe('CategoryDialog', () => {
   });
 
   it('should render dialog for new category', () => {
-    render(
-      <CategoryDialog
-        open={true}
-        onClose={mockOnClose}
-        onSubmit={mockOnSubmit}
-      />
-    );
+    render(<CategoryDialog open={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />);
 
     expect(screen.getByText('Add Category')).toBeInTheDocument();
     expect(screen.getByLabelText(/category name/i)).toBeInTheDocument();
@@ -48,26 +42,14 @@ describe('CategoryDialog', () => {
   });
 
   it('should not render when closed', () => {
-    render(
-      <CategoryDialog
-        open={false}
-        onClose={mockOnClose}
-        onSubmit={mockOnSubmit}
-      />
-    );
+    render(<CategoryDialog open={false} onClose={mockOnClose} onSubmit={mockOnSubmit} />);
 
     expect(screen.queryByText('Add Category')).not.toBeInTheDocument();
   });
 
   it('should call onClose when cancel button is clicked', async () => {
     const user = userEvent.setup();
-    render(
-      <CategoryDialog
-        open={true}
-        onClose={mockOnClose}
-        onSubmit={mockOnSubmit}
-      />
-    );
+    render(<CategoryDialog open={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />);
 
     const cancelButton = screen.getByRole('button', { name: /cancel/i });
     await user.click(cancelButton);
@@ -77,13 +59,7 @@ describe('CategoryDialog', () => {
 
   it('should call onSubmit and onClose when form is submitted', async () => {
     const user = userEvent.setup();
-    render(
-      <CategoryDialog
-        open={true}
-        onClose={mockOnClose}
-        onSubmit={mockOnSubmit}
-      />
-    );
+    render(<CategoryDialog open={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />);
 
     await user.type(screen.getByLabelText(/category name/i), 'Test Category');
 

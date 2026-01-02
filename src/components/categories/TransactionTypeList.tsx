@@ -17,7 +17,7 @@ export const TransactionTypeList: React.FC<TransactionTypeListProps> = ({
   onDelete,
 }) => {
   const getCategoryById = (categoryId: string) => {
-    return categories.find(c => c.id === categoryId);
+    return categories.find((c) => c.id === categoryId);
   };
 
   if (transactionTypes.length === 0) {

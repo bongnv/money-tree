@@ -40,11 +40,7 @@ describe('LineChart', () => {
       { name: '2024-02', date: '2024-02', value: 200 },
     ];
     const { container } = render(
-      <LineChart
-        data={customData}
-        lines={[{ dataKey: 'value', name: 'Value' }]}
-        xAxisKey="date"
-      />
+      <LineChart data={customData} lines={[{ dataKey: 'value', name: 'Value' }]} xAxisKey="date" />
     );
     expect(container.querySelector('.recharts-responsive-container')).toBeInTheDocument();
   });

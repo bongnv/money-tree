@@ -25,7 +25,6 @@ describe('date.utils', () => {
     });
   });
 
-
   describe('getTodayDate', () => {
     it('should return today date in YYYY-MM-DD format', () => {
       const result = getTodayDate();

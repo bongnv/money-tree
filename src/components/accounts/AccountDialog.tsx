@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent } from '@mui/material';
 import type { Account } from '../../types/models';
 import { AccountForm } from './AccountForm';
 
@@ -27,15 +23,9 @@ export const AccountDialog: React.FC<AccountDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {account ? 'Edit Account' : 'Create New Account'}
-      </DialogTitle>
+      <DialogTitle>{account ? 'Edit Account' : 'Create New Account'}</DialogTitle>
       <DialogContent>
-        <AccountForm
-          account={account}
-          onSubmit={handleSubmit}
-          onCancel={onClose}
-        />
+        <AccountForm account={account} onSubmit={handleSubmit} onCancel={onClose} />
       </DialogContent>
     </Dialog>
   );

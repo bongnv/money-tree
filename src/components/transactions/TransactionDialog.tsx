@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent } from '@mui/material';
 import type { Transaction, Account, TransactionType, Category } from '../../types/models';
 import { TransactionForm } from './TransactionForm';
 
@@ -33,9 +29,7 @@ export const TransactionDialog: React.FC<TransactionDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {transaction ? 'Edit Transaction' : 'Add Transaction'}
-      </DialogTitle>
+      <DialogTitle>{transaction ? 'Edit Transaction' : 'Add Transaction'}</DialogTitle>
       <DialogContent>
         <TransactionForm
           transaction={transaction}

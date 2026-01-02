@@ -17,9 +17,11 @@ import { useCategoryStore } from '../../stores/useCategoryStore';
 import { TransactionDialog } from './TransactionDialog';
 import { TransactionList } from './TransactionList';
 import { TransactionFilters, TransactionFiltersState } from './TransactionFilters';
+import { QuickEntryRow } from './QuickEntryRow';
 
 export const TransactionsPage: React.FC = () => {
-  const { transactions, addTransaction, updateTransaction, deleteTransaction } = useTransactionStore();
+  const { transactions, addTransaction, updateTransaction, deleteTransaction } =
+    useTransactionStore();
   const { accounts } = useAccountStore();
   const { categories, transactionTypes } = useCategoryStore();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -58,13 +60,18 @@ export const TransactionsPage: React.FC = () => {
       }
 
       // Transaction type filter
-      if (filters.transactionTypeId && transaction.transactionTypeId !== filters.transactionTypeId) {
+      if (
+        filters.transactionTypeId &&
+        transaction.transactionTypeId !== filters.transactionTypeId
+      ) {
         return false;
       }
 
       // Category filter (via transaction type)
       if (filters.categoryId) {
-        const transactionType = transactionTypes.find((t) => t.id === transaction.transactionTypeId);
+        const transactionType = transactionTypes.find(
+          (t) => t.id === transaction.transactionTypeId
+        );
         if (!transactionType || transactionType.categoryId !== filters.categoryId) {
           return false;
         }
@@ -72,7 +79,9 @@ export const TransactionsPage: React.FC = () => {
 
       // Group filter (via transaction type and category)
       if (filters.group) {
-        const transactionType = transactionTypes.find((t) => t.id === transaction.transactionTypeId);
+        const transactionType = transactionTypes.find(
+          (t) => t.id === transaction.transactionTypeId
+        );
         if (!transactionType) {
           return false;
         }
@@ -164,6 +173,14 @@ export const TransactionsPage: React.FC = () => {
         transactionTypes={transactionTypes}
         filters={filters}
         onFiltersChange={setFilters}
+      />
+
+      <QuickEntryRow
+        accounts={accounts}
+        categories={categories}
+        transactionTypes={transactionTypes}
+        onSubmit={handleSubmit}
+        onOpenFullDialog={handleOpenDialog}
       />
 
       <TransactionList

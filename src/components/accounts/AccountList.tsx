@@ -9,11 +9,7 @@ interface AccountListProps {
   onDelete: (account: Account) => void;
 }
 
-export const AccountList: React.FC<AccountListProps> = ({
-  accounts,
-  onEdit,
-  onDelete,
-}) => {
+export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onDelete }) => {
   if (accounts.length === 0) {
     return (
       <Box sx={{ textAlign: 'center', py: 4 }}>

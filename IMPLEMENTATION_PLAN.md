@@ -846,78 +846,57 @@ These features will be implemented after the MVP is validated by users.
 
 These features will be implemented after the MVP is validated by users.
 
-## Phase 12: Bulk Transaction Entry (Post-MVP)
+## Phase 12: Quick Transaction Entry Enhancement (Post-MVP)
 
-**Requirements**: FR-1 (Transaction Management - Bulk Entry)
+**Requirements**: FR-1 (Transaction Management - Quick Entry)
 
-**Goal**: Enhance existing TransactionsPage to support efficient bulk entry directly in the transaction list
+**Goal**: Add a quick entry row at the top of TransactionsPage for rapid transaction entry without opening dialogs
 
-### 12.1 Enhance Transaction List for Inline Editing
-- [ ] Update `src/components/transactions/TransactionList.tsx` to support inline editing mode
-- [ ] Add "Edit Mode" toggle button to TransactionsPage header
-- [ ] Convert list items to editable cells when in edit mode
-- [ ] Add inline cell editors for each field:
-  - [ ] Date cell with date picker
-  - [ ] Amount cell with numeric input
-  - [ ] Type cell with auto-complete dropdown
-  - [ ] Account cells with auto-complete dropdown
-  - [ ] Description cell with text input
-- [ ] Tab/Enter navigation between cells
-- [ ] **Write tests**: Edit mode toggle, inline editing
-- [ ] **Test**: Toggle edit mode, tab through cells, edit values
+### 12.1 Add Quick Entry Row to TransactionsPage
+- [x] Create `src/components/transactions/QuickEntryRow.tsx`:
+  - [x] Compact form row with essential fields: Amount, Date, Transaction Type, From/To Accounts, Notes
+  - [x] Always visible at top of transaction list (no toggle needed)
+  - [x] Pre-filled with smart defaults:
+    - [x] Date: today
+    - [x] Transaction type: last used type
+    - [x] Account: last used account
+  - [x] Conditional fields based on transaction type (same logic as TransactionForm)
+  - [x] Auto-complete dropdowns for transaction types and accounts
+  - [x] Real-time validation (same as TransactionForm)
+- [x] Add QuickEntryRow to TransactionsPage above TransactionList
+- [x] **Write tests**: QuickEntryRow rendering, conditional fields, defaults (15 tests)
+- [x] **Test**: View transactions page, see quick entry row at top, verify fields show/hide based on type
 
-### 12.2 Add Quick Entry Row
-- [ ] Add "New Transaction" row at top of list (always visible in edit mode)
-- [ ] Pre-filled with smart defaults (today's date, last used account)
-- [ ] Submit adds transaction and clears row for next entry
-- [ ] Enter key in description field submits and focuses on amount for next
-- [ ] Support rapid entry without leaving keyboard
-- [ ] **Write tests**: Quick entry row, keyboard workflow
-- [ ] **Test**: Enter 5+ transactions rapidly using only keyboard
+### 12.2 Add Keyboard Support for Quick Entry
+- [ ] Enter key submits form and clears for next entry:
+  - [ ] Focus returns to amount field after submit
+  - [ ] Last used type and account remain selected for rapid similar entries
+  - [ ] Date increments to today if previously set to past date
+- [ ] Tab key navigates between fields (standard browser behavior)
+- [ ] Escape key clears the quick entry form
+- [ ] Show success snackbar on submit (brief, non-intrusive)
+- [ ] **Write tests**: Enter key submit, Tab navigation, Escape clear, focus management
+- [ ] **Test**: Add 10+ transactions using only keyboard (Tab + Enter), verify rapid entry flow
 
-### 12.3 Add Inline Validation and Auto-Complete
-- [ ] Real-time validation as user types (same as TransactionForm)
-- [ ] Auto-complete for accounts and transaction types
-- [ ] Visual validation indicators (red border for errors)
-- [ ] Prevent save of invalid transactions
-- [ ] **Write tests**: Validation rules, auto-complete
-- [ ] **Test**: Trigger validation errors, use auto-complete
+### 12.3 Add Smart Defaults and Memory
+- [ ] Remember last used transaction type per session (localStorage)
+- [ ] Remember last used account per transaction type
+- [ ] Show placeholder text: "Enter amount to start..."
+- [ ] After submit, immediately ready for next transaction
+- [ ] Add "More Details" link to open full TransactionDialog for complex transactions
+- [ ] **Write tests**: Default memory, localStorage persistence, dialog link
+- [ ] **Test**: Add multiple similar transactions, verify smart defaults speed up entry
 
-### 12.4 Add Fill-Down and Duplicate Features
-- [ ] Right-click context menu on transaction rows:
-  - [ ] "Duplicate" - copy transaction to new row
-  - [ ] "Fill Down Date" - copy date from row above
-  - [ ] "Fill Down Account" - copy account from row above
-- [ ] Keyboard shortcuts:
-  - [ ] Ctrl+D to duplicate selected transaction
-  - [ ] Ctrl+Shift+D to fill down from previous row
-- [ ] **Write tests**: Context menu, keyboard shortcuts
-- [ ] **Test**: Duplicate transactions, fill down common fields
+### 12.4 Polish Quick Entry UX
+- [ ] Visual separation from transaction list (subtle border/background)
+- [ ] Compact design (doesn't take too much space)
+- [ ] Clear visual feedback during validation
+- [ ] Disabled state while transaction is being saved
+- [ ] Error messages appear inline near field (not blocking)
+- [ ] **Write tests**: Visual states, error display
+- [ ] **Test**: Verify professional appearance, error handling
 
-### 12.5 Add Paste from Clipboard
-- [ ] Detect when user pastes into description field
-- [ ] Parse common bank statement formats (tab/comma delimited)
-- [ ] Show preview dialog with column mapping:
-  - [ ] Auto-detect date, amount, description columns
-  - [ ] User confirms/adjusts mapping
-  - [ ] Preview parsed transactions
-- [ ] Bulk import parsed transactions
-- [ ] Handle various date and amount formats
-- [ ] **Write tests**: Clipboard parsing, column detection
-- [ ] **Test**: Copy from Excel/bank PDF, paste into list
-
-### 12.6 Add Batch Operations
-- [ ] Multi-select transactions (Shift+Click, Ctrl+Click)
-- [ ] Batch actions in edit mode:
-  - [ ] Delete selected (with confirmation)
-  - [ ] Change category for selected
-  - [ ] Change account for selected
-- [ ] Undo/redo for batch operations (Ctrl+Z / Ctrl+Y)
-- [ ] Unsaved changes indicator in edit mode
-- [ ] **Write tests**: Multi-select, batch operations, undo
-- [ ] **Test**: Select multiple transactions, batch delete, undo
-
-**Manual Verification (User):** Enable edit mode on transactions page, use quick entry row to add 10+ transactions rapidly, duplicate transactions, paste from bank statement, batch edit categories, verify all changes saved correctly when exiting edit mode.
+**Manual Verification (User):** Navigate to /transactions, see quick entry row at top, add 10+ transactions using only Enter key for rapid entry, verify smart defaults remember last used type/account, press Escape to clear form, use Tab to navigate between fields, verify all transactions saved correctly, check that opening "More Details" shows full dialog for complex transactions.
 
 ## Phase 13: Budget Planning Feature (Post-MVP)
 

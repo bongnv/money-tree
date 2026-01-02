@@ -165,4 +165,3 @@ describe('useAppStore', () => {
     expect(storageService.getCurrentYear()).toBeNull();
   });
 });
-

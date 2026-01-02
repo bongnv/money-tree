@@ -66,9 +66,7 @@ describe('CalculationService', () => {
     });
 
     it('should add income to balance', () => {
-      const balance = calculationService.calculateAccountBalance(mockAccount1, [
-        incomeTransaction,
-      ]);
+      const balance = calculationService.calculateAccountBalance(mockAccount1, [incomeTransaction]);
       expect(balance).toBe(4000); // 1000 + 3000
     });
 
@@ -192,10 +190,7 @@ describe('CalculationService', () => {
 
   describe('calculateNetIncome', () => {
     it('should calculate net income correctly', () => {
-      const net = calculationService.calculateNetIncome([
-        incomeTransaction,
-        expenseTransaction,
-      ]);
+      const net = calculationService.calculateNetIncome([incomeTransaction, expenseTransaction]);
       expect(net).toBe(2800); // 3000 - 200
     });
 
@@ -509,77 +504,45 @@ describe('CalculationService', () => {
     ];
 
     it('should return budget active on given date', () => {
-      const budget = calculationService.getActiveBudgetForPeriod(
-        budgets,
-        'type-1',
-        '2026-03-15'
-      );
+      const budget = calculationService.getActiveBudgetForPeriod(budgets, 'type-1', '2026-03-15');
       expect(budget?.id).toBe('1');
       expect(budget?.amount).toBe(500);
     });
 
     it('should return second budget when date is in second range', () => {
-      const budget = calculationService.getActiveBudgetForPeriod(
-        budgets,
-        'type-1',
-        '2026-09-15'
-      );
+      const budget = calculationService.getActiveBudgetForPeriod(budgets, 'type-1', '2026-09-15');
       expect(budget?.id).toBe('2');
       expect(budget?.amount).toBe(600);
     });
 
     it('should return year-round budget for any date', () => {
-      const budget = calculationService.getActiveBudgetForPeriod(
-        budgets,
-        'type-2',
-        '2026-03-15'
-      );
+      const budget = calculationService.getActiveBudgetForPeriod(budgets, 'type-2', '2026-03-15');
       expect(budget?.id).toBe('3');
       expect(budget?.amount).toBe(300);
     });
 
     it('should return undefined when date is before start date', () => {
-      const budget = calculationService.getActiveBudgetForPeriod(
-        budgets,
-        'type-1',
-        '2025-12-15'
-      );
+      const budget = calculationService.getActiveBudgetForPeriod(budgets, 'type-1', '2025-12-15');
       expect(budget).toBeUndefined();
     });
 
     it('should return undefined when date is after end date', () => {
-      const budget = calculationService.getActiveBudgetForPeriod(
-        budgets,
-        'type-1',
-        '2027-01-15'
-      );
+      const budget = calculationService.getActiveBudgetForPeriod(budgets, 'type-1', '2027-01-15');
       expect(budget).toBeUndefined();
     });
 
     it('should return undefined for non-existent transaction type', () => {
-      const budget = calculationService.getActiveBudgetForPeriod(
-        budgets,
-        'type-3',
-        '2026-03-15'
-      );
+      const budget = calculationService.getActiveBudgetForPeriod(budgets, 'type-3', '2026-03-15');
       expect(budget).toBeUndefined();
     });
 
     it('should handle date on start boundary', () => {
-      const budget = calculationService.getActiveBudgetForPeriod(
-        budgets,
-        'type-1',
-        '2026-01-01'
-      );
+      const budget = calculationService.getActiveBudgetForPeriod(budgets, 'type-1', '2026-01-01');
       expect(budget?.id).toBe('1');
     });
 
     it('should handle date on end boundary', () => {
-      const budget = calculationService.getActiveBudgetForPeriod(
-        budgets,
-        'type-1',
-        '2026-06-30'
-      );
+      const budget = calculationService.getActiveBudgetForPeriod(budgets, 'type-1', '2026-06-30');
       expect(budget?.id).toBe('1');
     });
 
@@ -682,7 +645,11 @@ describe('CalculationService', () => {
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
-      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-01-01', '2026-01-31');
+      const prorated = calculationService.prorateBudgetForPeriod(
+        budget,
+        '2026-01-01',
+        '2026-01-31'
+      );
       expect(prorated).toBe(1500); // 1 month
     });
 
@@ -697,7 +664,11 @@ describe('CalculationService', () => {
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
-      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-01-01', '2026-03-31');
+      const prorated = calculationService.prorateBudgetForPeriod(
+        budget,
+        '2026-01-01',
+        '2026-03-31'
+      );
       expect(prorated).toBe(4500); // 1500 * 3
     });
 
@@ -712,7 +683,11 @@ describe('CalculationService', () => {
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
-      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-01-01', '2026-12-31');
+      const prorated = calculationService.prorateBudgetForPeriod(
+        budget,
+        '2026-01-01',
+        '2026-12-31'
+      );
       expect(prorated).toBe(18000); // 1500 * 12
     });
 
@@ -727,7 +702,11 @@ describe('CalculationService', () => {
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
-      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-01-01', '2026-03-31');
+      const prorated = calculationService.prorateBudgetForPeriod(
+        budget,
+        '2026-01-01',
+        '2026-03-31'
+      );
       expect(prorated).toBe(4500); // 3 months
     });
 
@@ -742,7 +721,11 @@ describe('CalculationService', () => {
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
-      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-01-01', '2026-01-31');
+      const prorated = calculationService.prorateBudgetForPeriod(
+        budget,
+        '2026-01-01',
+        '2026-01-31'
+      );
       expect(prorated).toBe(1500); // 4500 / 3
     });
 
@@ -757,7 +740,11 @@ describe('CalculationService', () => {
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
-      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-01-01', '2026-12-31');
+      const prorated = calculationService.prorateBudgetForPeriod(
+        budget,
+        '2026-01-01',
+        '2026-12-31'
+      );
       expect(prorated).toBe(18000); // 4500 * 4
     });
 
@@ -772,7 +759,11 @@ describe('CalculationService', () => {
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
-      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-01-01', '2026-12-31');
+      const prorated = calculationService.prorateBudgetForPeriod(
+        budget,
+        '2026-01-01',
+        '2026-12-31'
+      );
       expect(prorated).toBe(18000); // 12 months
     });
 
@@ -787,7 +778,11 @@ describe('CalculationService', () => {
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
-      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-01-01', '2026-01-31');
+      const prorated = calculationService.prorateBudgetForPeriod(
+        budget,
+        '2026-01-01',
+        '2026-01-31'
+      );
       expect(prorated).toBe(1500); // 18000 / 12
     });
 
@@ -802,7 +797,11 @@ describe('CalculationService', () => {
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
-      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-01-01', '2026-03-31');
+      const prorated = calculationService.prorateBudgetForPeriod(
+        budget,
+        '2026-01-01',
+        '2026-03-31'
+      );
       expect(prorated).toBe(4500); // 18000 / 4
     });
 
@@ -818,7 +817,11 @@ describe('CalculationService', () => {
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
       // Viewing Q1 (90 days), but budget only active Jan-Feb (59 days)
-      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-01-01', '2026-03-31');
+      const prorated = calculationService.prorateBudgetForPeriod(
+        budget,
+        '2026-01-01',
+        '2026-03-31'
+      );
       // 1500 * 3 months * (59 days / 90 days) = 4500 * 0.6556 = 2950
       expect(prorated).toBeCloseTo(2950, 0);
     });
@@ -835,7 +838,11 @@ describe('CalculationService', () => {
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
       // Viewing period is after budget ends
-      const prorated = calculationService.prorateBudgetForPeriod(budget, '2026-07-01', '2026-07-31');
+      const prorated = calculationService.prorateBudgetForPeriod(
+        budget,
+        '2026-07-01',
+        '2026-07-31'
+      );
       expect(prorated).toBe(0);
     });
   });

@@ -33,9 +33,7 @@ export const useAssetStore = create<AssetState & AssetActions>((set, get) => ({
   updateManualAsset: (id, updates) => {
     set((state) => ({
       manualAssets: state.manualAssets.map((asset) =>
-        asset.id === id
-          ? { ...asset, ...updates, updatedAt: new Date().toISOString() }
-          : asset
+        asset.id === id ? { ...asset, ...updates, updatedAt: new Date().toISOString() } : asset
       ),
     }));
     useAppStore.getState().setUnsavedChanges(true);

@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent } from '@mui/material';
 import type { Category } from '../../types/models';
 import { CategoryForm } from './CategoryForm';
 
@@ -27,15 +23,9 @@ export const CategoryDialog: React.FC<CategoryDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {category ? 'Edit Category' : 'Add Category'}
-      </DialogTitle>
+      <DialogTitle>{category ? 'Edit Category' : 'Add Category'}</DialogTitle>
       <DialogContent>
-        <CategoryForm
-          category={category}
-          onSubmit={handleSubmit}
-          onCancel={onClose}
-        />
+        <CategoryForm category={category} onSubmit={handleSubmit} onCancel={onClose} />
       </DialogContent>
     </Dialog>
   );

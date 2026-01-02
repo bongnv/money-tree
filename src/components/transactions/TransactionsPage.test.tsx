@@ -11,7 +11,9 @@ jest.mock('../../stores/useTransactionStore');
 jest.mock('../../stores/useAccountStore');
 jest.mock('../../stores/useCategoryStore');
 
-const mockUseTransactionStore = useTransactionStore as jest.MockedFunction<typeof useTransactionStore>;
+const mockUseTransactionStore = useTransactionStore as jest.MockedFunction<
+  typeof useTransactionStore
+>;
 const mockUseAccountStore = useAccountStore as jest.MockedFunction<typeof useAccountStore>;
 const mockUseCategoryStore = useCategoryStore as jest.MockedFunction<typeof useCategoryStore>;
 
@@ -365,7 +367,9 @@ describe('TransactionsPage', () => {
     await user.click(deleteButton);
 
     // Should show delete confirmation dialog
-    expect(screen.getByText(/are you sure you want to delete this transaction/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/are you sure you want to delete this transaction/i)
+    ).toBeInTheDocument();
   });
 
   it('cancels delete when cancel button is clicked', async () => {
@@ -392,7 +396,9 @@ describe('TransactionsPage', () => {
 
     // Dialog should close
     await waitFor(() => {
-      expect(screen.queryByText(/are you sure you want to delete this transaction/i)).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/are you sure you want to delete this transaction/i)
+      ).not.toBeInTheDocument();
     });
 
     expect(mockDeleteTransaction).not.toHaveBeenCalled();
@@ -571,9 +577,13 @@ describe('TransactionsPage', () => {
     const searchInput = screen.getByPlaceholderText(/search/i);
     await user.type(searchInput, 'test');
 
-    // Clear filters
-    const clearButton = screen.getByRole('button', { name: /clear/i });
-    await user.click(clearButton);
+    // Clear filters - find the button with just "Clear" text that is not in a tooltip
+    const clearButtons = screen.getAllByText('Clear');
+    // The filters clear button is a regular button, not in a tooltip
+    const filtersClearButton = clearButtons.find((el) => el.tagName === 'BUTTON');
+    if (filtersClearButton) {
+      await user.click(filtersClearButton);
+    }
 
     // Search field should be empty
     expect(searchInput).toHaveValue('');

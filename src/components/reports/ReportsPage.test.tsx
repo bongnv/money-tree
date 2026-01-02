@@ -35,10 +35,10 @@ describe('ReportsPage', () => {
 
   it('shows Cash Flow report when tab is clicked', () => {
     render(<ReportsPage />);
-    
+
     const cashFlowTab = screen.getByRole('tab', { name: /cash flow/i });
     fireEvent.click(cashFlowTab);
-    
+
     // Cash Flow report should be visible
     expect(screen.getByTestId('cash-flow-report')).toBeInTheDocument();
   });

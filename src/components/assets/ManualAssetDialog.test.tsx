@@ -81,25 +81,13 @@ describe('ManualAssetDialog', () => {
     };
 
     it('should render dialog with Edit title', () => {
-      render(
-        <ManualAssetDialog
-          open={true}
-          asset={existingAsset}
-          onClose={mockOnClose}
-        />
-      );
+      render(<ManualAssetDialog open={true} asset={existingAsset} onClose={mockOnClose} />);
 
       expect(screen.getByText('Edit Asset')).toBeInTheDocument();
     });
 
     it('should call updateManualAsset when form is submitted', async () => {
-      render(
-        <ManualAssetDialog
-          open={true}
-          asset={existingAsset}
-          onClose={mockOnClose}
-        />
-      );
+      render(<ManualAssetDialog open={true} asset={existingAsset} onClose={mockOnClose} />);
 
       fireEvent.change(screen.getByLabelText(/value/i), {
         target: { value: '600000' },

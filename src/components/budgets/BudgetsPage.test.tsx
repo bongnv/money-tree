@@ -91,9 +91,7 @@ describe('BudgetsPage', () => {
     jest.clearAllMocks();
     window.confirm = jest.fn(() => true);
 
-    mockGetCategoryById.mockImplementation((id: string) => 
-      mockCategories.find((c) => c.id === id)
-    );
+    mockGetCategoryById.mockImplementation((id: string) => mockCategories.find((c) => c.id === id));
 
     (useCategoryStore as unknown as jest.Mock).mockReturnValue({
       categories: mockCategories,
@@ -134,7 +132,9 @@ describe('BudgetsPage', () => {
     render(<BudgetsPage />);
 
     expect(screen.getByText('No budgets set')).toBeInTheDocument();
-    expect(screen.getByText('Click "Add Budget" to get started with budget planning')).toBeInTheDocument();
+    expect(
+      screen.getByText('Click "Add Budget" to get started with budget planning')
+    ).toBeInTheDocument();
   });
 
   it('should display budget items grouped by category', () => {
@@ -240,8 +240,20 @@ describe('BudgetsPage', () => {
     });
 
     const monthlyBudget = { ...mockBudget, id: '1', period: 'monthly' as const };
-    const quarterlyBudget = { ...mockBudget, id: '2', period: 'quarterly' as const, amount: 4500, transactionTypeId: 'tt1-q' };
-    const yearlyBudget = { ...mockBudget, id: '3', period: 'yearly' as const, amount: 18000, transactionTypeId: 'tt1-y' };
+    const quarterlyBudget = {
+      ...mockBudget,
+      id: '2',
+      period: 'quarterly' as const,
+      amount: 4500,
+      transactionTypeId: 'tt1-q',
+    };
+    const yearlyBudget = {
+      ...mockBudget,
+      id: '3',
+      period: 'yearly' as const,
+      amount: 18000,
+      transactionTypeId: 'tt1-y',
+    };
 
     (useBudgetStore as unknown as jest.Mock).mockReturnValue({
       budgets: [monthlyBudget, quarterlyBudget, yearlyBudget],
@@ -326,7 +338,7 @@ describe('BudgetsPage', () => {
 
     // Expense category should show "Budgets"
     expect(screen.getByText('Housing Budgets')).toBeInTheDocument();
-    
+
     // Income category should show "Income Targets"
     expect(screen.getByText('Income Targets')).toBeInTheDocument();
   });

@@ -32,7 +32,11 @@ export const ReportsPage: React.FC = () => {
         </Typography>
 
         <Paper sx={{ mt: 3 }}>
-          <Tabs value={currentTab} onChange={handleTabChange} sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs
+            value={currentTab}
+            onChange={handleTabChange}
+            sx={{ borderBottom: 1, borderColor: 'divider' }}
+          >
             <Tab label="Balance Sheet" />
             <Tab label="Cash Flow" />
           </Tabs>

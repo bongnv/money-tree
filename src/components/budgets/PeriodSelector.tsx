@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  type SelectChangeEvent,
-} from '@mui/material';
+import { FormControl, InputLabel, Select, MenuItem, type SelectChangeEvent } from '@mui/material';
 
 export interface PeriodOption {
   label: string;

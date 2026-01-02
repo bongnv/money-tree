@@ -73,7 +73,16 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
     filters.group;
 
   return (
-    <Box sx={{ mb: 3, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: 1, borderColor: 'divider' }}>
+    <Box
+      sx={{
+        mb: 3,
+        p: 2,
+        bgcolor: 'background.paper',
+        borderRadius: 1,
+        border: 1,
+        borderColor: 'divider',
+      }}
+    >
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'flex-start' }}>
         {/* Date Range */}
         <TextField

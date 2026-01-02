@@ -21,9 +21,7 @@ describe('UnsavedChangesDialog', () => {
     );
 
     expect(screen.getByText('Unsaved Changes')).toBeInTheDocument();
-    expect(
-      screen.getByText(/Would you like to save them before continuing/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Would you like to save them before continuing/)).toBeInTheDocument();
   });
 
   it('should not render when closed', () => {
@@ -113,4 +111,3 @@ describe('UnsavedChangesDialog', () => {
     expect(saveButton).toHaveClass('MuiButton-contained');
   });
 });
-

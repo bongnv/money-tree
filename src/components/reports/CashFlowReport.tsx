@@ -52,7 +52,7 @@ export const CashFlowReport: React.FC = () => {
         newStartDate = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
         break;
       case 'quarterly':
-        const quarterStartMonth = Math.floor((todayDate.getMonth()) / 3) * 3;
+        const quarterStartMonth = Math.floor(todayDate.getMonth() / 3) * 3;
         newStartDate = new Date(todayDate.getFullYear(), quarterStartMonth, 1);
         break;
       case 'yearly':
@@ -68,7 +68,10 @@ export const CashFlowReport: React.FC = () => {
     setEndDate(today);
   };
 
-  const handlePeriodChange = (_event: React.MouseEvent<HTMLElement>, newPeriod: PeriodType | null) => {
+  const handlePeriodChange = (
+    _event: React.MouseEvent<HTMLElement>,
+    newPeriod: PeriodType | null
+  ) => {
     if (newPeriod) {
       setPeriodType(newPeriod);
       updatePeriodDates(newPeriod);
@@ -77,7 +80,14 @@ export const CashFlowReport: React.FC = () => {
 
   // Calculate cash flow for selected period
   const cashFlow = useMemo(
-    () => reportService.calculateCashFlow(transactions, transactionTypes, categories, startDate, endDate),
+    () =>
+      reportService.calculateCashFlow(
+        transactions,
+        transactionTypes,
+        categories,
+        startDate,
+        endDate
+      ),
     [transactions, transactionTypes, categories, startDate, endDate]
   );
 
@@ -184,7 +194,9 @@ export const CashFlowReport: React.FC = () => {
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <TrendingUpIcon color="success" />
-                <Typography variant="h5">{formatCurrency(cashFlow.totalIncome, currencyId)}</Typography>
+                <Typography variant="h5">
+                  {formatCurrency(cashFlow.totalIncome, currencyId)}
+                </Typography>
               </Box>
             </CardContent>
           </Card>
@@ -197,7 +209,9 @@ export const CashFlowReport: React.FC = () => {
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <TrendingDownIcon color="error" />
-                <Typography variant="h5">{formatCurrency(cashFlow.totalExpenses, currencyId)}</Typography>
+                <Typography variant="h5">
+                  {formatCurrency(cashFlow.totalExpenses, currencyId)}
+                </Typography>
               </Box>
             </CardContent>
           </Card>

@@ -343,7 +343,7 @@ describe('Model Schemas', () => {
     });
 
     it('should validate all asset types', () => {
-      Object.values(AssetType).forEach(type => {
+      Object.values(AssetType).forEach((type) => {
         const asset = {
           id: 'asset-1',
           name: 'Test Asset',
@@ -467,5 +467,3 @@ describe('Model Schemas', () => {
     });
   });
 });
-
-

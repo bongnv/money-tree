@@ -61,26 +61,14 @@ export const ManualAssetsPage: React.FC = () => {
         <Typography variant="h4" component="h1">
           Manual Assets
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleOpenDialog}
-        >
+        <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenDialog}>
           Add Asset
         </Button>
       </Box>
 
-      <ManualAssetList
-        assets={manualAssets}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      <ManualAssetList assets={manualAssets} onEdit={handleEdit} onDelete={handleDelete} />
 
-      <ManualAssetDialog
-        open={dialogOpen}
-        asset={selectedAsset}
-        onClose={handleCloseDialog}
-      />
+      <ManualAssetDialog open={dialogOpen} asset={selectedAsset} onClose={handleCloseDialog} />
 
       <Dialog open={deleteDialogOpen} onClose={handleCancelDelete}>
         <DialogTitle>Delete Asset</DialogTitle>

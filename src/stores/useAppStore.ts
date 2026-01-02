@@ -85,4 +85,3 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
     });
   },
 }));
-

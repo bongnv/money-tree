@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
-import {
-  TextField,
-  MenuItem,
-  Box,
-  Button,
-} from '@mui/material';
+import { TextField, MenuItem, Box, Button } from '@mui/material';
 import type { ManualAsset } from '../../types/models';
 import { AssetType } from '../../types/enums';
 import { getAllCurrencies } from '../../utils/currency.utils';
@@ -16,11 +11,7 @@ interface ManualAssetFormProps {
   onCancel: () => void;
 }
 
-export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
-  asset,
-  onSubmit,
-  onCancel,
-}) => {
+export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({ asset, onSubmit, onCancel }) => {
   const currencies = getAllCurrencies();
   const [formData, setFormData] = useState({
     name: asset?.name || '',
@@ -78,17 +69,16 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
     });
   };
 
-  const handleChange = (field: string) => (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setFormData({
-      ...formData,
-      [field]: e.target.value,
-    });
-    if (errors[field]) {
-      setErrors({ ...errors, [field]: '' });
-    }
-  };
+  const handleChange =
+    (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setFormData({
+        ...formData,
+        [field]: e.target.value,
+      });
+      if (errors[field]) {
+        setErrors({ ...errors, [field]: '' });
+      }
+    };
 
   const assetTypeLabels: Record<AssetType, string> = {
     [AssetType.REAL_ESTATE]: 'Real Estate',
@@ -184,9 +174,7 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
       />
 
       <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-        <Button onClick={onCancel}>
-          Cancel
-        </Button>
+        <Button onClick={onCancel}>Cancel</Button>
         <Button type="submit" variant="contained">
           {asset ? 'Update' : 'Create'}
         </Button>

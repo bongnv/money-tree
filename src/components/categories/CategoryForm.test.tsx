@@ -13,12 +13,7 @@ describe('CategoryForm', () => {
   });
 
   it('should render empty form for new category', () => {
-    render(
-      <CategoryForm
-        onSubmit={mockOnSubmit}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<CategoryForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     expect(screen.getByLabelText(/category name/i)).toHaveValue('');
     expect(screen.getByLabelText(/description/i)).toHaveValue('');
@@ -35,13 +30,7 @@ describe('CategoryForm', () => {
       updatedAt: '2024-01-01T00:00:00.000Z',
     };
 
-    render(
-      <CategoryForm
-        category={category}
-        onSubmit={mockOnSubmit}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<CategoryForm category={category} onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     expect(screen.getByLabelText(/category name/i)).toHaveValue('Groceries');
     expect(screen.getByLabelText(/description/i)).toHaveValue('Food and household items');
@@ -50,12 +39,7 @@ describe('CategoryForm', () => {
 
   it('should show validation error when name is empty', async () => {
     const user = userEvent.setup();
-    render(
-      <CategoryForm
-        onSubmit={mockOnSubmit}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<CategoryForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     const submitButton = screen.getByRole('button', { name: /create/i });
     await user.click(submitButton);
@@ -69,12 +53,7 @@ describe('CategoryForm', () => {
 
   it('should submit valid form data', async () => {
     const user = userEvent.setup();
-    render(
-      <CategoryForm
-        onSubmit={mockOnSubmit}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<CategoryForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     await user.type(screen.getByLabelText(/category name/i), 'Transportation');
     await user.click(screen.getByLabelText(/group/i));
@@ -95,12 +74,7 @@ describe('CategoryForm', () => {
 
   it('should submit without optional description', async () => {
     const user = userEvent.setup();
-    render(
-      <CategoryForm
-        onSubmit={mockOnSubmit}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<CategoryForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     await user.type(screen.getByLabelText(/category name/i), 'Utilities');
 
@@ -118,12 +92,7 @@ describe('CategoryForm', () => {
 
   it('should call onCancel when cancel button is clicked', async () => {
     const user = userEvent.setup();
-    render(
-      <CategoryForm
-        onSubmit={mockOnSubmit}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<CategoryForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     const cancelButton = screen.getByRole('button', { name: /cancel/i });
     await user.click(cancelButton);
@@ -134,12 +103,7 @@ describe('CategoryForm', () => {
 
   it('should clear error when user starts typing', async () => {
     const user = userEvent.setup();
-    render(
-      <CategoryForm
-        onSubmit={mockOnSubmit}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<CategoryForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     // Submit to trigger validation error
     const submitButton = screen.getByRole('button', { name: /create/i });

@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  TextField,
-  MenuItem,
-  FormControlLabel,
-  Switch,
-  Box,
-  Button,
-} from '@mui/material';
+import { TextField, MenuItem, FormControlLabel, Switch, Box, Button } from '@mui/material';
 import type { Account } from '../../types/models';
 import { AccountType } from '../../types/enums';
 import { getAllCurrencies } from '../../utils/currency.utils';
@@ -17,11 +10,7 @@ interface AccountFormProps {
   onCancel: () => void;
 }
 
-export const AccountForm: React.FC<AccountFormProps> = ({
-  account,
-  onSubmit,
-  onCancel,
-}) => {
+export const AccountForm: React.FC<AccountFormProps> = ({ account, onSubmit, onCancel }) => {
   const currencies = getAllCurrencies();
   const [formData, setFormData] = useState({
     name: account?.name || '',
@@ -75,17 +64,16 @@ export const AccountForm: React.FC<AccountFormProps> = ({
     });
   };
 
-  const handleChange = (field: string) => (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setFormData({
-      ...formData,
-      [field]: e.target.value,
-    });
-    if (errors[field]) {
-      setErrors({ ...errors, [field]: '' });
-    }
-  };
+  const handleChange =
+    (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setFormData({
+        ...formData,
+        [field]: e.target.value,
+      });
+      if (errors[field]) {
+        setErrors({ ...errors, [field]: '' });
+      }
+    };
 
   const handleSwitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -167,12 +155,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
       />
 
       <FormControlLabel
-        control={
-          <Switch
-            checked={formData.isActive}
-            onChange={handleSwitchChange}
-          />
-        }
+        control={<Switch checked={formData.isActive} onChange={handleSwitchChange} />}
         label="Active"
         sx={{ mt: 1 }}
       />

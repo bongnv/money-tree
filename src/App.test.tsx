@@ -66,4 +66,3 @@ describe('App', () => {
     expect(useAppStore.getState().error).toBeNull();
   });
 });
-

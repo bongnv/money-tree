@@ -71,22 +71,21 @@ export const TransactionSchema = z.object({
 /**
  * Zod schema for Budget
  */
-export const BudgetSchema = z.object({
-  id: z.string().min(1, 'ID is required'),
-  transactionTypeId: z.string().min(1, 'Transaction type ID is required'),
-  amount: z.number().positive('Amount must be greater than 0'),
-  period: z.enum(['monthly', 'quarterly', 'yearly']),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Start date must be in YYYY-MM-DD format'),
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'End date must be in YYYY-MM-DD format'),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
-}).refine(
-  (data) => data.endDate >= data.startDate,
-  {
+export const BudgetSchema = z
+  .object({
+    id: z.string().min(1, 'ID is required'),
+    transactionTypeId: z.string().min(1, 'Transaction type ID is required'),
+    amount: z.number().positive('Amount must be greater than 0'),
+    period: z.enum(['monthly', 'quarterly', 'yearly']),
+    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Start date must be in YYYY-MM-DD format'),
+    endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'End date must be in YYYY-MM-DD format'),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+  })
+  .refine((data) => data.endDate >= data.startDate, {
     message: 'End date must be on or after start date',
     path: ['endDate'],
-  }
-);
+  });
 
 /**
  * Zod schema for ManualAsset
@@ -110,12 +109,35 @@ export const ManualAssetSchema = z.object({
 export const DataFileSchema = z.object({
   version: z.string().min(1, 'Version is required'),
   year: z.number().int().min(1900).max(2100),
-  accounts: z.array(AccountSchema).nullable().optional().transform(val => val ?? []),
-  categories: z.array(CategorySchema).nullable().optional().transform(val => val ?? []),
-  transactionTypes: z.array(TransactionTypeSchema).nullable().optional().transform(val => val ?? []),
-  transactions: z.array(TransactionSchema).nullable().optional().transform(val => val ?? []),
-  budgets: z.array(BudgetSchema).nullable().optional().transform(val => val ?? []),
-  manualAssets: z.array(ManualAssetSchema).nullable().optional().transform(val => val ?? []),
+  accounts: z
+    .array(AccountSchema)
+    .nullable()
+    .optional()
+    .transform((val) => val ?? []),
+  categories: z
+    .array(CategorySchema)
+    .nullable()
+    .optional()
+    .transform((val) => val ?? []),
+  transactionTypes: z
+    .array(TransactionTypeSchema)
+    .nullable()
+    .optional()
+    .transform((val) => val ?? []),
+  transactions: z
+    .array(TransactionSchema)
+    .nullable()
+    .optional()
+    .transform((val) => val ?? []),
+  budgets: z
+    .array(BudgetSchema)
+    .nullable()
+    .optional()
+    .transform((val) => val ?? []),
+  manualAssets: z
+    .array(ManualAssetSchema)
+    .nullable()
+    .optional()
+    .transform((val) => val ?? []),
   lastModified: z.string().datetime(),
 });
-

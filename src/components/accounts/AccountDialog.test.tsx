@@ -13,26 +13,14 @@ describe('AccountDialog', () => {
   });
 
   it('should render dialog when open', () => {
-    render(
-      <AccountDialog
-        open={true}
-        onClose={mockOnClose}
-        onSubmit={mockOnSubmit}
-      />
-    );
+    render(<AccountDialog open={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />);
 
     expect(screen.getByText('Create New Account')).toBeInTheDocument();
     expect(screen.getByLabelText(/Account Name/i)).toBeInTheDocument();
   });
 
   it('should not render dialog when closed', () => {
-    render(
-      <AccountDialog
-        open={false}
-        onClose={mockOnClose}
-        onSubmit={mockOnSubmit}
-      />
-    );
+    render(<AccountDialog open={false} onClose={mockOnClose} onSubmit={mockOnSubmit} />);
 
     expect(screen.queryByText('Create New Account')).not.toBeInTheDocument();
   });
@@ -50,12 +38,7 @@ describe('AccountDialog', () => {
     };
 
     render(
-      <AccountDialog
-        open={true}
-        account={account}
-        onClose={mockOnClose}
-        onSubmit={mockOnSubmit}
-      />
+      <AccountDialog open={true} account={account} onClose={mockOnClose} onSubmit={mockOnSubmit} />
     );
 
     expect(screen.getByText('Edit Account')).toBeInTheDocument();
@@ -63,13 +46,7 @@ describe('AccountDialog', () => {
 
   it('should call onSubmit and onClose when form is submitted', async () => {
     const user = userEvent.setup();
-    render(
-      <AccountDialog
-        open={true}
-        onClose={mockOnClose}
-        onSubmit={mockOnSubmit}
-      />
-    );
+    render(<AccountDialog open={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />);
 
     const nameInput = screen.getByLabelText(/Account Name/i);
     await user.type(nameInput, 'New Account');
@@ -83,13 +60,7 @@ describe('AccountDialog', () => {
 
   it('should call onClose when cancel button is clicked', async () => {
     const user = userEvent.setup();
-    render(
-      <AccountDialog
-        open={true}
-        onClose={mockOnClose}
-        onSubmit={mockOnSubmit}
-      />
-    );
+    render(<AccountDialog open={true} onClose={mockOnClose} onSubmit={mockOnSubmit} />);
 
     const cancelButton = screen.getByText('Cancel');
     await user.click(cancelButton);

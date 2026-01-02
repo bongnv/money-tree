@@ -31,26 +31,14 @@ describe('AccountList', () => {
   const mockOnDelete = jest.fn();
 
   it('should render all accounts', () => {
-    render(
-      <AccountList
-        accounts={mockAccounts}
-        onEdit={mockOnEdit}
-        onDelete={mockOnDelete}
-      />
-    );
+    render(<AccountList accounts={mockAccounts} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 
     expect(screen.getByText('Checking Account')).toBeInTheDocument();
     expect(screen.getByText('Savings Account')).toBeInTheDocument();
   });
 
   it('should render empty state when no accounts', () => {
-    render(
-      <AccountList
-        accounts={[]}
-        onEdit={mockOnEdit}
-        onDelete={mockOnDelete}
-      />
-    );
+    render(<AccountList accounts={[]} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 
     expect(
       screen.getByText(/No accounts yet. Create your first account to get started./i)

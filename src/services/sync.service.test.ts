@@ -204,17 +204,19 @@ describe('SyncService', () => {
       const mockDataFile: DataFile = {
         version: '1.0.0',
         year: 2024,
-        accounts: [{
-          id: '1',
-          name: 'Test Account',
-          type: AccountType.CASH,
-          currencyId: 'USD',
-          initialBalance: 1000,
-          isActive: true,
-          description: '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        }],
+        accounts: [
+          {
+            id: '1',
+            name: 'Test Account',
+            type: AccountType.CASH,
+            currencyId: 'USD',
+            initialBalance: 1000,
+            isActive: true,
+            description: '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ],
         categories: [],
         transactionTypes: [],
         transactions: [],
@@ -328,4 +330,3 @@ describe('SyncService', () => {
     });
   });
 });
-

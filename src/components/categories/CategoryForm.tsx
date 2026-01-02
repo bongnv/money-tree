@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
-import {
-  TextField,
-  MenuItem,
-  Box,
-  Button,
-} from '@mui/material';
+import { TextField, MenuItem, Box, Button } from '@mui/material';
 import type { Category } from '../../types/models';
 import { Group } from '../../types/enums';
 
@@ -14,11 +9,7 @@ interface CategoryFormProps {
   onCancel: () => void;
 }
 
-export const CategoryForm: React.FC<CategoryFormProps> = ({
-  category,
-  onSubmit,
-  onCancel,
-}) => {
+export const CategoryForm: React.FC<CategoryFormProps> = ({ category, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
     name: category?.name || '',
     group: category?.group || Group.EXPENSE,
@@ -56,17 +47,16 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
     });
   };
 
-  const handleChange = (field: string) => (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setFormData({
-      ...formData,
-      [field]: e.target.value,
-    });
-    if (errors[field]) {
-      setErrors({ ...errors, [field]: '' });
-    }
-  };
+  const handleChange =
+    (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setFormData({
+        ...formData,
+        [field]: e.target.value,
+      });
+      if (errors[field]) {
+        setErrors({ ...errors, [field]: '' });
+      }
+    };
 
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate>
@@ -109,9 +99,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
       />
 
       <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
-        <Button onClick={onCancel}>
-          Cancel
-        </Button>
+        <Button onClick={onCancel}>Cancel</Button>
         <Button type="submit" variant="contained">
           {category ? 'Update' : 'Create'}
         </Button>

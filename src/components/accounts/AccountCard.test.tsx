@@ -7,7 +7,9 @@ import { useTransactionStore } from '../../stores/useTransactionStore';
 
 jest.mock('../../stores/useTransactionStore');
 
-const mockUseTransactionStore = useTransactionStore as jest.MockedFunction<typeof useTransactionStore>;
+const mockUseTransactionStore = useTransactionStore as jest.MockedFunction<
+  typeof useTransactionStore
+>;
 
 describe('AccountCard', () => {
   const mockAccount: Account = {
@@ -41,13 +43,7 @@ describe('AccountCard', () => {
   });
 
   it('should render account information', () => {
-    render(
-      <AccountCard
-        account={mockAccount}
-        onEdit={mockOnEdit}
-        onDelete={mockOnDelete}
-      />
-    );
+    render(<AccountCard account={mockAccount} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 
     expect(screen.getByText('Checking Account')).toBeInTheDocument();
     expect(screen.getByText('$1000.00')).toBeInTheDocument();
@@ -71,13 +67,7 @@ describe('AccountCard', () => {
 
   it('should call onEdit when edit button is clicked', async () => {
     const user = userEvent.setup();
-    render(
-      <AccountCard
-        account={mockAccount}
-        onEdit={mockOnEdit}
-        onDelete={mockOnDelete}
-      />
-    );
+    render(<AccountCard account={mockAccount} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 
     const editButton = screen.getByLabelText('Edit Checking Account');
     await user.click(editButton);
@@ -88,13 +78,7 @@ describe('AccountCard', () => {
 
   it('should call onDelete when delete button is clicked', async () => {
     const user = userEvent.setup();
-    render(
-      <AccountCard
-        account={mockAccount}
-        onEdit={mockOnEdit}
-        onDelete={mockOnDelete}
-      />
-    );
+    render(<AccountCard account={mockAccount} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 
     const deleteButton = screen.getByLabelText('Delete Checking Account');
     await user.click(deleteButton);
@@ -105,13 +89,7 @@ describe('AccountCard', () => {
 
   it('should show inactive status', () => {
     const inactiveAccount = { ...mockAccount, isActive: false };
-    render(
-      <AccountCard
-        account={inactiveAccount}
-        onEdit={mockOnEdit}
-        onDelete={mockOnDelete}
-      />
-    );
+    render(<AccountCard account={inactiveAccount} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 
     expect(screen.getByText('BANK ACCOUNT')).toBeInTheDocument();
   });
@@ -150,13 +128,7 @@ describe('AccountCard', () => {
       getTransactionsByDateRange: jest.fn(),
     });
 
-    render(
-      <AccountCard
-        account={mockAccount}
-        onEdit={mockOnEdit}
-        onDelete={mockOnDelete}
-      />
-    );
+    render(<AccountCard account={mockAccount} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 
     // Initial balance: $1000 + $200 (in) - $50 (out) = $1150
     expect(screen.getByText('$1150.00')).toBeInTheDocument();

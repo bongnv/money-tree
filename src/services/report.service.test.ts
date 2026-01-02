@@ -454,7 +454,13 @@ describe('ReportService', () => {
     });
 
     it('should handle empty transactions', () => {
-      const result = reportService.calculateCashFlow([], mockTypes, mockCategories, '2024-01-01', '2024-01-31');
+      const result = reportService.calculateCashFlow(
+        [],
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-01-31'
+      );
 
       expect(result.totalIncome).toBe(0);
       expect(result.totalExpenses).toBe(0);

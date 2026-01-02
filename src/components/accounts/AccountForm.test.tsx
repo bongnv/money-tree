@@ -36,9 +36,7 @@ describe('AccountForm', () => {
       updatedAt: '2024-01-01T00:00:00.000Z',
     };
 
-    render(
-      <AccountForm account={account} onSubmit={mockOnSubmit} onCancel={mockOnCancel} />
-    );
+    render(<AccountForm account={account} onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     expect(screen.getByLabelText(/Account Name/i)).toHaveValue('Test Account');
     expect(screen.getByLabelText(/Initial Balance/i)).toHaveValue(1500);
@@ -76,9 +74,7 @@ describe('AccountForm', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(
-        screen.getByText('Initial balance must be a valid number')
-      ).toBeInTheDocument();
+      expect(screen.getByText('Initial balance must be a valid number')).toBeInTheDocument();
     });
 
     expect(mockOnSubmit).not.toHaveBeenCalled();

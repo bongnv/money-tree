@@ -63,14 +63,14 @@ class SyncService {
 
     try {
       const storage = StorageFactory.getCurrentProvider();
-      
+
       // Gather data from all domain stores
       const accountStore = useAccountStore.getState();
       const categoryStore = useCategoryStore.getState();
       const transactionStore = useTransactionStore.getState();
       const assetStore = useAssetStore.getState();
       const budgetStore = useBudgetStore.getState();
-      
+
       const dataToSave: DataFile = {
         version: '1.0.0',
         year: state.currentYear,
@@ -148,7 +148,7 @@ class SyncService {
         useTransactionStore.getState().setTransactions(dataFile.transactions || []);
         useAssetStore.getState().setManualAssets(dataFile.manualAssets || []);
         useBudgetStore.getState().setBudgets(dataFile.budgets || []);
-        
+
         state.setCurrentYear(year);
         state.setFileName(`money-tree-${year}.json`);
         state.markAsSaved();
@@ -172,4 +172,3 @@ class SyncService {
 }
 
 export const syncService = new SyncService();
-

@@ -17,7 +17,7 @@ export const CategoryList: React.FC<CategoryListProps> = ({
   onDelete,
 }) => {
   const getTransactionTypeCount = (categoryId: string) => {
-    return transactionTypes.filter(tt => tt.categoryId === categoryId).length;
+    return transactionTypes.filter((tt) => tt.categoryId === categoryId).length;
   };
 
   if (categories.length === 0) {

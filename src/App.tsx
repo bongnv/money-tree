@@ -76,11 +76,7 @@ const App: React.FC = () => {
           </Routes>
         </MainLayout>
       </BrowserRouter>
-      <FileLoadErrorDialog
-        open={!!error}
-        error={error}
-        onClose={handleCloseError}
-      />
+      <FileLoadErrorDialog open={!!error} error={error} onClose={handleCloseError} />
     </ThemeProvider>
   );
 };

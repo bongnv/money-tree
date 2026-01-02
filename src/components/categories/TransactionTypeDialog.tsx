@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent } from '@mui/material';
 import type { TransactionType, Category } from '../../types/models';
 import { TransactionTypeForm } from './TransactionTypeForm';
 
@@ -22,7 +18,9 @@ export const TransactionTypeDialog: React.FC<TransactionTypeDialogProps> = ({
   onClose,
   onSubmit,
 }) => {
-  const handleSubmit = (transactionTypeData: Omit<TransactionType, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSubmit = (
+    transactionTypeData: Omit<TransactionType, 'id' | 'createdAt' | 'updatedAt'>
+  ) => {
     onSubmit(transactionTypeData);
     onClose();
   };

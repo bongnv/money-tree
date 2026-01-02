@@ -103,11 +103,7 @@ describe('ManualAssetForm', () => {
 
     it('should render form with existing asset data', () => {
       render(
-        <ManualAssetForm
-          asset={existingAsset}
-          onSubmit={mockOnSubmit}
-          onCancel={mockOnCancel}
-        />
+        <ManualAssetForm asset={existingAsset} onSubmit={mockOnSubmit} onCancel={mockOnCancel} />
       );
 
       expect(screen.getByLabelText(/asset name/i)).toHaveValue('House');
@@ -118,11 +114,7 @@ describe('ManualAssetForm', () => {
 
     it('should submit updated data', async () => {
       render(
-        <ManualAssetForm
-          asset={existingAsset}
-          onSubmit={mockOnSubmit}
-          onCancel={mockOnCancel}
-        />
+        <ManualAssetForm asset={existingAsset} onSubmit={mockOnSubmit} onCancel={mockOnCancel} />
       );
 
       fireEvent.change(screen.getByLabelText(/value/i), {

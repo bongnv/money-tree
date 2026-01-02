@@ -117,4 +117,3 @@ export interface DataFile {
   manualAssets: ManualAsset[];
   lastModified: string; // ISO date string
 }
-

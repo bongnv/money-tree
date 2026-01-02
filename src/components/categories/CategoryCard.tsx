@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  Card,
-  CardContent,
-  CardActions,
-  Typography,
-  IconButton,
-  Box,
-  Chip,
-} from '@mui/material';
+import { Card, CardContent, CardActions, Typography, IconButton, Box, Chip } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import type { Category } from '../../types/models';
 
@@ -48,7 +40,9 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
   return (
     <Card>
       <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+        <Box
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}
+        >
           <Typography variant="h6" component="h3">
             {category.name}
           </Typography>
@@ -68,11 +62,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
         </Typography>
       </CardContent>
       <CardActions sx={{ justifyContent: 'flex-end' }}>
-        <IconButton
-          size="small"
-          onClick={handleEdit}
-          aria-label={`Edit ${category.name}`}
-        >
+        <IconButton size="small" onClick={handleEdit} aria-label={`Edit ${category.name}`}>
           <EditIcon />
         </IconButton>
         <IconButton

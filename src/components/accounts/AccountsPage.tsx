@@ -75,20 +75,12 @@ export const AccountsPage: React.FC = () => {
         <Typography variant="h4" component="h1">
           Accounts
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleOpenDialog}
-        >
+        <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenDialog}>
           New Account
         </Button>
       </Box>
 
-      <AccountList
-        accounts={accounts}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      <AccountList accounts={accounts} onEdit={handleEdit} onDelete={handleDelete} />
 
       <AccountDialog
         open={dialogOpen}

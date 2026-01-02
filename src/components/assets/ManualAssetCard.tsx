@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  Box,
-  Paper,
-  Typography,
-  IconButton,
-  Chip,
-} from '@mui/material';
+import { Box, Paper, Typography, IconButton, Chip } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import type { ManualAsset } from '../../types/models';
 import { AssetType } from '../../types/enums';
@@ -18,11 +12,7 @@ interface ManualAssetCardProps {
   onDelete: (asset: ManualAsset) => void;
 }
 
-export const ManualAssetCard: React.FC<ManualAssetCardProps> = ({
-  asset,
-  onEdit,
-  onDelete,
-}) => {
+export const ManualAssetCard: React.FC<ManualAssetCardProps> = ({ asset, onEdit, onDelete }) => {
   const assetTypeLabels: Record<AssetType, string> = {
     [AssetType.REAL_ESTATE]: 'Real Estate',
     [AssetType.SUPERANNUATION]: 'Superannuation',
@@ -31,7 +21,10 @@ export const ManualAssetCard: React.FC<ManualAssetCardProps> = ({
     [AssetType.OTHER]: 'Other',
   };
 
-  const assetTypeColors: Record<AssetType, 'primary' | 'success' | 'info' | 'warning' | 'error' | 'default'> = {
+  const assetTypeColors: Record<
+    AssetType,
+    'primary' | 'success' | 'info' | 'warning' | 'error' | 'default'
+  > = {
     [AssetType.REAL_ESTATE]: 'primary',
     [AssetType.SUPERANNUATION]: 'info',
     [AssetType.INVESTMENT]: 'success',
@@ -41,7 +34,9 @@ export const ManualAssetCard: React.FC<ManualAssetCardProps> = ({
 
   return (
     <Paper sx={{ p: 2 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+      <Box
+        sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}
+      >
         <Box sx={{ flex: 1 }}>
           <Typography variant="h6" gutterBottom>
             {asset.name}
@@ -54,11 +49,7 @@ export const ManualAssetCard: React.FC<ManualAssetCardProps> = ({
           />
         </Box>
         <Box>
-          <IconButton
-            size="small"
-            onClick={() => onEdit(asset)}
-            aria-label="Edit asset"
-          >
+          <IconButton size="small" onClick={() => onEdit(asset)} aria-label="Edit asset">
             <EditIcon fontSize="small" />
           </IconButton>
           <IconButton

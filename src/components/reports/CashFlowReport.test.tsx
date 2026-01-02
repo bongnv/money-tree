@@ -34,7 +34,9 @@ jest.mock('recharts', () => ({
   Tooltip: () => <div />,
 }));
 
-const mockUseTransactionStore = useTransactionStore as jest.MockedFunction<typeof useTransactionStore>;
+const mockUseTransactionStore = useTransactionStore as jest.MockedFunction<
+  typeof useTransactionStore
+>;
 const mockUseCategoryStore = useCategoryStore as jest.MockedFunction<typeof useCategoryStore>;
 
 describe('CashFlowReport', () => {
@@ -208,9 +210,7 @@ describe('CashFlowReport', () => {
   });
 
   it('should show empty state when no transactions', () => {
-    mockUseTransactionStore.mockImplementation((selector) =>
-      selector({ transactions: [] } as any)
-    );
+    mockUseTransactionStore.mockImplementation((selector) => selector({ transactions: [] } as any));
     render(<CashFlowReport />);
     expect(screen.getByText('No income transactions')).toBeInTheDocument();
     expect(screen.getByText('No expense transactions')).toBeInTheDocument();
@@ -234,13 +234,13 @@ describe('CashFlowReport', () => {
     render(<CashFlowReport />);
     const customButton = screen.getByText('Custom');
     fireEvent.click(customButton);
-    
+
     const startDateInput = screen.getByLabelText('Start Date') as HTMLInputElement;
     fireEvent.change(startDateInput, { target: { value: '2026-01-01' } });
-    
+
     const endDateInput = screen.getByLabelText('End Date') as HTMLInputElement;
     fireEvent.change(endDateInput, { target: { value: '2026-01-31' } });
-    
+
     // Verify component still renders properly
     expect(screen.getByText('Cash Flow Report')).toBeInTheDocument();
   });

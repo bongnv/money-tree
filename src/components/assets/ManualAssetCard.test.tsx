@@ -24,13 +24,7 @@ describe('ManualAssetCard', () => {
   });
 
   it('should render asset details', () => {
-    render(
-      <ManualAssetCard
-        asset={mockAsset}
-        onEdit={mockOnEdit}
-        onDelete={mockOnDelete}
-      />
-    );
+    render(<ManualAssetCard asset={mockAsset} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 
     expect(screen.getByText('House')).toBeInTheDocument();
     expect(screen.getByText('Real Estate')).toBeInTheDocument();
@@ -41,11 +35,7 @@ describe('ManualAssetCard', () => {
   it('should render asset without notes', () => {
     const assetWithoutNotes = { ...mockAsset, notes: undefined };
     render(
-      <ManualAssetCard
-        asset={assetWithoutNotes}
-        onEdit={mockOnEdit}
-        onDelete={mockOnDelete}
-      />
+      <ManualAssetCard asset={assetWithoutNotes} onEdit={mockOnEdit} onDelete={mockOnDelete} />
     );
 
     expect(screen.getByText('House')).toBeInTheDocument();
@@ -64,11 +54,7 @@ describe('ManualAssetCard', () => {
     testCases.forEach(({ type, label }) => {
       const asset = { ...mockAsset, type };
       const { unmount } = render(
-        <ManualAssetCard
-          asset={asset}
-          onEdit={mockOnEdit}
-          onDelete={mockOnDelete}
-        />
+        <ManualAssetCard asset={asset} onEdit={mockOnEdit} onDelete={mockOnDelete} />
       );
       expect(screen.getByText(label)).toBeInTheDocument();
       unmount();
@@ -76,13 +62,7 @@ describe('ManualAssetCard', () => {
   });
 
   it('should call onEdit when edit button is clicked', () => {
-    render(
-      <ManualAssetCard
-        asset={mockAsset}
-        onEdit={mockOnEdit}
-        onDelete={mockOnDelete}
-      />
-    );
+    render(<ManualAssetCard asset={mockAsset} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 
     const editButton = screen.getByLabelText('Edit asset');
     editButton.click();
@@ -91,13 +71,7 @@ describe('ManualAssetCard', () => {
   });
 
   it('should call onDelete when delete button is clicked', () => {
-    render(
-      <ManualAssetCard
-        asset={mockAsset}
-        onEdit={mockOnEdit}
-        onDelete={mockOnDelete}
-      />
-    );
+    render(<ManualAssetCard asset={mockAsset} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 
     const deleteButton = screen.getByLabelText('Delete asset');
     deleteButton.click();

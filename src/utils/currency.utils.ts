@@ -75,10 +75,7 @@ export const getAllCurrencies = (): Currency[] => {
 /**
  * Validate currency amount
  */
-export const isValidCurrencyAmount = (
-  amount: number,
-  currencyId: string
-): boolean => {
+export const isValidCurrencyAmount = (amount: number, currencyId: string): boolean => {
   const currency = getCurrencyById(currencyId);
   if (!currency) {
     return false;

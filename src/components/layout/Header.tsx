@@ -1,13 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Button,
-  Box,
-  CircularProgress,
-} from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, CircularProgress } from '@mui/material';
 import {
   Save as SaveIcon,
   FolderOpen as FolderOpenIcon,
@@ -27,13 +20,7 @@ import { formatDistance } from 'date-fns';
 export const Header: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const {
-    fileName,
-    lastSaved,
-    hasUnsavedChanges,
-    isLoading,
-    currentYear,
-  } = useAppStore();
+  const { fileName, lastSaved, hasUnsavedChanges, isLoading, currentYear } = useAppStore();
 
   const handleLoad = async () => {
     try {
@@ -80,7 +67,8 @@ export const Header: React.FC = () => {
             startIcon={<HomeIcon />}
             onClick={() => navigate('/')}
             sx={{
-              backgroundColor: location.pathname === '/' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+              backgroundColor:
+                location.pathname === '/' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
             }}
           >
             Dashboard
@@ -90,7 +78,8 @@ export const Header: React.FC = () => {
             startIcon={<AccountsIcon />}
             onClick={() => navigate('/accounts')}
             sx={{
-              backgroundColor: location.pathname === '/accounts' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+              backgroundColor:
+                location.pathname === '/accounts' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
             }}
           >
             Accounts
@@ -100,7 +89,8 @@ export const Header: React.FC = () => {
             startIcon={<CategoryIcon />}
             onClick={() => navigate('/categories')}
             sx={{
-              backgroundColor: location.pathname === '/categories' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+              backgroundColor:
+                location.pathname === '/categories' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
             }}
           >
             Categories
@@ -110,7 +100,8 @@ export const Header: React.FC = () => {
             startIcon={<TransactionsIcon />}
             onClick={() => navigate('/transactions')}
             sx={{
-              backgroundColor: location.pathname === '/transactions' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+              backgroundColor:
+                location.pathname === '/transactions' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
             }}
           >
             Transactions
@@ -120,7 +111,8 @@ export const Header: React.FC = () => {
             startIcon={<AssetsIcon />}
             onClick={() => navigate('/assets')}
             sx={{
-              backgroundColor: location.pathname === '/assets' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+              backgroundColor:
+                location.pathname === '/assets' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
             }}
           >
             Assets
@@ -130,7 +122,8 @@ export const Header: React.FC = () => {
             startIcon={<ReportsIcon />}
             onClick={() => navigate('/reports')}
             sx={{
-              backgroundColor: location.pathname === '/reports' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+              backgroundColor:
+                location.pathname === '/reports' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
             }}
           >
             Reports
@@ -140,7 +133,8 @@ export const Header: React.FC = () => {
             startIcon={<BudgetIcon />}
             onClick={() => navigate('/budgets')}
             sx={{
-              backgroundColor: location.pathname === '/budgets' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+              backgroundColor:
+                location.pathname === '/budgets' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
             }}
           >
             Budgets
@@ -150,12 +144,8 @@ export const Header: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {fileName && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="body2">
-                {fileName}
-              </Typography>
-              {hasUnsavedChanges && (
-                <DotIcon sx={{ fontSize: 12, color: 'warning.main' }} />
-              )}
+              <Typography variant="body2">{fileName}</Typography>
+              {hasUnsavedChanges && <DotIcon sx={{ fontSize: 12, color: 'warning.main' }} />}
             </Box>
           )}
 
@@ -185,4 +175,3 @@ export const Header: React.FC = () => {
     </AppBar>
   );
 };
-

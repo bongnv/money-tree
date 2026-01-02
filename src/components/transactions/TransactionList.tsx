@@ -25,7 +25,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
 }) => {
   const getTransactionType = (id: string) => transactionTypes.find((tt) => tt.id === id);
   const getCategory = (id: string) => categories.find((c) => c.id === id);
-  const getAccount = (id?: string) => id ? accounts.find((a) => a.id === id) : undefined;
+  const getAccount = (id?: string) => (id ? accounts.find((a) => a.id === id) : undefined);
 
   const columns: GridColDef[] = [
     {
@@ -57,21 +57,15 @@ export const TransactionList: React.FC<TransactionListProps> = ({
         if (!transactionType) return '—';
         const category = getCategory(transactionType.categoryId);
         if (!category) return '—';
-        
+
         const colorMap: Record<Group, 'error' | 'success' | 'info' | 'warning'> = {
           [Group.EXPENSE]: 'error',
           [Group.INCOME]: 'success',
           [Group.TRANSFER]: 'info',
           [Group.INVESTMENT]: 'warning',
         };
-        
-        return (
-          <Chip 
-            label={category.name} 
-            size="small" 
-            color={colorMap[category.group]} 
-          />
-        );
+
+        return <Chip label={category.name} size="small" color={colorMap[category.group]} />;
       },
     },
     {
@@ -123,11 +117,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
       filterable: false,
       renderCell: (params: GridRenderCellParams) => (
         <Box>
-          <IconButton
-            size="small"
-            onClick={() => onEdit(params.row)}
-            aria-label="Edit transaction"
-          >
+          <IconButton size="small" onClick={() => onEdit(params.row)} aria-label="Edit transaction">
             <EditIcon fontSize="small" />
           </IconButton>
           <IconButton

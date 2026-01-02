@@ -230,10 +230,10 @@ describe('TransactionFilters', () => {
 
     // Verify onFiltersChange was called multiple times (once per keystroke)
     expect(mockOnFiltersChange).toHaveBeenCalled();
-    
+
     // Verify one of the calls included 'c' in searchText
     const calls = mockOnFiltersChange.mock.calls;
-    const hasSearchText = calls.some(call => call[0].searchText && call[0].searchText.length > 0);
+    const hasSearchText = calls.some((call) => call[0].searchText && call[0].searchText.length > 0);
     expect(hasSearchText).toBe(true);
   });
 

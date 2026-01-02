@@ -8,6 +8,8 @@ Read `REQUIREMENTS.md` and `IMPLEMENTATION_PLAN.md` before making changes.
 
 **IMPLEMENTATION_PLAN.md** - Technical implementation with step-by-step tasks.
 
+**Keep in Sync:** Update IMPLEMENTATION_PLAN.md & REQUIREMENTS.md after each task and when requirements change.
+
 ## Step Design
 
 - Build features incrementally with routes added early for UI testing

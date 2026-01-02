@@ -381,47 +381,60 @@ This plan implements all requirements from REQUIREMENTS.md.
 
 **Requirements**: FR-8 (Budget Planning & Review)
 
-**Goal**: Users can create budgets, allocate funds, and track spending
+**Goal**: Users can set budgets per transaction type and track spending progress
 
-### 7.1 Implement Budget Data Layer
-- [ ] Create `src/stores/useBudgetStore.ts` with budget and budget items
-- [ ] Add budget vs actual calculation functions to calculation service
-- [ ] Create budget templates functionality
-- [ ] **Write tests**: useBudgetStore.test.ts
-**Manual Verification (User):** Test budget store operations in browser console or React DevTools, verify budget vs actual calculations with sample data, test template creation.
+### 7.1 Create Basic Budget Page with Add/Edit/Delete
+- [ ] Update `src/types/models.ts` to add `BudgetItem` model:
+  - [ ] `id: string` - unique identifier
+  - [ ] `transactionTypeId: string` - which transaction type
+  - [ ] `amount: number` - budget amount
+  - [ ] `period: 'monthly' | 'quarterly' | 'yearly'` - period type
+- [ ] Create `src/stores/useBudgetStore.ts` with budget items CRUD operations
+- [ ] Create `src/components/budgets/BudgetItemDialog.tsx`:
+  - [ ] Transaction type selector (grouped by category, dropdown)
+  - [ ] Amount input field with validation
+  - [ ] Period selector dropdown (Monthly/Quarterly/Yearly)
+  - [ ] Save and cancel buttons
+  - [ ] Form validation (amount > 0, transaction type required)
+- [ ] Create `src/components/budgets/BudgetsPage.tsx`:
+  - [ ] "Add Budget" button (opens BudgetItemDialog)
+  - [ ] Simple list of budget items showing: transaction type, amount, period
+  - [ ] Edit and delete buttons for each item
+  - [ ] Empty state: "No budgets set. Click Add Budget to get started."
+- [ ] Add route `/budgets` in App.tsx
+- [ ] Add "Budgets" navigation button to Header with icon
+- [ ] **Write tests**: useBudgetStore.test.ts, BudgetItemDialog.test.tsx, BudgetsPage.test.tsx
+**Manual Verification (User):** Navigate to /budgets, click "Add Budget", select Groceries, enter $400, select Monthly, save. Verify item appears in list. Add more budgets (Rent $1,500/month, Car Insurance $600/quarter). Edit a budget amount. Delete a budget. Verify all CRUD operations work.
 
-### 7.2 Build Budget Management UI
-- [ ] Create `src/components/budgets/BudgetForm.tsx` with period types
-- [ ] Create `src/components/budgets/BudgetItemsGrid.tsx` for category allocations
-- [ ] Create `src/components/budgets/BudgetDialog.tsx` with stepper (create/edit)
-- [ ] Create `src/components/budgets/BudgetList.tsx`
-- [ ] Create `src/components/budgets/BudgetOverview.tsx` with progress bars and color coding
-- [ ] Create `src/components/budgets/BudgetsPage.tsx` with tabs
-- [ ] Add route `/budgets`
-- [ ] **Write tests**: Comprehensive component tests
-**Manual Verification (User):** Navigate to /budgets, create new budget with multiple category allocations, set as active, view budget vs actual with existing transactions, edit budget amounts, delete budget, verify all UI elements display correctly.
+### 7.2 Add Progress Tracking with Actual Spending
+- [ ] Add proration and progress calculation functions to `calculation.service.ts`:
+  - [ ] `prorateBudget(amount, fromPeriod, toPeriod)` - convert between periods
+  - [ ] `calculateActualSpending(transactionTypeId, startDate, endDate)` - sum transactions
+- [ ] Update BudgetsPage to show progress for current month:
+  - [ ] Display budget amount and actual spending for each budget item
+  - [ ] Add progress bar with color coding (green < 80%, yellow 80-100%, red > 100%)
+  - [ ] Show percentage (actual / budget × 100%)
+  - [ ] Group budget items by category
+  - [ ] Add total row at bottom (total budget vs total actual)
+- [ ] Automatically prorate budgets to monthly for display (e.g., $600 quarterly → $200/month)
+- [ ] **Write tests**: Calculation functions, progress display, color coding
+**Manual Verification (User):** With budgets from 7.1, add some transactions (groceries, rent). Navigate to /budgets and verify progress bars show actual spending vs budget. Check that $600 quarterly budget displays as $200 for current month. Add more transactions and verify progress bars update in real-time. Verify color coding: green when under 80%, yellow when 80-100%, red when over 100%.
 
-### 7.3 Budget Tracking Dashboard
-- [ ] Create `src/components/budgets/BudgetStatusCard.tsx` - real-time status
-- [ ] Create `src/components/budgets/BudgetAlerts.tsx` - warnings and alerts
-- [ ] Add budget status indicators (green/yellow/red)
-- [ ] **Write tests**: Test status calculations and alerts
-**Manual Verification (User):** Create active budget, add transactions that affect budget categories, verify real-time updates to budget status, check color indicators change (green when under budget, yellow approaching limit, red over budget), test alert notifications.
-
-### 7.4 Budget Analysis & Reports
-- [ ] Create `src/components/budgets/BudgetVarianceReport.tsx`
-- [ ] Create `src/components/budgets/BudgetComparisonChart.tsx`
-- [ ] Add historical budget performance view
-- [ ] Add budget recommendations based on spending patterns
-- [ ] **Write tests**: Test variance calculations
-**Manual Verification (User):** View budget variance report showing over/under spending by category, compare budgets across different months, check historical performance charts, verify budget recommendations appear and are relevant to spending patterns.
-
-### 7.5 Budget Adjustments
-- [ ] Implement in-period budget adjustments
-- [ ] Add adjustment history tracking
-- [ ] Implement rollover functionality
-- [ ] **Write tests**: Test adjustment logic
-**Manual Verification (User):** Modify active budget mid-period, verify adjustment tracking shows what changed and when, test rollover feature to carry over unused amounts to next period, check adjustment history is visible.
+### 7.3 Add Period Selector for Flexible Viewing
+- [ ] Create `src/components/budgets/PeriodSelector.tsx`:
+  - [ ] Dropdown with options: specific months (Jan 2026, Feb 2026), quarters (Q1 2026), years (2026), custom date range
+  - [ ] Default to current month
+- [ ] Update BudgetsPage to use PeriodSelector:
+  - [ ] Pass selected period to progress calculations
+  - [ ] Prorate all budgets based on selected period length
+  - [ ] Calculate actual spending for selected period only
+- [ ] Update progress display logic:
+  - [ ] Monthly budget viewed as quarterly → multiply by 3
+  - [ ] Quarterly budget viewed as monthly → divide by 3
+  - [ ] Yearly budget viewed as monthly → divide by 12
+  - [ ] Show prorated amount with period indicator
+- [ ] **Write tests**: PeriodSelector.test.tsx, proration for different period combinations
+**Manual Verification (User):** With existing budgets and transactions, navigate to /budgets. Use period selector to switch between January 2026, Q1 2026, and 2026. Verify budget amounts prorate correctly (e.g., Groceries $400/month shows as $1,200 for Q1, $4,800 for year). Verify actual spending updates based on selected period. Switch to different months with different transaction amounts and verify progress updates correctly.
 
 ## Phase 8: Dashboard with Quick Transaction Entry (MVP)
 

@@ -131,11 +131,11 @@ The MVP focuses on core personal finance tracking functionality with local file 
   - [ ] Copy budget from previous period as template
   
 #### Budget Allocation
-- [ ] **Category-Level Budgets:**
-  - [ ] Set budget amount for each expense category
-  - [ ] Set budget amount for income categories (expected income)
-  - [ ] Option to set budgets for transaction types (more granular)
-  - [ ] Allocate remaining budget across categories
+- [ ] **Transaction Type-Level Budgets:**
+  - [ ] Set budget amount for each transaction type (e.g., Groceries, Utilities, Salary)
+  - [ ] Support both expense and income transaction types
+  - [ ] Group budgets by category for summary view
+  - [ ] Allocate remaining budget across transaction types
   - [ ] Show total budget vs available funds
 - [ ] **Budget Templates:**
   - [ ] Save budget as template for reuse
@@ -144,14 +144,15 @@ The MVP focuses on core personal finance tracking functionality with local file 
 
 #### Budget Tracking & Review
 - [ ] **Real-Time Budget Status:**
-  - [ ] Show budget vs actual for each category
+  - [ ] Show budget vs actual for each transaction type
   - [ ] Display spent amount, remaining amount, and percentage used
-  - [ ] Visual progress bars for each category
+  - [ ] Visual progress bars for each transaction type
   - [ ] Color coding: Green (on track), Yellow (warning), Red (over budget)
+  - [ ] Roll up transaction types into category summaries
 - [ ] **Budget Dashboard:**
   - [ ] Overall budget status (total budgeted vs actual)
-  - [ ] Categories closest to limit
-  - [ ] Categories over budget (with overage amount)
+  - [ ] Transaction types closest to limit
+  - [ ] Transaction types over budget (with overage amount)
   - [ ] Projected end-of-period status based on current spending rate
 - [ ] **Alerts & Notifications:**
   - [ ] Warning when reaching 80% of budget
@@ -162,7 +163,7 @@ The MVP focuses on core personal finance tracking functionality with local file 
 - [ ] **Variance Analysis:**
   - [ ] Compare actual vs budgeted for completed periods
   - [ ] Show variance amount and percentage
-  - [ ] Identify categories consistently over/under budget
+  - [ ] Identify transaction types consistently over/under budget
   - [ ] Trend analysis across multiple periods
 - [ ] **Budget vs Actual Report:**
   - [ ] Side-by-side comparison table

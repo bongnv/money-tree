@@ -111,12 +111,69 @@ The MVP focuses on core personal finance tracking functionality with local file 
 - [x] Easy to add new storage providers in the future
 - [x] Core business logic is independent of storage implementation
 
-### FR-7: Year Management
+### FR-7: Financial Reports (MVP)
 
-- [ ] Users can switch between different years
-- [ ] Each year's data is stored in a separate file
-- [ ] Users can create new year files
-- [ ] Year selector visible in the interface
+#### Budget Creation
+- [ ] Users can create budget plans with the following features:
+  - [ ] Set budget period type (Monthly, Quarterly, Yearly)
+  - [ ] Define start date and duration
+  - [ ] Create recurring budgets (e.g., same budget every month)
+  - [ ] Copy budget from previous period as template
+  
+#### Budget Allocation
+- [ ] **Category-Level Budgets:**
+  - [ ] Set budget amount for each expense category
+  - [ ] Set budget amount for income categories (expected income)
+  - [ ] Option to set budgets for transaction types (more granular)
+  - [ ] Allocate remaining budget across categories
+  - [ ] Show total budget vs available funds
+- [ ] **Budget Templates:**
+  - [ ] Save budget as template for reuse
+  - [ ] Apply template to new periods
+  - [ ] Modify template without affecting existing budgets
+
+#### Budget Tracking & Review
+- [ ] **Real-Time Budget Status:**
+  - [ ] Show budget vs actual for each category
+  - [ ] Display spent amount, remaining amount, and percentage used
+  - [ ] Visual progress bars for each category
+  - [ ] Color coding: Green (on track), Yellow (warning), Red (over budget)
+- [ ] **Budget Dashboard:**
+  - [ ] Overall budget status (total budgeted vs actual)
+  - [ ] Categories closest to limit
+  - [ ] Categories over budget (with overage amount)
+  - [ ] Projected end-of-period status based on current spending rate
+- [ ] **Alerts & Notifications:**
+  - [ ] Warning when reaching 80% of budget
+  - [ ] Alert when exceeding budget
+  - [ ] Notification for unusual spending patterns
+
+#### Budget Analysis
+- [ ] **Variance Analysis:**
+  - [ ] Compare actual vs budgeted for completed periods
+  - [ ] Show variance amount and percentage
+  - [ ] Identify categories consistently over/under budget
+  - [ ] Trend analysis across multiple periods
+- [ ] **Budget vs Actual Report:**
+  - [ ] Side-by-side comparison table
+  - [ ] Visual charts (bar chart, waterfall chart)
+  - [ ] Drill down to transaction details for any category
+  - [ ] Filter by date range, category, account
+- [ ] **Historical Budget Performance:**
+  - [ ] View past budgets and their performance
+  - [ ] Compare budget adherence over time
+  - [ ] Success rate metrics (% of categories on budget)
+  - [ ] Recommend budget adjustments based on historical data
+
+#### Budget Adjustment
+- [ ] **In-Period Adjustments:**
+  - [ ] Modify budget amounts during the period
+  - [ ] Reallocate funds between categories
+  - [ ] Track adjustment history
+  - [ ] Show adjusted vs original budget
+- [ ] **Rollover Options:**
+  - [ ] Option to rollover unused budget to next period
+  - [ ] Option to compensate overspending in next period
 
 ---
 
@@ -124,22 +181,40 @@ The MVP focuses on core personal finance tracking functionality with local file 
 
 These features will be implemented after the MVP is complete and validated by users.
 
-### FR-8: Budget Planning (Post-MVP)
+### FR-9: Year Management & Multi-Year Support (Post-MVP)
 
-- [ ] Users can create budget plans
-- [ ] Users can set budget limits for different categories
-- [ ] Users can define budget periods (monthly, quarterly, yearly)
-- [ ] Users can modify budget plans as needed
-- [ ] Dashboard shows budget tracking status
+#### Year Management
+- [ ] Users can switch between different years
+- [ ] Each year's data is stored in a separate file
+- [ ] Users can create new year files
+- [ ] Year selector visible in the interface
 
-### FR-9: Financial Reports (Post-MVP)
-
-- [ ] Users can view and analyze their financial data through multiple reports:
-  - [ ] **Cash Flow Report**: Track income and expenses over time
-  - [ ] **Balance Sheet**: View current financial position and account balances
-  - [ ] **Budget Analysis**: Compare planned budget versus actual spending
-  - [ ] **Account Overview**: View individual account balances and transaction history
-
+#### Multi-Year Features
+- [ ] **Cross-Year Analysis:**
+  - [ ] View reports spanning multiple years
+  - [ ] Compare data year-over-year
+  - [ ] Track long-term trends across years
+  - [ ] Net worth progression over multiple years
+- [ ] **Multi-Year Data Loading:**
+  - [ ] Load multiple year files simultaneously
+  - [ ] Aggregate data from multiple years for reporting
+  - [ ] Memory-efficient handling of large datasets
+- [ ] **Year Transitions:**
+  - [ ] Carry forward account balances to new year
+  - [ ] Option to copy categories and budgets to new year
+  - [ ] Archive old year files
+- [ ] **Historical Analysis:**
+  - [ ] View transaction history across all years
+  - [ ] Search transactions across multiple years
+  - [ ] Category spending trends over multiple years
+  - [ ] Income and expense patterns year-over-year
+#### Account Overview Report
+- [ ] View individual account details and transaction history
+- [ ] Account balance over time chart
+- [ ] List of all transactions for the account
+- [ ] Filter and search transactions
+- [ ] Export account statement
+- [ ] Multi-year account history view
 ### FR-10: Advanced Data Management (Post-MVP)
 
 **Conflict Detection & Auto-Merge:**

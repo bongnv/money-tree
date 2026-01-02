@@ -26,7 +26,7 @@ Read `REQUIREMENTS.md` and `IMPLEMENTATION_PLAN.md` before making changes.
 **Keep in sync:**
 - Check off both files when completing features
 - Match phase numbers between files
-- Verify all checkboxes before finishing
+- Verify all checkboxes before finishing & mark them after finishing
 
 ## Code Style
 

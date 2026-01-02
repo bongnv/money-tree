@@ -25,32 +25,35 @@ This document provides a step-by-step implementation plan for building the Money
 This plan implements all requirements from REQUIREMENTS.md.
 
 **MVP Functional Requirements:**
-- **FR-1**: Transaction Management → Phase 5, 8 (MVP)
+- **FR-1**: Transaction Management → Phase 5, 6 (MVP)
 - **FR-2**: Categorization System → Phase 2, 4 (MVP)
-- **FR-3**: Account Management → Phase 3, 5, 8 (MVP)
+- **FR-3**: Account Management → Phase 3, 5 (MVP)
 - **FR-4**: Category Customization → Phase 4 (MVP)
-- **FR-5**: Dashboard & Quick Entry → Phase 8 (MVP)
-- **FR-6**: Data Storage (Local) → Phase 2, 10 (MVP)
-- **FR-7**: Year Management → Phase 10 (MVP)
+- **FR-5**: Dashboard & Quick Entry → Phase 6 (MVP)
+- **FR-6**: Data Storage (Local) → Phase 2, 8 (MVP)
+- **FR-7**: Financial Reports → Phase 7 (MVP)
+  - Balance Sheet with manual assets
+  - Cash Flow (transfers excluded)
+- **FR-8**: Budget Planning & Review → Phase 8 (MVP)
 
 **Post-MVP Functional Requirements:**
-- **FR-8**: Budget Planning → Phase 12 (Post-MVP)
-- **FR-9**: Financial Reports → Phase 13 (Post-MVP)
-- **FR-10**: Conflict Detection & Auto-Merge → Phase 15 (Post-MVP)
-- **FR-11**: Cloud Storage Integration → Phase 18+ (Post-MVP, Optional)
+- **FR-9**: Year Management & Multi-Year Support → Phase 11 (Post-MVP)
+  - Account Overview Report (multi-year view)
+- **FR-10**: Advanced Data Management → Phase 13 (Post-MVP)
+- **FR-11**: Cloud Storage Integration → Phase 16+ (Post-MVP, Optional)
 
 **MVP Non-Functional Requirements:**
 - **NFR-1**: Architecture → Phase 1, 9
 - **NFR-2**: Technology Stack → Phase 1, 2
-- **NFR-3**: Performance → Phase 11
-- **NFR-4**: Usability → Phase 8, 11
-- **NFR-5**: Compatibility → Phase 9, 11
-- **NFR-6**: Reliability → Phase 2, 11
-- **NFR-7**: Maintainability → Phase 1, 11
+- **NFR-3**: Performance → Phase 10
+- **NFR-4**: Usability → Phase 6, 8, 10
+- **NFR-5**: Compatibility → Phase 9, 10
+- **NFR-6**: Reliability → Phase 2, 10
+- **NFR-7**: Maintainability → Phase 1, 10
 
 **Post-MVP Non-Functional Requirements:**
-- **NFR-8**: Cloud Security → Phase 18+ (Post-MVP, Optional)
-- **NFR-9**: Advanced Reliability → Phase 15 (Post-MVP)
+- **NFR-8**: Cloud Security → Phase 16+ (Post-MVP, Optional)
+- **NFR-9**: Advanced Reliability → Phase 13 (Post-MVP)
 
 ---
 
@@ -342,57 +345,217 @@ This plan implements all requirements from REQUIREMENTS.md.
 - [ ] Update navigation to default to dashboard
 - [ ] **Test**: Open dashboard and immediately start typing to add transaction, submit with Enter key, verify form clears and transaction appears in recent list
 
-## Phase 7: Year Management Feature (MVP)
+## Phase 7: Financial Reports (MVP)
 
-**Requirements**: FR-7 (Year Management)
+**Requirements**: FR-7 (Financial Reports - Balance Sheet, Cash Flow)
 
-**Goal**: Users can switch between years and manage multi-year data
+**Goal**: Users can view balance sheet and cash flow reports
 
-### 7.1 Implement Year Switching
-- [ ] Create `src/components/common/YearSelector.tsx`
-- [ ] Add to header/navigation
-- [ ] Connect to app store
-- [ ] Implement year switching logic (load different file)
-- [ ] **Test**: Switch years, add transactions in different years, verify data isolation
+### 7.1 Setup Chart Library
+- [ ] Install charting library (recharts or nivo)
+- [ ] Create `src/components/charts/LineChart.tsx`
+- [ ] Create `src/components/charts/BarChart.tsx`
+- [ ] Create `src/components/charts/PieChart.tsx`
+- [ ] **Write tests**: Chart component tests
+- [ ] **Test**: Charts render correctly with sample data
 
-## Phase 8: Navigation & Routing (MVP)
+### 7.2 Implement Manual Assets Feature
+- [ ] Create `src/types/models.ts` interface for ManualAsset (name, type, value, date, notes)
+- [ ] Create `src/stores/useAssetStore.ts` for manual assets and liabilities
+- [ ] Add Zod schemas for asset validation
+- [ ] Create `src/components/assets/ManualAssetForm.tsx`
+- [ ] Create `src/components/assets/ManualAssetDialog.tsx`
+- [ ] Create `src/components/assets/ManualAssetList.tsx`
+- [ ] **Write tests**: Asset store and component tests
+- [ ] **Test**: Add/edit/delete manual assets, track value changes over time
+
+### 7.3 Build Balance Sheet Report
+- [ ] Create `src/services/report.service.ts` with balance calculations
+- [ ] Create `src/components/reports/BalanceSheet.tsx`:
+  - [ ] Assets section (accounts + manual assets grouped by type)
+  - [ ] Liabilities section (credit cards, loans, manual liabilities)
+  - [ ] Net worth calculation and trend
+  - [ ] Date selection for historical view
+  - [ ] Comparison features (month-over-month, year-over-year)
+- [ ] Create `src/components/reports/ManualAssetSection.tsx`
+- [ ] **Write tests**: Balance sheet calculations and rendering
+- [ ] **Test**: View balance sheet, select different dates, verify calculations, add manual assets and see them included
+
+### 7.4 Build Cash Flow Report
+- [ ] Create cash flow calculation service (excludes transfers)
+- [ ] Create `src/components/reports/CashFlowReport.tsx`:
+  - [ ] Income section by category
+  - [ ] Expense section by category
+  - [ ] Net cash flow calculation
+  - [ ] Time period selection (monthly, quarterly, yearly, custom)
+  - [ ] Trend charts (income vs expenses over time)
+  - [ ] Category breakdown charts
+  - [ ] Filtering options
+- [ ] Create `src/components/reports/CashFlowChart.tsx`
+- [ ] **Write tests**: Cash flow calculations, verify transfers excluded
+- [ ] **Test**: View cash flow for different periods, verify transfers are excluded, test filters
+
+### 7.5 Create Reports Page
+- [ ] Create `src/components/reports/ReportsPage.tsx` with tab navigation
+- [ ] Add export buttons for each report (CSV/PDF)
+- [ ] Create `src/utils/export.utils.ts` for data export
+- [ ] Add route `/reports`
+- [ ] **Write tests**: Reports page navigation and export
+- [ ] **Test**: Switch between reports tabs, export data to CSV
+
+## Phase 8: Budget Planning & Review (MVP)
+
+**Requirements**: FR-8 (Budget Planning & Review)
+
+**Goal**: Users can create budgets, allocate funds, and track spending
+
+### 8.1 Implement Budget Data Layer
+- [ ] Create `src/stores/useBudgetStore.ts` with budget and budget items
+- [ ] Add budget vs actual calculation functions to calculation service
+- [ ] Create budget templates functionality
+- [ ] **Write tests**: useBudgetStore.test.ts
+- [ ] **Test**: Budget CRUD operations, calculations, templates
+
+### 8.2 Build Budget Management UI
+- [ ] Create `src/components/budgets/BudgetForm.tsx` with period types
+- [ ] Create `src/components/budgets/BudgetItemsGrid.tsx` for category allocations
+- [ ] Create `src/components/budgets/BudgetDialog.tsx` with stepper (create/edit)
+- [ ] Create `src/components/budgets/BudgetList.tsx`
+- [ ] Create `src/components/budgets/BudgetOverview.tsx` with progress bars and color coding
+- [ ] Create `src/components/budgets/BudgetsPage.tsx` with tabs
+- [ ] Add route `/budgets`
+- [ ] **Write tests**: Comprehensive component tests
+- [ ] **Test**: Create budget with items, set as active, view budget vs actual, edit budget, delete budget
+
+### 8.3 Budget Tracking Dashboard
+- [ ] Create `src/components/budgets/BudgetStatusCard.tsx` - real-time status
+- [ ] Create `src/components/budgets/BudgetAlerts.tsx` - warnings and alerts
+- [ ] Add budget status indicators (green/yellow/red)
+- [ ] **Write tests**: Test status calculations and alerts
+- [ ] **Test**: Verify budget tracking updates in real-time as transactions are added
+
+### 8.4 Budget Analysis & Reports
+- [ ] Create `src/components/budgets/BudgetVarianceReport.tsx`
+- [ ] Create `src/components/budgets/BudgetComparisonChart.tsx`
+- [ ] Add historical budget performance view
+- [ ] Add budget recommendations based on spending patterns
+- [ ] **Write tests**: Test variance calculations
+- [ ] **Test**: View variance analysis, compare budgets across periods
+
+### 8.5 Budget Adjustments
+- [ ] Implement in-period budget adjustments
+- [ ] Add adjustment history tracking
+- [ ] Implement rollover functionality
+- [ ] **Write tests**: Test adjustment logic
+- [ ] **Test**: Modify budget mid-period, view adjustment history, test rollover
+
+## Phase 9: Navigation & Routing (MVP)
 
 **Requirements**: NFR-4 (Usability - navigation), NFR-5 (Compatibility - responsive)
 
 **Goal**: Complete navigation experience
 
-### 8.1 Complete Routing Setup
+### 9.1 Complete Routing Setup
 - [ ] Install `react-router-dom`
-- [ ] Create `src/routes.tsx` with route definitions for MVP pages
+- [ ] Create `src/routes.tsx` with route definitions for all MVP pages:
+  - [ ] `/` - Dashboard
+  - [ ] `/accounts` - Accounts
+  - [ ] `/categories` - Categories
+  - [ ] `/transactions` - Transactions
+  - [ ] `/reports` - Reports
+  - [ ] `/budgets` - Budgets
 - [ ] Wrap app with BrowserRouter
 - [ ] Create 404 page
+- [ ] **Write tests**: Route navigation tests
+- [ ] **Test**: All routes work correctly
 
-### 8.2 Complete Navigation
-- [ ] Update Header with navigation links for MVP pages
+### 9.2 Complete Navigation
+- [ ] Update Header with navigation links for all MVP pages
+- [ ] Add icons for each section
 - [ ] Add active state styling
 - [ ] Add mobile responsive menu (drawer)
+- [ ] **Write tests**: Header navigation tests
 - [ ] **Test**: Navigate between all pages, verify active states, test on mobile
 
-## Phase 9: Production Build & Deployment (MVP)
+## Phase 10: Production Build, Testing & Polish (MVP)
 
-**Requirements**: NFR-1 (Architecture), NFR-3 (Performance), NFR-5 (Compatibility)
+**Requirements**: NFR-1 (Architecture), NFR-3 (Performance), NFR-4 (Usability), NFR-5 (Compatibility), NFR-6 (Reliability), NFR-7 (Maintainability)
 
-**Goal**: Deploy the MVP to production
+**Goal**: Complete, polished, production-ready MVP
 
-### 9.1 Optimize Bundle
-- [ ] Configure webpack for production with code splitting, minimize bundle size, and add source maps
+### 10.1 Integration Testing
+- [ ] Test complete user workflows end-to-end
+- [ ] Test data flow between stores and components
+- [ ] Test interactions between different features
+- [ ] Test budget tracking with actual transactions
+- [ ] Test report calculations with real data
+
+### 10.2 Cross-Feature Validation
+- [ ] Test account deletion with existing transactions
+- [ ] Test category deletion with existing transaction types
+- [ ] Test transaction changes affecting account balances and budgets
+- [ ] Test budget updates reflecting in reports
+- [ ] Test data consistency across all features
+
+### 10.3 Test Coverage Review
+- [ ] Review unit test coverage from all phases
+- [ ] Run `npm run test:coverage` to check coverage metrics
+- [ ] Ensure minimum 80% code coverage across the codebase
+- [ ] Add tests for any gaps in critical functionality
+- [ ] **Test**: Coverage meets 80% threshold, all critical paths tested
+
+### 10.4 UI/UX Polish
+- [ ] Add loading states (spinners, skeletons)
+- [ ] Add success/error snackbars for all operations
+- [ ] Add confirmation dialogs for destructive actions
+- [ ] Add subtle animations and transitions
+- [ ] Optimize responsive design (mobile, tablet, desktop)
+- [ ] Add accessibility (ARIA labels, keyboard navigation)
+- [ ] **Test**: Smooth, professional user experience
+
+### 10.5 Performance Optimization
+- [ ] Profile app performance with React DevTools
+- [ ] Optimize re-renders with React.memo, useMemo, useCallback
+- [ ] Lazy load route components with React.lazy
+- [ ] Test with large datasets (100+ transactions)
+- [ ] **Test**: App is responsive and performant
+
+### 10.6 Cross-Browser Testing
+- [ ] Test on Chrome (desktop & mobile)
+- [ ] Test on Firefox
+- [ ] Test on Safari (desktop & mobile)
+- [ ] Test on Edge
+- [ ] **Test**: App works consistently across all browsers
+
+### 10.7 Production Build
+- [ ] Configure webpack for production with code splitting
+- [ ] Optimize bundle size
+- [ ] Add source maps
+- [ ] Test production build locally
 - [ ] **Test**: Production build completes without errors, bundle size is reasonable
 
-### 9.2 Create Build Documentation
-- [ ] Update README.md with setup instructions, environment variables, build/deployment instructions
+### 10.8 Deploy to Cloudflare Pages
+- [ ] Create Cloudflare account (if not already)
+- [ ] Connect GitHub repository to Cloudflare Pages
+- [ ] Configure build settings (build command: `npm run build`, output: `dist`)
+- [ ] Add `_headers` file for security (CSP, X-Frame-Options)
+- [ ] Add `_redirects` file for SPA routing (`/* /index.html 200`)
+- [ ] Configure automatic deployment from main branch
+- [ ] Deploy application
+- [ ] **Test**: Visit deployed URL, test all features
+
+### 10.9 Documentation
+- [ ] Update README.md with setup instructions
+- [ ] Add user guide or help section
+- [ ] Document build/deployment process
 - [ ] Add troubleshooting guide
 - [ ] **Test**: New developer can follow README to set up project
 
-### 9.3 Test Production Build Locally
-- [ ] Build production bundle, test locally
-- [ ] Verify file save/load works
-- [ ] Test all features in production mode
-- [ ] **Test**: App works correctly in production mode
+### 10.10 Bug Fixes and Final Validation
+- [ ] Fix any bugs discovered during testing
+- [ ] Handle edge cases and null/undefined scenarios
+- [ ] Validate data integrity across all operations
+- [ ] **Test**: App is stable, no critical bugs, ready for users
 
 ### 9.4 Deploy to Cloudflare Pages
 - [ ] Create Cloudflare account (if not already)
@@ -421,6 +584,145 @@ This plan implements all requirements from REQUIREMENTS.md.
 **Goal**: Comprehensive testing and validation of MVP
 
 ### 10.1 Integration Testing
+- [ ] Test complete user workflows end-to-end
+- [ ] Test data flow between stores and components
+- [ ] Test interactions between different features
+- [ ] Test budget tracking with actual transactions
+- [ ] Test report calculations with real data
+
+### 10.2 Cross-Feature Validation
+- [ ] Test account deletion with existing transactions
+- [ ] Test category deletion with existing transaction types
+- [ ] Test transaction changes affecting account balances and budgets
+- [ ] Test budget updates reflecting in reports
+- [ ] Test data consistency across all features
+
+### 10.3 Test Coverage Review
+- [ ] Review unit test coverage from all phases
+- [ ] Run `npm run test:coverage` to check coverage metrics
+- [ ] Ensure minimum 80% code coverage across the codebase
+- [ ] Add tests for any gaps in critical functionality
+- [ ] **Test**: Coverage meets 80% threshold, all critical paths tested
+
+### 10.4 UI/UX Polish
+- [ ] Add loading states (spinners, skeletons)
+- [ ] Add success/error snackbars for all operations
+- [ ] Add confirmation dialogs for destructive actions
+- [ ] Add subtle animations and transitions
+- [ ] Optimize responsive design (mobile, tablet, desktop)
+- [ ] Add accessibility (ARIA labels, keyboard navigation)
+- [ ] **Test**: Smooth, professional user experience
+
+### 10.5 Performance Optimization
+- [ ] Profile app performance with React DevTools
+- [ ] Optimize re-renders with React.memo, useMemo, useCallback
+- [ ] Lazy load route components with React.lazy
+- [ ] Test with large datasets (100+ transactions)
+- [ ] **Test**: App is responsive and performant
+
+### 10.6 Cross-Browser Testing
+- [ ] Test on Chrome (desktop & mobile)
+- [ ] Test on Firefox
+- [ ] Test on Safari (desktop & mobile)
+- [ ] Test on Edge
+- [ ] **Test**: App works consistently across all browsers
+
+### 10.7 Production Build
+- [ ] Configure webpack for production with code splitting
+- [ ] Optimize bundle size
+- [ ] Add source maps
+- [ ] Test production build locally
+- [ ] **Test**: Production build completes without errors, bundle size is reasonable
+
+### 10.8 Deploy to Cloudflare Pages
+- [ ] Create Cloudflare account (if not already)
+- [ ] Connect GitHub repository to Cloudflare Pages
+- [ ] Configure build settings (build command: `npm run build`, output: `dist`)
+- [ ] Add `_headers` file for security (CSP, X-Frame-Options)
+- [ ] Add `_redirects` file for SPA routing (`/* /index.html 200`)
+- [ ] Configure automatic deployment from main branch
+- [ ] Deploy application
+- [ ] **Test**: Visit deployed URL, test all features
+
+### 10.9 Documentation
+- [ ] Update README.md with setup instructions
+- [ ] Add user guide or help section
+- [ ] Document build/deployment process
+- [ ] Add troubleshooting guide
+- [ ] **Test**: New developer can follow README to set up project
+
+### 10.10 Bug Fixes and Final Validation
+- [ ] Fix any bugs discovered during testing
+- [ ] Handle edge cases and null/undefined scenarios
+- [ ] Validate data integrity across all operations
+- [ ] **Test**: App is stable, no critical bugs, ready for users
+
+---
+
+# POST-MVP ENHANCEMENTS
+
+These features will be implemented after the MVP is validated by users.
+
+## Phase 11: Year Management & Multi-Year Support (Post-MVP)
+
+**Requirements**: FR-9 (Year Management & Multi-Year Support)
+
+**Goal**: Users can manage multiple years and analyze data across years
+
+### 11.1 Implement Year Switching
+- [ ] Create `src/components/common/YearSelector.tsx`
+- [ ] Add to header/navigation
+- [ ] Connect to app store
+- [ ] Implement year switching logic (load different file)
+- [ ] Handle year transitions (carry forward balances)
+- [ ] **Write tests**: Year switching and data isolation
+- [ ] **Test**: Switch years, add transactions in different years, verify data isolation
+
+### 11.2 Multi-Year Data Loading
+- [ ] Implement multi-year file loading
+- [ ] Create aggregation service for cross-year data
+- [ ] Memory-efficient handling of large datasets
+- [ ] **Write tests**: Multi-year data loading and aggregation
+- [ ] **Test**: Load multiple year files, aggregate data
+
+### 11.3 Cross-Year Analysis Features
+- [ ] Create `src/components/reports/MultiYearComparison.tsx`
+- [ ] Year-over-year comparison charts
+- [ ] Long-term trend analysis
+- [ ] Net worth progression over years
+- [ ] **Write tests**: Cross-year calculations
+- [ ] **Test**: View trends across multiple years
+
+### 11.4 Account Overview Report (Multi-Year)
+- [ ] Create `src/components/reports/AccountOverview.tsx`:
+  - [ ] Account transaction history
+  - [ ] Balance over time chart (multi-year)
+  - [ ] Filter and search transactions
+  - [ ] Export account statement
+- [ ] Add to Reports page
+- [ ] **Write tests**: Account overview with multi-year data
+- [ ] **Test**: View individual account history across years
+
+### 11.5 Historical Analysis
+- [ ] Search transactions across all years
+- [ ] Category spending trends over multiple years
+- [ ] Income and expense patterns year-over-year
+- [ ] **Write tests**: Historical analysis queries
+- [ ] **Test**: Search across years, view long-term trends
+
+## Phase 12: Settings & Data Management (Post-MVP)
+
+**Requirements**: Data Import/Export
+
+**Goal**: Users can manage app settings and advanced data operations
+
+### 12.1 Build Settings UI
+- [ ] Create `src/components/settings/DataManagement.tsx` with import/export
+- [ ] Create `src/components/settings/SettingsPage.tsx`
+- [ ] Add route `/settings`
+- [ ] **Test**: Export all data, import data, clear data
+
+## Phase 13: Conflict Detection & Auto-Merge (Post-MVP)
 - [ ] Test complete user workflows end-to-end
 - [ ] Test data flow between stores and components
 - [ ] Test interactions between different features
@@ -581,7 +883,7 @@ These features will be implemented after the MVP is validated by users.
 - [ ] Add route `/settings`
 - [ ] **Test**: Export all data, import data, clear data
 
-## Phase 15: Conflict Detection & Auto-Merge (Post-MVP)
+## Phase 13: Conflict Detection & Auto-Merge (Post-MVP)
 
 **Requirements**: FR-10 (Advanced Data Management), NFR-9 (Advanced Reliability)
 
@@ -650,7 +952,7 @@ These features will be implemented after the MVP is validated by users.
 - [ ] Test conflict detection and resolution
 - [ ] Integration tests with concurrent modifications
 
-## Phase 16: User Documentation (Post-MVP)
+## Phase 14: User Documentation (Post-MVP)
 
 **Requirements**: NFR-4 (Usability)
 
@@ -662,7 +964,7 @@ These features will be implemented after the MVP is validated by users.
 - [ ] Create user guide (optional) with screenshots
 - [ ] **Test**: New user can understand how to use each feature
 
-## Phase 17: Advanced Error Handling & Validation (Post-MVP)
+## Phase 15: Advanced Error Handling & Validation (Post-MVP)
 
 **Requirements**: NFR-6 (Reliability), NFR-4 (Usability)
 
@@ -682,7 +984,7 @@ These features will be implemented after the MVP is validated by users.
 - [ ] Add user-friendly error messages
 - [ ] **Test**: Try to submit invalid data, try to delete referenced entities
 
-## Phase 18: Cloud Storage Integration (Post-MVP, Optional)
+## Phase 16: Cloud Storage Integration (Post-MVP, Optional)
 
 **Requirements**: FR-11 (Cloud Storage Integration), NFR-8 (Cloud Security)
 
@@ -738,20 +1040,36 @@ These features will be implemented after the MVP is validated by users.
 
 ## MVP Completion Checklist
 
-- [ ] All MVP phases (1-11) completed
-- [ ] All MVP features implemented and tested
+- [ ] All MVP phases (1-10) completed
+- [ ] All MVP features implemented and tested:
+  - [ ] Transaction Management
+  - [ ] Account Management
+  - [ ] Category & Transaction Type Management
+  - [ ] Dashboard with Quick Entry
+  - [ ] Financial Reports (Balance Sheet, Cash Flow)
+  - [ ] Budget Planning & Review
 - [ ] All tests passing with 80%+ coverage
 - [ ] Documentation complete
 - [ ] Production build deployed
 - [ ] No critical bugs
-- [ ] App is usable for daily personal finance tracking
+- [ ] App is usable for daily personal finance tracking with budgeting and reporting
+  - [ ] Category & Transaction Type Management
+  - [ ] Dashboard with Quick Entry
+  - [ ] Financial Reports (Balance Sheet, Cash Flow)
+  - [ ] Budget Planning & Review
+- [ ] All tests passing with 80%+ coverage
+- [ ] Documentation complete
+- [ ] Production build deployed
+- [ ] No critical bugs
+- [ ] App is usable for daily personal finance tracking with budgeting and reporting
 
 ## Post-MVP Completion Checklist
 
-- [ ] Budget planning feature complete
-- [ ] Financial reports complete
-- [ ] Advanced data management complete
+- [ ] Year management and multi-year support complete
+- [ ] Account overview report with multi-year view
+- [ ] Settings and advanced data management
 - [ ] Conflict detection and auto-merge complete
+- [ ] User documentation and error handling enhanced
 - [ ] All enhancements tested
 - [ ] Optional: Cloud storage integration complete
 

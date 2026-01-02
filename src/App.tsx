@@ -7,6 +7,7 @@ import theme from './theme';
 import { MainLayout } from './components/layout/MainLayout';
 import { FileLoadErrorDialog } from './components/common/FileLoadErrorDialog';
 import { AccountsPage } from './components/accounts/AccountsPage';
+import { CategoriesPage } from './components/categories/CategoriesPage';
 import { useAppStore } from './stores/useAppStore';
 import { syncService } from './services/sync.service';
 
@@ -62,6 +63,7 @@ const App: React.FC = () => {
           <Routes>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/accounts" element={<AccountsPage />} />
+            <Route path="/categories" element={<CategoriesPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </MainLayout>

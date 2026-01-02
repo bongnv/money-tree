@@ -209,12 +209,16 @@ This plan implements all requirements from REQUIREMENTS.md.
 - [x] Create `src/stores/useCategoryStore.ts` with categories and transaction types
 
 ### 4.2 Build Category Management UI
-- [ ] Create `src/components/categories/CategoryTree.tsx` showing hierarchy
-- [ ] Create `src/components/categories/CategoryForm.tsx`
-- [ ] Create `src/components/categories/TransactionTypeForm.tsx`
-- [ ] Create `src/components/categories/CategoriesPage.tsx`
-- [ ] Add route `/categories`
-- [ ] **Test**: Add category, add transaction type, edit names, delete (with validation), view hierarchy
+- [x] Create `src/components/categories/CategoryCard.tsx`, `CategoryList.tsx` (no hierarchy needed)
+- [x] Create `src/components/categories/CategoryForm.tsx`
+- [x] Create `src/components/categories/CategoryDialog.tsx`
+- [x] Create `src/components/categories/TransactionTypeCard.tsx`, `TransactionTypeList.tsx`
+- [x] Create `src/components/categories/TransactionTypeForm.tsx`
+- [x] Create `src/components/categories/TransactionTypeDialog.tsx`
+- [x] Create `src/components/categories/CategoriesPage.tsx` with tabs
+- [x] Write comprehensive tests for all components (59 tests)
+- [ ] Add route `/categories` (pending router setup in Phase 8)
+- [x] **Test**: Add category, add transaction type, edit names, delete (with validation), tabs work correctly
 
 ## Phase 5: Transaction Management Feature (MVP)
 

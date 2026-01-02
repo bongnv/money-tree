@@ -1,5 +1,6 @@
 import { useAppStore } from '../stores/useAppStore';
 import { useAccountStore } from '../stores/useAccountStore';
+import { useCategoryStore } from '../stores/useCategoryStore';
 import { StorageFactory } from './storage/StorageFactory';
 import type { DataFile } from '../types/models';
 
@@ -62,13 +63,14 @@ class SyncService {
       
       // Gather data from all domain stores
       const accountStore = useAccountStore.getState();
+      const categoryStore = useCategoryStore.getState();
       
       const dataToSave: DataFile = {
         version: '1.0.0',
         year: state.currentYear,
         accounts: accountStore.accounts,
-        categories: [],
-        transactionTypes: [],
+        categories: categoryStore.categories,
+        transactionTypes: categoryStore.transactionTypes,
         transactions: [],
         budgets: [],
         lastModified: new Date().toISOString(),
@@ -134,6 +136,8 @@ class SyncService {
       if (dataFile) {
         // Distribute data to domain stores
         useAccountStore.getState().setAccounts(dataFile.accounts || []);
+        useCategoryStore.getState().setCategories(dataFile.categories || []);
+        useCategoryStore.getState().setTransactionTypes(dataFile.transactionTypes || []);
         
         state.setCurrentYear(year);
         state.setFileName(`money-tree-${year}.json`);

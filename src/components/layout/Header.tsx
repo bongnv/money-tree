@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar,
   Toolbar,
@@ -11,12 +12,17 @@ import {
   Save as SaveIcon,
   FolderOpen as FolderOpenIcon,
   FiberManualRecord as DotIcon,
+  Home as HomeIcon,
+  AccountBalance as AccountsIcon,
+  Category as CategoryIcon,
 } from '@mui/icons-material';
 import { useAppStore } from '../../stores/useAppStore';
 import { syncService } from '../../services/sync.service';
 import { formatDistance } from 'date-fns';
 
 export const Header: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const {
     fileName,
     lastSaved,
@@ -60,9 +66,42 @@ export const Header: React.FC = () => {
   return (
     <AppBar position="static">
       <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+        <Typography variant="h6" component="div" sx={{ mr: 4 }}>
           Money Tree
         </Typography>
+
+        <Box sx={{ flexGrow: 1, display: 'flex', gap: 1 }}>
+          <Button
+            color="inherit"
+            startIcon={<HomeIcon />}
+            onClick={() => navigate('/')}
+            sx={{
+              backgroundColor: location.pathname === '/' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+            }}
+          >
+            Dashboard
+          </Button>
+          <Button
+            color="inherit"
+            startIcon={<AccountsIcon />}
+            onClick={() => navigate('/accounts')}
+            sx={{
+              backgroundColor: location.pathname === '/accounts' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+            }}
+          >
+            Accounts
+          </Button>
+          <Button
+            color="inherit"
+            startIcon={<CategoryIcon />}
+            onClick={() => navigate('/categories')}
+            sx={{
+              backgroundColor: location.pathname === '/categories' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+            }}
+          >
+            Categories
+          </Button>
+        </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {fileName && (

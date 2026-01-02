@@ -1,7 +1,12 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { Header } from './Header';
 import { useAppStore } from '../../stores/useAppStore';
 import { syncService } from '../../services/sync.service';
+
+const renderWithRouter = (component: React.ReactElement) => {
+  return render(<MemoryRouter>{component}</MemoryRouter>);
+};
 
 describe('Header', () => {
   let promptSaveIfNeededSpy: jest.SpyInstance;
@@ -22,24 +27,24 @@ describe('Header', () => {
   });
 
   it('should render header with title', () => {
-    render(<Header />);
+    renderWithRouter(<Header />);
     expect(screen.getByText('Money Tree')).toBeInTheDocument();
   });
 
   it('should render Load and Save buttons', () => {
-    render(<Header />);
+    renderWithRouter(<Header />);
     expect(screen.getByText('Load')).toBeInTheDocument();
     expect(screen.getByText('Save')).toBeInTheDocument();
   });
 
   it('should show file name when available', () => {
     useAppStore.getState().setFileName('money-tree-2024.json');
-    render(<Header />);
+    renderWithRouter(<Header />);
     expect(screen.getByText('money-tree-2024.json')).toBeInTheDocument();
   });
 
   it('should show "Never saved" when lastSaved is null', () => {
-    render(<Header />);
+    renderWithRouter(<Header />);
     expect(screen.getByText('Never saved')).toBeInTheDocument();
   });
 
@@ -47,7 +52,7 @@ describe('Header', () => {
     promptSaveIfNeededSpy.mockResolvedValue(true);
     loadDataFileSpy.mockResolvedValue(undefined);
 
-    render(<Header />);
+    renderWithRouter(<Header />);
 
     const loadButton = screen.getByText('Load');
     fireEvent.click(loadButton);
@@ -62,7 +67,7 @@ describe('Header', () => {
     promptSaveIfNeededSpy.mockResolvedValue(false);
     loadDataFileSpy.mockResolvedValue(undefined);
 
-    render(<Header />);
+    renderWithRouter(<Header />);
 
     const loadButton = screen.getByText('Load');
     fireEvent.click(loadButton);
@@ -77,7 +82,7 @@ describe('Header', () => {
     useAppStore.getState().setUnsavedChanges(true);
     saveNowSpy.mockResolvedValue(undefined);
 
-    render(<Header />);
+    renderWithRouter(<Header />);
 
     const saveButton = screen.getByText('Save');
     fireEvent.click(saveButton);
@@ -90,7 +95,7 @@ describe('Header', () => {
   it('should disable Save button when no unsaved changes', () => {
     useAppStore.getState().setUnsavedChanges(false);
 
-    render(<Header />);
+    renderWithRouter(<Header />);
 
     const saveButton = screen.getByText('Save').closest('button');
     expect(saveButton).toBeDisabled();
@@ -100,7 +105,7 @@ describe('Header', () => {
     useAppStore.getState().setLoading(true);
     useAppStore.getState().setUnsavedChanges(true);
 
-    render(<Header />);
+    renderWithRouter(<Header />);
 
     const loadButton = screen.getByText('Load').closest('button');
     const saveButton = screen.getByText('Save').closest('button');
@@ -113,7 +118,7 @@ describe('Header', () => {
     useAppStore.getState().setLoading(true);
     useAppStore.getState().setUnsavedChanges(true);
 
-    render(<Header />);
+    renderWithRouter(<Header />);
 
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });

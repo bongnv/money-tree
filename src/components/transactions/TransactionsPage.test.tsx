@@ -168,25 +168,28 @@ describe('TransactionsPage', () => {
     const newButton = screen.getByTestId('new-transaction-button');
     await user.click(newButton);
 
-    // Fill out form
-    const descriptionInput = screen.getByLabelText(/description/i);
+    // Wait for dialog to open
+    const dialog = await screen.findByRole('dialog');
+
+    // Fill out form within dialog
+    const descriptionInput = within(dialog).getByLabelText(/description/i);
     await user.type(descriptionInput, 'Test transaction');
 
-    const amountInput = screen.getByLabelText(/amount/i);
+    const amountInput = within(dialog).getByLabelText(/amount/i);
     await user.type(amountInput, '100');
 
-    const transactionTypeSelect = screen.getByLabelText(/transaction type/i);
+    const transactionTypeSelect = within(dialog).getByLabelText(/transaction type/i);
     await user.click(transactionTypeSelect);
     const typeOption = await screen.findByText('Groceries');
     await user.click(typeOption);
 
-    const fromAccountSelect = screen.getByLabelText(/from account/i);
+    const fromAccountSelect = within(dialog).getByLabelText(/from account/i);
     await user.click(fromAccountSelect);
     const accountOption = await screen.findByRole('option', { name: /checking/i });
     await user.click(accountOption);
 
     // Submit
-    const submitButton = screen.getByRole('button', { name: /create/i });
+    const submitButton = within(dialog).getByRole('button', { name: /create/i });
     await user.click(submitButton);
 
     await waitFor(() => {
@@ -214,24 +217,27 @@ describe('TransactionsPage', () => {
     const newButton = screen.getByTestId('new-transaction-button');
     await user.click(newButton);
 
+    // Wait for dialog to open
+    const dialog = await screen.findByRole('dialog');
+
     // Fill and submit first transaction
-    const descriptionInput1 = screen.getByLabelText(/description/i);
+    const descriptionInput1 = within(dialog).getByLabelText(/description/i);
     await user.type(descriptionInput1, 'First transaction');
 
-    const amountInput1 = screen.getByLabelText(/amount/i);
+    const amountInput1 = within(dialog).getByLabelText(/amount/i);
     await user.type(amountInput1, '100');
 
-    const transactionTypeSelect1 = screen.getByLabelText(/transaction type/i);
+    const transactionTypeSelect1 = within(dialog).getByLabelText(/transaction type/i);
     await user.click(transactionTypeSelect1);
     const typeOption1 = await screen.findByText('Groceries');
     await user.click(typeOption1);
 
-    const fromAccountSelect1 = screen.getByLabelText(/from account/i);
+    const fromAccountSelect1 = within(dialog).getByLabelText(/from account/i);
     await user.click(fromAccountSelect1);
     const accountOption1 = await screen.findByRole('option', { name: /checking/i });
     await user.click(accountOption1);
 
-    const submitButton1 = screen.getByRole('button', { name: /create/i });
+    const submitButton1 = within(dialog).getByRole('button', { name: /create/i });
     await user.click(submitButton1);
 
     await waitFor(() => {
@@ -249,28 +255,26 @@ describe('TransactionsPage', () => {
     await user.click(newButton);
 
     // Wait for dialog to open
-    await waitFor(() => {
-      expect(screen.getByText('Add Transaction')).toBeInTheDocument();
-    });
+    const dialog2 = await screen.findByRole('dialog');
 
     // Fill and submit second transaction
-    const descriptionInput2 = screen.getByLabelText(/description/i);
+    const descriptionInput2 = within(dialog2).getByLabelText(/description/i);
     await user.type(descriptionInput2, 'Second transaction');
 
-    const amountInput2 = screen.getByLabelText(/amount/i);
+    const amountInput2 = within(dialog2).getByLabelText(/amount/i);
     await user.type(amountInput2, '200');
 
-    const transactionTypeSelect2 = screen.getByLabelText(/transaction type/i);
+    const transactionTypeSelect2 = within(dialog2).getByLabelText(/transaction type/i);
     await user.click(transactionTypeSelect2);
     const typeOption2 = await screen.findByText('Groceries');
     await user.click(typeOption2);
 
-    const fromAccountSelect2 = screen.getByLabelText(/from account/i);
+    const fromAccountSelect2 = within(dialog2).getByLabelText(/from account/i);
     await user.click(fromAccountSelect2);
     const accountOption2 = await screen.findByRole('option', { name: /checking/i });
     await user.click(accountOption2);
 
-    const submitButton2 = screen.getByRole('button', { name: /create/i });
+    const submitButton2 = within(dialog2).getByRole('button', { name: /create/i });
     await user.click(submitButton2);
 
     await waitFor(() => {
@@ -467,5 +471,111 @@ describe('TransactionsPage', () => {
         fromAccountId: 'acc-1',
       })
     );
+  });
+
+  it('renders transaction filters', () => {
+    render(<TransactionsPage />);
+
+    expect(screen.getByLabelText(/from date/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/to date/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/accounts/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument();
+  });
+
+  it('filters transactions by date range', async () => {
+    const additionalTransaction: Transaction = {
+      id: 'txn-2',
+      date: '2024-02-01',
+      description: 'February transaction',
+      amount: 100,
+      transactionTypeId: 'tt-1',
+      fromAccountId: 'acc-1',
+      toAccountId: undefined,
+      createdAt: '2024-02-01T00:00:00.000Z',
+      updatedAt: '2024-02-01T00:00:00.000Z',
+    };
+
+    mockUseTransactionStore.mockReturnValue({
+      transactions: [...mockTransactions, additionalTransaction],
+      addTransaction: mockAddTransaction,
+      updateTransaction: mockUpdateTransaction,
+      deleteTransaction: mockDeleteTransaction,
+      getTransactionsByAccount: jest.fn(),
+      getTransactionsByType: jest.fn(),
+      getTransactionsByDateRange: jest.fn(),
+    });
+
+    const user = userEvent.setup();
+    render(<TransactionsPage />);
+
+    // Both transactions should be visible initially
+    expect(screen.getByText('Grocery shopping')).toBeInTheDocument();
+    expect(screen.getByText('February transaction')).toBeInTheDocument();
+
+    // Apply date filter
+    const fromDateInput = screen.getByLabelText(/from date/i);
+    await user.type(fromDateInput, '2024-01-01');
+
+    const toDateInput = screen.getByLabelText(/to date/i);
+    await user.type(toDateInput, '2024-01-31');
+
+    // Only January transaction should be visible
+    expect(screen.getByText('Grocery shopping')).toBeInTheDocument();
+    expect(screen.queryByText('February transaction')).not.toBeInTheDocument();
+  });
+
+  it('filters transactions by search text', async () => {
+    const additionalTransaction: Transaction = {
+      id: 'txn-2',
+      date: '2024-01-20',
+      description: 'Coffee shop',
+      amount: 5,
+      transactionTypeId: 'tt-1',
+      fromAccountId: 'acc-1',
+      toAccountId: undefined,
+      createdAt: '2024-01-20T00:00:00.000Z',
+      updatedAt: '2024-01-20T00:00:00.000Z',
+    };
+
+    mockUseTransactionStore.mockReturnValue({
+      transactions: [...mockTransactions, additionalTransaction],
+      addTransaction: mockAddTransaction,
+      updateTransaction: mockUpdateTransaction,
+      deleteTransaction: mockDeleteTransaction,
+      getTransactionsByAccount: jest.fn(),
+      getTransactionsByType: jest.fn(),
+      getTransactionsByDateRange: jest.fn(),
+    });
+
+    const user = userEvent.setup();
+    render(<TransactionsPage />);
+
+    // Both transactions should be visible initially
+    expect(screen.getByText('Grocery shopping')).toBeInTheDocument();
+    expect(screen.getByText('Coffee shop')).toBeInTheDocument();
+
+    // Apply search filter
+    const searchInput = screen.getByPlaceholderText(/search/i);
+    await user.type(searchInput, 'coffee');
+
+    // Only coffee transaction should be visible
+    expect(screen.queryByText('Grocery shopping')).not.toBeInTheDocument();
+    expect(screen.getByText('Coffee shop')).toBeInTheDocument();
+  });
+
+  it('clears all filters when clear button is clicked', async () => {
+    const user = userEvent.setup();
+    render(<TransactionsPage />);
+
+    // Apply a filter
+    const searchInput = screen.getByPlaceholderText(/search/i);
+    await user.type(searchInput, 'test');
+
+    // Clear filters
+    const clearButton = screen.getByRole('button', { name: /clear/i });
+    await user.click(clearButton);
+
+    // Search field should be empty
+    expect(searchInput).toHaveValue('');
   });
 });

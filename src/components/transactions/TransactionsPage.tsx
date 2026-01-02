@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -16,6 +16,7 @@ import { useAccountStore } from '../../stores/useAccountStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import { TransactionDialog } from './TransactionDialog';
 import { TransactionList } from './TransactionList';
+import { TransactionFilters, TransactionFiltersState } from './TransactionFilters';
 
 export const TransactionsPage: React.FC = () => {
   const { transactions, addTransaction, updateTransaction, deleteTransaction } = useTransactionStore();
@@ -25,6 +26,74 @@ export const TransactionsPage: React.FC = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | undefined>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<Transaction | undefined>();
+  const [filters, setFilters] = useState<TransactionFiltersState>({
+    dateFrom: '',
+    dateTo: '',
+    accountIds: [],
+    categoryId: '',
+    transactionTypeId: '',
+    searchText: '',
+    group: '',
+  });
+
+  // Filter transactions based on filter state
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter((transaction) => {
+      // Date range filter
+      if (filters.dateFrom && transaction.date < filters.dateFrom) {
+        return false;
+      }
+      if (filters.dateTo && transaction.date > filters.dateTo) {
+        return false;
+      }
+
+      // Account filter (checks both from and to accounts)
+      if (filters.accountIds.length > 0) {
+        const matchesAccount =
+          (transaction.fromAccountId && filters.accountIds.includes(transaction.fromAccountId)) ||
+          (transaction.toAccountId && filters.accountIds.includes(transaction.toAccountId));
+        if (!matchesAccount) {
+          return false;
+        }
+      }
+
+      // Transaction type filter
+      if (filters.transactionTypeId && transaction.transactionTypeId !== filters.transactionTypeId) {
+        return false;
+      }
+
+      // Category filter (via transaction type)
+      if (filters.categoryId) {
+        const transactionType = transactionTypes.find((t) => t.id === transaction.transactionTypeId);
+        if (!transactionType || transactionType.categoryId !== filters.categoryId) {
+          return false;
+        }
+      }
+
+      // Group filter (via transaction type and category)
+      if (filters.group) {
+        const transactionType = transactionTypes.find((t) => t.id === transaction.transactionTypeId);
+        if (!transactionType) {
+          return false;
+        }
+        const category = categories.find((c) => c.id === transactionType.categoryId);
+        if (!category || category.group !== filters.group) {
+          return false;
+        }
+      }
+
+      // Search text filter
+      if (filters.searchText) {
+        const searchLower = filters.searchText.toLowerCase();
+        const descriptionMatch = transaction.description?.toLowerCase().includes(searchLower);
+        if (!descriptionMatch) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [transactions, filters, transactionTypes, categories]);
 
   const handleOpenDialog = () => {
     setSelectedTransaction(undefined);
@@ -89,8 +158,16 @@ export const TransactionsPage: React.FC = () => {
         </Button>
       </Box>
 
+      <TransactionFilters
+        accounts={accounts}
+        categories={categories}
+        transactionTypes={transactionTypes}
+        filters={filters}
+        onFiltersChange={setFilters}
+      />
+
       <TransactionList
-        transactions={transactions}
+        transactions={filteredTransactions}
         accounts={accounts}
         categories={categories}
         transactionTypes={transactionTypes}

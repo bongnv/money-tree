@@ -320,13 +320,114 @@ This plan implements all requirements from REQUIREMENTS.md.
 - [x] Update AccountCard to show calculated balance
 - [x] **Test**: Add transactions and verify account balances update correctly
 
-## Phase 6: Dashboard with Quick Transaction Entry (MVP)
+## Phase 6: Financial Reports (MVP)
+
+**Requirements**: FR-7 (Financial Reports - Balance Sheet, Cash Flow)
+
+**Goal**: Users can view balance sheet and cash flow reports
+
+### 6.1 Implement Manual Assets Feature
+- [ ] Create `src/types/models.ts` interface for ManualAsset (name, type, value, date, notes)
+- [ ] Create `src/stores/useAssetStore.ts` for manual assets and liabilities
+- [ ] Add Zod schemas for asset validation
+- [ ] Create `src/components/assets/ManualAssetForm.tsx`
+- [ ] Create `src/components/assets/ManualAssetDialog.tsx`
+- [ ] Create `src/components/assets/ManualAssetList.tsx`
+- [ ] **Write tests**: Asset store and component tests
+**Manual Verification (User):** Add various manual assets (house, car, investments), edit asset values, delete assets, verify all CRUD operations work correctly.
+
+### 6.2 Build Balance Sheet Report with Charts
+- [ ] Install charting library (recharts or nivo)
+- [ ] Create `src/components/charts/LineChart.tsx` - reusable line chart component
+- [ ] Create `src/components/charts/BarChart.tsx` - reusable bar chart component
+- [ ] Create `src/services/report.service.ts` with balance calculations
+- [ ] Create `src/components/reports/BalanceSheet.tsx`:
+  - [ ] Assets section (accounts + manual assets grouped by type)
+  - [ ] Liabilities section (credit cards, loans, manual liabilities)
+  - [ ] Net worth calculation and trend
+  - [ ] Date selection for historical view
+  - [ ] Comparison features (month-over-month, year-over-year)
+  - [ ] Net worth trend chart using LineChart component
+- [ ] Create `src/components/reports/ManualAssetSection.tsx`
+- [ ] **Write tests**: Balance sheet calculations, rendering, and chart component tests
+**Manual Verification (User):** View balance sheet with accounts and manual assets, select different dates and verify historical data, check net worth calculation and trend chart displays correctly, test month-over-month comparison, verify assets grouped correctly by type.
+
+### 6.3 Build Cash Flow Report with Charts
+- [ ] Create `src/components/charts/PieChart.tsx` - reusable pie chart component
+- [ ] Create cash flow calculation service (excludes transfers)
+- [ ] Create `src/components/reports/CashFlowReport.tsx`:
+  - [ ] Income section by category
+  - [ ] Expense section by category
+  - [ ] Net cash flow calculation
+  - [ ] Time period selection (monthly, quarterly, yearly, custom)
+  - [ ] Trend charts (income vs expenses over time) using LineChart
+  - [ ] Category breakdown charts using PieChart
+  - [ ] Filtering options
+- [ ] Create `src/components/reports/CashFlowChart.tsx`
+- [ ] **Write tests**: Cash flow calculations, verify transfers excluded, chart rendering
+**Manual Verification (User):** Create mix of income/expense/transfer transactions, view cash flow for monthly/quarterly/yearly periods, verify transfers don't appear in report, test category filters, check trend and pie charts display correctly.
+
+### 6.4 Create Reports Page
+- [ ] Create `src/components/reports/ReportsPage.tsx` with tab navigation
+- [ ] Add export buttons for each report (CSV/PDF)
+- [ ] Create `src/utils/export.utils.ts` for data export
+- [ ] Add route `/reports`
+- [ ] **Write tests**: Reports page navigation and export
+**Manual Verification (User):** Navigate to /reports, switch between Balance Sheet and Cash Flow tabs, export each report to CSV and verify data accuracy, check responsive layout on different screen sizes.
+
+## Phase 7: Budget Planning & Review (MVP)
+
+**Requirements**: FR-8 (Budget Planning & Review)
+
+**Goal**: Users can create budgets, allocate funds, and track spending
+
+### 7.1 Implement Budget Data Layer
+- [ ] Create `src/stores/useBudgetStore.ts` with budget and budget items
+- [ ] Add budget vs actual calculation functions to calculation service
+- [ ] Create budget templates functionality
+- [ ] **Write tests**: useBudgetStore.test.ts
+**Manual Verification (User):** Test budget store operations in browser console or React DevTools, verify budget vs actual calculations with sample data, test template creation.
+
+### 7.2 Build Budget Management UI
+- [ ] Create `src/components/budgets/BudgetForm.tsx` with period types
+- [ ] Create `src/components/budgets/BudgetItemsGrid.tsx` for category allocations
+- [ ] Create `src/components/budgets/BudgetDialog.tsx` with stepper (create/edit)
+- [ ] Create `src/components/budgets/BudgetList.tsx`
+- [ ] Create `src/components/budgets/BudgetOverview.tsx` with progress bars and color coding
+- [ ] Create `src/components/budgets/BudgetsPage.tsx` with tabs
+- [ ] Add route `/budgets`
+- [ ] **Write tests**: Comprehensive component tests
+**Manual Verification (User):** Navigate to /budgets, create new budget with multiple category allocations, set as active, view budget vs actual with existing transactions, edit budget amounts, delete budget, verify all UI elements display correctly.
+
+### 7.3 Budget Tracking Dashboard
+- [ ] Create `src/components/budgets/BudgetStatusCard.tsx` - real-time status
+- [ ] Create `src/components/budgets/BudgetAlerts.tsx` - warnings and alerts
+- [ ] Add budget status indicators (green/yellow/red)
+- [ ] **Write tests**: Test status calculations and alerts
+**Manual Verification (User):** Create active budget, add transactions that affect budget categories, verify real-time updates to budget status, check color indicators change (green when under budget, yellow approaching limit, red over budget), test alert notifications.
+
+### 7.4 Budget Analysis & Reports
+- [ ] Create `src/components/budgets/BudgetVarianceReport.tsx`
+- [ ] Create `src/components/budgets/BudgetComparisonChart.tsx`
+- [ ] Add historical budget performance view
+- [ ] Add budget recommendations based on spending patterns
+- [ ] **Write tests**: Test variance calculations
+**Manual Verification (User):** View budget variance report showing over/under spending by category, compare budgets across different months, check historical performance charts, verify budget recommendations appear and are relevant to spending patterns.
+
+### 7.5 Budget Adjustments
+- [ ] Implement in-period budget adjustments
+- [ ] Add adjustment history tracking
+- [ ] Implement rollover functionality
+- [ ] **Write tests**: Test adjustment logic
+**Manual Verification (User):** Modify active budget mid-period, verify adjustment tracking shows what changed and when, test rollover feature to carry over unused amounts to next period, check adjustment history is visible.
+
+## Phase 8: Dashboard with Quick Transaction Entry (MVP)
 
 **Requirements**: FR-5 (Dashboard & Quick Entry), FR-1 (Transaction Management)
 
 **Goal**: Users see a summary dashboard with inline transaction entry
 
-### 6.1 Build Dashboard Widgets
+### 8.1 Build Dashboard Widgets
 - [ ] Create `src/components/dashboard/StatsCard.tsx`
 - [ ] Create `src/components/dashboard/RecentTransactions.tsx`
 - [ ] Create `src/components/dashboard/AccountSummary.tsx`
@@ -336,118 +437,17 @@ This plan implements all requirements from REQUIREMENTS.md.
   - [ ] Auto-save on submit or Enter key
   - [ ] Clears form after successful submission
   - [ ] Optional: "More Details" link to open full TransactionDialog for complex transactions
+- [ ] **Write tests**: Dashboard widget component tests
+**Manual Verification (User):** Test each widget individually with sample data, verify stats display correctly, check recent transactions list updates, test account summary shows all accounts.
 
-### 6.2 Create Dashboard Page
+### 8.2 Create Dashboard Page
 - [ ] Create `src/components/dashboard/DashboardPage.tsx`
 - [ ] Place QuickAddTransaction form prominently at the top
 - [ ] Integrate remaining widgets below in responsive grid
 - [ ] Add route `/` (Dashboard)
 - [ ] Update navigation to default to dashboard
-- [ ] **Test**: Open dashboard and immediately start typing to add transaction, submit with Enter key, verify form clears and transaction appears in recent list
-
-## Phase 7: Financial Reports (MVP)
-
-**Requirements**: FR-7 (Financial Reports - Balance Sheet, Cash Flow)
-
-**Goal**: Users can view balance sheet and cash flow reports
-
-### 7.1 Setup Chart Library
-- [ ] Install charting library (recharts or nivo)
-- [ ] Create `src/components/charts/LineChart.tsx`
-- [ ] Create `src/components/charts/BarChart.tsx`
-- [ ] Create `src/components/charts/PieChart.tsx`
-- [ ] **Write tests**: Chart component tests
-- [ ] **Test**: Charts render correctly with sample data
-
-### 7.2 Implement Manual Assets Feature
-- [ ] Create `src/types/models.ts` interface for ManualAsset (name, type, value, date, notes)
-- [ ] Create `src/stores/useAssetStore.ts` for manual assets and liabilities
-- [ ] Add Zod schemas for asset validation
-- [ ] Create `src/components/assets/ManualAssetForm.tsx`
-- [ ] Create `src/components/assets/ManualAssetDialog.tsx`
-- [ ] Create `src/components/assets/ManualAssetList.tsx`
-- [ ] **Write tests**: Asset store and component tests
-- [ ] **Test**: Add/edit/delete manual assets, track value changes over time
-
-### 7.3 Build Balance Sheet Report
-- [ ] Create `src/services/report.service.ts` with balance calculations
-- [ ] Create `src/components/reports/BalanceSheet.tsx`:
-  - [ ] Assets section (accounts + manual assets grouped by type)
-  - [ ] Liabilities section (credit cards, loans, manual liabilities)
-  - [ ] Net worth calculation and trend
-  - [ ] Date selection for historical view
-  - [ ] Comparison features (month-over-month, year-over-year)
-- [ ] Create `src/components/reports/ManualAssetSection.tsx`
-- [ ] **Write tests**: Balance sheet calculations and rendering
-- [ ] **Test**: View balance sheet, select different dates, verify calculations, add manual assets and see them included
-
-### 7.4 Build Cash Flow Report
-- [ ] Create cash flow calculation service (excludes transfers)
-- [ ] Create `src/components/reports/CashFlowReport.tsx`:
-  - [ ] Income section by category
-  - [ ] Expense section by category
-  - [ ] Net cash flow calculation
-  - [ ] Time period selection (monthly, quarterly, yearly, custom)
-  - [ ] Trend charts (income vs expenses over time)
-  - [ ] Category breakdown charts
-  - [ ] Filtering options
-- [ ] Create `src/components/reports/CashFlowChart.tsx`
-- [ ] **Write tests**: Cash flow calculations, verify transfers excluded
-- [ ] **Test**: View cash flow for different periods, verify transfers are excluded, test filters
-
-### 7.5 Create Reports Page
-- [ ] Create `src/components/reports/ReportsPage.tsx` with tab navigation
-- [ ] Add export buttons for each report (CSV/PDF)
-- [ ] Create `src/utils/export.utils.ts` for data export
-- [ ] Add route `/reports`
-- [ ] **Write tests**: Reports page navigation and export
-- [ ] **Test**: Switch between reports tabs, export data to CSV
-
-## Phase 8: Budget Planning & Review (MVP)
-
-**Requirements**: FR-8 (Budget Planning & Review)
-
-**Goal**: Users can create budgets, allocate funds, and track spending
-
-### 8.1 Implement Budget Data Layer
-- [ ] Create `src/stores/useBudgetStore.ts` with budget and budget items
-- [ ] Add budget vs actual calculation functions to calculation service
-- [ ] Create budget templates functionality
-- [ ] **Write tests**: useBudgetStore.test.ts
-- [ ] **Test**: Budget CRUD operations, calculations, templates
-
-### 8.2 Build Budget Management UI
-- [ ] Create `src/components/budgets/BudgetForm.tsx` with period types
-- [ ] Create `src/components/budgets/BudgetItemsGrid.tsx` for category allocations
-- [ ] Create `src/components/budgets/BudgetDialog.tsx` with stepper (create/edit)
-- [ ] Create `src/components/budgets/BudgetList.tsx`
-- [ ] Create `src/components/budgets/BudgetOverview.tsx` with progress bars and color coding
-- [ ] Create `src/components/budgets/BudgetsPage.tsx` with tabs
-- [ ] Add route `/budgets`
-- [ ] **Write tests**: Comprehensive component tests
-- [ ] **Test**: Create budget with items, set as active, view budget vs actual, edit budget, delete budget
-
-### 8.3 Budget Tracking Dashboard
-- [ ] Create `src/components/budgets/BudgetStatusCard.tsx` - real-time status
-- [ ] Create `src/components/budgets/BudgetAlerts.tsx` - warnings and alerts
-- [ ] Add budget status indicators (green/yellow/red)
-- [ ] **Write tests**: Test status calculations and alerts
-- [ ] **Test**: Verify budget tracking updates in real-time as transactions are added
-
-### 8.4 Budget Analysis & Reports
-- [ ] Create `src/components/budgets/BudgetVarianceReport.tsx`
-- [ ] Create `src/components/budgets/BudgetComparisonChart.tsx`
-- [ ] Add historical budget performance view
-- [ ] Add budget recommendations based on spending patterns
-- [ ] **Write tests**: Test variance calculations
-- [ ] **Test**: View variance analysis, compare budgets across periods
-
-### 8.5 Budget Adjustments
-- [ ] Implement in-period budget adjustments
-- [ ] Add adjustment history tracking
-- [ ] Implement rollover functionality
-- [ ] **Write tests**: Test adjustment logic
-- [ ] **Test**: Modify budget mid-period, view adjustment history, test rollover
+- [ ] **Write tests**: Dashboard page integration tests
+**Manual Verification (User):** Open dashboard at /, immediately start typing in quick add form, add transaction using Enter key, verify form clears and transaction appears in recent list, check all widgets display with proper layout, test responsive grid on mobile.
 
 ## Phase 9: Navigation & Routing (MVP)
 
@@ -467,7 +467,7 @@ This plan implements all requirements from REQUIREMENTS.md.
 - [ ] Wrap app with BrowserRouter
 - [ ] Create 404 page
 - [ ] **Write tests**: Route navigation tests
-- [ ] **Test**: All routes work correctly
+**Manual Verification (User):** Navigate directly to each URL (/, /accounts, /categories, etc.), verify correct page loads, test 404 page with invalid URL, check browser back/forward buttons work correctly.
 
 ### 9.2 Complete Navigation
 - [ ] Update Header with navigation links for all MVP pages
@@ -475,7 +475,7 @@ This plan implements all requirements from REQUIREMENTS.md.
 - [ ] Add active state styling
 - [ ] Add mobile responsive menu (drawer)
 - [ ] **Write tests**: Header navigation tests
-- [ ] **Test**: Navigate between all pages, verify active states, test on mobile
+**Manual Verification (User):** Click each navigation link in Header, verify active state highlights current page, test on mobile to see drawer menu, verify all icons display correctly, check keyboard navigation works.
 
 ## Phase 10: Production Build, Testing & Polish (MVP)
 

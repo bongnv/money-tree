@@ -14,6 +14,14 @@ Read `REQUIREMENTS.md` and `IMPLEMENTATION_PLAN.md` before making changes.
 - Step-by-step tasks with tests
 - Break large steps into 3-7 numbered sub-steps (1-3 files each)
 - Each sub-step needs test requirements and verification criteria
+- **Prioritize UI-verifiable steps**: Design steps that can be tested in the browser, not just via automated tests
+
+**Step Design for UI Verification:**
+- Create components with visual output that can be seen in the browser
+- Add routes early so features are immediately accessible
+- Build pages incrementally (add dialog → add list → add filters)
+- Complete integration steps that make features accessible in the app
+- Example: Create page with route first, then add components one by one
 
 **Keep in sync:**
 - Check off both files when completing features

@@ -14,6 +14,12 @@ This document provides a step-by-step implementation plan for building the Money
 - Run `npm test -- --coverage` to check coverage metrics
 - All new features must include tests before marking phase as complete
 
+**Manual UI Verification:**
+- "Test UI" sections provide manual verification steps for the user
+- These are performed in the browser by the user, not automated
+- Build features incrementally so each step is immediately visible
+- Add routes early to enable UI testing as you build
+
 ## Requirements Reference
 
 This plan implements all requirements from REQUIREMENTS.md.
@@ -252,25 +258,30 @@ This plan implements all requirements from REQUIREMENTS.md.
 - [x] **Write tests**: TransactionForm.test.tsx with conditional field rendering
 - [x] **Test**: Form shows correct fields based on transaction type, validates required fields
 
-#### 5.2.3 Create Transaction Dialog Component
+#### 5.2.3 Create Transaction Dialog and Page with Route
 - [ ] Create `src/components/transactions/TransactionDialog.tsx`:
   - [ ] Wraps TransactionForm in MUI Dialog
   - [ ] Dynamic title (Add/Edit Transaction)
   - [ ] Submit and cancel handlers
+- [ ] Create `src/components/transactions/TransactionsPage.tsx` with "New Transaction" button
+- [ ] Add route `/transactions` in App.tsx
 - [ ] **Write tests**: TransactionDialog.test.tsx
-- [ ] **Test**: Dialog opens/closes, passes data to form, handles submit
+**Manual Verification (User):** Navigate to /transactions, click "New Transaction": dialog opens, conditional fields appear based on transaction type, validation errors display, submit creates transaction, dialog closes.
 
-#### 5.2.4 Create Transaction List Component
+#### 5.2.4 Add Transaction List to Page
 - [ ] Create `src/components/transactions/TransactionList.tsx`:
   - [ ] Integrate @mui/x-data-grid
   - [ ] Define columns: Date, Description, Category, Amount, From/To Accounts
   - [ ] Add edit and delete action buttons
   - [ ] Handle row click for editing
   - [ ] Empty state message
+- [ ] Add TransactionList to TransactionsPage below the button
+- [ ] Connect edit button to open dialog with transaction data
+- [ ] Add delete confirmation
 - [ ] **Write tests**: TransactionList.test.tsx
-- [ ] **Test**: List displays transactions, edit/delete buttons work, shows empty state
+**Manual Verification (User):** Create transactions and see them in the list, click edit to open dialog with data, delete transaction, verify empty state.
 
-#### 5.2.5 Create Transaction Filters Component
+#### 5.2.5 Add Transaction Filters to Page
 - [ ] Create `src/components/transactions/TransactionFilters.tsx`:
   - [ ] Date range filter (from/to)
   - [ ] Account filter (multi-select)
@@ -278,32 +289,19 @@ This plan implements all requirements from REQUIREMENTS.md.
   - [ ] Transaction type filter
   - [ ] Search by description
   - [ ] Clear filters button
+- [ ] Add TransactionFilters to TransactionsPage at top
+- [ ] Connect filters to filter transaction list
 - [ ] **Write tests**: TransactionFilters.test.tsx
-- [ ] **Test**: Each filter works independently and in combination
+**Manual Verification (User):** Create diverse transactions, test each filter independently and in combination, verify clear filters button works.
 
-#### 5.2.6 Create Transactions Page
-- [ ] Create `src/components/transactions/TransactionsPage.tsx`:
-  - [ ] Integrate TransactionFilters at top
-  - [ ] Integrate TransactionList below filters
-  - [ ] "New Transaction" button
-  - [ ] Connect to useTransactionStore for CRUD operations
-  - [ ] Handle TransactionDialog open/close states
-  - [ ] Confirmation dialog for deletions
-- [ ] **Write tests**: TransactionsPage.test.tsx with full CRUD workflow
-- [ ] **Test**: Create, read, update, delete transactions through page UI
-
-#### 5.2.7 Add Routing and Final Integration
-- [ ] Add route `/transactions` in App.tsx
-- [ ] Add "Transactions" button to Header navigation
+#### 5.2.6 Add Navigation and Polish
+- [ ] Add "Transactions" button to Header navigation with icon
 - [ ] Update Header.test.tsx for new navigation button
-- [ ] **Test**: Navigate to /transactions, all features work end-to-end:
-  - [ ] Add expense (from account only)
-  - [ ] Add income (to account only)
-  - [ ] Add transfer (both from and to accounts)
-  - [ ] Add investment transaction
-  - [ ] Filter by date, account, category
-  - [ ] Edit existing transaction
-  - [ ] Delete transaction with confirmation
+- [ ] Add page title and layout refinements to TransactionsPage
+- [ ] **Write tests**: TransactionsPage.test.tsx with full CRUD workflow
+**Manual Verification (User):** Complete end-to-end workflow - add expense/income/transfer/investment transactions, filter by date/account/category, edit and delete transactions, verify unsaved changes indicator, save file and verify persistence.
+
+#### 5.2.7 (Removed - merged into 5.2.3 and 5.2.6)
 
 ### 5.3 Verify Account Balance Updates
 - [ ] Update AccountCard to show calculated balance

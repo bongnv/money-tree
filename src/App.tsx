@@ -33,6 +33,13 @@ const App: React.FC = () => {
     initializeApp();
     syncService.startAutoSave();
 
+    return () => {
+      syncService.stopAutoSave();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
+
+  useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
         e.preventDefault();
@@ -43,7 +50,6 @@ const App: React.FC = () => {
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
-      syncService.stopAutoSave();
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [hasUnsavedChanges]);

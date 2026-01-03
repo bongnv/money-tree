@@ -930,7 +930,7 @@ These features will be implemented after the MVP is validated by users.
 **Manual Verification**:
 - [x] **UI Test**: Open app, verify header has no "Load" button
 - [x] **UI Test**: Verify "Sync" button is present (replaces Save)
-- [ ] **UI Test**: Make change, verify "Sync" button enabled with unsaved indicator (dot)
+- [x] **UI Test**: Make change, verify "Sync" button enabled with unsaved indicator (dot)
 - [ ] **UI Test**: Click "Sync", verify data saves and button disables
 - [ ] **UI Test**: Verify loading spinner appears during sync
 - [ ] **UI Test**: Verify "last saved" timestamp updates after sync

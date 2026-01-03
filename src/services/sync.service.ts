@@ -12,6 +12,7 @@ const AUTO_SAVE_INTERVAL = 1 * 60 * 1000; // 1 minute in milliseconds
 class SyncService {
   private autoSaveTimerId: NodeJS.Timeout | null = null;
   private isSaving = false;
+  private cachedDataFile: DataFile | null = null;
 
   /**
    * Check if there are unsaved changes and prompt user if needed
@@ -72,21 +73,12 @@ class SyncService {
       const assetStore = useAssetStore.getState();
       const budgetStore = useBudgetStore.getState();
 
-      // Get existing data file from storage or create new one
-      let existingData: DataFile | null = null;
-
-      try {
-        existingData = await storage.loadDataFile();
-      } catch (error) {
-        // If file doesn't exist, we'll create a new one
-      }
-
       const currentYearStr = String(state.currentYear);
 
       const dataToSave: DataFile = {
         version: '1.0.0',
         years: {
-          ...existingData?.years,
+          ...this.cachedDataFile?.years,
           [currentYearStr]: {
             transactions: transactionStore.transactions,
             budgets: budgetStore.budgets,
@@ -96,11 +88,14 @@ class SyncService {
         accounts: accountStore.accounts,
         categories: categoryStore.categories,
         transactionTypes: categoryStore.transactionTypes,
-        archivedYears: existingData?.archivedYears || [],
+        archivedYears: this.cachedDataFile?.archivedYears || [],
         lastModified: new Date().toISOString(),
       };
 
       await storage.saveDataFile(dataToSave);
+
+      // Update cache with what we just saved
+      this.cachedDataFile = dataToSave;
 
       state.markAsSaved();
       // Get the actual filename from storage provider
@@ -167,6 +162,9 @@ class SyncService {
       const dataFile = await storage.loadDataFile();
 
       if (dataFile) {
+        // Cache the loaded data file
+        this.cachedDataFile = dataFile;
+
         // Distribute shared data to domain stores
         useAccountStore.getState().setAccounts(dataFile.accounts || []);
         useCategoryStore.getState().setCategories(dataFile.categories || []);

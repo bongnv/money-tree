@@ -11,6 +11,7 @@ import { SettingsLayout } from './components/settings/SettingsLayout';
 import { SettingsPage } from './components/settings/SettingsPage';
 import { AssetsPage } from './components/settings/AssetsPage';
 import { CategoriesPage } from './components/categories/CategoriesPage';
+import { DataSyncSettings } from './components/settings/DataSyncSettings';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -26,6 +27,7 @@ export const AppRoutes: React.FC = () => {
         <Route index element={<SettingsPage />} />
         <Route path="assets" element={<AssetsPage />} />
         <Route path="categories" element={<CategoriesPage />} />
+        <Route path="data-sync" element={<DataSyncSettings />} />
       </Route>
 
       {/* 404 - Not Found */}

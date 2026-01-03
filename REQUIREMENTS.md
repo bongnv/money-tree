@@ -160,6 +160,8 @@ The MVP focuses on core personal finance tracking functionality with local file 
 - Store archive reference and year-end summary in main file
 - Archive files are self-contained and can be loaded independently
 
+**FR-6-11** [ ] Auto-save should be trigger after the first change + interval
+
 **Performance rationale:** With ~2000 transactions/year (~450 KB per year), keeping 2 years in main file (~900 KB) ensures fast auto-save while recent data remains instantly accessible. Older years archived separately for long-term scalability.
 
 ### FR-7: Budget Management

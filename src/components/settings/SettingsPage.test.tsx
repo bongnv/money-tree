@@ -22,10 +22,10 @@ describe('SettingsPage', () => {
       </BrowserRouter>
     );
     expect(screen.getByText('Settings')).toBeInTheDocument();
-    expect(screen.getByText(/Configure your assets and categories/i)).toBeInTheDocument();
+    expect(screen.getByText(/Configure your assets, categories, and data sync/i)).toBeInTheDocument();
   });
 
-  it('renders Assets and Categories cards', () => {
+  it('renders Assets, Categories, and Data & Sync cards', () => {
     render(
       <BrowserRouter>
         <SettingsPage />
@@ -33,6 +33,7 @@ describe('SettingsPage', () => {
     );
     expect(screen.getByText('Assets')).toBeInTheDocument();
     expect(screen.getByText('Categories')).toBeInTheDocument();
+    expect(screen.getByText('Data & Sync')).toBeInTheDocument();
   });
 
   it('navigates to /settings/assets when Assets card is clicked', async () => {
@@ -59,6 +60,18 @@ describe('SettingsPage', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/settings/categories');
   });
 
+  it('navigates to /settings/data-sync when Data & Sync card is clicked', async () => {
+    const user = userEvent.setup();
+    render(
+      <BrowserRouter>
+        <SettingsPage />
+      </BrowserRouter>
+    );
+
+    await user.click(screen.getByText('Data & Sync'));
+    expect(mockNavigate).toHaveBeenCalledWith('/settings/data-sync');
+  });
+
   it('renders card descriptions', () => {
     render(
       <BrowserRouter>
@@ -69,5 +82,6 @@ describe('SettingsPage', () => {
       screen.getByText(/Manage your transactional accounts and manual assets/i)
     ).toBeInTheDocument();
     expect(screen.getByText(/Organize your transaction types and categories/i)).toBeInTheDocument();
+    expect(screen.getByText(/Manage your data file and sync preferences/i)).toBeInTheDocument();
   });
 });

@@ -232,6 +232,53 @@ class SyncService {
   }
 
   /**
+   * Switch to a different data file
+   * Prompts user to select a new file and loads it
+   */
+  async switchFile(year: number): Promise<void> {
+    const storage = StorageFactory.getCurrentProvider();
+    
+    // Clear the cached file handle to force file picker
+    if (storage.clearFileHandle) {
+      await storage.clearFileHandle();
+    }
+
+    // Clear the cached data file
+    this.cachedDataFile = null;
+
+    // Load the new file
+    await this.loadDataFile(year);
+  }
+
+  /**
+   * Clear cached file reference and reset all data
+   * User will need to select file again on next visit
+   */
+  async clearCachedFile(): Promise<void> {
+    const storage = StorageFactory.getCurrentProvider();
+    
+    if (storage.clearFileHandle) {
+      await storage.clearFileHandle();
+    }
+
+    // Clear the cached data file
+    this.cachedDataFile = null;
+
+    // Clear all domain stores
+    useAccountStore.getState().setAccounts([]);
+    useCategoryStore.getState().setCategories([]);
+    useCategoryStore.getState().setTransactionTypes([]);
+    useTransactionStore.getState().setTransactions([]);
+    useAssetStore.getState().setManualAssets([]);
+    useBudgetStore.getState().setBudgets([]);
+
+    // Reset app state
+    const state = useAppStore.getState();
+    state.setFileName(null);
+    state.markAsSaved();
+  }
+
+  /**
    * Mark changes as made (to trigger auto-save timer)
    */
   markChanged(): void {

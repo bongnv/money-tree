@@ -3,6 +3,7 @@ import { Container, Typography, Grid, Card, CardActionArea, CardContent, Box } f
 import { useNavigate } from 'react-router-dom';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import CategoryIcon from '@mui/icons-material/Category';
+import SyncIcon from '@mui/icons-material/Sync';
 
 export const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ export const SettingsPage: React.FC = () => {
         Settings
       </Typography>
       <Typography variant="body1" color="text.secondary" paragraph>
-        Configure your assets and categories
+        Configure your assets, categories, and data sync
       </Typography>
 
       <Grid container spacing={3}>
@@ -47,6 +48,24 @@ export const SettingsPage: React.FC = () => {
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Organize your transaction types and categories
+                </Typography>
+              </CardContent>
+            </CardActionArea>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <Card>
+            <CardActionArea onClick={() => navigate('/settings/data-sync')}>
+              <CardContent>
+                <Box display="flex" alignItems="center" mb={2}>
+                  <SyncIcon fontSize="large" color="primary" />
+                </Box>
+                <Typography variant="h6" gutterBottom>
+                  Data & Sync
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Manage your data file and sync preferences
                 </Typography>
               </CardContent>
             </CardActionArea>

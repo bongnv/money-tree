@@ -15,6 +15,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import CategoryIcon from '@mui/icons-material/Category';
+import SyncIcon from '@mui/icons-material/Sync';
 
 const DRAWER_WIDTH = 240;
 
@@ -27,6 +28,7 @@ interface NavigationItem {
 const navigationItems: NavigationItem[] = [
   { label: 'Assets', path: '/settings/assets', icon: <AccountBalanceIcon /> },
   { label: 'Categories', path: '/settings/categories', icon: <CategoryIcon /> },
+  { label: 'Data & Sync', path: '/settings/data-sync', icon: <SyncIcon /> },
 ];
 
 export const SettingsLayout: React.FC = () => {

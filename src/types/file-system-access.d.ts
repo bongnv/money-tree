@@ -3,6 +3,21 @@
  * See: https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API
  */
 
+// Augment the existing FileSystemFileHandle interface with permission methods
+declare global {
+  type PermissionState = 'granted' | 'denied' | 'prompt';
+
+  interface FileSystemHandlePermissionDescriptor {
+    mode?: 'read' | 'readwrite';
+  }
+
+  interface FileSystemFileHandle {
+    queryPermission(descriptor?: FileSystemHandlePermissionDescriptor): Promise<PermissionState>;
+    requestPermission(descriptor?: FileSystemHandlePermissionDescriptor): Promise<PermissionState>;
+  }
+}
+
+// Keep existing declarations
 interface FileSystemFileHandle {
   readonly kind: 'file';
   readonly name: string;

@@ -20,12 +20,6 @@ export interface IStorageProvider {
   saveDataFile(data: DataFile): Promise<void>;
 
   /**
-   * List all available years in the data file
-   * @returns Promise with array of years
-   */
-  listAvailableYears(): Promise<number[]>;
-
-  /**
    * Check if a file handle is cached
    * @returns True if file handle exists, false otherwise
    */
@@ -34,5 +28,17 @@ export interface IStorageProvider {
   /**
    * Clear cached file handle
    */
-  clearFileHandle?(): void;
+  clearFileHandle?(): void | Promise<void>;
+
+  /**
+   * Get the name of the current file
+   * @returns File name or null if no file is open
+   */
+  getFileName?(): string | null;
+
+  /**
+   * Ensure any async initialization is complete
+   * Call this before checking hasFileHandle() or other operations
+   */
+  ensureInitialized?(): Promise<void>;
 }

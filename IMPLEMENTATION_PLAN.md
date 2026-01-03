@@ -889,9 +889,9 @@ These features will be implemented after the MVP is validated by users.
   - [x] Build succeeds
 
 **Manual Verification**:
-- [ ] **UI Test**: Clear browser cache, open app, see Welcome Dialog appear
-- [ ] **UI Test**: Click "Open Local File", select file, verify data loads and dialog closes
-- [ ] **UI Test**: Close app, reopen, verify data auto-loads without dialog (cached file handle)
+- [x] **UI Test**: Clear browser cache, open app, see Welcome Dialog appear
+- [x] **UI Test**: Click "Open Local File", select file, verify data loads and dialog closes
+- [x] **UI Test**: Close app, reopen, verify data auto-loads without dialog (cached file handle)
 - [ ] **UI Test**: Clear cache again, click "Start with Empty Data", verify empty state loads
 - [ ] **UI Test**: Add transaction, verify sync prompt appears to save new file
 - [ ] **UI Test**: Check "Don't show this again", restart app with cleared cache, verify no dialog
@@ -899,26 +899,37 @@ These features will be implemented after the MVP is validated by users.
 
 ### 11.2 Remove Load Button & Update Header (FR-11.1)
 **Implementation**:
-- [ ] Update `src/components/layout/Header.tsx`:
-  - [ ] Remove "Load" button and `handleLoad` function
-  - [ ] Rename "Save" button to "Sync"
-  - [ ] Update `handleSave` → `handleSync` for clarity
-  - [ ] Keep save icon (<SaveIcon />) but update aria-label to "Sync"
-  - [ ] Keep existing logic: disabled when `!hasUnsavedChanges`
-  - [ ] Keep loading spinner integration
-  - [ ] Simplify header layout (more space for file info)
-- [ ] Update `src/services/sync.service.ts`:
-  - [ ] Rename internal method names from `saveNow` → `syncNow` (optional, for consistency)
-  - [ ] Keep backward compatibility for existing code
-  - [ ] Update comments to use "sync" terminology
-- [ ] Update tests:
-  - [ ] Header.test.tsx: Remove Load button tests
-  - [ ] Header.test.tsx: Update Save → Sync button tests
-  - [ ] sync.service.test.ts: Update test descriptions
+- [x] Update `src/components/layout/Header.tsx`:
+  - [x] Remove "Load" button and `handleLoad` function
+  - [x] Rename "Save" button to "Sync"
+  - [x] Update `handleSave` → `handleSync` for clarity
+  - [x] Change icon from SaveIcon to SyncIcon
+  - [x] Update aria-label to "Sync"
+  - [x] Keep existing logic: disabled when `!hasUnsavedChanges`
+  - [x] Keep loading spinner integration
+  - [x] Simplify header layout (more space for file info)
+  - [x] Update "Never saved" → "Never synced"
+  - [x] Rename `getLastSavedText` → `getLastSyncedText`
+- [x] Update `src/services/sync.service.ts`:
+  - [x] Rename internal method `saveNow` → `syncNow`
+  - [x] Keep deprecated `saveNow` as alias for backward compatibility
+  - [x] Update error messages to use "sync" terminology
+  - [x] Update `promptSaveIfNeeded` to call `syncNow()`
+  - [x] Update `startAutoSave` to call `syncNow()`
+  - [x] Update comments to use "sync" terminology
+- [x] Update tests:
+  - [x] Header.test.tsx: Remove Load button tests
+  - [x] Header.test.tsx: Update Save → Sync button tests
+  - [x] Header.test.tsx: Update spy to use `syncNow`
+  - [x] sync.service.test.ts: Update test descriptions from saveNow → syncNow
+  - [x] sync.service.test.ts: Update method calls to `syncNow()`
+  - [x] App.test.tsx: Remove Load button check, add Sync button check
+  - [x] All tests passing (950 tests)
+  - [x] Build successful
 
 **Manual Verification**:
-- [ ] **UI Test**: Open app, verify header has no "Load" button
-- [ ] **UI Test**: Verify "Sync" button is present (replaces Save)
+- [x] **UI Test**: Open app, verify header has no "Load" button
+- [x] **UI Test**: Verify "Sync" button is present (replaces Save)
 - [ ] **UI Test**: Make change, verify "Sync" button enabled with unsaved indicator (dot)
 - [ ] **UI Test**: Click "Sync", verify data saves and button disables
 - [ ] **UI Test**: Verify loading spinner appears during sync

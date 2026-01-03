@@ -1,6 +1,97 @@
 import { LocalStorageProvider } from './index';
 import type { DataFile } from '../../types/models';
 
+// Mock IndexedDB
+const mockIndexedDB = {
+  open: jest.fn(),
+  deleteDatabase: jest.fn(),
+};
+
+const createMockDB = () => {
+  const store: Record<string, any> = {};
+
+  const mockObjectStore = {
+    get: jest.fn((key: string) => {
+      const request: any = {
+        onsuccess: null,
+        onerror: null,
+        result: store[key],
+      };
+      // Trigger success asynchronously
+      setTimeout(() => {
+        if (request.onsuccess) request.onsuccess({ target: request });
+      }, 0);
+      return request;
+    }),
+    put: jest.fn((value: any, key: string) => {
+      store[key] = value;
+      const request: any = {
+        onsuccess: null,
+        onerror: null,
+      };
+      // Trigger success asynchronously
+      setTimeout(() => {
+        if (request.onsuccess) request.onsuccess({ target: request });
+      }, 0);
+      return request;
+    }),
+    delete: jest.fn((key: string) => {
+      delete store[key];
+      const request: any = {
+        onsuccess: null,
+        onerror: null,
+      };
+      // Trigger success asynchronously
+      setTimeout(() => {
+        if (request.onsuccess) request.onsuccess({ target: request });
+      }, 0);
+      return request;
+    }),
+  };
+
+  const mockTransaction = {
+    objectStore: jest.fn(() => mockObjectStore),
+    oncomplete: null as any,
+    onerror: null as any,
+  };
+
+  // Auto-complete transactions
+  setTimeout(() => {
+    if (mockTransaction.oncomplete) mockTransaction.oncomplete();
+  }, 10);
+
+  return {
+    objectStoreNames: { contains: jest.fn(() => false) },
+    createObjectStore: jest.fn(() => mockObjectStore),
+    transaction: jest.fn(() => {
+      // Create new transaction instance each time
+      const newTransaction = {
+        objectStore: jest.fn(() => mockObjectStore),
+        oncomplete: null as any,
+        onerror: null as any,
+      };
+      // Auto-complete this transaction
+      setTimeout(() => {
+        if (newTransaction.oncomplete) newTransaction.oncomplete();
+      }, 10);
+      return newTransaction;
+    }),
+  };
+};
+
+/**
+ * Create a mock file handle with permission methods
+ */
+const createMockFileHandle = (mockFile: any) => ({
+  getFile: jest.fn().mockResolvedValue(mockFile),
+  createWritable: jest.fn().mockResolvedValue({
+    write: jest.fn().mockResolvedValue(undefined),
+    close: jest.fn().mockResolvedValue(undefined),
+  }),
+  queryPermission: jest.fn().mockResolvedValue('granted'),
+  requestPermission: jest.fn().mockResolvedValue('granted'),
+});
+
 /**
  * Tests for LocalStorageProvider
  */
@@ -9,6 +100,30 @@ describe('LocalStorageProvider', () => {
   let mockData: DataFile;
 
   beforeEach(() => {
+    // Setup IndexedDB mock
+    const mockDB = createMockDB();
+    const mockRequest: any = {
+      onsuccess: null,
+      onerror: null,
+      onupgradeneeded: null,
+      result: mockDB,
+    };
+
+    mockIndexedDB.open.mockReturnValue(mockRequest);
+    (global as any).indexedDB = mockIndexedDB;
+
+    // Trigger success immediately
+    setTimeout(() => {
+      if (mockRequest.onsuccess) {
+        mockRequest.onsuccess({ target: mockRequest });
+      }
+      // Trigger transactions to complete
+      const transactions = mockDB.transaction();
+      setTimeout(() => {
+        if (transactions.oncomplete) transactions.oncomplete();
+      }, 0);
+    }, 0);
+
     provider = new LocalStorageProvider();
     mockData = {
       version: '1.0.0',
@@ -63,9 +178,7 @@ describe('LocalStorageProvider', () => {
         text: jest.fn().mockResolvedValue('invalid json'),
       };
 
-      const mockFileHandle = {
-        getFile: jest.fn().mockResolvedValue(mockFile),
-      };
+      const mockFileHandle = createMockFileHandle(mockFile);
 
       (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
 
@@ -77,9 +190,7 @@ describe('LocalStorageProvider', () => {
         text: jest.fn().mockResolvedValue(JSON.stringify(mockData)),
       };
 
-      const mockFileHandle = {
-        getFile: jest.fn().mockResolvedValue(mockFile),
-      };
+      const mockFileHandle = createMockFileHandle(mockFile);
 
       (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
 
@@ -92,9 +203,7 @@ describe('LocalStorageProvider', () => {
         text: jest.fn().mockResolvedValue(JSON.stringify(mockData)),
       };
 
-      const mockFileHandle = {
-        getFile: jest.fn().mockResolvedValue(mockFile),
-      };
+      const mockFileHandle = createMockFileHandle(mockFile);
 
       (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
 
@@ -118,9 +227,7 @@ describe('LocalStorageProvider', () => {
         text: jest.fn().mockResolvedValue(JSON.stringify(dataWithNulls)),
       };
 
-      const mockFileHandle = {
-        getFile: jest.fn().mockResolvedValue(mockFile),
-      };
+      const mockFileHandle = createMockFileHandle(mockFile);
 
       (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
 
@@ -143,9 +250,7 @@ describe('LocalStorageProvider', () => {
         text: jest.fn().mockResolvedValue(JSON.stringify(dataWithMissingArrays)),
       };
 
-      const mockFileHandle = {
-        getFile: jest.fn().mockResolvedValue(mockFile),
-      };
+      const mockFileHandle = createMockFileHandle(mockFile);
 
       (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
 
@@ -181,6 +286,8 @@ describe('LocalStorageProvider', () => {
 
       const mockFileHandle = {
         createWritable: jest.fn().mockResolvedValue(mockWritable),
+        queryPermission: jest.fn().mockResolvedValue('granted'),
+        requestPermission: jest.fn().mockResolvedValue('granted'),
       };
 
       (window as any).showSaveFilePicker = jest.fn().mockResolvedValue(mockFileHandle);
@@ -192,19 +299,11 @@ describe('LocalStorageProvider', () => {
     });
 
     it('should use cached file handle for subsequent saves', async () => {
-      const mockWritable = {
-        write: jest.fn().mockResolvedValue(undefined),
-        close: jest.fn().mockResolvedValue(undefined),
-      };
-
       const mockFile = {
         text: jest.fn().mockResolvedValue(JSON.stringify(mockData)),
       };
 
-      const mockFileHandle = {
-        createWritable: jest.fn().mockResolvedValue(mockWritable),
-        getFile: jest.fn().mockResolvedValue(mockFile),
-      };
+      const mockFileHandle = createMockFileHandle(mockFile);
 
       // First load to cache the handle
       (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
@@ -217,29 +316,20 @@ describe('LocalStorageProvider', () => {
     });
   });
 
-  describe('listAvailableYears', () => {
-    it('should return empty array', async () => {
-      const result = await provider.listAvailableYears();
-      expect(result).toEqual([]);
-    });
-  });
-
   describe('clearFileHandle', () => {
     it('should remove cached file handle', async () => {
       const mockFile = {
         text: jest.fn().mockResolvedValue(JSON.stringify(mockData)),
       };
 
-      const mockFileHandle = {
-        getFile: jest.fn().mockResolvedValue(mockFile),
-      };
+      const mockFileHandle = createMockFileHandle(mockFile);
 
       (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
 
       await provider.loadDataFile();
       expect(provider.hasFileHandle()).toBe(true);
 
-      provider.clearFileHandle();
+      await provider.clearFileHandle();
       expect(provider.hasFileHandle()).toBe(false);
     });
   });

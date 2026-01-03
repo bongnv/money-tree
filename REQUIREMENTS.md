@@ -252,6 +252,7 @@ These features will be implemented after the MVP is complete and validated by us
 - Year-end summaries: closing net worth, closing balances, transaction count
 - Load archived year for detailed viewing (read-only recommended)
 - Handle missing archive files gracefully (allow browsing)
+- Archived files are for read-only. Not modifiable.
 
 **FR-9.4** [ ] Cross-year analysis with quick trends - *Phase 11*
 - Dashboard shows year-over-year net worth trend using summaries (instant, no file loading)

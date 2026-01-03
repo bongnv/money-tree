@@ -23,8 +23,7 @@ describe('App', () => {
 
     // Check for Header elements
     expect(screen.getByText('Money Tree')).toBeInTheDocument();
-    expect(screen.getByText('Load')).toBeInTheDocument();
-    expect(screen.getByText('Save')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /sync/i })).toBeInTheDocument();
 
     // Check for Dashboard page title - use getAllByText since it appears in nav and heading
     const dashboardElements = screen.getAllByText('Dashboard');

@@ -23,7 +23,6 @@ describe('SyncService', () => {
     (StorageFactory.getCurrentProvider as jest.Mock).mockReturnValue({
       saveDataFile: mockSaveDataFile,
       loadDataFile: mockLoadDataFile,
-      listAvailableYears: jest.fn(),
     });
 
     jest.spyOn(window, 'confirm').mockReturnValue(false);
@@ -109,8 +108,8 @@ describe('SyncService', () => {
     });
   });
 
-  describe('saveNow', () => {
-    it('should save data file', async () => {
+  describe('syncNow', () => {
+    it('should sync data file', async () => {
       useAccountStore.getState().addAccount({
         id: '1',
         name: 'Test Account',
@@ -128,7 +127,7 @@ describe('SyncService', () => {
       mockLoadDataFile.mockResolvedValue(null);
       mockSaveDataFile.mockResolvedValue(undefined);
 
-      await syncService.saveNow();
+      await syncService.syncNow();
 
       expect(mockSaveDataFile).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -142,13 +141,13 @@ describe('SyncService', () => {
       expect(useAppStore.getState().hasUnsavedChanges).toBe(false);
     });
 
-    it('should save empty data file when no domain data', async () => {
+    it('should sync empty data file when no domain data', async () => {
       useAppStore.getState().setCurrentYear(2024);
       useAppStore.getState().setUnsavedChanges(true);
       mockLoadDataFile.mockResolvedValue(null);
       mockSaveDataFile.mockResolvedValue(undefined);
 
-      await syncService.saveNow();
+      await syncService.syncNow();
 
       expect(mockSaveDataFile).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -165,7 +164,7 @@ describe('SyncService', () => {
       );
     });
 
-    it('should not save when no unsaved changes', async () => {
+    it('should not sync when no unsaved changes', async () => {
       useAccountStore.getState().addAccount({
         id: '1',
         name: 'Test Account',
@@ -180,12 +179,12 @@ describe('SyncService', () => {
       useAppStore.getState().setCurrentYear(2024);
       useAppStore.getState().setUnsavedChanges(false);
 
-      await syncService.saveNow();
+      await syncService.syncNow();
 
       expect(mockSaveDataFile).not.toHaveBeenCalled();
     });
 
-    it('should handle save errors', async () => {
+    it('should handle sync errors', async () => {
       useAccountStore.getState().addAccount({
         id: '1',
         name: 'Test Account',
@@ -200,10 +199,10 @@ describe('SyncService', () => {
       useAppStore.getState().setCurrentYear(2024);
       useAppStore.getState().setUnsavedChanges(true);
 
-      mockSaveDataFile.mockRejectedValue(new Error('Save failed'));
+      mockSaveDataFile.mockRejectedValue(new Error('Sync failed'));
 
-      await expect(syncService.saveNow()).rejects.toThrow('Save failed');
-      expect(useAppStore.getState().error).toBe('Save failed');
+      await expect(syncService.syncNow()).rejects.toThrow('Sync failed');
+      expect(useAppStore.getState().error).toBe('Sync failed');
     });
   });
 
@@ -364,7 +363,6 @@ describe('SyncService', () => {
       (StorageFactory.getCurrentProvider as jest.Mock).mockReturnValue({
         saveDataFile: mockSaveDataFile,
         loadDataFile: mockLoadDataFile.mockResolvedValue(mockDataFile),
-        listAvailableYears: jest.fn(),
         hasFileHandle: mockHasFileHandle,
       });
 
@@ -383,7 +381,6 @@ describe('SyncService', () => {
       (StorageFactory.getCurrentProvider as jest.Mock).mockReturnValue({
         saveDataFile: mockSaveDataFile,
         loadDataFile: mockLoadDataFile,
-        listAvailableYears: jest.fn(),
         hasFileHandle: mockHasFileHandle,
       });
 
@@ -400,7 +397,6 @@ describe('SyncService', () => {
       (StorageFactory.getCurrentProvider as jest.Mock).mockReturnValue({
         saveDataFile: mockSaveDataFile,
         loadDataFile: mockLoadDataFile.mockRejectedValue(new Error('Load failed')),
-        listAvailableYears: jest.fn(),
         hasFileHandle: mockHasFileHandle,
       });
 
@@ -417,7 +413,6 @@ describe('SyncService', () => {
       (StorageFactory.getCurrentProvider as jest.Mock).mockReturnValue({
         saveDataFile: mockSaveDataFile,
         loadDataFile: mockLoadDataFile,
-        listAvailableYears: jest.fn(),
         // No hasFileHandle method
       });
 

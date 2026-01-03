@@ -18,8 +18,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import {
-  Save as SaveIcon,
-  FolderOpen as FolderOpenIcon,
+  Sync as SyncIcon,
   FiberManualRecord as DotIcon,
   ReceiptLong as TransactionsIcon,
   Assessment as ReportsIcon,
@@ -38,32 +37,19 @@ export const Header: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { fileName, lastSaved, hasUnsavedChanges, isLoading, currentYear } = useAppStore();
+  const { fileName, lastSaved, hasUnsavedChanges, isLoading } = useAppStore();
 
-  const handleLoad = async () => {
+  const handleSync = async () => {
     try {
-      const canProceed = await syncService.promptSaveIfNeeded();
-      if (!canProceed) {
-        return;
-      }
-
-      await syncService.loadDataFile(currentYear);
+      await syncService.syncNow();
     } catch (error) {
-      console.error('Load failed:', error);
+      console.error('Sync failed:', error);
     }
   };
 
-  const handleSave = async () => {
-    try {
-      await syncService.saveNow();
-    } catch (error) {
-      console.error('Save failed:', error);
-    }
-  };
-
-  const getLastSavedText = (): string => {
+  const getLastSyncedText = (): string => {
     if (!lastSaved) {
-      return 'Never saved';
+      return 'Never synced';
     }
     try {
       return formatDistance(new Date(lastSaved), new Date(), { addSuffix: true });
@@ -160,25 +146,17 @@ export const Header: React.FC = () => {
           )}
 
           <Typography variant="caption" color="inherit" sx={{ opacity: 0.7 }}>
-            {getLastSavedText()}
+            {getLastSyncedText()}
           </Typography>
 
           <Button
             color="inherit"
-            startIcon={<FolderOpenIcon />}
-            onClick={handleLoad}
-            disabled={isLoading}
-          >
-            Load
-          </Button>
-
-          <Button
-            color="inherit"
-            startIcon={isLoading ? <CircularProgress size={20} /> : <SaveIcon />}
-            onClick={handleSave}
+            startIcon={isLoading ? <CircularProgress size={20} /> : <SyncIcon />}
+            onClick={handleSync}
             disabled={isLoading || !hasUnsavedChanges}
+            aria-label="Sync"
           >
-            Save
+            Sync
           </Button>
         </Box>
       </Toolbar>

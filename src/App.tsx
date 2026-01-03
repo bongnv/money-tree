@@ -20,7 +20,7 @@ const App: React.FC = () => {
     const initializeApp = async () => {
       // Try to auto-load from cached file
       const loaded = await syncService.autoLoad();
-      
+
       if (!loaded) {
         // Check if user has dismissed the welcome dialog
         const dismissed = localStorage.getItem(WELCOME_DISMISSED_KEY);
@@ -94,4 +94,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-

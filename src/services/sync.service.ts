@@ -30,12 +30,12 @@ class SyncService {
 
     if (shouldSave) {
       try {
-        await this.saveNow();
+        await this.syncNow();
         return true;
       } catch (error) {
-        console.error('Failed to save:', error);
+        console.error('Failed to sync:', error);
         const proceedAnyway = window.confirm(
-          'Failed to save. Do you want to continue without saving? Your changes will be lost.'
+          'Failed to sync. Do you want to continue without syncing? Your changes will be lost.'
         );
         return proceedAnyway;
       }
@@ -45,9 +45,10 @@ class SyncService {
   }
 
   /**
-   * Save data immediately
+   * Sync data immediately
+   * Saves current state to storage provider
    */
-  async saveNow(): Promise<void> {
+  async syncNow(): Promise<void> {
     if (this.isSaving) {
       return;
     }
@@ -102,16 +103,25 @@ class SyncService {
       await storage.saveDataFile(dataToSave);
 
       state.markAsSaved();
-      state.setFileName(`money-tree.json`);
+      // Get the actual filename from storage provider
+      const fileName = storage.getFileName?.() || 'money-tree.json';
+      state.setFileName(fileName);
       state.setError(null);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to save';
+      const message = error instanceof Error ? error.message : 'Failed to sync';
       state.setError(message);
       throw error;
     } finally {
       this.isSaving = false;
       state.setLoading(false);
     }
+  }
+
+  /**
+   * @deprecated Use syncNow() instead
+   */
+  async saveNow(): Promise<void> {
+    return this.syncNow();
   }
 
   /**
@@ -126,9 +136,9 @@ class SyncService {
 
       if (state.hasUnsavedChanges && !this.isSaving) {
         try {
-          await this.saveNow();
+          await this.syncNow();
         } catch (error) {
-          console.error('Auto-save failed:', error);
+          console.error('Auto-sync failed:', error);
         }
       }
     }, AUTO_SAVE_INTERVAL);
@@ -178,7 +188,9 @@ class SyncService {
         }
 
         state.setCurrentYear(year);
-        state.setFileName(`money-tree.json`);
+        // Get the actual filename from storage provider
+        const fileName = storage.getFileName?.() || 'money-tree.json';
+        state.setFileName(fileName);
         state.markAsSaved();
       }
     } catch (error) {
@@ -197,7 +209,12 @@ class SyncService {
   async autoLoad(): Promise<boolean> {
     try {
       const storage = StorageFactory.getCurrentProvider();
-      
+
+      // Ensure storage provider is initialized (important for LocalStorageProvider)
+      if ('ensureInitialized' in storage && typeof storage.ensureInitialized === 'function') {
+        await storage.ensureInitialized();
+      }
+
       // Check if we have a cached file handle
       if (!storage.hasFileHandle || !storage.hasFileHandle()) {
         return false;
@@ -205,7 +222,7 @@ class SyncService {
 
       const state = useAppStore.getState();
       const currentYear = state.currentYear || new Date().getFullYear();
-      
+
       // Try to load from cached handle
       await this.loadDataFile(currentYear);
       return true;

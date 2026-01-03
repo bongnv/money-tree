@@ -19,13 +19,6 @@ describe('IStorageProvider', () => {
     async saveDataFile(data: DataFile): Promise<void> {
       this.dataFile = data;
     }
-
-    async listAvailableYears(): Promise<number[]> {
-      if (!this.dataFile) return [];
-      return Object.keys(this.dataFile.years || {})
-        .map(Number)
-        .sort((a, b) => b - a);
-    }
   }
 
   let provider: IStorageProvider;
@@ -110,34 +103,6 @@ describe('IStorageProvider', () => {
 
       expect(result?.years).toHaveProperty('2023');
       expect(result?.years).toHaveProperty('2024');
-    });
-  });
-
-  describe('listAvailableYears', () => {
-    it('should return empty array when no file exists', async () => {
-      const result = await provider.listAvailableYears();
-      expect(result).toEqual([]);
-    });
-
-    it('should return single year when one year exists', async () => {
-      await provider.saveDataFile(mockData);
-      const result = await provider.listAvailableYears();
-      expect(result).toEqual([2024]);
-    });
-
-    it('should return multiple years sorted descending', async () => {
-      const multiYearData = {
-        ...mockData,
-        years: {
-          '2022': { transactions: [], budgets: [], manualAssets: [] },
-          '2023': { transactions: [], budgets: [], manualAssets: [] },
-          '2024': { transactions: [], budgets: [], manualAssets: [] },
-        },
-      };
-
-      await provider.saveDataFile(multiYearData);
-      const result = await provider.listAvailableYears();
-      expect(result).toEqual([2024, 2023, 2022]);
     });
   });
 });

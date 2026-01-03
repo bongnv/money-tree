@@ -840,7 +840,270 @@ This plan implements all requirements from REQUIREMENTS.md.
 
 These features will be implemented after the MVP is validated by users.
 
-## Phase 11: Year Management & Multi-Year Support (Post-MVP)
+## Phase 11: Sync & Storage Providers (Post-MVP)
+
+**Requirements**: FR-6.9 (File handle caching), FR-11.1 (Initial file selection), FR-11.2 (Data & Sync settings), FR-11.3 (OneDrive integration)
+
+**Goal**: Streamline file management with auto-load, remove Load button from header, add comprehensive Data & Sync settings page, and prepare foundation for cloud storage providers
+
+**Architecture Context**:
+- File System Access API file handle caching for seamless auto-load
+- Welcome Dialog for first-time users (no cached file)
+- "Sync" terminology replaces "Save/Load" for cloud-ready UX
+- Extensible storage provider pattern supports Local/OneDrive/Google Drive
+- Settings page centralizes all file and sync management
+
+### 11.1 Welcome Dialog & Auto-Load (FR-11.1, FR-6.9)
+**Implementation**:
+- [ ] Create `src/components/common/WelcomeDialog.tsx`:
+  - [ ] Material-UI Dialog with app branding and welcome message
+  - [ ] Three action buttons:
+    - [ ] "Open Local File" → Triggers File System Access API picker
+    - [ ] "Connect to OneDrive" → Disabled with "Coming Soon" tooltip (Phase 11.3)
+    - [ ] "Start with Empty Data" → Creates empty state, prompts for save on first change
+  - [ ] Descriptive text explaining each option
+  - [ ] "Don't show this again" checkbox (for empty data flow)
+  - [ ] Responsive design for mobile/desktop
+- [ ] Update `src/services/storage/LocalStorageProvider.ts`:
+  - [ ] Add `hasFileHandle()` method to check if file handle is cached
+  - [ ] Ensure file handle persists across app sessions
+  - [ ] Add `clearFileHandle()` method for Settings integration
+- [ ] Update `src/services/sync.service.ts`:
+  - [ ] Add `autoLoad()` method that attempts to load from cached file handle
+  - [ ] Return boolean indicating success/failure
+  - [ ] Handle missing file handle gracefully (return false, no error)
+- [ ] Update `src/App.tsx`:
+  - [ ] Add state for `showWelcomeDialog` (initially false)
+  - [ ] On mount, call `syncService.autoLoad()`
+  - [ ] If autoLoad fails, check if user has dismissed welcome dialog
+  - [ ] Show WelcomeDialog if no cached file and not dismissed
+  - [ ] Handle "Start with Empty Data" by setting flag in localStorage
+- [ ] Update `src/stores/useAppStore.ts`:
+  - [ ] Track whether app has loaded initial data
+  - [ ] Add `isInitialLoad` state flag
+- [ ] Write automated tests:
+  - [ ] WelcomeDialog component renders correctly
+  - [ ] Auto-load succeeds when file handle cached
+  - [ ] Auto-load fails gracefully when no file handle
+  - [ ] Dialog dismissal preference persists
+
+**Manual Verification**:
+- [ ] **UI Test**: Clear browser cache, open app, see Welcome Dialog appear
+- [ ] **UI Test**: Click "Open Local File", select file, verify data loads and dialog closes
+- [ ] **UI Test**: Close app, reopen, verify data auto-loads without dialog (cached file handle)
+- [ ] **UI Test**: Clear cache again, click "Start with Empty Data", verify empty state loads
+- [ ] **UI Test**: Add transaction, verify sync prompt appears to save new file
+- [ ] **UI Test**: Check "Don't show this again", restart app with cleared cache, verify no dialog
+- [ ] **UI Test**: Hover over "Connect to OneDrive", see "Coming Soon" tooltip
+
+### 11.2 Remove Load Button & Update Header (FR-11.1)
+**Implementation**:
+- [ ] Update `src/components/layout/Header.tsx`:
+  - [ ] Remove "Load" button and `handleLoad` function
+  - [ ] Rename "Save" button to "Sync"
+  - [ ] Update `handleSave` → `handleSync` for clarity
+  - [ ] Keep save icon (<SaveIcon />) but update aria-label to "Sync"
+  - [ ] Keep existing logic: disabled when `!hasUnsavedChanges`
+  - [ ] Keep loading spinner integration
+  - [ ] Simplify header layout (more space for file info)
+- [ ] Update `src/services/sync.service.ts`:
+  - [ ] Rename internal method names from `saveNow` → `syncNow` (optional, for consistency)
+  - [ ] Keep backward compatibility for existing code
+  - [ ] Update comments to use "sync" terminology
+- [ ] Update tests:
+  - [ ] Header.test.tsx: Remove Load button tests
+  - [ ] Header.test.tsx: Update Save → Sync button tests
+  - [ ] sync.service.test.ts: Update test descriptions
+
+**Manual Verification**:
+- [ ] **UI Test**: Open app, verify header has no "Load" button
+- [ ] **UI Test**: Verify "Sync" button is present (replaces Save)
+- [ ] **UI Test**: Make change, verify "Sync" button enabled with unsaved indicator (dot)
+- [ ] **UI Test**: Click "Sync", verify data saves and button disables
+- [ ] **UI Test**: Verify loading spinner appears during sync
+- [ ] **UI Test**: Verify "last saved" timestamp updates after sync
+- [ ] **UI Test**: On mobile, verify header layout works with removed button
+
+### 11.3 Data & Sync Settings Page (FR-11.2)
+**Implementation**:
+- [ ] Create `src/components/settings/DataSyncSettings.tsx`:
+  - [ ] **Section 1: Current File**
+    - [ ] Display file name (read-only text)
+    - [ ] Display file path/location (if available from File System Access API)
+    - [ ] Display last modified timestamp
+    - [ ] Display file size (calculated from JSON)
+  - [ ] **Section 2: File Management**
+    - [ ] "Switch File" button → Opens file picker, replaces cached file handle
+    - [ ] Confirmation dialog: "Unsaved changes will be lost. Continue?"
+    - [ ] After switch, auto-load new file
+    - [ ] "Clear Cached File" button → Calls `clearFileHandle()`, shows Welcome Dialog on next visit
+    - [ ] Confirmation dialog with warning about losing quick access
+  - [ ] **Section 3: Storage Provider** (Foundation for Phase 11.4)
+    - [ ] Dropdown: "Local File System" (default, only option for now)
+    - [ ] "OneDrive" option disabled with "Coming Soon" label
+    - [ ] "Google Drive" option disabled with "Coming Soon" label
+    - [ ] Help text explaining provider selection
+  - [ ] **Section 4: Sync Settings**
+    - [ ] Toggle: "Enable Auto-Sync" (default: on)
+    - [ ] Number input: "Auto-Sync Interval" (default: 60 seconds)
+    - [ ] Display next scheduled sync time
+    - [ ] Manual "Sync Now" button (same as header)
+    - [ ] Last sync timestamp display
+  - [ ] Use Material-UI Card, Typography, Button, TextField components
+  - [ ] Responsive layout with proper spacing
+- [ ] Update `src/components/settings/SettingsPage.tsx`:
+  - [ ] Add "Data & Sync" option to settings navigation
+  - [ ] Route to DataSyncSettings component
+- [ ] Update `src/routes.tsx`:
+  - [ ] Add route for `/settings/data-sync`
+- [ ] Update `src/services/sync.service.ts`:
+  - [ ] Add `getFileInfo()` method returning name, size, lastModified
+  - [ ] Add `switchFile()` method handling file switch workflow
+  - [ ] Add `setAutoSyncInterval(seconds)` method
+  - [ ] Add `getAutoSyncSettings()` method
+- [ ] Write automated tests:
+  - [ ] DataSyncSettings component renders all sections
+  - [ ] Switch File triggers confirmation and file picker
+  - [ ] Clear Cached File shows warning dialog
+  - [ ] Auto-sync settings update correctly
+  - [ ] Provider dropdown shows correct options
+
+**Manual Verification**:
+- [ ] **UI Test**: Open Settings → Data & Sync, see all four sections
+- [ ] **UI Test**: Verify current file name and path displayed correctly
+- [ ] **UI Test**: Verify last modified timestamp is accurate
+- [ ] **UI Test**: Click "Switch File", see confirmation dialog
+- [ ] **UI Test**: Confirm switch, see file picker, select new file, verify data loads
+- [ ] **UI Test**: Click "Clear Cached File", see warning dialog
+- [ ] **UI Test**: Confirm clear, restart app, see Welcome Dialog appear
+- [ ] **UI Test**: Change auto-sync interval to 30 seconds, verify next sync scheduled correctly
+- [ ] **UI Test**: Disable auto-sync, make changes, verify no automatic sync occurs
+- [ ] **UI Test**: Enable auto-sync, verify periodic sync resumes
+- [ ] **UI Test**: Click "Sync Now", verify manual sync triggers immediately
+- [ ] **UI Test**: Check provider dropdown shows Local (enabled), OneDrive/Google Drive (disabled)
+
+### 11.4 OneDrive Storage Provider (FR-11.3)
+**Implementation**:
+- [ ] Install dependencies:
+  - [ ] `npm install @azure/msal-browser @microsoft/microsoft-graph-client`
+- [ ] Create `src/services/storage/OneDriveProvider.ts`:
+  - [ ] Implement `IStorageProvider` interface
+  - [ ] OAuth authentication via MSAL (Microsoft Authentication Library)
+  - [ ] `authenticate()`: Popup login flow, acquire access token
+  - [ ] `loadDataFile()`: GET /me/drive/root:/money-tree.json:/content
+  - [ ] `saveDataFile(data)`: PUT /me/drive/root:/money-tree.json:/content
+  - [ ] `listAvailableYears()`: Parse years from loaded file
+  - [ ] Error handling for network issues, auth failures
+  - [ ] Token refresh handling
+- [ ] Create `src/config/onedrive.config.ts`:
+  - [ ] MSAL configuration (clientId, authority, redirectUri)
+  - [ ] Microsoft Graph API scopes (Files.ReadWrite)
+  - [ ] File path constants
+- [ ] Update `src/services/storage/StorageFactory.ts`:
+  - [ ] Add OneDrive provider case in `getCurrentProvider()`
+  - [ ] Store selected provider in localStorage
+  - [ ] `setProvider(type: 'local' | 'onedrive' | 'googledrive')`
+- [ ] Update `src/components/settings/DataSyncSettings.tsx`:
+  - [ ] Enable "OneDrive" option in provider dropdown
+  - [ ] Add "Connect OneDrive" button when OneDrive selected but not authenticated
+  - [ ] Show authenticated user email when connected
+  - [ ] Add "Disconnect" button to clear OneDrive tokens
+  - [ ] Add "Re-authenticate" button if token expired
+- [ ] Update `src/components/common/WelcomeDialog.tsx`:
+  - [ ] Enable "Connect to OneDrive" button
+  - [ ] Trigger OneDrive authentication flow
+  - [ ] Show loading state during auth
+  - [ ] Handle auth errors gracefully
+- [ ] Update `src/services/sync.service.ts`:
+  - [ ] Handle provider switching (clear cached handles)
+  - [ ] Sync status indicators specific to OneDrive (uploading/downloading)
+- [ ] Write automated tests:
+  - [ ] OneDriveProvider authentication flow
+  - [ ] File upload/download with mock Graph API
+  - [ ] Token refresh handling
+  - [ ] Error handling for network failures
+  - [ ] Provider switching logic
+
+**Manual Verification**:
+- [ ] **UI Test**: In Settings → Data & Sync, select "OneDrive" from dropdown
+- [ ] **UI Test**: Click "Connect OneDrive", see Microsoft login popup
+- [ ] **UI Test**: Complete authentication, see user email displayed
+- [ ] **UI Test**: Verify "Connected to OneDrive" status message
+- [ ] **UI Test**: Make change, click "Sync", verify file uploads to OneDrive
+- [ ] **UI Test**: Open OneDrive web, verify money-tree.json file exists in root folder
+- [ ] **UI Test**: Edit file in OneDrive web (add transaction), refresh app
+- [ ] **UI Test**: Verify app detects remote changes and prompts to reload (conflict handling)
+- [ ] **UI Test**: Click "Disconnect", verify tokens cleared
+- [ ] **UI Test**: Try to sync, see "Not connected to OneDrive" error
+- [ ] **UI Test**: Reconnect, verify sync resumes
+- [ ] **UI Test**: Simulate network error, verify sync retries with exponential backoff
+- [ ] **UI Test**: Switch back to "Local File System", verify local file sync works
+
+### 11.5 Sync Status Indicators (FR-11.3)
+**Implementation**:
+- [ ] Create `src/components/common/SyncStatusIndicator.tsx`:
+  - [ ] Small badge/icon showing sync state
+  - [ ] States: "Synced" (green check), "Syncing..." (spinner), "Error" (red x), "Offline" (gray cloud)
+  - [ ] Tooltip with detailed status message
+  - [ ] Click to open sync details dialog
+- [ ] Update `src/stores/useAppStore.ts`:
+  - [ ] Add `syncStatus` state: 'idle' | 'syncing' | 'synced' | 'error' | 'offline'
+  - [ ] Add `lastSyncError` state for error messages
+  - [ ] Add `setSyncStatus()` action
+- [ ] Update `src/services/sync.service.ts`:
+  - [ ] Update sync status throughout sync lifecycle
+  - [ ] Detect offline state (navigator.onLine)
+  - [ ] Queue sync operations when offline
+  - [ ] Process queue when back online
+- [ ] Update `src/components/layout/Header.tsx`:
+  - [ ] Add SyncStatusIndicator next to sync button
+  - [ ] Replace text "last saved X ago" with visual indicator
+  - [ ] Keep text on hover/tooltip
+- [ ] Write automated tests:
+  - [ ] SyncStatusIndicator renders for each state
+  - [ ] Status updates correctly during sync
+  - [ ] Offline detection works
+  - [ ] Sync queue processes when back online
+
+**Manual Verification**:
+- [ ] **UI Test**: With OneDrive connected, see "Synced" green check in header
+- [ ] **UI Test**: Make change, see status change to "Syncing..." with spinner
+- [ ] **UI Test**: After sync completes, see green check return
+- [ ] **UI Test**: Hover over status indicator, see tooltip: "Last synced 5 seconds ago"
+- [ ] **UI Test**: Disconnect network, make change, see "Offline" gray cloud
+- [ ] **UI Test**: Verify change queued (check browser console or indicator tooltip)
+- [ ] **UI Test**: Reconnect network, see status change to "Syncing..." then "Synced"
+- [ ] **UI Test**: Simulate sync error (invalid token), see "Error" red x
+- [ ] **UI Test**: Click error indicator, see error details dialog
+- [ ] **UI Test**: Click "Retry" in error dialog, verify sync retries
+
+### 11.6 Integration Testing & Polish
+**Implementation**:
+- [ ] Test complete workflows:
+  - [ ] First-time user → Welcome Dialog → Select file → Auto-load next visit
+  - [ ] Switch from Local to OneDrive → Authenticate → Sync works
+  - [ ] Switch from OneDrive to Local → Cached file restored
+  - [ ] Offline → Make changes → Come back online → Auto-sync
+- [ ] Add loading states for all operations
+- [ ] Add success/error notifications for all actions
+- [ ] Optimize file handle caching (minimize API calls)
+- [ ] Add keyboard shortcuts (e.g., Ctrl+S for manual sync)
+- [ ] Performance testing with large files
+- [ ] Write end-to-end tests
+
+**Manual Verification**:
+- [ ] **UI Test**: Complete first-time setup, verify smooth onboarding
+- [ ] **UI Test**: Switch providers multiple times, verify no data loss
+- [ ] **UI Test**: Test offline mode thoroughly (airplane mode)
+- [ ] **UI Test**: Test with 1000+ transactions, verify sync performance acceptable
+- [ ] **UI Test**: Press Ctrl+S, verify manual sync triggers
+- [ ] **UI Test**: All operations show appropriate notifications
+- [ ] **UI Test**: No console errors or warnings during normal use
+- [ ] **UI Test**: App feels responsive and polished
+
+---
+
+## Phase 12: Year Management & Multi-Year Support (Post-MVP)
 
 **Requirements**: FR-6.10 (Auto-archive), FR-9.1-9.6 (Year Management & Multi-Year Support)
 
@@ -853,7 +1116,7 @@ These features will be implemented after the MVP is validated by users.
 - Quick trends use summaries (instant, no file loading)
 - Detailed analysis loads archive files on-demand
 
-### 11.1 Multi-Year Data Structure & Year Selector (FR-9.1, FR-6.10)
+### 12.1 Multi-Year Data Structure & Year Selector (FR-9.1, FR-6.10)
 **Implementation**:
 - [x] Update `src/types/models.ts` with multi-year structure:
   - [x] Add `years` object: `{ "2025": { transactions, budgets, manualAssets }, "2026": {...} }`
@@ -878,7 +1141,7 @@ These features will be implemented after the MVP is validated by users.
 - [ ] **UI Test**: Switch back to 2026, verify 2026 transactions display
 - [ ] **UI Test**: Reload app, verify it auto-selects 2026 (current year)
 
-### 11.2 Archive Detection & Prompt UI (FR-6.10, FR-9.2)
+### 12.2 Archive Detection & Prompt UI (FR-6.10, FR-9.2)
 **Implementation**:
 - [ ] Create `src/services/archive.service.ts`:
   - [ ] `detectArchiveTrigger()`: Check if 3+ years exist in main file
@@ -903,7 +1166,7 @@ These features will be implemented after the MVP is validated by users.
 - [ ] **UI Test**: Click "Don't Ask Again", reload app, verify no prompt
 - [ ] **UI Test**: In settings, reset "Don't Ask Again", reload, see prompt return
 
-### 11.3 Archive File Creation & Export (FR-6.10, FR-9.2, FR-9.6)
+### 12.3 Archive File Creation & Export (FR-6.10, FR-9.2, FR-9.6)
 **Implementation**:
 - [ ] Implement `createArchiveFile(year)` in archive service:
   - [ ] Extract year data from main file
@@ -932,7 +1195,7 @@ These features will be implemented after the MVP is validated by users.
 - [ ] **UI Test**: Open archive file in text editor, verify it contains complete 2024 data
 - [ ] **UI Test**: In Archive Manager, click "Export Year" for 2025, verify standalone archive created
 
-### 11.4 Quick Trends Dashboard with Summaries (FR-9.4)
+### 12.4 Quick Trends Dashboard with Summaries (FR-9.4)
 **Implementation**:
 - [ ] Create `src/services/trend.service.ts`:
   - [ ] `calculateYearOverYearTrends()`: Use archive summaries from archivedYears array
@@ -955,7 +1218,7 @@ These features will be implemented after the MVP is validated by users.
 - [ ] **UI Test**: Archive 2025, reload, verify trends now show 2024-2025-2026
 - [ ] **UI Test**: Add transactions to 2026, verify current year net worth updates in trends
 
-### 11.5 Archive Loading & Year Selector Integration (FR-9.1, FR-9.3)
+### 12.5 Archive Loading & Year Selector Integration (FR-9.1, FR-9.3)
 **Implementation**:
 - [ ] Implement `loadArchiveFile()` in archive service:
   - [ ] File picker to select archive JSON file
@@ -987,7 +1250,7 @@ These features will be implemented after the MVP is validated by users.
 - [ ] **UI Test**: Switch back to 2026, verify live data appears
 - [ ] **UI Test**: Switch to 2024 again, verify archive still loaded (no file picker)
 
-### 11.6 Detailed Multi-Year Analysis Reports (FR-9.5)
+### 12.6 Detailed Multi-Year Analysis Reports (FR-9.5)
 **Implementation**:
 - [ ] Create `src/components/reports/MultiYearAnalysis.tsx`:
   - [ ] "Load Archives" button with file picker (multi-select)
@@ -1013,7 +1276,7 @@ These features will be implemented after the MVP is validated by users.
 - [ ] **UI Test**: Click "Unload" on 2023, verify reports update to 2024-2026 only
 - [ ] **UI Test**: Click "Unload All Archives", see empty state return
 
-### 11.7 Archive Import & Settings (FR-9.6)
+### 12.7 Archive Import & Settings (FR-9.6)
 **Implementation**:
 - [ ] Implement `importYearFromArchive(archiveFile)` in archive service:
   - [ ] Validate archive file
@@ -1039,7 +1302,7 @@ These features will be implemented after the MVP is validated by users.
 - [ ] **UI Test**: In Archive Manager, change "Keep 2 years" to "Keep 3 years"
 - [ ] **UI Test**: Reload app, verify archive prompt doesn't appear with 3 years
 
-### 11.8 Performance Validation & Polish
+### 12.8 Performance Validation & Polish
 **Implementation**:
 - [ ] Add loading states for all archive operations
 - [ ] Add file size indicators in Archive Manager

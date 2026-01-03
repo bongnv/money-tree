@@ -124,7 +124,7 @@ The MVP focuses on core personal finance tracking functionality with local file 
 
 **FR-6.2** [x] Save and load data files - *Phase 2*
 
-**FR-6.3** [x] Single JSON file with multi-year support - *Phase 2*
+**FR-6.3** [x] Single JSON file with multi-year support - *Phase 2, 11*
 - Main file contains: accounts, categories, transaction types, preferences
 - Main file contains years data structure with 2 most recent years
 - Archive references with year-end summaries for quick trends
@@ -137,16 +137,19 @@ The MVP focuses on core personal finance tracking functionality with local file 
 
 **FR-6.7** [x] Extensible storage adapter pattern - *Phase 2*
 
-**FR-6.8** [x] Auto-save with unsaved changes tracking - *Phase 2*
+**FR-6.8** [x] Auto-sync with unsaved changes tracking - *Phase 2, 11*
 - Track changes across all stores
-- Periodic auto-save (1 minute interval)
-- Auto-save only when there are unsaved changes
-- Prompt before destructive actions (load different file, close browser)
+- Periodic auto-sync (1 minute interval)
+- Auto-sync only when there are unsaved changes
+- Manual sync button in header for immediate sync
+- Prompt before destructive actions (switch file, close browser)
 
-**FR-6.9** [x] Auto-save integration - *Phase 2*
-- Save silently without user prompts
+**FR-6.9** [x] File handle caching and auto-load - *Phase 2, 11*
+- Cache file handle via File System Access API
+- Auto-load from cached file on app startup
+- Show Welcome Dialog if no cached file exists
+- Sync silently without user prompts
 - Unsaved changes indicator in UI
-- Manual save option always available
 - Window beforeunload handler for unsaved changes warning
 
 **FR-6.10** [ ] Auto-archive old years (Post-MVP - Phase 11)
@@ -311,20 +314,53 @@ These features will be implemented after the MVP is complete and validated by us
 - Display file modification timestamps
 - Clear warnings about data loss
 
-### FR-11: Cloud Storage Integration (Post-MVP, Optional)
+### FR-11: Data Sync & Storage Providers
 
-**FR-11.1** [ ] OneDrive integration with full sync
+**FR-11.1** [x] Initial file selection and auto-sync workflow - *Phase 11*
+- Welcome Dialog on first app open (no cached file)
+  - "Open Local File" → File System Access API picker
+  - "Connect to OneDrive" → OAuth flow (future)
+  - "Start with Empty Data" → Creates new file on first sync
+- Auto-load from cached file handle on subsequent visits
+- File handle persistence via File System Access API
+- Remove "Load" button from header (replaced by auto-load + Settings)
+- Manual sync via "Sync" button in header (replaces "Save")
+- Auto-sync for changed data (background periodic sync)
 
-**FR-11.2** [ ] Google Drive integration with full sync
+**FR-11.2** [x] Data & Sync settings page - *Phase 11*
+- Current file information (name, path, last modified)
+- Switch File button (opens file picker, replaces cached handle)
+- Storage provider selector (Local/OneDrive/Google Drive)
+- Sync status display (last sync time, sync frequency)
+- Clear cached file button (triggers Welcome Dialog on next visit)
+- Sync preferences (auto-sync interval, conflict resolution)
 
-**FR-11.3** [ ] Dropbox integration with full sync
+**FR-11.3** [x] OneDrive integration with full sync - *Post-MVP*
+- OAuth authentication via `@azure/msal-browser`
+- Two-way sync (upload changes, download remote changes)
+- Single file sync (main data file with all years)
+- Background sync on data changes
+- Sync status indicators (syncing, synced, offline)
 
-**FR-11.4** [ ] OAuth authentication via provider SDKs
-- OneDrive: `@azure/msal-browser`
-- Google Drive: Google Sign-In SDK
-- Dropbox: Dropbox SDK authentication
+**FR-11.4** [ ] Google Drive integration with full sync - *Post-MVP*
+- OAuth authentication via Google Sign-In SDK
+- Two-way sync (upload changes, download remote changes)
+- Single file sync (main data file with all years)
+- Background sync on data changes
+- Sync status indicators (syncing, synced, offline)
 
-**FR-11.5** [ ] Opt-in cloud storage (local-only remains fully functional)
+**FR-11.5** [ ] Dropbox integration with full sync - *Post-MVP*
+- OAuth authentication via Dropbox SDK
+- Two-way sync (upload changes, download remote changes)
+- Single file sync (main data file with all years)
+- Background sync on data changes
+- Sync status indicators (syncing, synced, offline)
+
+**FR-11.6** [ ] Multi-device sync considerations - *Post-MVP*
+- Archive files synced separately (optional, on-demand)
+- Conflict resolution handled by FR-10 (auto-merge + user resolution)
+- Offline mode with sync queue when back online
+- Last sync timestamp tracking per device
 
 ---
 

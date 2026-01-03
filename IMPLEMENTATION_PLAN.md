@@ -1148,45 +1148,37 @@ These features will be implemented after the MVP is validated by users.
 **Manual Verification (User):** Create manual asset "House - $500,000" on Jan 1, 2026. Click "Update Value" button on the card, enter new value $510,000 with date Apr 1, 2026, add note "Market appraisal". Submit and verify card now shows $510,000 as current value. Verify confirmation message mentions old value saved to history.
 
 ### 13.2 Asset Value History in Reports
-- [ ] Add to `src/services/history.service.ts`:
-  - [ ] `getCompleteValueHistory(assetId)`: Get all values including current (for charts)
-  - [ ] `recordHistoricalValue(assetId, date, value, notes)`: Add historical value directly (for backdating)
-  - [ ] `editHistoricalValue(assetId, historyIndex, date, value, notes)`: Edit specific historical entry
-  - [ ] `deleteHistoricalValue(assetId, historyIndex)`: Remove specific historical entry
-  - [ ] `calculateAssetValueGrowth(assetId, startDate, endDate)`: Calculate growth percentage
-- [ ] Update `useAssetStore`:
-  - [ ] Add actions for managing historical values
-  - [ ] Ensure history array stays sorted by date
-- [ ] Update `src/components/reports/BalanceSheet.tsx`:
-  - [ ] Make manual asset items clickable
-  - [ ] Add expand/collapse indicator icon
-  - [ ] On click, expand inline to show:
-    - [ ] Line chart showing value over time (valueHistory + current value)
-    - [ ] Compact date range selector (Last 3 months, 6 months, 1 year, All time)
-    - [ ] Growth percentage badge (total growth since first value)
-    - [ ] "Manage History" button to open detailed dialog
-  - [ ] Collapse other expanded assets when opening new one
-- [ ] Create `src/components/assets/AssetValueHistoryDialog.tsx`:
-  - [ ] Opens from "Manage History" button in Balance Sheet
-  - [ ] Header showing asset name and current value prominently
-  - [ ] Full-size line chart with complete timeline
-  - [ ] Date range selector for chart
-  - [ ] Growth metrics section:
-    - [ ] Total growth percentage (first value to current)
-    - [ ] Year-over-year growth (if applicable)
-  - [ ] "Historical Values" table:
-    - [ ] Columns: Date, Value, Change, Notes, Actions
-    - [ ] Show value changes between entries
-    - [ ] Edit/delete buttons for each historical entry
-    - [ ] Current value shown in table header (not editable here)
-  - [ ] "Add Historical Value" button:
-    - [ ] Opens form to add backdated value
-    - [ ] Date picker, value input, notes
-    - [ ] Validation: date must be before current valuationDate
-- [ ] **Write tests**: Expandable asset items in Balance Sheet, inline chart rendering, dialog with full history management, add/edit/delete historical values
-- [ ] **Test**: Click asset in Balance Sheet to see inline chart, verify growth percentage, click "Manage History" to open full dialog, add backdated value, edit/delete entries
+- [x] Add to `src/services/history.service.ts`:
+  - [x] `getCompleteValueHistory(assetId)`: Get all values including current (for charts)
+  - [x] `calculateAssetValueGrowth(assetId, startDate, endDate)`: Calculate growth percentage
+- [x] Update `useAssetStore`:
+  - [x] History is created automatically through updateAssetValue action only
+- [x] Update `src/components/reports/BalanceSheet.tsx`:
+  - [x] Make manual asset items clickable (only if history exists)
+  - [x] Add expand/collapse indicator icon
+  - [x] On click, expand inline to show:
+    - [x] Line chart showing value over time (valueHistory + current value)
+    - [x] Compact date range selector (Last 3 months, 6 months, 1 year, All time)
+    - [x] Growth percentage badge (total growth since first value)
+    - [x] "Manage History" button to open detailed dialog
+  - [x] Collapse other expanded assets when opening new one
+- [x] Create `src/components/assets/AssetValueHistoryDialog.tsx`:
+  - [x] Opens from "Manage History" button in Balance Sheet (read-only view)
+  - [x] Header showing asset name and current value prominently
+  - [x] Full-size line chart with complete timeline
+  - [x] Date range selector for chart
+  - [x] Growth metrics section:
+    - [x] Total growth percentage (first value to current)
+    - [x] Absolute change in currency
+  - [x] "Value History" table:
+    - [x] Columns: Date, Value, Change, Notes
+    - [x] Show value changes between entries
+    - [x] Current value shown in table with special styling
+    - [x] Read-only (no add/edit/delete functionality)
+- [x] **Write tests**: Expandable asset items in Balance Sheet, inline chart rendering, dialog with read-only history display
+- [x] **Test**: Click asset in Balance Sheet to see inline chart, verify growth percentage, click "Manage History" to see full read-only dialog with chart and metrics
 
-**Manual Verification (User):** With asset from 13.1 (now has Jan $500k in history, current Apr $510k), navigate to Reports → Balance Sheet. Click on "House" asset item in manual assets section. Verify: (1) Inline chart expands showing 2 points (Jan: $500k, Apr: $510k), (2) Growth badge shows +2% or $10k, (3) Click "Manage History" button to open full dialog, (4) Dialog shows complete chart and historical table, (5) Click "Add Historical Value", enter Feb 15, 2026 with $505,000 → verify chart in both inline view and dialog updates to show 3 points. Edit Jan value to $495,000 in the dialog → verify changes reflected everywhere. Close dialog and collapse inline chart → click asset again to verify chart still shows updated data.
+**Manual Verification (User):** With asset from 13.1 (now has Jan $500k in history, current Apr $510k), navigate to Reports → Balance Sheet. Click on "House" asset item in manual assets section. Verify: (1) Inline chart expands showing 2 points (Jan: $500k, Apr: $510k), (2) Growth badge shows +2.0% or $10k, (3) Click "Manage History" button to open full dialog, (4) Dialog shows complete chart, growth metrics, and historical table (read-only, no add/delete buttons). Note: All history is created automatically through the "Update Value" workflow in asset settings. To add new values, use the "Update Value" button on the asset card in Manual Assets page.
 
 ### 13.3 Account Balance Chart (Optional UI Enhancement)
 - [ ] Add to `src/services/history.service.ts`:

@@ -87,7 +87,8 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
       <DialogContent>
         {showSuccessMessage && previousValue && (
           <Alert severity="success" sx={{ mb: 2 }}>
-            Value updated. Previous value ({formatCurrency(previousValue.value, asset?.currencyId || 'usd')} on{' '}
+            Value updated. Previous value (
+            {formatCurrency(previousValue.value, asset?.currencyId || 'usd')} on{' '}
             {formatDate(previousValue.date)}) saved to history.
           </Alert>
         )}
@@ -111,9 +112,7 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
               Current Value
             </Typography>
-            <Typography variant="h6">
-              {formatCurrency(asset.value, asset.currencyId)}
-            </Typography>
+            <Typography variant="h6">{formatCurrency(asset.value, asset.currencyId)}</Typography>
             <Typography variant="body2" color="text.secondary">
               As of {formatDate(asset.date)}
             </Typography>
@@ -126,7 +125,11 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
         )}
 
         <ManualAssetForm
-          asset={isUpdateMode ? { ...asset!, value: 0, date: new Date().toISOString().split('T')[0], notes: '' } : asset}
+          asset={
+            isUpdateMode
+              ? { ...asset!, value: 0, date: new Date().toISOString().split('T')[0], notes: '' }
+              : asset
+          }
           onSubmit={handleSubmit}
           onCancel={handleClose}
           updateValueOnly={isUpdateMode}

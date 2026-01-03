@@ -261,9 +261,7 @@ describe('useAssetStore', () => {
       const { result } = renderHook(() => useAssetStore());
       const assetWithHistory: ManualAsset = {
         ...mockAsset,
-        valueHistory: [
-          { date: '2025-01-01', value: 450000, notes: 'Initial' },
-        ],
+        valueHistory: [{ date: '2025-01-01', value: 450000, notes: 'Initial' }],
       };
 
       act(() => {

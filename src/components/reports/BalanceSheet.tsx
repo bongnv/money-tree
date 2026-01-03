@@ -18,6 +18,7 @@ import { useAssetStore } from '../../stores/useAssetStore';
 import { useTransactionStore } from '../../stores/useTransactionStore';
 import { reportService } from '../../services/report.service';
 import { ManualAssetSection } from './ManualAssetSection';
+import { AssetValueHistoryDialog } from '../assets/AssetValueHistoryDialog';
 import { LineChart } from '../charts/LineChart';
 import { formatCurrency } from '../../utils/currency.utils';
 
@@ -32,6 +33,7 @@ export const BalanceSheet: React.FC = () => {
   const today = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState<string>(today);
   const [comparisonType, setComparisonType] = useState<ComparisonType>('none');
+  const [historyDialogAssetId, setHistoryDialogAssetId] = useState<string | null>(null);
 
   // Assume USD for now - in future this should come from app settings
   const currencyId = 'usd';
@@ -106,6 +108,16 @@ export const BalanceSheet: React.FC = () => {
       setComparisonType(newValue);
     }
   };
+
+  const handleManageHistory = (assetId: string) => {
+    setHistoryDialogAssetId(assetId);
+  };
+
+  const handleCloseHistoryDialog = () => {
+    setHistoryDialogAssetId(null);
+  };
+
+  const selectedAsset = manualAssets.find((asset) => asset.id === historyDialogAssetId);
 
   return (
     <Box>
@@ -251,7 +263,12 @@ export const BalanceSheet: React.FC = () => {
       )}
 
       {/* Assets Section */}
-      <ManualAssetSection title="Assets" groups={balanceSheet.assets} currencyId={currencyId} />
+      <ManualAssetSection
+        title="Assets"
+        groups={balanceSheet.assets}
+        currencyId={currencyId}
+        onManageHistory={handleManageHistory}
+      />
 
       <Divider sx={{ my: 4 }} />
 
@@ -260,6 +277,7 @@ export const BalanceSheet: React.FC = () => {
         title="Liabilities"
         groups={balanceSheet.liabilities}
         currencyId={currencyId}
+        onManageHistory={handleManageHistory}
       />
 
       {/* Net Worth Summary */}
@@ -276,6 +294,13 @@ export const BalanceSheet: React.FC = () => {
           </Grid>
         </Grid>
       </Paper>
+
+      {/* Asset Value History Dialog */}
+      <AssetValueHistoryDialog
+        open={historyDialogAssetId !== null}
+        asset={selectedAsset || null}
+        onClose={handleCloseHistoryDialog}
+      />
     </Box>
   );
 };

@@ -12,7 +12,12 @@ interface ManualAssetFormProps {
   updateValueOnly?: boolean;
 }
 
-export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({ asset, onSubmit, onCancel, updateValueOnly = false }) => {
+export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
+  asset,
+  onSubmit,
+  onCancel,
+  updateValueOnly = false,
+}) => {
   const currencies = getAllCurrencies();
   const [formData, setFormData] = useState({
     name: asset?.name || '',

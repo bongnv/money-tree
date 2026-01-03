@@ -4,6 +4,12 @@ import { QuickEntryRow } from './QuickEntryRow';
 import type { Account, Category, TransactionType } from '../../types/models';
 import { Group, AccountType } from '../../types/enums';
 
+// Helper to get today's date in YYYY-MM-DD format
+const getTodayDate = () => {
+  const today = new Date();
+  return today.toISOString().split('T')[0];
+};
+
 describe('QuickEntryRow', () => {
   const mockAccounts: Account[] = [
     {
@@ -107,7 +113,7 @@ describe('QuickEntryRow', () => {
 
     expect(screen.getByPlaceholderText('Amount')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Description (optional)')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('2026-01-02')).toBeInTheDocument(); // Today's date
+    expect(screen.getByDisplayValue(getTodayDate())).toBeInTheDocument(); // Today's date
   });
 
   it('should show from account field for expense transactions', async () => {
@@ -217,7 +223,7 @@ describe('QuickEntryRow', () => {
 
     await waitFor(() => {
       expect(mockOnSubmit).toHaveBeenCalledWith({
-        date: '2026-01-02',
+        date: getTodayDate(),
         amount: 50.0,
         transactionTypeId: 'type-1',
         fromAccountId: 'acc-1',
@@ -533,7 +539,7 @@ describe('QuickEntryRow', () => {
       );
 
       // Start at date field
-      const dateInput = screen.getByDisplayValue(/2026-01-02/);
+      const dateInput = screen.getByDisplayValue(getTodayDate());
       dateInput.focus();
       expect(dateInput).toHaveFocus();
 
@@ -567,7 +573,7 @@ describe('QuickEntryRow', () => {
 
       // Press ArrowLeft to move to date
       await user.keyboard('{ArrowLeft}');
-      const dateInput = screen.getByDisplayValue(/2026-01-02/);
+      const dateInput = screen.getByDisplayValue(getTodayDate());
       expect(dateInput).toHaveFocus();
 
       // Press ArrowLeft to wrap to description
@@ -593,7 +599,7 @@ describe('QuickEntryRow', () => {
       descriptionInput.focus();
       await user.keyboard('{ArrowRight}');
 
-      const dateInput = screen.getByDisplayValue(/2026-01-02/);
+      const dateInput = screen.getByDisplayValue(getTodayDate());
       expect(dateInput).toHaveFocus();
 
       // Press ArrowLeft should wrap to description

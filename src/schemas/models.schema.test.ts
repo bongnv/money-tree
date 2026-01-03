@@ -366,9 +366,7 @@ describe('Model Schemas', () => {
         value: 510000,
         currencyId: 'usd',
         date: '2026-04-01',
-        valueHistory: [
-          { date: '2026-01-01', value: 500000, notes: 'Initial purchase' },
-        ],
+        valueHistory: [{ date: '2026-01-01', value: 500000, notes: 'Initial purchase' }],
         createdAt: getDateTimeString(),
         updatedAt: getDateTimeString(),
       };

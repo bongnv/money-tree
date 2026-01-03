@@ -1,6 +1,10 @@
 import React from 'react';
 import { Box, Paper, Typography, IconButton, Chip, Button } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon, TrendingUp as TrendingUpIcon } from '@mui/icons-material';
+import {
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  TrendingUp as TrendingUpIcon,
+} from '@mui/icons-material';
 import type { ManualAsset } from '../../types/models';
 import { AssetType } from '../../types/enums';
 import { formatCurrency } from '../../utils/currency.utils';
@@ -76,7 +80,6 @@ export const ManualAssetCard: React.FC<ManualAssetCardProps> = ({
       <Typography variant="body2" color="text.secondary" gutterBottom>
         As of {formatDate(asset.date)}
       </Typography>
-
 
       {onUpdateValue && (
         <Box sx={{ mt: 2 }}>

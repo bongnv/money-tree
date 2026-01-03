@@ -10,11 +10,14 @@
  * 6. After registration, copy the "Application (client) ID"
  * 7. Under "API permissions", add "Microsoft Graph" -> "Delegated permissions" -> "Files.ReadWrite"
  * 8. Grant admin consent for the permissions
- * 
+ *
  * BUILD CONFIGURATION:
  * Set ONEDRIVE_CLIENT_ID environment variable when building:
  *   Development: ONEDRIVE_CLIENT_ID=your-client-id npm run dev
  *   Production:  ONEDRIVE_CLIENT_ID=your-client-id npm run build
+ *
+ * Or create a .env file (not committed to git):
+ *   ONEDRIVE_CLIENT_ID=your-client-id
  */
 
 export const msalConfig = {

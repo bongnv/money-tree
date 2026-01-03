@@ -715,8 +715,8 @@ This plan implements all requirements from REQUIREMENTS.md.
 - [x] Create Cloudflare account (if not already)
 - [x] Connect GitHub repository to Cloudflare Pages
 - [x] Configure build settings (build command: `npm run build`, output: `dist`)
-- [ ] Add `_headers` file for security (CSP, X-Frame-Options)
-- [ ] Add `_redirects` file for SPA routing (`/* /index.html 200`)
+- [x] Add `_headers` file for security (CSP, X-Frame-Options)
+- [x] Add `_redirects` file for SPA routing (`/* /index.html 200`)
 - [ ] Configure automatic deployment from main branch
 - [ ] Deploy application
 - [ ] **Test**: Visit deployed URL, test all features
@@ -815,9 +815,9 @@ This plan implements all requirements from REQUIREMENTS.md.
 - [x] Create Cloudflare account (if not already)
 - [x] Connect GitHub repository to Cloudflare Pages
 - [x] Configure build settings (build command: `npm run build`, output: `dist`)
-- [ ] Add `_headers` file for security (CSP, X-Frame-Options)
-- [ ] Add `_redirects` file for SPA routing (`/* /index.html 200`)
-- [ ] Configure automatic deployment from main branch
+- [x] Add `_headers` file for security (CSP, X-Frame-Options)
+- [x] Add `_redirects` file for SPA routing (`/* /index.html 200`)
+- [x] Configure automatic deployment from main branch
 - [ ] Deploy application
 - [ ] **Test**: Visit deployed URL, test all features
 

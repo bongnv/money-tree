@@ -1,6 +1,8 @@
 const path = require('path');
 const webpack = require('webpack');
+const Dotenv = require('dotenv-webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 
@@ -54,6 +56,11 @@ module.exports = (env, argv) => {
       ],
     },
     plugins: [
+      new Dotenv({
+        safe: false,
+        systemvars: true,
+        silent: true,
+      }),
       new webpack.DefinePlugin({
         'process.env.ONEDRIVE_CLIENT_ID': JSON.stringify(
           process.env.ONEDRIVE_CLIENT_ID || ''
@@ -75,6 +82,22 @@ module.exports = (env, argv) => {
               minifyURLs: true,
             }
           : false,
+      }),
+      new CopyWebpackPlugin({
+        patterns: [
+          {
+            from: 'public/_headers',
+            to: '_headers',
+            toType: 'file',
+            noErrorOnMissing: true,
+          },
+          {
+            from: 'public/_redirects',
+            to: '_redirects',
+            toType: 'file',
+            noErrorOnMissing: true,
+          },
+        ],
       }),
       ...(isProduction
         ? [

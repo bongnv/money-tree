@@ -99,6 +99,7 @@ describe('Header', () => {
   it('should render all navigation buttons', () => {
     renderWithRouter(<Header />);
 
+    expect(screen.getByRole('button', { name: /dashboard/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /transactions/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /reports/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /budgets/i })).toBeInTheDocument();
@@ -125,6 +126,14 @@ describe('Header', () => {
   });
 
   describe('Active State Highlighting', () => {
+    it('should highlight Dashboard button when on /', () => {
+      renderWithRouter(<Header />, '/');
+      const dashboardButton = screen.getByRole('button', { name: /dashboard/i });
+      expect(dashboardButton).toHaveStyle({
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+      });
+    });
+
     it('should highlight Transactions button when on /transactions', () => {
       renderWithRouter(<Header />, '/transactions');
       const transactionsButton = screen.getByRole('button', { name: /transactions/i });
@@ -181,14 +190,17 @@ describe('Header', () => {
       });
     });
 
-    it('should not highlight any button when on dashboard', () => {
+    it('should not highlight any button except Dashboard when on dashboard', () => {
       renderWithRouter(<Header />, '/');
+      const dashboardButton = screen.getByRole('button', { name: /dashboard/i });
       const transactionsButton = screen.getByRole('button', { name: /transactions/i });
       const reportsButton = screen.getByRole('button', { name: /reports/i });
       const budgetsButton = screen.getByRole('button', { name: /budgets/i });
       const settingsButton = screen.getByRole('button', { name: /settings/i });
 
-      // When on dashboard (/), no nav buttons should be highlighted
+      // Dashboard button should be highlighted when on /
+      expect(dashboardButton).toHaveStyle({ backgroundColor: 'rgba(255, 255, 255, 0.1)' });
+      // Other buttons should not be highlighted
       expect(transactionsButton).not.toHaveStyle({ backgroundColor: 'rgba(255, 255, 255, 0.1)' });
       expect(reportsButton).not.toHaveStyle({ backgroundColor: 'rgba(255, 255, 255, 0.1)' });
       expect(budgetsButton).not.toHaveStyle({ backgroundColor: 'rgba(255, 255, 255, 0.1)' });
@@ -268,11 +280,13 @@ describe('Header', () => {
       renderWithRouter(<Header />);
 
       // Check that nav buttons have icons
+      const dashboardButton = screen.getByRole('button', { name: /dashboard/i });
       const transactionsButton = screen.getByRole('button', { name: /transactions/i });
       const reportsButton = screen.getByRole('button', { name: /reports/i });
       const budgetsButton = screen.getByRole('button', { name: /budgets/i });
       const settingsButton = screen.getByRole('button', { name: /settings/i });
 
+      expect(dashboardButton.querySelector('svg')).toBeInTheDocument();
       expect(transactionsButton.querySelector('svg')).toBeInTheDocument();
       expect(reportsButton.querySelector('svg')).toBeInTheDocument();
       expect(budgetsButton.querySelector('svg')).toBeInTheDocument();

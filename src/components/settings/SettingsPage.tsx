@@ -182,18 +182,9 @@ export const SettingsPage: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h4">Settings</Typography>
-        {(activeTab === 2 || activeTab === 3) && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={activeTab === 2 ? handleOpenCategoryDialog : handleOpenTransactionTypeDialog}
-          >
-            {activeTab === 2 ? 'New Category' : 'New Transaction Type'}
-          </Button>
-        )}
-      </Box>
+      <Typography variant="h4" sx={{ mb: 2 }}>
+        Settings
+      </Typography>
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs
@@ -219,21 +210,53 @@ export const SettingsPage: React.FC = () => {
       </TabPanel>
 
       <TabPanel value={activeTab} index={2}>
-        <CategoryList
-          categories={categories}
-          transactionTypes={transactionTypes}
-          onEdit={handleEditCategory}
-          onDelete={handleDeleteCategory}
-        />
+        <Box>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
+          >
+            <Typography variant="h4" component="h1">
+              Categories
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleOpenCategoryDialog}
+            >
+              New Category
+            </Button>
+          </Box>
+          <CategoryList
+            categories={categories}
+            transactionTypes={transactionTypes}
+            onEdit={handleEditCategory}
+            onDelete={handleDeleteCategory}
+          />
+        </Box>
       </TabPanel>
 
       <TabPanel value={activeTab} index={3}>
-        <TransactionTypeList
-          transactionTypes={transactionTypes}
-          categories={categories}
-          onEdit={handleEditTransactionType}
-          onDelete={handleDeleteTransactionType}
-        />
+        <Box>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
+          >
+            <Typography variant="h4" component="h1">
+              Transaction Types
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleOpenTransactionTypeDialog}
+            >
+              New Transaction Type
+            </Button>
+          </Box>
+          <TransactionTypeList
+            transactionTypes={transactionTypes}
+            categories={categories}
+            onEdit={handleEditTransactionType}
+            onDelete={handleDeleteTransactionType}
+          />
+        </Box>
       </TabPanel>
 
       <TabPanel value={activeTab} index={4}>

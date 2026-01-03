@@ -20,6 +20,7 @@ import {
 import {
   Sync as SyncIcon,
   FiberManualRecord as DotIcon,
+  Dashboard as DashboardIcon,
   ReceiptLong as TransactionsIcon,
   Assessment as ReportsIcon,
   AccountBalanceWallet as BudgetIcon,
@@ -59,6 +60,7 @@ export const Header: React.FC = () => {
   };
 
   const navItems = [
+    { label: 'Dashboard', path: '/', icon: <DashboardIcon /> },
     { label: 'Transactions', path: '/transactions', icon: <TransactionsIcon /> },
     { label: 'Reports', path: '/reports', icon: <ReportsIcon /> },
     { label: 'Budgets', path: '/budgets', icon: <BudgetIcon /> },
@@ -71,6 +73,9 @@ export const Header: React.FC = () => {
   };
 
   const isActive = (path: string) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
     if (path === '/settings') {
       return (
         location.pathname.startsWith('/settings') ||

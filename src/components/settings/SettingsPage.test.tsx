@@ -15,30 +15,39 @@ describe('SettingsPage', () => {
     mockNavigate.mockClear();
   });
 
-  it('renders page title and description', () => {
+  it('renders page title', () => {
     render(
       <BrowserRouter>
         <SettingsPage />
       </BrowserRouter>
     );
     expect(screen.getByText('Settings')).toBeInTheDocument();
-    expect(
-      screen.getByText(/Configure your assets, categories, and data sync/i)
-    ).toBeInTheDocument();
   });
 
-  it('renders Assets, Categories, and Data & Sync cards', () => {
+  it('renders all tabs', () => {
     render(
       <BrowserRouter>
         <SettingsPage />
       </BrowserRouter>
     );
-    expect(screen.getByText('Assets')).toBeInTheDocument();
-    expect(screen.getByText('Categories')).toBeInTheDocument();
-    expect(screen.getByText('Data & Sync')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /transactional/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /manual assets/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /^categories$/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /transaction types/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /data & sync/i })).toBeInTheDocument();
   });
 
-  it('navigates to /settings/assets when Assets card is clicked', async () => {
+  it('displays Accounts content by default', () => {
+    render(
+      <BrowserRouter>
+        <SettingsPage />
+      </BrowserRouter>
+    );
+    expect(screen.getByText('Accounts')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /new account/i })).toBeInTheDocument();
+  });
+
+  it('switches to Manual Assets tab when clicked', async () => {
     const user = userEvent.setup();
     render(
       <BrowserRouter>
@@ -46,11 +55,11 @@ describe('SettingsPage', () => {
       </BrowserRouter>
     );
 
-    await user.click(screen.getByText('Assets'));
-    expect(mockNavigate).toHaveBeenCalledWith('/settings/assets');
+    await user.click(screen.getByRole('tab', { name: /manual assets/i }));
+    expect(screen.getByRole('button', { name: /add asset/i })).toBeInTheDocument();
   });
 
-  it('navigates to /settings/categories when Categories card is clicked', async () => {
+  it('switches to Categories tab and shows New Category button', async () => {
     const user = userEvent.setup();
     render(
       <BrowserRouter>
@@ -58,11 +67,11 @@ describe('SettingsPage', () => {
       </BrowserRouter>
     );
 
-    await user.click(screen.getByText('Categories'));
-    expect(mockNavigate).toHaveBeenCalledWith('/settings/categories');
+    await user.click(screen.getByRole('tab', { name: /^categories$/i }));
+    expect(screen.getByRole('button', { name: /new category/i })).toBeInTheDocument();
   });
 
-  it('navigates to /settings/data-sync when Data & Sync card is clicked', async () => {
+  it('switches to Transaction Types tab and shows New Transaction Type button', async () => {
     const user = userEvent.setup();
     render(
       <BrowserRouter>
@@ -70,20 +79,19 @@ describe('SettingsPage', () => {
       </BrowserRouter>
     );
 
-    await user.click(screen.getByText('Data & Sync'));
-    expect(mockNavigate).toHaveBeenCalledWith('/settings/data-sync');
+    await user.click(screen.getByRole('tab', { name: /transaction types/i }));
+    expect(screen.getByRole('button', { name: /new transaction type/i })).toBeInTheDocument();
   });
 
-  it('renders card descriptions', () => {
+  it('switches to Data & Sync tab', async () => {
+    const user = userEvent.setup();
     render(
       <BrowserRouter>
         <SettingsPage />
       </BrowserRouter>
     );
-    expect(
-      screen.getByText(/Manage your transactional accounts and manual assets/i)
-    ).toBeInTheDocument();
-    expect(screen.getByText(/Organize your transaction types and categories/i)).toBeInTheDocument();
-    expect(screen.getByText(/Manage your data file and sync preferences/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: /data & sync/i }));
+    expect(screen.getByText(/Storage Provider/i)).toBeInTheDocument();
   });
 });

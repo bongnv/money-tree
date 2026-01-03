@@ -542,7 +542,128 @@ These features will be implemented after the MVP is complete and validated by us
 - Archive files must be managed separately
 - User controls archive creation/loading through UI
 
+### FR-11: Multi-Currency Support (Future Enhancement)
+
+**FR-11.1** [ ] Base Currency Configuration
+- User selects a primary "reporting currency" (default: USD)
+- All reports consolidate to this base currency
+- Setting stored in user preferences
+- Can be changed at any time (recalculates all reports)
+
+**FR-11.2** [ ] Exchange Rate Management (Simplified Monthly Rates)
+- Store one exchange rate per month per currency pair in each year's data
+- Data structure: `{ month: 'YYYY-MM', fromCurrency: 'EUR', toCurrency: 'USD', rate: 1.18 }`
+- Automatically fetch from API when rate for a month is not available
+- Rates stored in YearData to avoid accumulating too much historical data
+- Apply same rate to all transactions within that month
+- Old year rates archived with year data when year is archived
+
+**FR-11.3** [ ] Automatic Currency Conversion in Reports
+- Balance Sheet: Convert all account balances and manual assets to base currency using current month's rate
+- Cash Flow Report: Convert all transactions using the rate from their transaction month
+- Net Worth Calculation: Sum all assets in base currency
+- Show original amount + currency alongside converted amount (e.g., "€1,000 (≈ $1,180)")
+
+**FR-11.4** [ ] Monthly Rate Fallback Strategy
+- Use rate from transaction's month (e.g., transaction on 2026-01-15 uses 2026-01 rate)
+- If month rate unavailable locally:
+  1. Attempt to fetch from API automatically
+  2. If API fails, use previous month's rate (up to 12 months back)
+  3. If no rate found, flag as "missing rate" in reports
+- Allow retroactive rate updates (recalculates affected reports)
+- Fetch happens in background, doesn't block report display
+
+**FR-11.5** [ ] Multi-Currency Transaction Support
+- Transactions inherit currency from source account
+- Transfer between accounts with different currencies uses month's exchange rate
+- Store actual amounts without conversion (conversion done at report time)
+
+**FR-11.6** [ ] Exchange Rate Data Model
+
+```typescript
+interface ExchangeRate {
+  id: string;
+  month: string; // YYYY-MM format (e.g., '2026-01')
+  fromCurrency: string; // Currency code (e.g., 'EUR')
+  toCurrency: string; // Currency code (e.g., 'USD')
+  rate: number; // Exchange rate (e.g., 1.18)
+  createdAt: string; // ISO timestamp
+}
+
+// Add to YearData - rates stored per year to avoid historical data accumulation
+interface YearData {
+  transactions: Transaction[];
+  budgets: Budget[];
+  manualAssets: ManualAsset[];
+  exchangeRates: ExchangeRate[]; // Exchange rates for this year only
+}
+
+// Budget needs currency support
+interface Budget {
+  // ... existing fields
+  currencyId: string; // Budget amount is in this currency
+}
+```
+
+**FR-11.7** [ ] Exchange Rate Management UI (Read-Only)
+- Dedicated section in Settings: "Exchange Rates"
+- Table view: Month | Currency Pair | Rate (read-only display)
+- Filter by year (shows rates for selected year)
+- Rates displayed are read-only - no manual editing allowed
+- Rates auto-fetched from API when needed (background)
+- "Refresh" button to trigger re-fetch from API for current year
+- "Fetch Missing Rates" button to trigger API fetch for selected year
+- All rate values are sourced from API only (no manual entry/override)
+
+**FR-11.8** [ ] Report Display Options
+- Toggle: "Show in base currency" vs "Show original currencies"
+- Visual indicator for converted values (e.g., "(converted)" label)
+- Warning icon when rate is estimated/missing
+
+**FR-11.9** [ ] Missing Rate Handling
+- Report shows clear message: "Exchange rate not set for [Month] [Currency]"
+- Automatic: Attempts to fetch from API in background when rate needed
+- Quick action: "Retry fetch" if API fetch fails
+- List of missing rates by month in Settings with "Fetch All" button
+- Show loading indicator while fetching rates
+- If API consistently fails, use previous month's rate with warning indicator
+
+**FR-11.10** [ ] Exchange Rate API Integration
+- Use free/public API (e.g., exchangerate-api.io free tier: 1,500 requests/month)
+- Fetch monthly average or mid-month rate (15th of month)
+- All fetched rates stored in YearData (exchangeRates array)
+- Each year contains only its own rates (reduces data size)
+- Rates persist across sessions and sync with file
+- Handle API errors gracefully (fallback to previous month's rate)
+- No API key stored in code (user can optionally configure for higher limits)
+- Works offline: Uses rates already stored in year data
+
+**Rationale**: API-first approach with monthly rates stored per year provides:
+- ~12 rates per year per currency pair (vs ~250 daily rates)
+- Automatic rate fetching eliminates manual data entry
+- Simple mental model: "1 EUR = $1.18 this month"
+- Rates stored per year: ~1-2 KB per year for multi-currency users
+- Historical rates archived with year data automatically
+- No manual override keeps implementation simple
+
+**Limitations**: 
+- Less precise for currencies with high volatility
+- Intra-month fluctuations ignored
+- No manual rate override in initial version (API-only)
+- Requires internet for first-time rate fetch (stored in year data after)
+- Acceptable trade-offs for personal finance use case
+
+**Models Requiring Currency Support**:
+- Account: Already has `currencyId` ✓
+- ManualAsset: Already has `currencyId` ✓
+- Budget: **Add `currencyId`** - budget amounts must be in specific currency
+- Transaction: Inherits currency from account, no direct field needed
+- Categories/TransactionTypes: No currency needed (classification only)
+
+---
+
 ## Bug fixes
 
 **B-1** [ ] Got error: "Failed to download file from OneDrive" when creating a new data file in OneDrive
 **B-2** [x] Add a new dashboard button next to Money Tree label in the navigation to improve UX
+**B-3** [ ] Permission errors when saving for local storage

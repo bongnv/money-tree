@@ -40,7 +40,8 @@ This plan implements all requirements from REQUIREMENTS.md.
 - **FR-9**: Year Management & Multi-Year Support → Phase 11 (Post-MVP)
   - Account Overview Report (multi-year view)
 - **FR-10**: Advanced Data Management → Phase 17 (Post-MVP)
-- **FR-11**: Cloud Storage Integration → Phase 18+ (Post-MVP, Optional)
+- **FR-11**: Multi-Currency Support → Phase 18 (Post-MVP)
+- **FR-12**: Cloud Storage Integration → Phase 19+ (Post-MVP, Optional)
 
 **MVP Non-Functional Requirements:**
 - **NFR-1**: Architecture → Phase 1, 9
@@ -52,7 +53,7 @@ This plan implements all requirements from REQUIREMENTS.md.
 - **NFR-7**: Maintainability → Phase 1, 10
 
 **Post-MVP Non-Functional Requirements:**
-- **NFR-8**: Cloud Security → Phase 18+ (Post-MVP, Optional)
+- **NFR-8**: Cloud Security → Phase 19+ (Post-MVP, Optional)
 - **NFR-9**: Advanced Reliability → Phase 17 (Post-MVP)
 
 ---
@@ -1650,32 +1651,192 @@ These features will be implemented after the MVP is validated by users.
   - [ ] Verify all snackbars and notifications appear correctly
   - [ ] Test with multiple conflict scenarios
 
-### 19.1 Implement OneDrive Storage Provider
-- [ ] Install dependencies: `@azure/msal-browser`, `@microsoft/microsoft-graph-client`
-- [ ] Create `src/services/storage/OneDriveStorageProvider.ts` implementing IStorageProvider
-- [ ] Integrate `@azure/msal-browser` for authentication (handled by Microsoft's SDK)
-- [ ] Implement OneDrive file operations using Microsoft Graph API
-- [ ] Add error handling and retry logic
-- [ ] **Write tests**: Test OneDrive operations (with mocks)
-- [ ] **Test**: Can authenticate with Microsoft (via their SDK), can save/load files from OneDrive
+---
 
-### 18.2 Add Storage Provider Selector
-- [ ] Create UI in Settings to select storage provider (Local, OneDrive, Google Drive)
-- [ ] Update StorageFactory to switch between providers based on user preference
-- [ ] Add "Connect to OneDrive" button that triggers MSAL authentication
-- [ ] Store provider preference in localStorage
-- [ ] Show current provider and connection status in UI
-- [ ] **Test**: Can switch between local and OneDrive storage, authentication works
+## Phase 18: Multi-Currency Support (Post-MVP)
 
-### 18.3 Implement Auto-Sync for Cloud Storage
-- [ ] Add automatic sync on data changes (debounced) for cloud providers
-- [ ] Show sync status in UI (syncing, synced, error, offline)
-- [ ] Add offline support with conflict resolution
-- [ ] Add "Force Sync" button for manual sync
-- [ ] **Write tests**: Test auto-sync, offline queue, conflict resolution
-- [ ] **Test**: Changes auto-sync to OneDrive, offline changes sync when reconnected
+**Requirements**: FR-11 (Multi-Currency Support)
 
-### 18.4 Add Google Drive Provider (Optional)
+**Goal**: Enable multi-currency transactions and reports with automatic exchange rate management
+
+### 18.1 Add Currency to Budget Model
+- [ ] Update `Budget` interface in `src/types/models.ts`:
+  - [ ] Add `currencyId: string` field to Budget interface
+  - [ ] Default to account's currency or user's base currency
+- [ ] Update Budget validation schema in `src/schemas/models.schema.ts`
+- [ ] Update Budget forms to include currency selection
+- [ ] Update `useBudgetStore` to handle currency in CRUD operations
+- [ ] **Write tests**: Test budget creation/editing with currency
+- [ ] **Test UI**: Create budget with different currencies, verify persistence
+
+### 18.2 Exchange Rate Data Model & Storage
+- [ ] Create `ExchangeRate` interface in `src/types/models.ts`:
+  ```typescript
+  interface ExchangeRate {
+    id: string;
+    month: string; // YYYY-MM format
+    fromCurrency: string;
+    toCurrency: string;
+    rate: number;
+    createdAt: string;
+  }
+  ```
+- [ ] Update `YearData` interface to include `exchangeRates: ExchangeRate[]`
+- [ ] Create validation schema for ExchangeRate in `src/schemas/models.schema.ts`
+- [ ] Update storage service to handle exchangeRates in YearData
+- [ ] **Write tests**: Test ExchangeRate schema validation, YearData with rates
+- [ ] **Test**: Verify rates persist in year data
+
+### 18.3 Exchange Rate API Service
+- [ ] Create `src/services/exchangeRate.service.ts`:
+  - [ ] `fetchMonthlyRate(month: string, fromCurrency: string, toCurrency: string): Promise<number>`
+  - [ ] Integrate with free API (e.g., exchangerate-api.io)
+  - [ ] Handle API errors with graceful fallbacks
+  - [ ] Rate limiting and caching logic
+- [ ] Add rate fallback logic:
+  - [ ] Search previous months (up to 12 months back)
+  - [ ] Return null if no rate found
+- [ ] **Write tests**: Mock API calls, test fallback logic, error handling
+- [ ] **Test**: Verify API integration works (with real API call in dev)
+
+### 18.4 Base Currency Configuration
+- [ ] Add `baseCurrency: string` to user preferences in `useAppStore`
+- [ ] Create base currency selector in Settings → App Preferences
+- [ ] Default to 'USD' if not set
+- [ ] Store preference in DataFile metadata
+- [ ] **Write tests**: Test preference storage and retrieval
+- [ ] **Test UI**: Change base currency in Settings, verify persistence
+
+### 18.5 Exchange Rate Store
+- [ ] Create `src/stores/useExchangeRateStore.ts`:
+  - [ ] State: `rates: ExchangeRate[]`, `loading: boolean`, `errors: Record<string, string>`
+  - [ ] Actions:
+    - [ ] `getRateForMonth(month, fromCurrency, toCurrency): number | null`
+    - [ ] `fetchRateIfMissing(month, fromCurrency, toCurrency): Promise<void>`
+    - [ ] `fetchMissingRatesForYear(year): Promise<void>`
+    - [ ] `refreshRatesForYear(year): Promise<void>`
+    - [ ] `listMissingRates(transactions, budgets): MissingRate[]`
+  - [ ] Load rates from YearData on app init
+  - [ ] Save rates back to YearData on changes
+- [ ] **Write tests**: Test all store actions, rate lookup logic
+- [ ] **Test**: Verify store integration with YearData
+
+### 18.6 Currency Conversion Utilities
+- [ ] Create `src/utils/currency.utils.ts` (if not exists, extend existing):
+  - [ ] `convertAmount(amount, fromCurrency, toCurrency, rate): number`
+  - [ ] `getTransactionMonth(date: string): string` - returns YYYY-MM
+  - [ ] `formatCurrencyWithConversion(amount, currency, baseAmount, baseCurrency): string`
+  - [ ] Example: "€1,000 (≈ $1,180)"
+- [ ] **Write tests**: Test conversion calculations, formatting
+- [ ] **Test**: Verify conversion accuracy with known rates
+
+### 18.7 Report Currency Conversion - Balance Sheet
+- [ ] Update Balance Sheet calculation in `src/services/calculation.service.ts`:
+  - [ ] For each account: Convert balance to base currency using current month's rate
+  - [ ] For each manual asset: Convert value to base currency
+  - [ ] Fetch missing rates automatically in background
+  - [ ] Track conversion metadata (original amount, currency, rate used)
+- [ ] Update Balance Sheet display components:
+  - [ ] Show original amount + converted amount
+  - [ ] Add "(converted)" indicator for foreign currency items
+  - [ ] Add warning icon for missing/estimated rates
+- [ ] **Write tests**: Test balance sheet with multi-currency accounts
+- [ ] **Test UI**: View Balance Sheet with accounts in different currencies
+
+### 18.8 Report Currency Conversion - Cash Flow
+- [ ] Update Cash Flow calculation in `src/services/report.service.ts`:
+  - [ ] For each transaction: Convert using rate from transaction's month
+  - [ ] Handle transfers between different currency accounts
+  - [ ] Fetch missing rates automatically
+  - [ ] Track conversion metadata per transaction
+- [ ] Update Cash Flow display:
+  - [ ] Show monthly totals in base currency
+  - [ ] Option to show original currency details on expand
+  - [ ] Warning for missing rates with "Retry fetch" action
+- [ ] **Write tests**: Test cash flow with multi-currency transactions
+- [ ] **Test UI**: View Cash Flow report with mixed currencies
+
+### 18.9 Exchange Rate Management UI (Read-Only)
+- [ ] Create `src/components/settings/ExchangeRatesTab.tsx`:
+  - [ ] Table: Month | Currency Pair | Rate (read-only)
+  - [ ] Year filter dropdown
+  - [ ] "Refresh Current Year Rates" button (triggers API re-fetch)
+  - [ ] "Fetch Missing Rates" button for selected year
+  - [ ] Loading indicators during fetch
+  - [ ] Error messages for API failures
+- [ ] Add Exchange Rates tab to Settings page
+- [ ] Show count of missing rates with quick action
+- [ ] Display last updated timestamp per rate
+- [ ] **Write tests**: Test UI interactions, button actions
+- [ ] **Test UI**: 
+  - [ ] View exchange rates table
+  - [ ] Filter by year
+  - [ ] Trigger rate refresh
+  - [ ] Verify rates update after fetch
+
+### 18.10 Report Display Options
+- [ ] Add toggle in Report pages: "Show in base currency" vs "Show original currencies"
+  - [ ] Store preference per report type in localStorage
+  - [ ] Default to "Show in base currency"
+- [ ] When "Show original currencies" selected:
+  - [ ] Display amounts in their original currency
+  - [ ] Group by currency in summaries
+  - [ ] No conversion applied
+- [ ] Visual indicators:
+  - [ ] "(converted)" label on converted amounts
+  - [ ] Warning icon for missing rates
+  - [ ] Tooltip showing conversion details
+- [ ] **Write tests**: Test toggle behavior, display mode switching
+- [ ] **Test UI**: Toggle between display modes, verify correct amounts shown
+
+### 18.11 Missing Rate Handling & Background Fetching
+- [ ] Implement automatic rate fetching:
+  - [ ] When report loads, detect required currency pairs and months
+  - [ ] Queue missing rate fetches (debounced to avoid API spam)
+  - [ ] Show loading state in reports during fetch
+  - [ ] Update report automatically when rates arrive
+- [ ] Create Missing Rates indicator:
+  - [ ] Badge in Settings showing count of missing rates
+  - [ ] List view of missing rates by month/currency pair
+  - [ ] "Fetch All Missing" batch action
+- [ ] Handle API failures gracefully:
+  - [ ] Use fallback (previous month's rate) with warning
+  - [ ] Show error message with "Retry" action
+  - [ ] Don't block report display
+- [ ] **Write tests**: Test auto-fetch logic, error handling, fallback strategy
+- [ ] **Test UI**:
+  - [ ] Create transaction in new currency
+  - [ ] View report → see loading indicator
+  - [ ] Verify rate auto-fetched and report updated
+  - [ ] Test with API failure → verify fallback works
+
+### 18.12 Integration & Final Polish
+- [ ] Update Quick Entry to show transaction currency (from account)
+- [ ] Add currency indicator in Transaction list
+- [ ] Update Budget progress calculations to handle currency conversion
+- [ ] Add migration logic for existing data (add empty exchangeRates array)
+- [ ] Performance optimization: Cache conversion results per render
+- [ ] Add comprehensive error boundaries for currency operations
+- [ ] **Write tests**: Integration tests for multi-currency workflows
+- [ ] **Test UI**: Full multi-currency workflow:
+  - [ ] Set base currency to USD
+  - [ ] Create EUR and GBP accounts
+  - [ ] Add transactions in both currencies
+  - [ ] Create budgets in different currencies
+  - [ ] View all reports in base currency
+  - [ ] Verify conversions accurate
+  - [ ] Test with missing rates → see auto-fetch
+  - [ ] Verify offline behavior (uses cached rates)
+
+---
+
+## Phase 19: Cloud Storage Integration (Post-MVP, Optional)
+
+**Requirements**: FR-12 (Cloud Storage Integration), NFR-8 (Cloud Security)
+
+**Goal**: Enable OneDrive and Google Drive sync for multi-device access
+
+### 19.4 Add Google Drive Provider (Optional)
 - [ ] Install Google Drive API dependencies
 - [ ] Create `src/services/storage/GoogleDriveStorageProvider.ts` implementing IStorageProvider
 - [ ] Integrate Google Sign-In SDK for authentication (handled by Google's SDK)
@@ -1684,7 +1845,7 @@ These features will be implemented after the MVP is validated by users.
 - [ ] **Write tests**: Test Google Drive operations (with mocks)
 - [ ] **Test**: Can save/load files from Google Drive
 
-### 18.5 Documentation and Migration
+### 19.5 Documentation and Migration
 - [ ] Update README with cloud storage setup instructions
 - [ ] Document OneDrive setup (Azure AD app registration)
 - [ ] Document Google Drive setup (Google Cloud Console setup)

@@ -71,18 +71,84 @@ describe('useExchangeRateStore', () => {
   });
 
   describe('fetchRateIfMissing', () => {
-    it('should fetch rate from API if missing', async () => {
-      const mockFetchMonthlyRate = jest.spyOn(exchangeRateService, 'fetchMonthlyRate');
-      mockFetchMonthlyRate.mockResolvedValue(1.2);
+    beforeEach(() => {
+      // Reset store to ensure clean state for these tests
+      useExchangeRateStore.getState().resetRates();
+    });
+
+    it('should fetch rate from API if missing for current month', async () => {
+      // Mock getCurrentMonth to return 2026-01
+      jest.spyOn(exchangeRateService, 'getCurrentMonth').mockReturnValue('2026-01');
+      const mockFindFallbackRate = jest.spyOn(exchangeRateService, 'findFallbackRate');
+      mockFindFallbackRate.mockReturnValue(null); // No fallback available
+      const mockFetchCurrentRate = jest.spyOn(exchangeRateService, 'fetchCurrentRate');
+      mockFetchCurrentRate.mockResolvedValue(1.2);
 
       const rate = await useExchangeRateStore
         .getState()
         .fetchRateIfMissing('2026-01', 'EUR', 'USD');
 
       expect(rate).toBe(1.2);
-      expect(mockFetchMonthlyRate).toHaveBeenCalledWith('2026-01', 'EUR', 'USD');
+      expect(mockFetchCurrentRate).toHaveBeenCalledWith('EUR', 'USD');
       expect(useExchangeRateStore.getState().rates).toHaveLength(1);
       expect(useExchangeRateStore.getState().rates[0].rate).toBe(1.2);
+    });
+
+    it('should use fallback rate when available instead of fetching', async () => {
+      // Set up existing rate for February
+      useExchangeRateStore.getState().setRates([{
+        id: 'rate-1',
+        month: '2026-02',
+        fromCurrency: 'EUR',
+        toCurrency: 'USD',
+        rate: 1.19,
+        createdAt: '2026-02-01T00:00:00.000Z',
+      }]);
+
+      const mockFetchCurrentRate = jest.spyOn(exchangeRateService, 'fetchCurrentRate');
+      const mockFindFallbackRate = jest.spyOn(exchangeRateService, 'findFallbackRate');
+      mockFindFallbackRate.mockReturnValue(1.19); // Mock fallback finding the Feb rate
+
+      // Try to fetch for March - should use fallback instead of API
+      const rate = await useExchangeRateStore
+        .getState()
+        .fetchRateIfMissing('2026-03', 'EUR', 'USD');
+
+      expect(rate).toBe(1.19);
+      expect(mockFetchCurrentRate).not.toHaveBeenCalled(); // Should not call API
+      expect(mockFindFallbackRate).toHaveBeenCalled();
+      // Verify it was stored with the requested month
+      const storedRate = useExchangeRateStore
+        .getState()
+        .rates.find(
+          (r) => r.month === '2026-03' && r.fromCurrency === 'EUR' && r.toCurrency === 'USD'
+        );
+      expect(storedRate).toBeDefined();
+      expect(storedRate?.rate).toBe(1.19);
+    });
+
+    it('should fetch from API when no fallback available', async () => {
+      // No existing rates, so fallback won't find anything
+      const mockFetchCurrentRate = jest.spyOn(exchangeRateService, 'fetchCurrentRate');
+      const mockFindFallbackRate = jest.spyOn(exchangeRateService, 'findFallbackRate');
+      mockFindFallbackRate.mockReturnValue(null); // No fallback available
+      mockFetchCurrentRate.mockResolvedValue(1.2);
+
+      const rate = await useExchangeRateStore
+        .getState()
+        .fetchRateIfMissing('2025-12', 'EUR', 'USD');
+
+      expect(rate).toBe(1.2);
+      expect(mockFindFallbackRate).toHaveBeenCalled();
+      expect(mockFetchCurrentRate).toHaveBeenCalledWith('EUR', 'USD');
+      // Verify it was stored with the historical month
+      const storedRate = useExchangeRateStore
+        .getState()
+        .rates.find(
+          (r) => r.month === '2025-12' && r.fromCurrency === 'EUR' && r.toCurrency === 'USD'
+        );
+      expect(storedRate).toBeDefined();
+      expect(storedRate?.rate).toBe(1.2);
     });
 
     it('should return existing rate without fetching', async () => {
@@ -96,19 +162,21 @@ describe('useExchangeRateStore', () => {
       };
       useExchangeRateStore.getState().setRates([existingRate]);
 
-      const mockFetchMonthlyRate = jest.spyOn(exchangeRateService, 'fetchMonthlyRate');
+      const mockFetchCurrentRate = jest.spyOn(exchangeRateService, 'fetchCurrentRate');
 
       const rate = await useExchangeRateStore
         .getState()
         .fetchRateIfMissing('2026-01', 'EUR', 'USD');
 
       expect(rate).toBe(1.18);
-      expect(mockFetchMonthlyRate).not.toHaveBeenCalled();
+      expect(mockFetchCurrentRate).not.toHaveBeenCalled();
     });
 
     it('should handle API errors', async () => {
-      const mockFetchMonthlyRate = jest.spyOn(exchangeRateService, 'fetchMonthlyRate');
-      mockFetchMonthlyRate.mockResolvedValue(null);
+      const mockFindFallbackRate = jest.spyOn(exchangeRateService, 'findFallbackRate');
+      mockFindFallbackRate.mockReturnValue(null); // No fallback available
+      const mockFetchCurrentRate = jest.spyOn(exchangeRateService, 'fetchCurrentRate');
+      mockFetchCurrentRate.mockResolvedValue(null);
 
       await useExchangeRateStore.getState().fetchRateIfMissing('2026-01', 'EUR', 'USD');
 

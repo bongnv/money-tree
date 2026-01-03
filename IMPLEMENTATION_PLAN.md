@@ -1689,15 +1689,16 @@ These features will be implemented after the MVP is validated by users.
 
 ### 18.3 Exchange Rate API Service
 - [x] Create `src/services/exchangeRate.service.ts`:
-  - [x] `fetchMonthlyRate(month: string, fromCurrency: string, toCurrency: string): Promise<number>`
+  - [x] `fetchCurrentRate(fromCurrency: string, toCurrency: string): Promise<number>` (renamed from fetchMonthlyRate to reflect that it fetches current rates only, not historical)
+  - [x] USD intermediate rate calculation: If direct rate not found, calculate via USD (e.g., VND→USD×USD→SGD)
   - [x] Integrate with free API (exchangerate-api.com)
   - [x] Handle API errors with graceful fallbacks
   - [x] Rate limiting and caching logic
 - [x] Add rate fallback logic:
   - [x] Search previous months (up to 12 months back)
   - [x] Return null if no rate found
-- [x] **Write tests**: Mock API calls, test fallback logic, error handling
-- [x] **Test**: Verify API integration works (16 tests passing)
+- [x] **Write tests**: Mock API calls, test fallback logic, error handling, USD intermediate calculation
+- [x] **Test**: Verify API integration works (18 tests passing)
 
 ### 18.4 Base Currency Configuration
 - [x] Add `baseCurrency: string` to user preferences in `useAppStore`
@@ -1711,13 +1712,14 @@ These features will be implemented after the MVP is validated by users.
   - [x] State: `rates: ExchangeRate[]`, `loading: boolean`, `errors: Record<string, string>`
   - [x] Actions:
     - [x] `getRateForMonth(month, fromCurrency, toCurrency): number | null`
-    - [x] `fetchRateIfMissing(month, fromCurrency, toCurrency): Promise<void>`
+    - [x] `fetchRateIfMissing(month, fromCurrency, toCurrency): Promise<void>` - Fetches current rate for any missing month (current or historical) and stores it with that month
     - [x] `fetchMissingRatesForYear(year): Promise<void>`
-    - [x] `refreshRatesForYear(year): Promise<void>`
+    - [x] `refreshRatesForYear(year): Promise<void>` - Only refreshes current month to preserve historical rates
     - [x] `listMissingRates(transactions, budgets): MissingRate[]`
-  - [x] Load rates from YearData on app init
-  - [x] Save rates back to YearData on changes
-- [x] **Write tests**: Test all store actions, rate lookup logic (13 tests passing)
+  - [x] Load rates from YearData on app init via sync.service
+  - [x] Save rates back to YearData on changes via sync.service
+- [x] **Write tests**: Test all store actions, rate lookup logic, historical rate fetching (14 tests passing)
+- [x] **Test**: Verify rates are loaded from and saved to data file correctly
 - [x] **Test**: Verify store integration with YearData
 
 ### 18.6 Currency Conversion Utilities

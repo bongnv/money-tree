@@ -4,6 +4,7 @@ import { useCategoryStore } from '../stores/useCategoryStore';
 import { useTransactionStore } from '../stores/useTransactionStore';
 import { useAssetStore } from '../stores/useAssetStore';
 import { useBudgetStore } from '../stores/useBudgetStore';
+import { useExchangeRateStore } from '../stores/useExchangeRateStore';
 import { StorageFactory } from './storage/StorageFactory';
 import type { DataFile } from '../types/models';
 import { calculateDataFileHash } from '../utils/hash.utils';
@@ -13,6 +14,23 @@ import { ConflictResolution } from '../components/common/MergePreviewDialog';
 const AUTO_SAVE_INTERVAL = 1 * 60 * 1000; // 1 minute in milliseconds
 
 type MergeHandler = (mergeResult: MergeResult) => Promise<ConflictResolution[] | null>;
+
+/**
+ * Check if an error is related to authentication/permission issues
+ */
+function isAuthError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const message = error.message.toLowerCase();
+  return (
+    message.includes('permission') ||
+    message.includes('authenticate') ||
+    message.includes('auth') ||
+    message.includes('expired') ||
+    message.includes('denied') ||
+    message.includes('401') ||
+    message.includes('403')
+  );
+}
 
 class SyncService {
   private autoSaveTimerId: NodeJS.Timeout | null = null;
@@ -163,6 +181,7 @@ class SyncService {
       const transactionStore = useTransactionStore.getState();
       const assetStore = useAssetStore.getState();
       const budgetStore = useBudgetStore.getState();
+      const exchangeRateStore = useExchangeRateStore.getState();
 
       const currentYearStr = String(state.currentYear);
 
@@ -174,7 +193,7 @@ class SyncService {
             transactions: transactionStore.transactions,
             budgets: budgetStore.budgets,
             manualAssets: assetStore.manualAssets,
-            exchangeRates: this.cachedDataFile?.years[currentYearStr]?.exchangeRates || [],
+            exchangeRates: exchangeRateStore.rates,
           },
         },
         accounts: accountStore.accounts,
@@ -343,11 +362,13 @@ class SyncService {
           useTransactionStore.getState().setTransactions(yearData.transactions || []);
           useAssetStore.getState().setManualAssets(yearData.manualAssets || []);
           useBudgetStore.getState().setBudgets(yearData.budgets || []);
+          useExchangeRateStore.getState().setRates(yearData.exchangeRates || []);
         } else {
           // No data for this year, initialize with empty arrays
           useTransactionStore.getState().setTransactions([]);
           useAssetStore.getState().setManualAssets([]);
           useBudgetStore.getState().setBudgets([]);
+          useExchangeRateStore.getState().setRates([]);
         }
 
         state.setCurrentYear(year);
@@ -370,6 +391,8 @@ class SyncService {
    * Returns true if successful, false if no cached file or load failed
    */
   async autoLoad(): Promise<boolean> {
+    const state = useAppStore.getState();
+
     try {
       const storage = StorageFactory.getCurrentProvider();
 
@@ -380,16 +403,39 @@ class SyncService {
 
       // Check if provider is ready to load data
       if (!storage.isReady()) {
+        console.info('Provider not ready for auto-load');
         return false;
       }
 
       // Try to load file from provider
-      const state = useAppStore.getState();
       const currentYear = state.currentYear || new Date().getFullYear();
       await this.loadDataFile(currentYear);
       return true;
     } catch (error) {
-      // Auto-load fails silently - user will see Welcome Dialog
+      const providerType = StorageFactory.getProviderType();
+
+      // Check if this is an authentication/permission error
+      if (isAuthError(error)) {
+        const providerName =
+          providerType === 'onedrive'
+            ? 'OneDrive'
+            : providerType === 'google_drive'
+              ? 'Google Drive'
+              : providerType === 'dropbox'
+                ? 'Dropbox'
+                : 'cloud storage';
+
+        // Set error message to inform user
+        const errorMessage = `Failed to load file: File permission expired. Please go to Settings → Data & Sync to reconnect your ${providerName} account.`;
+        state.setError(errorMessage);
+        state.showSnackbar(errorMessage, 'error');
+
+        console.error('Authentication error during auto-load:', error);
+        return false;
+      }
+
+      // For other errors (file not found, network issues), fail silently
+      // User will see Welcome Dialog
       console.info('Auto-load failed:', error);
       return false;
     }
@@ -431,6 +477,7 @@ class SyncService {
     useTransactionStore.getState().setTransactions([]);
     useAssetStore.getState().setManualAssets([]);
     useBudgetStore.getState().setBudgets([]);
+    useExchangeRateStore.getState().resetRates();
 
     // Reset app state
     const state = useAppStore.getState();

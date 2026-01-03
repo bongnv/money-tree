@@ -317,7 +317,9 @@ export class OneDriveProvider implements IStorageProvider {
    */
   async loadDataFile(): Promise<DataFile | null> {
     if (!this.isAuthenticated()) {
-      throw new Error(errorMessages.authRequired);
+      throw new Error(
+        'Please authenticate with OneDrive. Go to Settings → Data & Sync to reconnect your account.'
+      );
     }
 
     try {
@@ -338,7 +340,9 @@ export class OneDriveProvider implements IStorageProvider {
       console.error('Failed to load file from OneDrive:', error);
 
       if (error.statusCode === 401 || error.statusCode === 403) {
-        throw new Error(errorMessages.permissionDenied);
+        throw new Error(
+          'OneDrive permission expired. Please reconnect your account in Settings → Data & Sync.'
+        );
       }
 
       throw new Error(errorMessages.downloadFailed);
@@ -350,7 +354,9 @@ export class OneDriveProvider implements IStorageProvider {
    */
   async saveDataFile(data: DataFile): Promise<void> {
     if (!this.isAuthenticated()) {
-      throw new Error(errorMessages.authRequired);
+      throw new Error(
+        'Please authenticate with OneDrive. Go to Settings → Data & Sync to reconnect your account.'
+      );
     }
 
     // Validate data before saving
@@ -372,7 +378,9 @@ export class OneDriveProvider implements IStorageProvider {
       console.error('Failed to save file to OneDrive:', error);
 
       if (error.statusCode === 401 || error.statusCode === 403) {
-        throw new Error(errorMessages.permissionDenied);
+        throw new Error(
+          'OneDrive permission expired. Please reconnect your account in Settings → Data & Sync.'
+        );
       }
 
       throw new Error(errorMessages.uploadFailed);

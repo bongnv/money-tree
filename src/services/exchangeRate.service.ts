@@ -11,15 +11,15 @@ export interface ExchangeRateAPIResponse {
 }
 
 /**
- * Fetch monthly exchange rate from API
+ * Fetch current exchange rate from API
  * Uses exchangerate-api.io free tier (1,500 requests/month)
- * @param month Month in YYYY-MM format
+ * Note: This fetches the CURRENT rate only, not historical rates.
+ * Historical rates from the data file should never be overwritten.
  * @param fromCurrency Source currency code (e.g., 'EUR')
  * @param toCurrency Target currency code (e.g., 'USD')
  * @returns Exchange rate or null if unavailable
  */
-export async function fetchMonthlyRate(
-  _month: string,
+export async function fetchCurrentRate(
   fromCurrency: string,
   toCurrency: string
 ): Promise<number | null> {
@@ -33,15 +33,58 @@ export async function fetchMonthlyRate(
       return 1;
     }
 
+    // Try direct rate first
+    const directRate = await fetchDirectRate(fromCurrencyUpper, toCurrencyUpper);
+    if (directRate !== null) {
+      return directRate;
+    }
+
+    // If direct rate fails and neither currency is USD, try USD as intermediate
+    if (fromCurrencyUpper !== 'USD' && toCurrencyUpper !== 'USD') {
+      console.log(
+        `Direct rate not found for ${fromCurrencyUpper}/${toCurrencyUpper}, trying USD as intermediate`
+      );
+
+      // Try fromCurrency → USD → toCurrency
+      const fromToUSD = await fetchDirectRate(fromCurrencyUpper, 'USD');
+      const usdToTo = await fetchDirectRate('USD', toCurrencyUpper);
+
+      if (fromToUSD !== null && usdToTo !== null) {
+        const intermediateRate = fromToUSD * usdToTo;
+        console.log(
+          `Calculated intermediate rate via USD: ${fromCurrencyUpper} → USD (${fromToUSD}) → ${toCurrencyUpper} (${usdToTo}) = ${intermediateRate}`
+        );
+        return intermediateRate;
+      }
+    }
+
+    console.error(
+      `Failed to find rate for ${fromCurrencyUpper}/${toCurrencyUpper} (direct or via USD)`
+    );
+    return null;
+  } catch (error) {
+    console.error('Error fetching exchange rate:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch direct exchange rate from API
+ * @param fromCurrency Source currency code (uppercase)
+ * @param toCurrency Target currency code (uppercase)
+ * @returns Exchange rate or null if unavailable
+ */
+async function fetchDirectRate(fromCurrency: string, toCurrency: string): Promise<number | null> {
+  try {
     // Use exchangerate-api.io free tier API
     // Format: https://api.exchangerate-api.io/v4/latest/{fromCurrency}
     // Alternative format for better API: https://v6.exchangerate-api.com/v6/YOUR-API-KEY/latest/{fromCurrency}
-    const apiUrl = `https://api.exchangerate-api.com/v4/latest/${fromCurrencyUpper}`;
+    const apiUrl = `https://api.exchangerate-api.com/v4/latest/${fromCurrency}`;
 
     const response = await fetch(apiUrl);
 
     if (!response.ok) {
-      console.error(`Exchange rate API returned ${response.status} for ${fromCurrencyUpper}`);
+      console.error(`Exchange rate API returned ${response.status} for ${fromCurrency}`);
       return null;
     }
 
@@ -60,15 +103,14 @@ export async function fetchMonthlyRate(
       return null;
     }
 
-    const rate = rates[toCurrencyUpper];
+    const rate = rates[toCurrency];
     if (rate === undefined || rate === null) {
-      console.error(`Rate not found for ${toCurrencyUpper}`);
       return null;
     }
 
     return rate;
   } catch (error) {
-    console.error('Error fetching exchange rate:', error);
+    console.error('Error fetching direct exchange rate:', error);
     return null;
   }
 }

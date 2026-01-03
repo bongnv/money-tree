@@ -1,7 +1,11 @@
 import { create } from 'zustand';
 import type { ExchangeRate } from '../types/models';
 import { useAppStore } from './useAppStore';
-import { fetchMonthlyRate, findFallbackRate } from '../services/exchangeRate.service';
+import {
+  fetchCurrentRate,
+  findFallbackRate,
+  getCurrentMonth,
+} from '../services/exchangeRate.service';
 
 interface ExchangeRateState {
   rates: ExchangeRate[];
@@ -108,6 +112,23 @@ export const useExchangeRateStore = create<ExchangeRateState & ExchangeRateActio
       return existingRate.rate;
     }
 
+    // Try to find nearest available rate first (saves API call)
+    const fallbackRate = findFallbackRate(rates, month, fromCurrency, toCurrency);
+    if (fallbackRate !== null) {
+      // Store the fallback rate for this month to avoid future lookups
+      const newRate: ExchangeRate = {
+        id: `rate-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        month,
+        fromCurrency,
+        toCurrency,
+        rate: fallbackRate,
+        createdAt: new Date().toISOString(),
+      };
+      get().addRate(newRate);
+      return fallbackRate;
+    }
+
+    // No fallback available, fetch from API
     // Set loading state
     set((state) => ({
       loading: { ...state.loading, [key]: true },
@@ -115,7 +136,7 @@ export const useExchangeRateStore = create<ExchangeRateState & ExchangeRateActio
     }));
 
     try {
-      const rate = await fetchMonthlyRate(month, fromCurrency, toCurrency);
+      const rate = await fetchCurrentRate(fromCurrency, toCurrency);
 
       if (rate === null) {
         const error = `Failed to fetch rate for ${fromCurrency}/${toCurrency} in ${month}`;
@@ -175,25 +196,26 @@ export const useExchangeRateStore = create<ExchangeRateState & ExchangeRateActio
   },
 
   refreshRatesForYear: async (year, currencyPairs) => {
-    const months = Array.from({ length: 12 }, (_, i) => {
-      const month = String(i + 1).padStart(2, '0');
-      return `${year}-${month}`;
-    });
+    // Don't update existing rates to save API calls
+    // Only fetch rates that are truly missing
+    const currentMonth = getCurrentMonth();
+    const [currentYear] = currentMonth.split('-').map(Number);
+
+    // If refreshing a year that's not current, do nothing (preserve historical data)
+    if (year !== currentYear) {
+      return;
+    }
 
     const fetchPromises: Promise<unknown>[] = [];
 
-    for (const month of months) {
-      for (const [fromCurrency, toCurrency] of currencyPairs) {
-        // Delete existing rate if any
-        const existingRate = get().rates.find(
-          (r) => r.month === month && r.fromCurrency === fromCurrency && r.toCurrency === toCurrency
-        );
-        if (existingRate) {
-          get().deleteRate(existingRate.id);
-        }
-
-        // Fetch fresh rate
-        fetchPromises.push(get().fetchRateIfMissing(month, fromCurrency, toCurrency));
+    for (const [fromCurrency, toCurrency] of currencyPairs) {
+      // Only fetch if rate doesn't exist - don't delete and refetch
+      const existingRate = get().rates.find(
+        (r) =>
+          r.month === currentMonth && r.fromCurrency === fromCurrency && r.toCurrency === toCurrency
+      );
+      if (!existingRate) {
+        fetchPromises.push(get().fetchRateIfMissing(currentMonth, fromCurrency, toCurrency));
       }
     }
 

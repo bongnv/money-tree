@@ -70,9 +70,15 @@ export class LocalStorageProvider implements IStorageProvider {
       return true;
     }
 
-    // Request permission
-    if ((await fileHandle.requestPermission(options)) === 'granted') {
-      return true;
+    // Request permission - this requires user activation
+    try {
+      if ((await fileHandle.requestPermission(options)) === 'granted') {
+        return true;
+      }
+    } catch (error) {
+      // Failed to request permission (likely no user activation)
+      console.warn('Failed to request permission:', error);
+      return false;
     }
 
     return false;
@@ -245,14 +251,17 @@ export class LocalStorageProvider implements IStorageProvider {
         this.fileHandle = fileHandle;
         await this.saveCachedHandle(fileHandle);
       } else {
-        // Verify write permission for cached handle
+        // Check write permission for cached handle
         const options: FileSystemHandlePermissionDescriptor = { mode: 'readwrite' };
-        if ((await fileHandle.queryPermission(options)) !== 'granted') {
-          if ((await fileHandle.requestPermission(options)) !== 'granted') {
-            // Permission denied, clear cached handle and throw error
-            await this.clearFileHandle();
-            throw new Error('Permission denied to write to the file');
-          }
+        const permission = await fileHandle.queryPermission(options);
+        
+        if (permission !== 'granted') {
+          // Permission not granted - we can't request it without user activation
+          // Clear the cached handle so user will be prompted next time they manually sync
+          await this.clearFileHandle();
+          throw new Error(
+            'File permission expired. Please click the Sync button to grant permission again.'
+          );
         }
       }
 

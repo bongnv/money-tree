@@ -1,4 +1,9 @@
-import { StorageFactory, StorageProviderType, LocalStorageProvider, OneDriveProvider } from './index';
+import {
+  StorageFactory,
+  StorageProviderType,
+  LocalStorageProvider,
+  OneDriveProvider,
+} from './index';
 
 /**
  * Tests for StorageFactory

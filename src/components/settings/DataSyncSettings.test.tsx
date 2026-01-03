@@ -198,10 +198,7 @@ describe('DataSyncSettings', () => {
       fireEvent.click(switchButton);
 
       await waitFor(() => {
-        expect(consoleError).toHaveBeenCalledWith(
-          'Failed to switch file:',
-          expect.any(Error)
-        );
+        expect(consoleError).toHaveBeenCalledWith('Failed to switch file:', expect.any(Error));
       });
 
       consoleError.mockRestore();

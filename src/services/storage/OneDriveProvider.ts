@@ -1,18 +1,38 @@
-import { PublicClientApplication, AccountInfo, InteractionRequiredAuthError } from '@azure/msal-browser';
+import {
+  PublicClientApplication,
+  AccountInfo,
+  InteractionRequiredAuthError,
+} from '@azure/msal-browser';
 import { Client } from '@microsoft/microsoft-graph-client';
 import type { IStorageProvider } from './IStorageProvider';
 import type { DataFile } from '../../types/models';
 import { DataFileSchema } from '../../schemas/models.schema';
-import { msalConfig, loginRequest, graphConfig, errorMessages, isOneDriveConfigured } from '../../config/onedrive.config';
+import {
+  msalConfig,
+  loginRequest,
+  graphConfig,
+  errorMessages,
+  isOneDriveConfigured,
+} from '../../config/onedrive.config';
 
 /**
  * OneDrive Storage Provider
  * Uses Microsoft Graph API to store data in OneDrive
  */
+export interface SelectedFileInfo {
+  fileId: string;
+  filePath: string;
+  fileName: string;
+  isNew: boolean;
+}
+
+const SELECTED_FILE_KEY = 'moneyTree.onedrive.selectedFile';
+
 export class OneDriveProvider implements IStorageProvider {
   private msalInstance: PublicClientApplication | null = null;
   private graphClient: Client | null = null;
   private account: AccountInfo | null = null;
+  private selectedFileInfo: SelectedFileInfo | null = null;
 
   /**
    * Lazy load MSAL instance to avoid initialization errors in test environments
@@ -37,7 +57,10 @@ export class OneDriveProvider implements IStorageProvider {
     }
     const msalInstance = this.ensureMSALInstance();
     await msalInstance.initialize();
-    
+
+    // Load selected file info from localStorage
+    this.loadSelectedFileInfo();
+
     // Check if user is already logged in
     const accounts = msalInstance.getAllAccounts();
     if (accounts.length > 0) {
@@ -92,7 +115,20 @@ export class OneDriveProvider implements IStorageProvider {
       await msalInstance.logoutPopup({ account: this.account });
       this.account = null;
       this.graphClient = null;
+      this.selectedFileInfo = null;
+      localStorage.removeItem(SELECTED_FILE_KEY);
     }
+  }
+
+  /**
+   * Disconnect from OneDrive (clear app access without global sign out)
+   */
+  disconnect(): void {
+    // Clear app authentication state without signing out of Microsoft globally
+    this.account = null;
+    this.graphClient = null;
+    this.selectedFileInfo = null;
+    localStorage.removeItem(SELECTED_FILE_KEY);
   }
 
   /**
@@ -114,6 +150,138 @@ export class OneDriveProvider implements IStorageProvider {
         }
       },
     });
+  }
+
+  /**
+   * Set selected file location
+   */
+  setSelectedFile(fileInfo: SelectedFileInfo): void {
+    this.selectedFileInfo = fileInfo;
+    localStorage.setItem(SELECTED_FILE_KEY, JSON.stringify(fileInfo));
+  }
+
+  /**
+   * Get selected file location
+   */
+  getSelectedFile(): SelectedFileInfo | null {
+    return this.selectedFileInfo;
+  }
+
+  /**
+   * Load selected file info from localStorage
+   */
+  private loadSelectedFileInfo(): void {
+    const stored = localStorage.getItem(SELECTED_FILE_KEY);
+    if (stored) {
+      try {
+        this.selectedFileInfo = JSON.parse(stored);
+      } catch (error) {
+        console.warn('Failed to parse stored file info:', error);
+        this.selectedFileInfo = null;
+      }
+    }
+  }
+
+  /**
+   * List folders and files in OneDrive
+   * @param parentItem Parent folder item with metadata, or null/undefined for root
+   */
+  async listFolders(
+    parentItem?: {
+      id: string;
+      remoteItem?: { id: string; parentReference?: { driveId: string } };
+    } | null
+  ): Promise<any[]> {
+    if (!this.isAuthenticated()) {
+      throw new Error(errorMessages.authRequired);
+    }
+
+    try {
+      let items: any[] = [];
+
+      if (!parentItem) {
+        // Root level - get both personal drive and shared items
+        const [personalItems, sharedItems] = await Promise.all([
+          this.graphClient!.api('/me/drive/root/children').get(),
+          this.graphClient!.api('/me/drive/sharedWithMe')
+            .get()
+            .catch(() => ({ value: [] })),
+        ]);
+
+        items = [...(personalItems.value || []), ...(sharedItems.value || [])];
+      } else if (parentItem.remoteItem) {
+        // Navigating into a shared folder - use the remote drive and item IDs
+        const driveId = parentItem.remoteItem.parentReference?.driveId;
+        const itemId = parentItem.remoteItem.id;
+
+        if (!driveId || !itemId) {
+          throw new Error('Invalid shared folder reference');
+        }
+
+        const endpoint = `/drives/${driveId}/items/${itemId}/children`;
+        const response = await this.graphClient!.api(endpoint).get();
+        items = response.value || [];
+      } else {
+        // Navigating into a personal folder
+        const endpoint = `/me/drive/items/${parentItem.id}/children`;
+        const response = await this.graphClient!.api(endpoint).get();
+        items = response.value || [];
+      }
+
+      return items;
+    } catch (error: any) {
+      console.error('Failed to list folders:', error);
+      throw new Error('Failed to load folder contents');
+    }
+  }
+
+  /**
+   * Search for files in OneDrive
+   * @param query Search query
+   */
+  async searchFiles(query: string): Promise<any[]> {
+    if (!this.isAuthenticated()) {
+      throw new Error(errorMessages.authRequired);
+    }
+
+    try {
+      const response = await this.graphClient!.api(
+        `/me/drive/root/search(q='${encodeURIComponent(query)}')`
+      ).get();
+      return response.value || [];
+    } catch (error: any) {
+      console.error('Failed to search files:', error);
+      throw new Error('Failed to search files');
+    }
+  }
+
+  /**
+   * Get file content URL based on selected file or default path
+   */
+  private getFileUrl(): string {
+    if (this.selectedFileInfo && this.selectedFileInfo.fileId !== 'new') {
+      // Use specific file ID
+      return `/me/drive/items/${this.selectedFileInfo.fileId}/content`;
+    }
+    // Use default path
+    return graphConfig.getFileContentUrl();
+  }
+
+  /**
+   * Get file upload URL based on selected file or default path
+   */
+  private getUploadUrl(): string {
+    if (this.selectedFileInfo) {
+      if (this.selectedFileInfo.isNew || this.selectedFileInfo.fileId === 'new') {
+        // Create new file at specified path
+        return `/me/drive/root:/${this.selectedFileInfo.filePath}:/content`;
+      } else {
+        // Update existing file by ID
+        return `/me/drive/items/${this.selectedFileInfo.fileId}/content`;
+      }
+    }
+    // Use default path
+    return graphConfig.getFileContentUrl();
   }
 
   /**
@@ -154,9 +322,7 @@ export class OneDriveProvider implements IStorageProvider {
 
     try {
       // Download file content
-      const response = await this.graphClient!
-        .api(graphConfig.getFileContentUrl())
-        .get();
+      const response = await this.graphClient!.api(this.getFileUrl()).get();
 
       // Parse and validate
       const data = typeof response === 'string' ? JSON.parse(response) : response;
@@ -170,11 +336,11 @@ export class OneDriveProvider implements IStorageProvider {
       }
 
       console.error('Failed to load file from OneDrive:', error);
-      
+
       if (error.statusCode === 401 || error.statusCode === 403) {
         throw new Error(errorMessages.permissionDenied);
       }
-      
+
       throw new Error(errorMessages.downloadFailed);
     }
   }
@@ -194,32 +360,40 @@ export class OneDriveProvider implements IStorageProvider {
       const content = JSON.stringify(data, null, 2);
 
       // Upload file content
-      await this.graphClient!
-        .api(graphConfig.getFileContentUrl())
-        .put(content);
+      const response = await this.graphClient!.api(this.getUploadUrl()).put(content);
+
+      // If this was a new file, update the file ID
+      if (this.selectedFileInfo && this.selectedFileInfo.isNew) {
+        this.selectedFileInfo.fileId = response.id;
+        this.selectedFileInfo.isNew = false;
+        localStorage.setItem(SELECTED_FILE_KEY, JSON.stringify(this.selectedFileInfo));
+      }
     } catch (error: any) {
       console.error('Failed to save file to OneDrive:', error);
-      
+
       if (error.statusCode === 401 || error.statusCode === 403) {
         throw new Error(errorMessages.permissionDenied);
       }
-      
+
       throw new Error(errorMessages.uploadFailed);
     }
   }
 
   /**
-   * Clear cached authentication (sign out)
+   * Clear cached file reference (for switching files)
+   * Does not sign out - user stays authenticated
    */
   async clearFileHandle(): Promise<void> {
-    await this.signOut();
+    this.selectedFileInfo = null;
+    localStorage.removeItem(SELECTED_FILE_KEY);
   }
 
   /**
    * Get file name
    */
   getFileName(): string | null {
-    return this.isAuthenticated() ? 'money-tree.json' : null;
+    if (!this.isAuthenticated()) return null;
+    return this.selectedFileInfo?.fileName || 'money-tree.json';
   }
 
   /**

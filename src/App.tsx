@@ -11,6 +11,7 @@ import { useAppStore } from './stores/useAppStore';
 import { syncService } from './services/sync.service';
 import { StorageFactory, StorageProviderType } from './services/storage/StorageFactory';
 import { OneDriveProvider } from './services/storage/OneDriveProvider';
+import { SelectedFileInfo } from './components/onedrive/OneDriveFilePicker';
 
 const WELCOME_DISMISSED_KEY = 'moneyTree.welcomeDismissed';
 
@@ -67,16 +68,21 @@ const App: React.FC = () => {
     }
   };
 
-  const handleConnectOneDrive = async () => {
+  const handleConnectOneDrive = async (fileInfo?: SelectedFileInfo) => {
     try {
       // Switch to OneDrive provider
       StorageFactory.setProviderType(StorageProviderType.ONEDRIVE);
-      
+
       // Get OneDrive provider and authenticate
       const provider = StorageFactory.getCurrentProvider() as OneDriveProvider;
       await provider.initialize();
       await provider.authenticate();
-      
+
+      // Set selected file location if provided
+      if (fileInfo) {
+        provider.setSelectedFile(fileInfo);
+      }
+
       // Try to load existing file from OneDrive
       try {
         await syncService.loadDataFile(currentYear);
@@ -84,12 +90,26 @@ const App: React.FC = () => {
         // If no file exists, that's OK - user will start with empty data
         console.log('No existing file in OneDrive, starting fresh');
       }
-      
+
       setShowWelcomeDialog(false);
     } catch (error) {
       console.error('OneDrive connection failed:', error);
       throw error; // Re-throw so WelcomeDialog can show error
     }
+  };
+
+  const handleListOneDriveFolders = async (parentItem?: any) => {
+    // Switch to OneDrive provider temporarily to use its API
+    StorageFactory.setProviderType(StorageProviderType.ONEDRIVE);
+    const provider = StorageFactory.getCurrentProvider() as OneDriveProvider;
+    await provider.initialize();
+
+    // If not authenticated yet, authenticate first
+    if (!provider.isAuthenticated()) {
+      await provider.authenticate();
+    }
+
+    return provider.listFolders(parentItem);
   };
 
   const handleStartEmpty = (dontShowAgain: boolean) => {
@@ -117,6 +137,7 @@ const App: React.FC = () => {
         onOpenLocalFile={handleOpenLocalFile}
         onConnectOneDrive={handleConnectOneDrive}
         onStartEmpty={handleStartEmpty}
+        onListOneDriveFolders={handleListOneDriveFolders}
       />
       <FileLoadErrorDialog open={!!error} error={error} onClose={handleCloseError} />
     </ThemeProvider>

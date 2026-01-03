@@ -262,7 +262,7 @@ export class LocalStorageProvider implements IStorageProvider {
         // Check write permission for cached handle
         const options: FileSystemHandlePermissionDescriptor = { mode: 'readwrite' };
         const permission = await fileHandle.queryPermission(options);
-        
+
         if (permission !== 'granted') {
           // Permission not granted - we can't request it without user activation
           // Clear the cached handle so user will be prompted next time they manually sync

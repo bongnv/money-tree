@@ -22,7 +22,9 @@ describe('SettingsPage', () => {
       </BrowserRouter>
     );
     expect(screen.getByText('Settings')).toBeInTheDocument();
-    expect(screen.getByText(/Configure your assets, categories, and data sync/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Configure your assets, categories, and data sync/i)
+    ).toBeInTheDocument();
   });
 
   it('renders Assets, Categories, and Data & Sync cards', () => {

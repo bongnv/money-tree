@@ -1058,41 +1058,41 @@ These features will be implemented after the MVP is validated by users.
 
 ### 11.4.1 OneDrive File Picker (FR-11.3 - File Location Selection)
 **Implementation**:
-- [ ] Create `src/components/onedrive/OneDriveFilePicker.tsx`:
-  - [ ] Dialog showing OneDrive folder tree (using Graph API `/me/drive/root/children`)
-  - [ ] Browse folders (recursively load children on expand)
-  - [ ] Show shared folders/files (access via Graph API)
-  - [ ] "Select existing file" option (filter for .json files)
-  - [ ] "Create new file here" option (select folder, name file)
-  - [ ] Display current path breadcrumb
-  - [ ] Loading states for folder navigation
-- [ ] Update `src/services/storage/OneDriveProvider.ts`:
-  - [ ] Add `listFolders(parentId?: string)` - GET `/me/drive/items/{id}/children`
-  - [ ] Add `searchFiles(query: string)` - GET `/me/drive/root/search(q='{query}')`
-  - [ ] Store selected file info: `{ fileId: string, filePath: string, fileName: string }`
-  - [ ] Update `loadDataFile()` to use fileId instead of fixed path
-  - [ ] Update `saveDataFile()` to use fileId instead of fixed path
-  - [ ] Add `setSelectedFile(fileInfo)` and `getSelectedFile()` methods
-  - [ ] Persist selected file info to localStorage
-- [ ] Update `src/components/common/WelcomeDialog.tsx`:
-  - [ ] After OneDrive authentication succeeds, show file picker
-  - [ ] Allow user to browse and select file location
-  - [ ] If file exists, load it; if new location, start with empty data
-- [ ] Update `src/components/settings/DataSyncSettings.tsx`:
-  - [ ] Add "Change OneDrive file location" button
-  - [ ] Show current file path and name
-  - [ ] Open file picker on button click
-  - [ ] Handle file location change (migrate data if needed)
-- [ ] Write automated tests:
-  - [ ] OneDriveFilePicker renders folder tree
-  - [ ] File picker handles folder navigation
-  - [ ] Selected file info is persisted
-  - [ ] File location change updates provider
+- [x] Create `src/components/onedrive/OneDriveFilePicker.tsx`:
+  - [x] Dialog showing OneDrive folder tree (using Graph API `/me/drive/root/children`)
+  - [x] Browse folders (recursively load children on expand)
+  - [x] Show shared folders/files (access via Graph API)
+  - [x] "Select existing file" option (filter for .json files)
+  - [x] "Create new file here" option (select folder, name file)
+  - [x] Display current path breadcrumb
+  - [x] Loading states for folder navigation
+- [x] Update `src/services/storage/OneDriveProvider.ts`:
+  - [x] Add `listFolders(parentId?: string)` - GET `/me/drive/items/{id}/children`
+  - [x] Add `searchFiles(query: string)` - GET `/me/drive/root/search(q='{query}')`
+  - [x] Store selected file info: `{ fileId: string, filePath: string, fileName: string }`
+  - [x] Update `loadDataFile()` to use fileId instead of fixed path
+  - [x] Update `saveDataFile()` to use fileId instead of fixed path
+  - [x] Add `setSelectedFile(fileInfo)` and `getSelectedFile()` methods
+  - [x] Persist selected file info to localStorage
+- [x] Update `src/components/common/WelcomeDialog.tsx`:
+  - [x] After OneDrive authentication succeeds, show file picker
+  - [x] Allow user to browse and select file location
+  - [x] If file exists, load it; if new location, start with empty data
+- [x] Update `src/components/settings/DataSyncSettings.tsx`:
+  - [x] Add "Change OneDrive file location" button
+  - [x] Show current file path and name
+  - [x] Open file picker on button click
+  - [x] Handle file location change (migrate data if needed)
+- [x] Write automated tests:
+  - [x] OneDriveFilePicker renders folder tree
+  - [x] File picker handles folder navigation
+  - [x] Selected file info is persisted
+  - [x] File location change updates provider
 
 **Manual Verification**:
-- [ ] **UI Test**: After OneDrive auth, see file picker dialog
-- [ ] **UI Test**: Browse folders, see nested folder structure
-- [ ] **UI Test**: Select existing money-tree.json file from any folder
+- [x] **UI Test**: After OneDrive auth, see file picker dialog
+- [x] **UI Test**: Browse folders, see nested folder structure
+- [x] **UI Test**: Select existing money-tree.json file from any folder
 - [ ] **UI Test**: Navigate to shared folder, select file from there
 - [ ] **UI Test**: Create new file in custom location (e.g., /Documents/Finances/)
 - [ ] **UI Test**: In Settings, see current file path displayed

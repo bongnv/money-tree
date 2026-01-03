@@ -1,6 +1,6 @@
 /**
  * OneDrive/Microsoft Graph API Configuration
- * 
+ *
  * SETUP INSTRUCTIONS:
  * 1. Go to https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade
  * 2. Click "New registration"
@@ -17,11 +17,11 @@ export const msalConfig = {
     // TODO: Replace with your actual Azure AD application client ID after registration
     // Leave as empty string until you complete Azure app registration
     clientId: 'ce7ae0cb-7884-4fd9-9135-ad9452ce59b4',
-    
+
     // Authority for Microsoft personal accounts only
     // Use 'consumers' for personal accounts, 'common' for both personal and organizational
     authority: 'https://login.microsoftonline.com/consumers',
-    
+
     // Redirect URI - must match what's configured in Azure portal
     redirectUri: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
   },
@@ -45,14 +45,14 @@ export const loginRequest = {
 export const graphConfig = {
   // Graph API endpoint
   graphMeEndpoint: 'https://graph.microsoft.com/v1.0/me',
-  
+
   // OneDrive file path - file will be stored in OneDrive root folder
   dataFilePath: '/money-tree.json',
-  
+
   // Full URL for file operations
   getFileUrl: (fileName: string = 'money-tree.json') =>
     `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}`,
-  
+
   // URL for file content operations
   getFileContentUrl: (fileName: string = 'money-tree.json') =>
     `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/content`,

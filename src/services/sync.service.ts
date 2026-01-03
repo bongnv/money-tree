@@ -236,7 +236,7 @@ class SyncService {
    */
   async switchFile(year: number): Promise<void> {
     const storage = StorageFactory.getCurrentProvider();
-    
+
     // Clear the cached file handle to force file picker
     await storage.clearFileHandle();
 
@@ -253,7 +253,7 @@ class SyncService {
    */
   async clearCachedFile(): Promise<void> {
     const storage = StorageFactory.getCurrentProvider();
-    
+
     await storage.clearFileHandle();
 
     // Clear the cached data file

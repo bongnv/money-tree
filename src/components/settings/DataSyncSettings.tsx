@@ -22,12 +22,14 @@ import {
 import { useNavigate } from 'react-router-dom';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import FolderIcon from '@mui/icons-material/Folder';
 import { useAppStore } from '../../stores/useAppStore';
 import { syncService } from '../../services/sync.service';
 import { formatDistance } from 'date-fns';
 import { StorageFactory, StorageProviderType } from '../../services/storage/StorageFactory';
 import { OneDriveProvider } from '../../services/storage/OneDriveProvider';
 import { isOneDriveConfigured } from '../../config/onedrive.config';
+import { OneDriveFilePicker, SelectedFileInfo } from '../onedrive/OneDriveFilePicker';
 
 export const DataSyncSettings: React.FC = () => {
   const navigate = useNavigate();
@@ -40,8 +42,10 @@ export const DataSyncSettings: React.FC = () => {
   );
   const [isOneDriveAuthenticated, setIsOneDriveAuthenticated] = useState(false);
   const [oneDriveUserEmail, setOneDriveUserEmail] = useState<string | null>(null);
+  const [oneDriveFilePath, setOneDriveFilePath] = useState<string | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [showFilePicker, setShowFilePicker] = useState(false);
 
   // Check OneDrive authentication status on mount and provider change
   useEffect(() => {
@@ -53,6 +57,8 @@ export const DataSyncSettings: React.FC = () => {
         setIsOneDriveAuthenticated(authenticated);
         if (authenticated) {
           setOneDriveUserEmail(provider.getUserEmail() || null);
+          const fileInfo = provider.getSelectedFile();
+          setOneDriveFilePath(fileInfo?.filePath || null);
         }
       }
     };
@@ -95,7 +101,8 @@ export const DataSyncSettings: React.FC = () => {
     try {
       const accountStore = require('../../stores/useAccountStore').useAccountStore.getState();
       const categoryStore = require('../../stores/useCategoryStore').useCategoryStore.getState();
-      const transactionStore = require('../../stores/useTransactionStore').useTransactionStore.getState();
+      const transactionStore =
+        require('../../stores/useTransactionStore').useTransactionStore.getState();
       const assetStore = require('../../stores/useAssetStore').useAssetStore.getState();
       const budgetStore = require('../../stores/useBudgetStore').useBudgetStore.getState();
 
@@ -152,7 +159,7 @@ export const DataSyncSettings: React.FC = () => {
       await provider.authenticate();
       setIsOneDriveAuthenticated(true);
       setOneDriveUserEmail(provider.getUserEmail() || null);
-      
+
       // Try to load existing file from OneDrive
       try {
         await syncService.loadDataFile(currentYear);
@@ -171,10 +178,11 @@ export const DataSyncSettings: React.FC = () => {
   const handleDisconnectOneDrive = async () => {
     try {
       const provider = StorageFactory.getCurrentProvider() as OneDriveProvider;
-      await provider.signOut();
+      provider.disconnect();
       setIsOneDriveAuthenticated(false);
       setOneDriveUserEmail(null);
-      
+      setOneDriveFilePath(null);
+
       // Clear cached file on disconnect
       if (fileName) {
         await syncService.clearCachedFile();
@@ -182,6 +190,32 @@ export const DataSyncSettings: React.FC = () => {
     } catch (error) {
       console.error('OneDrive disconnect failed:', error);
     }
+  };
+
+  const handleChangeFileLocation = () => {
+    setShowFilePicker(true);
+  };
+
+  const handleFileSelect = async (fileInfo: SelectedFileInfo) => {
+    setShowFilePicker(false);
+    try {
+      const provider = StorageFactory.getCurrentProvider() as OneDriveProvider;
+      provider.setSelectedFile(fileInfo);
+      setOneDriveFilePath(fileInfo.filePath);
+
+      // Optionally load the file if it exists
+      if (!fileInfo.isNew) {
+        await syncService.loadDataFile(currentYear);
+      }
+    } catch (error) {
+      console.error('Failed to change file location:', error);
+      setAuthError(error instanceof Error ? error.message : 'Failed to change file location');
+    }
+  };
+
+  const handleListOneDriveFolders = async (parentItem?: any) => {
+    const provider = StorageFactory.getCurrentProvider() as OneDriveProvider;
+    return provider.listFolders(parentItem);
   };
 
   return (
@@ -201,34 +235,28 @@ export const DataSyncSettings: React.FC = () => {
               <Typography variant="h6" gutterBottom>
                 Current File
               </Typography>
-              
+
               <Box sx={{ mt: 2 }}>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
                     <Typography variant="body2" color="text.secondary">
                       File Name
                     </Typography>
-                    <Typography variant="body1">
-                      {fileName || 'No file loaded'}
-                    </Typography>
+                    <Typography variant="body1">{fileName || 'No file loaded'}</Typography>
                   </Grid>
 
                   <Grid item xs={12} sm={6}>
                     <Typography variant="body2" color="text.secondary">
                       Last Modified
                     </Typography>
-                    <Typography variant="body1">
-                      {getLastModifiedText()}
-                    </Typography>
+                    <Typography variant="body1">{getLastModifiedText()}</Typography>
                   </Grid>
 
                   <Grid item xs={12} sm={6}>
                     <Typography variant="body2" color="text.secondary">
                       File Size (approximate)
                     </Typography>
-                    <Typography variant="body1">
-                      {getFileSize()}
-                    </Typography>
+                    <Typography variant="body1">{getFileSize()}</Typography>
                   </Grid>
 
                   <Grid item xs={12} sm={6}>
@@ -347,13 +375,35 @@ export const DataSyncSettings: React.FC = () => {
                       <Alert severity="success" sx={{ mb: 2 }}>
                         Connected as: {oneDriveUserEmail}
                       </Alert>
-                      <Button
-                        variant="outlined"
-                        color="warning"
-                        onClick={handleDisconnectOneDrive}
-                      >
-                        Disconnect OneDrive
-                      </Button>
+
+                      {/* Show file location */}
+                      {oneDriveFilePath && (
+                        <Box sx={{ mb: 2, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+                          <Typography variant="body2" color="text.secondary" gutterBottom>
+                            File Location:
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                            {oneDriveFilePath}
+                          </Typography>
+                        </Box>
+                      )}
+
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Button
+                          variant="outlined"
+                          startIcon={<FolderIcon />}
+                          onClick={handleChangeFileLocation}
+                        >
+                          Change File Location
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="warning"
+                          onClick={handleDisconnectOneDrive}
+                        >
+                          Disconnect OneDrive
+                        </Button>
+                      </Box>
                     </Box>
                   )}
                 </Box>
@@ -368,8 +418,8 @@ export const DataSyncSettings: React.FC = () => {
         <DialogTitle>Switch File</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            You have unsaved changes. Switching to a different file will discard these changes.
-            Do you want to continue?
+            You have unsaved changes. Switching to a different file will discard these changes. Do
+            you want to continue?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -385,8 +435,8 @@ export const DataSyncSettings: React.FC = () => {
         <DialogTitle>Clear Cached File</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            This will remove the cached file reference. The next time you open the app,
-            you'll need to select your data file again. The file itself will not be deleted.
+            This will remove the cached file reference. The next time you open the app, you'll need
+            to select your data file again. The file itself will not be deleted.
           </DialogContentText>
           <DialogContentText sx={{ mt: 2, fontWeight: 'bold' }}>
             Are you sure you want to continue?
@@ -399,6 +449,14 @@ export const DataSyncSettings: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* OneDrive File Picker Dialog */}
+      <OneDriveFilePicker
+        open={showFilePicker}
+        onSelect={handleFileSelect}
+        onCancel={() => setShowFilePicker(false)}
+        onListFolders={handleListOneDriveFolders}
+      />
     </Container>
   );
 };

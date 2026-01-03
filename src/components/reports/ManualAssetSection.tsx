@@ -193,7 +193,22 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
                           </Box>
                         </TableCell>
                         <TableCell align="right">
-                          {formatCurrency(item.value, currencyId)}
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'flex-end',
+                            }}
+                          >
+                            <Typography>{formatCurrency(item.value, currencyId)}</Typography>
+                            {item.currencyId &&
+                              item.currencyId !== currencyId &&
+                              item.convertedValue && (
+                                <Typography variant="caption" color="text.secondary">
+                                  (converted)
+                                </Typography>
+                              )}
+                          </Box>
                         </TableCell>
                       </TableRow>
                       {hasHistory && (

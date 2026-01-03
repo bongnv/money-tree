@@ -24,20 +24,24 @@ export async function fetchMonthlyRate(
   toCurrency: string
 ): Promise<number | null> {
   try {
+    // Normalize currency codes to uppercase (API returns uppercase)
+    const fromCurrencyUpper = fromCurrency.toUpperCase();
+    const toCurrencyUpper = toCurrency.toUpperCase();
+
     // If same currency, rate is always 1
-    if (fromCurrency === toCurrency) {
+    if (fromCurrencyUpper === toCurrencyUpper) {
       return 1;
     }
 
     // Use exchangerate-api.io free tier API
     // Format: https://api.exchangerate-api.io/v4/latest/{fromCurrency}
     // Alternative format for better API: https://v6.exchangerate-api.com/v6/YOUR-API-KEY/latest/{fromCurrency}
-    const apiUrl = `https://api.exchangerate-api.com/v4/latest/${fromCurrency}`;
+    const apiUrl = `https://api.exchangerate-api.com/v4/latest/${fromCurrencyUpper}`;
 
     const response = await fetch(apiUrl);
 
     if (!response.ok) {
-      console.error(`Exchange rate API returned ${response.status} for ${fromCurrency}`);
+      console.error(`Exchange rate API returned ${response.status} for ${fromCurrencyUpper}`);
       return null;
     }
 
@@ -56,9 +60,9 @@ export async function fetchMonthlyRate(
       return null;
     }
 
-    const rate = rates[toCurrency];
+    const rate = rates[toCurrencyUpper];
     if (rate === undefined || rate === null) {
-      console.error(`Rate not found for ${toCurrency}`);
+      console.error(`Rate not found for ${toCurrencyUpper}`);
       return null;
     }
 

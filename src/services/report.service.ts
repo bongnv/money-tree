@@ -21,6 +21,9 @@ export interface AssetItem {
   name: string;
   value: number;
   type: string;
+  currencyId?: string;
+  convertedValue?: number;
+  conversionRate?: number;
 }
 
 export interface NetWorthTrendPoint {
@@ -64,13 +67,17 @@ class ReportService {
    * @param manualAssets All manual assets
    * @param transactions All transactions up to the date
    * @param asOfDate Date to calculate balance sheet for (ISO string)
+   * @param baseCurrency Optional base currency for conversion
+   * @param getRateForMonth Optional function to get exchange rate
    * @returns Balance sheet data
    */
   calculateBalanceSheet(
     accounts: Account[],
     manualAssets: ManualAsset[],
     transactions: Transaction[],
-    asOfDate?: string
+    asOfDate?: string,
+    baseCurrency?: string,
+    getRateForMonth?: (month: string, from: string, to: string) => number | null
   ): BalanceSheetData {
     // Filter transactions up to the date
     const filteredTransactions = asOfDate
@@ -82,12 +89,27 @@ class ReportService {
       ? manualAssets.filter((a) => a.date <= asOfDate)
       : manualAssets;
 
+    // Get month for rate lookup (YYYY-MM format)
+    const rateMonth = asOfDate
+      ? asOfDate.substring(0, 7)
+      : new Date().toISOString().substring(0, 7);
+
     // Group assets by type
-    const assetGroups = this.groupAssets(accounts, filteredManualAssets, filteredTransactions);
+    const assetGroups = this.groupAssets(
+      accounts,
+      filteredManualAssets,
+      filteredTransactions,
+      baseCurrency,
+      getRateForMonth,
+      rateMonth
+    );
     const liabilityGroups = this.groupLiabilities(
       accounts,
       filteredManualAssets,
-      filteredTransactions
+      filteredTransactions,
+      baseCurrency,
+      getRateForMonth,
+      rateMonth
     );
 
     const totalAssets = assetGroups.reduce((sum, group) => sum + group.total, 0);
@@ -109,7 +131,10 @@ class ReportService {
   private groupAssets(
     accounts: Account[],
     manualAssets: ManualAsset[],
-    transactions: Transaction[]
+    transactions: Transaction[],
+    baseCurrency?: string,
+    getRateForMonth?: (month: string, from: string, to: string) => number | null,
+    rateMonth?: string
   ): AssetGroup[] {
     const groups: Map<string, AssetItem[]> = new Map();
 
@@ -123,11 +148,28 @@ class ReportService {
           if (!groups.has(groupName)) {
             groups.set(groupName, []);
           }
+
+          let convertedValue = balance;
+          let conversionRate: number | undefined;
+
+          // Apply currency conversion if base currency is specified
+          if (baseCurrency && getRateForMonth && rateMonth && account.currencyId !== baseCurrency) {
+            const rate = getRateForMonth(rateMonth, account.currencyId, baseCurrency);
+            if (rate !== null) {
+              convertedValue = balance * rate;
+              conversionRate = rate;
+            }
+          }
+
           groups.get(groupName)!.push({
             id: account.id,
             name: account.name,
-            value: balance,
+            value: convertedValue,
             type: account.type,
+            currencyId: account.currencyId,
+            convertedValue:
+              baseCurrency && account.currencyId !== baseCurrency ? convertedValue : undefined,
+            conversionRate,
           });
         }
       });
@@ -140,11 +182,28 @@ class ReportService {
         if (!groups.has(groupName)) {
           groups.set(groupName, []);
         }
+
+        let convertedValue = asset.value;
+        let conversionRate: number | undefined;
+
+        // Apply currency conversion if base currency is specified
+        if (baseCurrency && getRateForMonth && rateMonth && asset.currencyId !== baseCurrency) {
+          const rate = getRateForMonth(rateMonth, asset.currencyId, baseCurrency);
+          if (rate !== null) {
+            convertedValue = asset.value * rate;
+            conversionRate = rate;
+          }
+        }
+
         groups.get(groupName)!.push({
           id: asset.id,
           name: asset.name,
-          value: asset.value,
+          value: convertedValue,
           type: asset.type,
+          currencyId: asset.currencyId,
+          convertedValue:
+            baseCurrency && asset.currencyId !== baseCurrency ? convertedValue : undefined,
+          conversionRate,
         });
       });
 
@@ -162,7 +221,10 @@ class ReportService {
   private groupLiabilities(
     accounts: Account[],
     manualAssets: ManualAsset[],
-    transactions: Transaction[]
+    transactions: Transaction[],
+    baseCurrency?: string,
+    getRateForMonth?: (month: string, from: string, to: string) => number | null,
+    rateMonth?: string
   ): AssetGroup[] {
     const groups: Map<string, AssetItem[]> = new Map();
 
@@ -178,11 +240,28 @@ class ReportService {
           if (!groups.has(groupName)) {
             groups.set(groupName, []);
           }
+
+          let convertedValue = liability;
+          let conversionRate: number | undefined;
+
+          // Apply currency conversion if base currency is specified
+          if (baseCurrency && getRateForMonth && rateMonth && account.currencyId !== baseCurrency) {
+            const rate = getRateForMonth(rateMonth, account.currencyId, baseCurrency);
+            if (rate !== null) {
+              convertedValue = liability * rate;
+              conversionRate = rate;
+            }
+          }
+
           groups.get(groupName)!.push({
             id: account.id,
             name: account.name,
-            value: liability,
+            value: convertedValue,
             type: account.type,
+            currencyId: account.currencyId,
+            convertedValue:
+              baseCurrency && account.currencyId !== baseCurrency ? convertedValue : undefined,
+            conversionRate,
           });
         }
       });
@@ -197,11 +276,29 @@ class ReportService {
           if (!groups.has(groupName)) {
             groups.set(groupName, []);
           }
+
+          const liability = Math.abs(balance);
+          let convertedValue = liability;
+          let conversionRate: number | undefined;
+
+          // Apply currency conversion if base currency is specified
+          if (baseCurrency && getRateForMonth && rateMonth && account.currencyId !== baseCurrency) {
+            const rate = getRateForMonth(rateMonth, account.currencyId, baseCurrency);
+            if (rate !== null) {
+              convertedValue = liability * rate;
+              conversionRate = rate;
+            }
+          }
+
           groups.get(groupName)!.push({
             id: account.id,
             name: account.name,
-            value: Math.abs(balance),
+            value: convertedValue,
             type: account.type,
+            currencyId: account.currencyId,
+            convertedValue:
+              baseCurrency && account.currencyId !== baseCurrency ? convertedValue : undefined,
+            conversionRate,
           });
         }
       });
@@ -214,11 +311,29 @@ class ReportService {
         if (!groups.has(groupName)) {
           groups.set(groupName, []);
         }
+
+        const liability = Math.abs(asset.value);
+        let convertedValue = liability;
+        let conversionRate: number | undefined;
+
+        // Apply currency conversion if base currency is specified
+        if (baseCurrency && getRateForMonth && rateMonth && asset.currencyId !== baseCurrency) {
+          const rate = getRateForMonth(rateMonth, asset.currencyId, baseCurrency);
+          if (rate !== null) {
+            convertedValue = liability * rate;
+            conversionRate = rate;
+          }
+        }
+
         groups.get(groupName)!.push({
           id: asset.id,
           name: asset.name,
-          value: Math.abs(asset.value),
+          value: convertedValue,
           type: asset.type,
+          currencyId: asset.currencyId,
+          convertedValue:
+            baseCurrency && asset.currencyId !== baseCurrency ? convertedValue : undefined,
+          conversionRate,
         });
       });
 
@@ -276,6 +391,8 @@ class ReportService {
    * @param startDate Start date for trend (ISO string)
    * @param endDate End date for trend (ISO string)
    * @param interval Number of days between data points (default: 30)
+   * @param baseCurrency Optional base currency for conversion
+   * @param getRateForMonth Optional function to get exchange rate
    * @returns Array of net worth trend points
    */
   calculateNetWorthTrend(
@@ -284,7 +401,9 @@ class ReportService {
     transactions: Transaction[],
     startDate: string,
     endDate: string,
-    interval: number = 30
+    interval: number = 30,
+    baseCurrency?: string,
+    getRateForMonth?: (month: string, from: string, to: string) => number | null
   ): NetWorthTrendPoint[] {
     const trend: NetWorthTrendPoint[] = [];
     // Parse dates as local dates to avoid timezone issues
@@ -301,7 +420,9 @@ class ReportService {
         accounts,
         manualAssets,
         transactions,
-        dateStr
+        dateStr,
+        baseCurrency,
+        getRateForMonth
       );
 
       trend.push({
@@ -321,7 +442,9 @@ class ReportService {
         accounts,
         manualAssets,
         transactions,
-        endDate
+        endDate,
+        baseCurrency,
+        getRateForMonth
       );
 
       trend.push({
@@ -342,14 +465,23 @@ class ReportService {
     accounts: Account[],
     manualAssets: ManualAsset[],
     transactions: Transaction[],
-    currentDate: string
+    currentDate: string,
+    baseCurrency?: string,
+    getRateForMonth?: (month: string, from: string, to: string) => number | null
   ): {
     current: BalanceSheetData;
     previous: BalanceSheetData;
     change: number;
     changePercent: number;
   } {
-    const current = this.calculateBalanceSheet(accounts, manualAssets, transactions, currentDate);
+    const current = this.calculateBalanceSheet(
+      accounts,
+      manualAssets,
+      transactions,
+      currentDate,
+      baseCurrency,
+      getRateForMonth
+    );
 
     // Calculate previous month date (parse as local date to avoid timezone issues)
     const [year, month, day] = currentDate.split('-').map(Number);
@@ -357,7 +489,14 @@ class ReportService {
     currentDateObj.setMonth(currentDateObj.getMonth() - 1);
     const previousDate = `${currentDateObj.getFullYear()}-${String(currentDateObj.getMonth() + 1).padStart(2, '0')}-${String(currentDateObj.getDate()).padStart(2, '0')}`;
 
-    const previous = this.calculateBalanceSheet(accounts, manualAssets, transactions, previousDate);
+    const previous = this.calculateBalanceSheet(
+      accounts,
+      manualAssets,
+      transactions,
+      previousDate,
+      baseCurrency,
+      getRateForMonth
+    );
 
     const change = current.netWorth - previous.netWorth;
     const changePercent = previous.netWorth !== 0 ? (change / previous.netWorth) * 100 : 0;
@@ -377,14 +516,23 @@ class ReportService {
     accounts: Account[],
     manualAssets: ManualAsset[],
     transactions: Transaction[],
-    currentDate: string
+    currentDate: string,
+    baseCurrency?: string,
+    getRateForMonth?: (month: string, from: string, to: string) => number | null
   ): {
     current: BalanceSheetData;
     previous: BalanceSheetData;
     change: number;
     changePercent: number;
   } {
-    const current = this.calculateBalanceSheet(accounts, manualAssets, transactions, currentDate);
+    const current = this.calculateBalanceSheet(
+      accounts,
+      manualAssets,
+      transactions,
+      currentDate,
+      baseCurrency,
+      getRateForMonth
+    );
 
     // Calculate previous year date (parse as local date to avoid timezone issues)
     const [year, month, day] = currentDate.split('-').map(Number);
@@ -392,7 +540,14 @@ class ReportService {
     currentDateObj.setFullYear(currentDateObj.getFullYear() - 1);
     const previousDate = `${currentDateObj.getFullYear()}-${String(currentDateObj.getMonth() + 1).padStart(2, '0')}-${String(currentDateObj.getDate()).padStart(2, '0')}`;
 
-    const previous = this.calculateBalanceSheet(accounts, manualAssets, transactions, previousDate);
+    const previous = this.calculateBalanceSheet(
+      accounts,
+      manualAssets,
+      transactions,
+      previousDate,
+      baseCurrency,
+      getRateForMonth
+    );
 
     const change = current.netWorth - previous.netWorth;
     const changePercent = previous.netWorth !== 0 ? (change / previous.netWorth) * 100 : 0;
@@ -412,6 +567,9 @@ class ReportService {
    * @param categories All categories
    * @param startDate Start date (YYYY-MM-DD)
    * @param endDate End date (YYYY-MM-DD)
+   * @param accounts All accounts (needed for currency lookup)
+   * @param baseCurrency Optional base currency for conversion
+   * @param getRateForMonth Optional function to get exchange rate
    * @returns Cash flow data grouped by category
    */
   calculateCashFlow(
@@ -419,7 +577,10 @@ class ReportService {
     transactionTypes: TransactionType[],
     categories: Category[],
     startDate: string,
-    endDate: string
+    endDate: string,
+    accounts?: Account[],
+    baseCurrency?: string,
+    getRateForMonth?: (month: string, from: string, to: string) => number | null
   ): CashFlowData {
     // Filter transactions in date range and exclude transfers
     const filteredTransactions = transactions.filter(
@@ -429,6 +590,7 @@ class ReportService {
     // Create lookup maps
     const typeToCategory = new Map(transactionTypes.map((t) => [t.id, t.categoryId]));
     const categoryData = new Map(categories.map((c) => [c.id, c]));
+    const accountData = accounts ? new Map(accounts.map((a) => [a.id, a])) : new Map();
 
     // Group transactions by category
     const incomeByCategory = new Map<string, { total: number; count: number }>();
@@ -444,10 +606,25 @@ class ReportService {
       // Skip transfers
       if (category.group === Group.TRANSFER) return;
 
+      // Determine the account for currency lookup
+      const accountId =
+        category.group === Group.INCOME ? transaction.toAccountId : transaction.fromAccountId;
+      const account = accountId ? accountData.get(accountId) : null;
+
+      // Convert amount if needed
+      let convertedAmount = transaction.amount;
+      if (baseCurrency && getRateForMonth && account && account.currencyId !== baseCurrency) {
+        const month = transaction.date.substring(0, 7); // YYYY-MM
+        const rate = getRateForMonth(month, account.currencyId, baseCurrency);
+        if (rate !== null) {
+          convertedAmount = transaction.amount * rate;
+        }
+      }
+
       const targetMap = category.group === Group.INCOME ? incomeByCategory : expensesByCategory;
       const existing = targetMap.get(category.id) || { total: 0, count: 0 };
       targetMap.set(category.id, {
-        total: existing.total + transaction.amount,
+        total: existing.total + convertedAmount,
         count: existing.count + 1,
       });
     });
@@ -492,6 +669,9 @@ class ReportService {
    * @param startDate Start date (YYYY-MM-DD)
    * @param endDate End date (YYYY-MM-DD)
    * @param intervalDays Interval between data points in days
+   * @param accounts All accounts (needed for currency lookup)
+   * @param baseCurrency Optional base currency for conversion
+   * @param getRateForMonth Optional function to get exchange rate
    * @returns Array of cash flow trend points
    */
   calculateCashFlowTrend(
@@ -500,7 +680,10 @@ class ReportService {
     categories: Category[],
     startDate: string,
     endDate: string,
-    intervalDays: number = 30
+    intervalDays: number = 30,
+    accounts?: Account[],
+    baseCurrency?: string,
+    getRateForMonth?: (month: string, from: string, to: string) => number | null
   ): CashFlowTrendPoint[] {
     // Parse dates
     const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
@@ -528,7 +711,10 @@ class ReportService {
         transactionTypes,
         categories,
         periodStartStr,
-        periodEndStr
+        periodEndStr,
+        accounts,
+        baseCurrency,
+        getRateForMonth
       );
 
       trendPoints.push({

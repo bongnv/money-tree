@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -10,14 +10,21 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   Divider,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useAssetStore } from '../../stores/useAssetStore';
 import { useTransactionStore } from '../../stores/useTransactionStore';
+import { useAppStore } from '../../stores/useAppStore';
+import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
 import { reportService } from '../../services/report.service';
 import { ManualAssetSection } from './ManualAssetSection';
+import { DEFAULT_CURRENCIES } from '../../constants/defaults';
 import { AssetValueHistoryDialog } from '../assets/AssetValueHistoryDialog';
 import { LineChart } from '../charts/LineChart';
 import { formatCurrency } from '../../utils/currency.utils';
@@ -28,20 +35,67 @@ export const BalanceSheet: React.FC = () => {
   const accounts = useAccountStore((state) => state.accounts);
   const manualAssets = useAssetStore((state) => state.manualAssets);
   const transactions = useTransactionStore((state) => state.transactions);
+  const baseCurrency = useAppStore((state) => state.baseCurrency);
+  const getRateForMonth = useExchangeRateStore((state) => state.getRateForMonth);
+  const fetchRateIfMissing = useExchangeRateStore((state) => state.fetchRateIfMissing);
 
   // Use today as default date
   const today = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState<string>(today);
   const [comparisonType, setComparisonType] = useState<ComparisonType>('none');
   const [historyDialogAssetId, setHistoryDialogAssetId] = useState<string | null>(null);
+  const [conversionCurrency, setConversionCurrency] = useState<string>(baseCurrency);
 
-  // Assume USD for now - in future this should come from app settings
-  const currencyId = 'usd';
+  // Use the selected currency for display
+  const currencyId = conversionCurrency;
 
-  // Calculate balance sheet for selected date
+  // Always apply currency conversion
+  const effectiveBaseCurrency = conversionCurrency;
+  const effectiveGetRateForMonth = getRateForMonth;
+
+  // Automatically fetch missing exchange rates in background
+  useEffect(() => {
+    // Get the month from selected date (YYYY-MM)
+    const month = selectedDate.slice(0, 7);
+
+    // Get unique currencies from accounts and manual assets
+    const currencies = new Set<string>();
+    accounts.forEach((account) => {
+      if (account.currencyId && account.currencyId !== conversionCurrency) {
+        currencies.add(account.currencyId);
+      }
+    });
+    manualAssets.forEach((asset) => {
+      if (asset.currencyId && asset.currencyId !== conversionCurrency) {
+        currencies.add(asset.currencyId);
+      }
+    });
+
+    // Fetch missing rates for each currency
+    currencies.forEach((currency) => {
+      fetchRateIfMissing(month, currency, conversionCurrency);
+    });
+  }, [conversionCurrency, selectedDate, accounts, manualAssets, fetchRateIfMissing]);
+
+  // Calculate balance sheet for selected date with currency conversion
   const balanceSheet = useMemo(
-    () => reportService.calculateBalanceSheet(accounts, manualAssets, transactions, selectedDate),
-    [accounts, manualAssets, transactions, selectedDate]
+    () =>
+      reportService.calculateBalanceSheet(
+        accounts,
+        manualAssets,
+        transactions,
+        selectedDate,
+        effectiveBaseCurrency,
+        effectiveGetRateForMonth
+      ),
+    [
+      accounts,
+      manualAssets,
+      transactions,
+      selectedDate,
+      effectiveBaseCurrency,
+      effectiveGetRateForMonth,
+    ]
   );
 
   // Calculate comparison data
@@ -51,18 +105,30 @@ export const BalanceSheet: React.FC = () => {
         accounts,
         manualAssets,
         transactions,
-        selectedDate
+        selectedDate,
+        effectiveBaseCurrency,
+        effectiveGetRateForMonth
       );
     } else if (comparisonType === 'year') {
       return reportService.calculateYearOverYearComparison(
         accounts,
         manualAssets,
         transactions,
-        selectedDate
+        selectedDate,
+        effectiveBaseCurrency,
+        effectiveGetRateForMonth
       );
     }
     return null;
-  }, [accounts, manualAssets, transactions, selectedDate, comparisonType]);
+  }, [
+    accounts,
+    manualAssets,
+    transactions,
+    selectedDate,
+    comparisonType,
+    effectiveBaseCurrency,
+    effectiveGetRateForMonth,
+  ]);
 
   // Calculate net worth trend for the past year
   const trendData = useMemo(() => {
@@ -86,7 +152,9 @@ export const BalanceSheet: React.FC = () => {
       transactions,
       formatLocalDate(startDate),
       selectedDate,
-      30 // Monthly data points
+      30, // Monthly data points
+      effectiveBaseCurrency,
+      effectiveGetRateForMonth
     );
 
     return trend.map((point) => ({
@@ -124,7 +192,7 @@ export const BalanceSheet: React.FC = () => {
       {/* Header with date selector and comparison options */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={3} alignItems="center">
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={4}>
             <Typography variant="h5" gutterBottom>
               Balance Sheet
             </Typography>
@@ -137,7 +205,7 @@ export const BalanceSheet: React.FC = () => {
               fullWidth
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={4}>
             <Typography variant="body2" color="text.secondary" gutterBottom>
               Comparison
             </Typography>
@@ -152,12 +220,31 @@ export const BalanceSheet: React.FC = () => {
                 None
               </ToggleButton>
               <ToggleButton value="month" aria-label="month over month">
-                Month-over-Month
+                M/M
               </ToggleButton>
               <ToggleButton value="year" aria-label="year over year">
-                Year-over-Year
+                Y/Y
               </ToggleButton>
             </ToggleButtonGroup>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <FormControl fullWidth>
+              <InputLabel>Display Currency</InputLabel>
+              <Select
+                value={conversionCurrency}
+                label="Display Currency"
+                onChange={(e) => setConversionCurrency(e.target.value)}
+              >
+                {DEFAULT_CURRENCIES.map((curr) => (
+                  <MenuItem key={curr.id} value={curr.id}>
+                    {curr.code} - {curr.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+              Converting all amounts to {conversionCurrency.toUpperCase()}
+            </Typography>
           </Grid>
         </Grid>
       </Paper>

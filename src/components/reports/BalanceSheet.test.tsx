@@ -86,8 +86,8 @@ describe('BalanceSheet', () => {
   it('should render comparison toggle buttons', () => {
     render(<BalanceSheet />);
     expect(screen.getByText('None')).toBeInTheDocument();
-    expect(screen.getByText('Month-over-Month')).toBeInTheDocument();
-    expect(screen.getByText('Year-over-Year')).toBeInTheDocument();
+    expect(screen.getByText('M/M')).toBeInTheDocument();
+    expect(screen.getByText('Y/Y')).toBeInTheDocument();
   });
 
   it('should render summary cards', () => {
@@ -106,7 +106,7 @@ describe('BalanceSheet', () => {
 
   it('should change comparison type when toggle button clicked', () => {
     render(<BalanceSheet />);
-    const monthButton = screen.getByText('Month-over-Month');
+    const monthButton = screen.getByText('M/M');
     fireEvent.click(monthButton);
     // The button should be in selected state after click
     expect(monthButton).toBeInTheDocument();
@@ -159,7 +159,7 @@ describe('BalanceSheet', () => {
 
   it('should show comparison data when month-over-month is selected', () => {
     render(<BalanceSheet />);
-    const monthButton = screen.getByText('Month-over-Month');
+    const monthButton = screen.getByText('M/M');
     fireEvent.click(monthButton);
     // Should display trending icons when comparison is active
     expect(screen.getByText('Balance Sheet')).toBeInTheDocument();
@@ -167,7 +167,7 @@ describe('BalanceSheet', () => {
 
   it('should show comparison data when year-over-year is selected', () => {
     render(<BalanceSheet />);
-    const yearButton = screen.getByText('Year-over-Year');
+    const yearButton = screen.getByText('Y/Y');
     fireEvent.click(yearButton);
     expect(screen.getByText('Balance Sheet')).toBeInTheDocument();
   });

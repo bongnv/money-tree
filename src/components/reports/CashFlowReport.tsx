@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -15,21 +15,33 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
+import { useAccountStore } from '../../stores/useAccountStore';
+import { useAppStore } from '../../stores/useAppStore';
+import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
 import { reportService, PeriodType } from '../../services/report.service';
 import { LineChart } from '../charts/LineChart';
 import { PieChart } from '../charts/PieChart';
 import { formatCurrency } from '../../utils/currency.utils';
 import { getTodayDate } from '../../utils/date.utils';
+import { DEFAULT_CURRENCIES } from '../../constants/defaults';
 
 export const CashFlowReport: React.FC = () => {
   const transactions = useTransactionStore((state) => state.transactions);
   const transactionTypes = useCategoryStore((state) => state.transactionTypes);
   const categories = useCategoryStore((state) => state.categories);
+  const accounts = useAccountStore((state) => state.accounts);
+  const baseCurrency = useAppStore((state) => state.baseCurrency);
+  const getRateForMonth = useExchangeRateStore((state) => state.getRateForMonth);
+  const fetchRateIfMissing = useExchangeRateStore((state) => state.fetchRateIfMissing);
 
   // Date range state
   const today = getTodayDate();
@@ -37,9 +49,45 @@ export const CashFlowReport: React.FC = () => {
   const [startDate, setStartDate] = useState<string>(firstDayOfMonth);
   const [endDate, setEndDate] = useState<string>(today);
   const [periodType, setPeriodType] = useState<PeriodType>('monthly');
+  const [conversionCurrency, setConversionCurrency] = useState<string>(baseCurrency);
 
-  // Assume USD for now - in future this should come from app settings
-  const currencyId = 'usd';
+  // Use the selected currency for display
+  const currencyId = conversionCurrency;
+
+  // Always apply currency conversion
+  const effectiveBaseCurrency = conversionCurrency;
+  const effectiveGetRateForMonth = getRateForMonth;
+
+  // Automatically fetch missing exchange rates in background
+  useEffect(() => {
+    // Get unique currency-month pairs from transactions in the date range
+    const rateRequests = new Set<string>();
+    const filteredTransactions = transactions.filter(
+      (t) => t.date >= startDate && t.date <= endDate
+    );
+
+    filteredTransactions.forEach((transaction) => {
+      // Check both fromAccountId and toAccountId
+      const accountIds = [transaction.fromAccountId, transaction.toAccountId].filter(Boolean);
+
+      accountIds.forEach((accountId) => {
+        const account = accounts.find((a) => a.id === accountId);
+        if (account?.currencyId && account.currencyId !== conversionCurrency) {
+          const month = transaction.date.slice(0, 7); // YYYY-MM
+          const key = `${month}-${account.currencyId}`;
+          rateRequests.add(key);
+        }
+      });
+    });
+
+    // Fetch missing rates
+    rateRequests.forEach((key) => {
+      const parts = key.split('-');
+      const month = `${parts[0]}-${parts[1]}`; // YYYY-MM
+      const currency = parts.slice(2).join('-'); // Handle currency codes with dashes
+      fetchRateIfMissing(month, currency, conversionCurrency);
+    });
+  }, [conversionCurrency, startDate, endDate, transactions, accounts, fetchRateIfMissing]);
 
   // Update date range based on period type
   const updatePeriodDates = (period: PeriodType) => {
@@ -86,9 +134,21 @@ export const CashFlowReport: React.FC = () => {
         transactionTypes,
         categories,
         startDate,
-        endDate
+        endDate,
+        accounts,
+        effectiveBaseCurrency,
+        effectiveGetRateForMonth
       ),
-    [transactions, transactionTypes, categories, startDate, endDate]
+    [
+      transactions,
+      transactionTypes,
+      categories,
+      startDate,
+      endDate,
+      accounts,
+      effectiveBaseCurrency,
+      effectiveGetRateForMonth,
+    ]
   );
 
   // Calculate trend data
@@ -100,7 +160,10 @@ export const CashFlowReport: React.FC = () => {
       categories,
       startDate,
       endDate,
-      intervalDays
+      intervalDays,
+      accounts,
+      effectiveBaseCurrency,
+      effectiveGetRateForMonth
     );
 
     return trend.map((point) => ({
@@ -112,7 +175,17 @@ export const CashFlowReport: React.FC = () => {
       Expenses: point.expenses,
       'Net Cash Flow': point.netCashFlow,
     }));
-  }, [transactions, transactionTypes, categories, startDate, endDate, periodType]);
+  }, [
+    transactions,
+    transactionTypes,
+    categories,
+    startDate,
+    endDate,
+    periodType,
+    accounts,
+    effectiveBaseCurrency,
+    effectiveGetRateForMonth,
+  ]);
 
   // Prepare pie chart data
   const incomePieData = cashFlow.income.map((cat) => ({
@@ -137,7 +210,7 @@ export const CashFlowReport: React.FC = () => {
       {/* Period Selection */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={3} alignItems="center">
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={4}>
             <ToggleButtonGroup
               value={periodType}
               exclusive
@@ -180,6 +253,22 @@ export const CashFlowReport: React.FC = () => {
               InputLabelProps={{ shrink: true }}
               disabled={periodType !== 'custom'}
             />
+          </Grid>
+          <Grid item xs={12} md={2}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Currency</InputLabel>
+              <Select
+                value={conversionCurrency}
+                label="Currency"
+                onChange={(e) => setConversionCurrency(e.target.value)}
+              >
+                {DEFAULT_CURRENCIES.map((curr) => (
+                  <MenuItem key={curr.id} value={curr.id}>
+                    {curr.code}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Grid>
         </Grid>
       </Paper>

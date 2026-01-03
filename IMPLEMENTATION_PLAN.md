@@ -1729,43 +1729,43 @@ These features will be implemented after the MVP is validated by users.
 - [x] **Test**: Verify conversion accuracy with known rates
 
 ### 18.7 Report Currency Conversion - Balance Sheet
-- [ ] Update Balance Sheet calculation in `src/services/calculation.service.ts`:
-  - [ ] For each account: Convert balance to base currency using current month's rate
-  - [ ] For each manual asset: Convert value to base currency
-  - [ ] Fetch missing rates automatically in background
-  - [ ] Track conversion metadata (original amount, currency, rate used)
-- [ ] Update Balance Sheet display components:
-  - [ ] Show original amount + converted amount
-  - [ ] Add "(converted)" indicator for foreign currency items
-  - [ ] Add warning icon for missing/estimated rates
-- [ ] **Write tests**: Test balance sheet with multi-currency accounts
+- [x] Update Balance Sheet calculation in `src/services/calculation.service.ts`:
+  - [x] For each account: Convert balance to base currency using current month's rate
+  - [x] For each manual asset: Convert value to base currency
+  - [x] Fetch missing rates automatically in background
+  - [x] Track conversion metadata (original amount, currency, rate used)
+- [x] Update Balance Sheet display components:
+  - [x] Show original amount + converted amount
+  - [x] Add "(converted)" indicator for foreign currency items
+  - [x] Add warning icon for missing/estimated rates
+- [x] **Write tests**: Test balance sheet with multi-currency accounts
 - [ ] **Test UI**: View Balance Sheet with accounts in different currencies
 
 ### 18.8 Report Currency Conversion - Cash Flow
-- [ ] Update Cash Flow calculation in `src/services/report.service.ts`:
-  - [ ] For each transaction: Convert using rate from transaction's month
-  - [ ] Handle transfers between different currency accounts
-  - [ ] Fetch missing rates automatically
-  - [ ] Track conversion metadata per transaction
-- [ ] Update Cash Flow display:
-  - [ ] Show monthly totals in base currency
-  - [ ] Option to show original currency details on expand
-  - [ ] Warning for missing rates with "Retry fetch" action
-- [ ] **Write tests**: Test cash flow with multi-currency transactions
+- [x] Update Cash Flow calculation in `src/services/report.service.ts`:
+  - [x] For each transaction: Convert using rate from transaction's month
+  - [x] Handle transfers between different currency accounts
+  - [x] Fetch missing rates automatically
+  - [x] Track conversion metadata per transaction
+- [x] Update Cash Flow display:
+  - [x] Show monthly totals in base currency
+  - [x] Option to show original currency details on expand
+  - [x] Warning for missing rates with "Retry fetch" action
+- [x] **Write tests**: Test cash flow with multi-currency transactions
 - [ ] **Test UI**: View Cash Flow report with mixed currencies
 
 ### 18.9 Exchange Rate Management UI (Read-Only)
-- [ ] Create `src/components/settings/ExchangeRatesTab.tsx`:
-  - [ ] Table: Month | Currency Pair | Rate (read-only)
-  - [ ] Year filter dropdown
-  - [ ] "Refresh Current Year Rates" button (triggers API re-fetch)
-  - [ ] "Fetch Missing Rates" button for selected year
-  - [ ] Loading indicators during fetch
-  - [ ] Error messages for API failures
-- [ ] Add Exchange Rates tab to Settings page
-- [ ] Show count of missing rates with quick action
-- [ ] Display last updated timestamp per rate
-- [ ] **Write tests**: Test UI interactions, button actions
+- [x] Create `src/components/settings/ExchangeRatesTab.tsx`:
+  - [x] Table: Month | Currency Pair | Rate (read-only)
+  - [x] Year filter dropdown
+  - [x] "Refresh Current Year Rates" button (triggers API re-fetch)
+  - [x] "Fetch Missing Rates" button for selected year
+  - [x] Loading indicators during fetch
+  - [x] Error messages for API failures
+- [x] Add Exchange Rates tab to Settings page
+- [x] Show count of missing rates with quick action
+- [x] Display last updated timestamp per rate
+- [x] **Write tests**: Test UI interactions, button actions
 - [ ] **Test UI**: 
   - [ ] View exchange rates table
   - [ ] Filter by year
@@ -1773,35 +1773,35 @@ These features will be implemented after the MVP is validated by users.
   - [ ] Verify rates update after fetch
 
 ### 18.10 Report Display Options
-- [ ] Add toggle in Report pages: "Show in base currency" vs "Show original currencies"
-  - [ ] Store preference per report type in localStorage
-  - [ ] Default to "Show in base currency"
-- [ ] When "Show original currencies" selected:
-  - [ ] Display amounts in their original currency
-  - [ ] Group by currency in summaries
-  - [ ] No conversion applied
-- [ ] Visual indicators:
-  - [ ] "(converted)" label on converted amounts
-  - [ ] Warning icon for missing rates
-  - [ ] Tooltip showing conversion details
-- [ ] **Write tests**: Test toggle behavior, display mode switching
+- [x] Add toggle in Report pages: "Show in base currency" vs "Show original currencies"
+  - [x] Store preference per report type in localStorage
+  - [x] Default to "Show in base currency"
+- [x] When "Show original currencies" selected:
+  - [x] Display amounts in their original currency
+  - [x] Group by currency in summaries
+  - [x] No conversion applied
+- [x] Visual indicators:
+  - [x] "(converted)" label on converted amounts
+  - [x] Warning icon for missing rates
+  - [x] Tooltip showing conversion details
+- [x] **Write tests**: Test toggle behavior, display mode switching
 - [ ] **Test UI**: Toggle between display modes, verify correct amounts shown
 
 ### 18.11 Missing Rate Handling & Background Fetching
-- [ ] Implement automatic rate fetching:
-  - [ ] When report loads, detect required currency pairs and months
-  - [ ] Queue missing rate fetches (debounced to avoid API spam)
-  - [ ] Show loading state in reports during fetch
-  - [ ] Update report automatically when rates arrive
-- [ ] Create Missing Rates indicator:
-  - [ ] Badge in Settings showing count of missing rates
-  - [ ] List view of missing rates by month/currency pair
-  - [ ] "Fetch All Missing" batch action
-- [ ] Handle API failures gracefully:
-  - [ ] Use fallback (previous month's rate) with warning
-  - [ ] Show error message with "Retry" action
-  - [ ] Don't block report display
-- [ ] **Write tests**: Test auto-fetch logic, error handling, fallback strategy
+- [x] Implement automatic rate fetching:
+  - [x] When report loads, detect required currency pairs and months
+  - [x] Queue missing rate fetches (debounced to avoid API spam)
+  - [x] Show loading state in reports during fetch
+  - [x] Update report automatically when rates arrive
+- [x] Create Missing Rates indicator:
+  - [x] Badge in Settings showing count of missing rates
+  - [x] List view of missing rates by month/currency pair
+  - [x] "Fetch All Missing" batch action
+- [x] Handle API failures gracefully:
+  - [x] Use fallback (previous month's rate) with warning
+  - [x] Show error message with "Retry" action
+  - [x] Don't block report display
+- [x] **Write tests**: Test auto-fetch logic, error handling, fallback strategy
 - [ ] **Test UI**:
   - [ ] Create transaction in new currency
   - [ ] View report → see loading indicator

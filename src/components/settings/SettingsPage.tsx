@@ -5,6 +5,7 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import CategoryIcon from '@mui/icons-material/Category';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import SyncIcon from '@mui/icons-material/Sync';
+import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
 import { AccountsPage } from '../accounts/AccountsPage';
 import { ManualAssetsPage } from '../assets/ManualAssetsPage';
 import { CategoryList } from '../categories/CategoryList';
@@ -12,6 +13,7 @@ import { CategoryDialog } from '../categories/CategoryDialog';
 import { TransactionTypeList } from '../categories/TransactionTypeList';
 import { TransactionTypeDialog } from '../categories/TransactionTypeDialog';
 import { DataSyncSettings } from './DataSyncSettings';
+import { ExchangeRatesSettings } from './ExchangeRatesSettings';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import type { Category, TransactionType } from '../../types/models';
 import { Add as AddIcon } from '@mui/icons-material';
@@ -198,6 +200,7 @@ export const SettingsPage: React.FC = () => {
           <Tab icon={<CategoryIcon />} label="Categories" iconPosition="start" />
           <Tab icon={<ReceiptIcon />} label="Transaction Types" iconPosition="start" />
           <Tab icon={<SyncIcon />} label="Data & Sync" iconPosition="start" />
+          <Tab icon={<CurrencyExchangeIcon />} label="Exchange Rates" iconPosition="start" />
         </Tabs>
       </Box>
 
@@ -257,6 +260,10 @@ export const SettingsPage: React.FC = () => {
 
       <TabPanel value={activeTab} index={4}>
         <DataSyncSettings />
+      </TabPanel>
+
+      <TabPanel value={activeTab} index={5}>
+        <ExchangeRatesSettings />
       </TabPanel>
 
       {/* Category Dialogs */}

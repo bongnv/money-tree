@@ -22,11 +22,6 @@ Always read `REQUIREMENTS.md`, `IMPLEMENTATION_PLAN.md`, and `BUGS.md` before ma
 - **Format**: Each bug numbered with checkbox `- [ ] BUG-X: Description`
 - **Checkbox meaning**: Bug is fixed (code patched, tests pass, issue resolved)
 - **When to check**: Mark `[x]` once bug is fixed AND verified working AND tests pass
-- **Example**:
-  ```markdown
-  - [x] BUG-1: Transaction list shows wrong currency symbol
-  - [ ] BUG-2: Budget dialog crashes with empty category
-  ```
 - **When to add**: Create entry when bug is discovered, include steps to reproduce
 - **Priority**: Fix bugs before implementing new features when appropriate
 

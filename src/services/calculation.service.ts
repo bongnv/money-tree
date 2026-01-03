@@ -336,19 +336,53 @@ class CalculationService {
    * @param accounts All accounts
    * @param transactions All transactions
    * @param manualAssets All manual assets
-   * @returns Total net worth
+   * @param baseCurrency Optional base currency for conversion (if null, no conversion)
+   * @param getRateForMonth Optional function to get exchange rate for a month
+   * @param currentMonth Current month in YYYY-MM format for rate lookup
+   * @returns Total net worth (in base currency if provided)
    */
   calculateNetWorth(
     accounts: Account[],
     transactions: Transaction[],
-    manualAssets: ManualAsset[]
+    manualAssets: ManualAsset[],
+    baseCurrency?: string | null,
+    getRateForMonth?: (month: string, from: string, to: string) => number | null,
+    currentMonth?: string
   ): number {
     const accountBalances = this.calculateAccountBalances(accounts, transactions);
-    const totalAccountBalance = Array.from(accountBalances.values()).reduce(
-      (sum, balance) => sum + balance,
-      0
-    );
-    const totalAssets = manualAssets.reduce((sum, asset) => sum + asset.value, 0);
+
+    let totalAccountBalance = 0;
+    for (const account of accounts) {
+      const balance = accountBalances.get(account.id) || 0;
+
+      if (baseCurrency && getRateForMonth && currentMonth && account.currencyId !== baseCurrency) {
+        const rate = getRateForMonth(currentMonth, account.currencyId, baseCurrency);
+        if (rate !== null) {
+          totalAccountBalance += balance * rate;
+        } else {
+          // If no rate found, add unconverted (fallback)
+          totalAccountBalance += balance;
+        }
+      } else {
+        totalAccountBalance += balance;
+      }
+    }
+
+    let totalAssets = 0;
+    for (const asset of manualAssets) {
+      if (baseCurrency && getRateForMonth && currentMonth && asset.currencyId !== baseCurrency) {
+        const rate = getRateForMonth(currentMonth, asset.currencyId, baseCurrency);
+        if (rate !== null) {
+          totalAssets += asset.value * rate;
+        } else {
+          // If no rate found, add unconverted (fallback)
+          totalAssets += asset.value;
+        }
+      } else {
+        totalAssets += asset.value;
+      }
+    }
+
     return totalAccountBalance + totalAssets;
   }
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -16,6 +16,8 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -23,6 +25,9 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { useAppStore } from '../../stores/useAppStore';
 import { syncService } from '../../services/sync.service';
 import { formatDistance } from 'date-fns';
+import { StorageFactory, StorageProviderType } from '../../services/storage/StorageFactory';
+import { OneDriveProvider } from '../../services/storage/OneDriveProvider';
+import { isOneDriveConfigured } from '../../config/onedrive.config';
 
 export const DataSyncSettings: React.FC = () => {
   const navigate = useNavigate();
@@ -30,6 +35,29 @@ export const DataSyncSettings: React.FC = () => {
   const [switchFileDialogOpen, setSwitchFileDialogOpen] = useState(false);
   const [clearFileDialogOpen, setClearFileDialogOpen] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
+  const [storageProvider, setStorageProvider] = useState<StorageProviderType>(
+    StorageFactory.getProviderType()
+  );
+  const [isOneDriveAuthenticated, setIsOneDriveAuthenticated] = useState(false);
+  const [oneDriveUserEmail, setOneDriveUserEmail] = useState<string | null>(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  // Check OneDrive authentication status on mount and provider change
+  useEffect(() => {
+    const checkOneDriveAuth = async () => {
+      if (storageProvider === StorageProviderType.ONEDRIVE) {
+        const provider = StorageFactory.getCurrentProvider() as OneDriveProvider;
+        await provider.initialize();
+        const authenticated = provider.isAuthenticated();
+        setIsOneDriveAuthenticated(authenticated);
+        if (authenticated) {
+          setOneDriveUserEmail(provider.getUserEmail() || null);
+        }
+      }
+    };
+    checkOneDriveAuth();
+  }, [storageProvider]);
 
   const handleSwitchFile = async () => {
     setSwitchFileDialogOpen(false);
@@ -97,6 +125,54 @@ export const DataSyncSettings: React.FC = () => {
       return formatDistance(new Date(lastSaved), new Date(), { addSuffix: true });
     } catch {
       return 'Unknown';
+    }
+  };
+
+  const handleProviderChange = async (newProvider: StorageProviderType) => {
+    if (newProvider === storageProvider) return;
+
+    // If switching to OneDrive and not authenticated, just set provider type
+    // User will need to authenticate in the authentication section
+    setStorageProvider(newProvider);
+    StorageFactory.setProviderType(newProvider);
+
+    // Clear cached file when switching providers
+    if (fileName) {
+      await syncService.clearCachedFile();
+    }
+  };
+
+  const handleConnectOneDrive = async () => {
+    setIsAuthenticating(true);
+    setAuthError(null);
+
+    try {
+      const provider = StorageFactory.getCurrentProvider() as OneDriveProvider;
+      await provider.initialize();
+      await provider.authenticate();
+      setIsOneDriveAuthenticated(true);
+      setOneDriveUserEmail(provider.getUserEmail() || null);
+    } catch (error) {
+      console.error('OneDrive authentication failed:', error);
+      setAuthError(error instanceof Error ? error.message : 'Authentication failed');
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleDisconnectOneDrive = async () => {
+    try {
+      const provider = StorageFactory.getCurrentProvider() as OneDriveProvider;
+      await provider.signOut();
+      setIsOneDriveAuthenticated(false);
+      setOneDriveUserEmail(null);
+      
+      // Clear cached file on disconnect
+      if (fileName) {
+        await syncService.clearCachedFile();
+      }
+    } catch (error) {
+      console.error('OneDrive disconnect failed:', error);
     }
   };
 
@@ -210,27 +286,70 @@ export const DataSyncSettings: React.FC = () => {
                 Storage Provider
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                Choose where your data is stored. Cloud providers will be available in future updates.
+                Choose where your data is stored.
               </Typography>
 
-              <FormControl fullWidth>
+              <FormControl fullWidth sx={{ mb: 3 }}>
                 <InputLabel id="storage-provider-label">Provider</InputLabel>
                 <Select
                   labelId="storage-provider-label"
                   id="storage-provider"
-                  value="local"
+                  value={storageProvider}
                   label="Provider"
-                  disabled
+                  onChange={(e) => handleProviderChange(e.target.value as StorageProviderType)}
                 >
-                  <MenuItem value="local">Local File System</MenuItem>
-                  <MenuItem value="onedrive" disabled>
-                    OneDrive (Coming Soon)
+                  <MenuItem value={StorageProviderType.LOCAL}>Local File System</MenuItem>
+                  <MenuItem value={StorageProviderType.ONEDRIVE} disabled={!isOneDriveConfigured()}>
+                    OneDrive {!isOneDriveConfigured() && '(Not Configured)'}
                   </MenuItem>
-                  <MenuItem value="googledrive" disabled>
+                  <MenuItem value={StorageProviderType.GOOGLE_DRIVE} disabled>
                     Google Drive (Coming Soon)
+                  </MenuItem>
+                  <MenuItem value={StorageProviderType.DROPBOX} disabled>
+                    Dropbox (Coming Soon)
                   </MenuItem>
                 </Select>
               </FormControl>
+
+              {/* OneDrive Authentication Section */}
+              {storageProvider === StorageProviderType.ONEDRIVE && (
+                <Box sx={{ mt: 2 }}>
+                  {authError && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                      {authError}
+                    </Alert>
+                  )}
+
+                  {!isOneDriveAuthenticated ? (
+                    <Box>
+                      <Typography variant="body2" color="text.secondary" paragraph>
+                        Connect your OneDrive account to sync your data across devices.
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        onClick={handleConnectOneDrive}
+                        disabled={isAuthenticating}
+                        startIcon={isAuthenticating ? <CircularProgress size={20} /> : undefined}
+                      >
+                        {isAuthenticating ? 'Connecting...' : 'Connect OneDrive'}
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Box>
+                      <Alert severity="success" sx={{ mb: 2 }}>
+                        Connected as: {oneDriveUserEmail}
+                      </Alert>
+                      <Button
+                        variant="outlined"
+                        color="warning"
+                        onClick={handleDisconnectOneDrive}
+                      >
+                        Disconnect OneDrive
+                      </Button>
+                    </Box>
+                  )}
+                </Box>
+              )}
             </CardContent>
           </Card>
         </Grid>

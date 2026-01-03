@@ -9,6 +9,8 @@ import { WelcomeDialog } from './components/common/WelcomeDialog';
 import { AppRoutes } from './routes';
 import { useAppStore } from './stores/useAppStore';
 import { syncService } from './services/sync.service';
+import { StorageFactory, StorageProviderType } from './services/storage/StorageFactory';
+import { OneDriveProvider } from './services/storage/OneDriveProvider';
 
 const WELCOME_DISMISSED_KEY = 'moneyTree.welcomeDismissed';
 
@@ -56,6 +58,8 @@ const App: React.FC = () => {
 
   const handleOpenLocalFile = async () => {
     try {
+      // Make sure we're using local storage provider
+      StorageFactory.setProviderType(StorageProviderType.LOCAL);
       await syncService.loadDataFile(currentYear);
       setShowWelcomeDialog(false);
     } catch (error) {
@@ -63,9 +67,29 @@ const App: React.FC = () => {
     }
   };
 
-  const handleConnectOneDrive = () => {
-    // Will be implemented in Phase 11.4
-    console.log('OneDrive integration coming soon');
+  const handleConnectOneDrive = async () => {
+    try {
+      // Switch to OneDrive provider
+      StorageFactory.setProviderType(StorageProviderType.ONEDRIVE);
+      
+      // Get OneDrive provider and authenticate
+      const provider = StorageFactory.getCurrentProvider() as OneDriveProvider;
+      await provider.initialize();
+      await provider.authenticate();
+      
+      // Try to load existing file from OneDrive
+      try {
+        await syncService.loadDataFile(currentYear);
+      } catch (error) {
+        // If no file exists, that's OK - user will start with empty data
+        console.log('No existing file in OneDrive, starting fresh');
+      }
+      
+      setShowWelcomeDialog(false);
+    } catch (error) {
+      console.error('OneDrive connection failed:', error);
+      throw error; // Re-throw so WelcomeDialog can show error
+    }
   };
 
   const handleStartEmpty = (dontShowAgain: boolean) => {

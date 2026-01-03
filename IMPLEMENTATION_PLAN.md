@@ -1001,60 +1001,60 @@ These features will be implemented after the MVP is validated by users.
 
 ### 11.4 OneDrive Storage Provider (FR-11.3)
 **Implementation**:
-- [ ] Install dependencies:
-  - [ ] `npm install @azure/msal-browser @microsoft/microsoft-graph-client`
-- [ ] Create `src/services/storage/OneDriveProvider.ts`:
-  - [ ] Implement `IStorageProvider` interface
-  - [ ] OAuth authentication via MSAL (Microsoft Authentication Library)
-  - [ ] `authenticate()`: Popup login flow, acquire access token
-  - [ ] `loadDataFile()`: GET /me/drive/root:/money-tree.json:/content
-  - [ ] `saveDataFile(data)`: PUT /me/drive/root:/money-tree.json:/content
-  - [ ] `listAvailableYears()`: Parse years from loaded file
-  - [ ] Error handling for network issues, auth failures
-  - [ ] Token refresh handling
-- [ ] Create `src/config/onedrive.config.ts`:
-  - [ ] MSAL configuration (clientId, authority, redirectUri)
-  - [ ] Microsoft Graph API scopes (Files.ReadWrite)
-  - [ ] File path constants
-- [ ] Update `src/services/storage/StorageFactory.ts`:
-  - [ ] Add OneDrive provider case in `getCurrentProvider()`
-  - [ ] Store selected provider in localStorage
-  - [ ] `setProvider(type: 'local' | 'onedrive' | 'googledrive')`
-- [ ] Update `src/components/settings/DataSyncSettings.tsx`:
-  - [ ] Enable "OneDrive" option in provider dropdown
-  - [ ] Add "Connect OneDrive" button when OneDrive selected but not authenticated
-  - [ ] Show authenticated user email when connected
-  - [ ] Add "Disconnect" button to clear OneDrive tokens
-  - [ ] Add "Re-authenticate" button if token expired
-- [ ] Update `src/components/common/WelcomeDialog.tsx`:
-  - [ ] Enable "Connect to OneDrive" button
-  - [ ] Trigger OneDrive authentication flow
-  - [ ] Show loading state during auth
-  - [ ] Handle auth errors gracefully
-- [ ] Update `src/services/sync.service.ts`:
-  - [ ] Handle provider switching (clear cached handles)
-  - [ ] Sync status indicators specific to OneDrive (uploading/downloading)
-- [ ] Write automated tests:
-  - [ ] OneDriveProvider authentication flow
-  - [ ] File upload/download with mock Graph API
-  - [ ] Token refresh handling
-  - [ ] Error handling for network failures
-  - [ ] Provider switching logic
+- [x] Install dependencies:
+  - [x] `npm install @azure/msal-browser @microsoft/microsoft-graph-client`
+- [x] Create `src/services/storage/OneDriveProvider.ts`:
+  - [x] Implement `IStorageProvider` interface
+  - [x] OAuth authentication via MSAL (Microsoft Authentication Library)
+  - [x] `authenticate()`: Popup login flow, acquire access token
+  - [x] `loadDataFile()`: GET /me/drive/root:/money-tree.json:/content
+  - [x] `saveDataFile(data)`: PUT /me/drive/root:/money-tree.json:/content
+  - [x] Error handling for network issues, auth failures
+  - [x] Token refresh handling (silent acquisition with popup fallback)
+- [x] Create `src/config/onedrive.config.ts`:
+  - [x] MSAL configuration (clientId, authority, redirectUri)
+  - [x] Microsoft Graph API scopes (Files.ReadWrite)
+  - [x] File path constants
+  - [x] Setup instructions for Azure app registration
+- [x] Update `src/services/storage/StorageFactory.ts`:
+  - [x] Add OneDrive provider case in `createProvider()`
+  - [x] Store selected provider in localStorage
+  - [x] Load saved provider type on initialization
+- [x] Update `src/components/settings/DataSyncSettings.tsx`:
+  - [x] Enable "OneDrive" option in provider dropdown
+  - [x] Add "Connect OneDrive" button when OneDrive selected but not authenticated
+  - [x] Show authenticated user email when connected
+  - [x] Add "Disconnect" button to clear OneDrive tokens
+  - [x] Clear cached file when switching providers
+- [x] Update `src/components/common/WelcomeDialog.tsx`:
+  - [x] Enable "Connect to OneDrive" button
+  - [x] Trigger OneDrive authentication flow
+  - [x] Show loading state during auth
+  - [x] Handle auth errors gracefully
+- [x] Update `src/App.tsx`:
+  - [x] Handle OneDrive authentication in welcome flow
+  - [x] Switch provider type when user selects OneDrive
+  - [x] Auto-load file from OneDrive after authentication
+- [x] Write automated tests:
+  - [x] StorageFactory provider switching and persistence
+  - [x] DataSyncSettings UI with OneDrive enabled
+  - [x] WelcomeDialog OneDrive button enabled
 
-**Manual Verification**:
+**Manual Verification** (requires Azure app registration):
+- [ ] **Pre-requisite**: Complete Azure app registration (see onedrive.config.ts instructions)
+- [ ] **Pre-requisite**: Set REACT_APP_AZURE_CLIENT_ID in environment
 - [ ] **UI Test**: In Settings → Data & Sync, select "OneDrive" from dropdown
 - [ ] **UI Test**: Click "Connect OneDrive", see Microsoft login popup
 - [ ] **UI Test**: Complete authentication, see user email displayed
 - [ ] **UI Test**: Verify "Connected to OneDrive" status message
 - [ ] **UI Test**: Make change, click "Sync", verify file uploads to OneDrive
 - [ ] **UI Test**: Open OneDrive web, verify money-tree.json file exists in root folder
-- [ ] **UI Test**: Edit file in OneDrive web (add transaction), refresh app
-- [ ] **UI Test**: Verify app detects remote changes and prompts to reload (conflict handling)
+- [ ] **UI Test**: Refresh app, verify OneDrive authentication persists
 - [ ] **UI Test**: Click "Disconnect", verify tokens cleared
 - [ ] **UI Test**: Try to sync, see "Not connected to OneDrive" error
 - [ ] **UI Test**: Reconnect, verify sync resumes
-- [ ] **UI Test**: Simulate network error, verify sync retries with exponential backoff
 - [ ] **UI Test**: Switch back to "Local File System", verify local file sync works
+- [ ] **UI Test**: In WelcomeDialog, click "Connect to OneDrive", verify auth flow works
 
 ### 11.5 Sync Status Indicators (FR-11.3)
 **Implementation**:

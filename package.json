@@ -27,8 +27,10 @@
     "url": "https://github.com/yourusername/money-tree.git"
   },
   "dependencies": {
+    "@azure/msal-browser": "^4.27.0",
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.13.5",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
     "@mui/icons-material": "^6.3.0",
     "@mui/material": "^6.3.0",
     "@mui/x-data-grid": "^8.23.0",

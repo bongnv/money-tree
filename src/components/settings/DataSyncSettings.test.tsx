@@ -179,11 +179,11 @@ describe('DataSyncSettings', () => {
       expect(screen.getByText('Local File System')).toBeInTheDocument();
     });
 
-    it('should have provider select field disabled', () => {
+    it('should allow provider selection', () => {
       renderComponent();
 
-      const selectContainer = screen.getByRole('combobox').parentElement;
-      expect(selectContainer).toHaveClass('Mui-disabled');
+      const select = screen.getByRole('combobox');
+      expect(select).not.toBeDisabled();
     });
   });
 

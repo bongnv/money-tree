@@ -1,5 +1,6 @@
 import { IStorageProvider } from './IStorageProvider';
 import { LocalStorageProvider } from './LocalStorageProvider';
+import { OneDriveProvider } from './OneDriveProvider';
 
 /**
  * Storage provider type
@@ -11,13 +12,33 @@ export enum StorageProviderType {
   DROPBOX = 'dropbox',
 }
 
+const STORAGE_PROVIDER_KEY = 'moneyTree.storageProvider';
+
 /**
  * Storage factory
  * Creates and manages storage provider instances
  */
 export class StorageFactory {
   private static providers: Map<StorageProviderType, IStorageProvider> = new Map();
-  private static currentProviderType: StorageProviderType = StorageProviderType.LOCAL;
+  private static currentProviderType: StorageProviderType = StorageFactory.loadProviderType();
+
+  /**
+   * Load saved provider type from localStorage
+   */
+  private static loadProviderType(): StorageProviderType {
+    const saved = localStorage.getItem(STORAGE_PROVIDER_KEY);
+    if (saved && Object.values(StorageProviderType).includes(saved as StorageProviderType)) {
+      return saved as StorageProviderType;
+    }
+    return StorageProviderType.LOCAL;
+  }
+
+  /**
+   * Save provider type to localStorage
+   */
+  private static saveProviderType(type: StorageProviderType): void {
+    localStorage.setItem(STORAGE_PROVIDER_KEY, type);
+  }
 
   /**
    * Get the current storage provider
@@ -34,6 +55,7 @@ export class StorageFactory {
    */
   static setProviderType(type: StorageProviderType): void {
     this.currentProviderType = type;
+    this.saveProviderType(type);
   }
 
   /**
@@ -51,7 +73,7 @@ export class StorageFactory {
       case StorageProviderType.LOCAL:
         return new LocalStorageProvider();
       case StorageProviderType.ONEDRIVE:
-        throw new Error('OneDrive storage provider not yet implemented (Phase 18+)');
+        return new OneDriveProvider();
       case StorageProviderType.GOOGLE_DRIVE:
         throw new Error('Google Drive storage provider not yet implemented');
       case StorageProviderType.DROPBOX:

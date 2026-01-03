@@ -90,7 +90,7 @@ describe('WelcomeDialog', () => {
     expect(mockOnStartEmpty).toHaveBeenCalledWith(true);
   });
 
-  it('should have OneDrive button disabled', () => {
+  it('should have OneDrive button enabled', () => {
     render(
       <WelcomeDialog
         open={true}
@@ -100,8 +100,8 @@ describe('WelcomeDialog', () => {
       />
     );
 
-    const oneDriveButton = screen.getByRole('button', { name: /coming soon/i });
-    expect(oneDriveButton).toBeDisabled();
+    const oneDriveButton = screen.getByRole('button', { name: /connect onedrive/i });
+    expect(oneDriveButton).not.toBeDisabled();
   });
 
   it('should show helper text about changing location later', () => {

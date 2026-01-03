@@ -79,7 +79,7 @@ describe('YearSelector', () => {
 
   it('should call setCurrentYear when year is changed', async () => {
     const user = userEvent.setup();
-    
+
     // Mock with multiple years available
     mockUseAppStore.mockReturnValue({
       currentYear: 2026,

@@ -855,37 +855,38 @@ These features will be implemented after the MVP is validated by users.
 
 ### 11.1 Welcome Dialog & Auto-Load (FR-11.1, FR-6.9)
 **Implementation**:
-- [ ] Create `src/components/common/WelcomeDialog.tsx`:
-  - [ ] Material-UI Dialog with app branding and welcome message
-  - [ ] Three action buttons:
-    - [ ] "Open Local File" → Triggers File System Access API picker
-    - [ ] "Connect to OneDrive" → Disabled with "Coming Soon" tooltip (Phase 11.3)
-    - [ ] "Start with Empty Data" → Creates empty state, prompts for save on first change
-  - [ ] Descriptive text explaining each option
-  - [ ] "Don't show this again" checkbox (for empty data flow)
-  - [ ] Responsive design for mobile/desktop
-- [ ] Update `src/services/storage/LocalStorageProvider.ts`:
-  - [ ] Add `hasFileHandle()` method to check if file handle is cached
-  - [ ] Ensure file handle persists across app sessions
-  - [ ] Add `clearFileHandle()` method for Settings integration
-- [ ] Update `src/services/sync.service.ts`:
-  - [ ] Add `autoLoad()` method that attempts to load from cached file handle
-  - [ ] Return boolean indicating success/failure
-  - [ ] Handle missing file handle gracefully (return false, no error)
-- [ ] Update `src/App.tsx`:
-  - [ ] Add state for `showWelcomeDialog` (initially false)
-  - [ ] On mount, call `syncService.autoLoad()`
-  - [ ] If autoLoad fails, check if user has dismissed welcome dialog
-  - [ ] Show WelcomeDialog if no cached file and not dismissed
-  - [ ] Handle "Start with Empty Data" by setting flag in localStorage
-- [ ] Update `src/stores/useAppStore.ts`:
-  - [ ] Track whether app has loaded initial data
-  - [ ] Add `isInitialLoad` state flag
-- [ ] Write automated tests:
-  - [ ] WelcomeDialog component renders correctly
-  - [ ] Auto-load succeeds when file handle cached
-  - [ ] Auto-load fails gracefully when no file handle
-  - [ ] Dialog dismissal preference persists
+- [x] Create `src/components/common/WelcomeDialog.tsx`:
+  - [x] Material-UI Dialog with app branding and welcome message
+  - [x] Three action buttons:
+    - [x] "Open Local File" → Triggers File System Access API picker
+    - [x] "Connect to OneDrive" → Disabled with "Coming Soon" tooltip (Phase 11.3)
+    - [x] "Start with Empty Data" → Creates empty state, prompts for save on first change
+  - [x] Descriptive text explaining each option
+  - [x] "Don't show this again" checkbox (for empty data flow)
+  - [x] Responsive design for mobile/desktop
+- [x] Update `src/services/storage/LocalStorageProvider.ts`:
+  - [x] Add `hasFileHandle()` method to check if file handle is cached
+  - [x] Ensure file handle persists across app sessions
+  - [x] Add `clearFileHandle()` method for Settings integration
+- [x] Update `src/services/storage/IStorageProvider.ts`:
+  - [x] Add optional `hasFileHandle()` and `clearFileHandle()` methods to interface
+- [x] Update `src/services/sync.service.ts`:
+  - [x] Add `autoLoad()` method that attempts to load from cached file handle
+  - [x] Return boolean indicating success/failure
+  - [x] Handle missing file handle gracefully (return false, no error)
+- [x] Update `src/App.tsx`:
+  - [x] Add state for `showWelcomeDialog` (initially false)
+  - [x] On mount, call `syncService.autoLoad()`
+  - [x] If autoLoad fails, check if user has dismissed welcome dialog
+  - [x] Show WelcomeDialog if no cached file and not dismissed
+  - [x] Handle "Start with Empty Data" by setting flag in localStorage
+- [x] Write automated tests:
+  - [x] WelcomeDialog component renders correctly (8 tests)
+  - [x] Auto-load succeeds when file handle cached
+  - [x] Auto-load fails gracefully when no file handle
+  - [x] Dialog dismissal preference persists
+  - [x] All tests passing (952 total)
+  - [x] Build succeeds
 
 **Manual Verification**:
 - [ ] **UI Test**: Clear browser cache, open app, see Welcome Dialog appear

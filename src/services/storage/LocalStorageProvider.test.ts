@@ -238,7 +238,7 @@ describe('LocalStorageProvider', () => {
 
       await provider.loadDataFile();
       expect(provider.hasFileHandle()).toBe(true);
-      
+
       provider.clearFileHandle();
       expect(provider.hasFileHandle()).toBe(false);
     });

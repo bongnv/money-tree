@@ -73,7 +73,7 @@ class SyncService {
 
       // Get existing data file from storage or create new one
       let existingData: DataFile | null = null;
-      
+
       try {
         existingData = await storage.loadDataFile();
       } catch (error) {
@@ -81,7 +81,7 @@ class SyncService {
       }
 
       const currentYearStr = String(state.currentYear);
-      
+
       const dataToSave: DataFile = {
         version: '1.0.0',
         years: {
@@ -161,11 +161,11 @@ class SyncService {
         useAccountStore.getState().setAccounts(dataFile.accounts || []);
         useCategoryStore.getState().setCategories(dataFile.categories || []);
         useCategoryStore.getState().setTransactionTypes(dataFile.transactionTypes || []);
-        
+
         // Get year-specific data
         const yearStr = String(year);
         const yearData = dataFile.years?.[yearStr];
-        
+
         if (yearData) {
           useTransactionStore.getState().setTransactions(yearData.transactions || []);
           useAssetStore.getState().setManualAssets(yearData.manualAssets || []);
@@ -187,6 +187,32 @@ class SyncService {
       throw error;
     } finally {
       state.setLoading(false);
+    }
+  }
+
+  /**
+   * Attempt to auto-load from cached file handle
+   * Returns true if successful, false if no cached file or load failed
+   */
+  async autoLoad(): Promise<boolean> {
+    try {
+      const storage = StorageFactory.getCurrentProvider();
+      
+      // Check if we have a cached file handle
+      if (!storage.hasFileHandle || !storage.hasFileHandle()) {
+        return false;
+      }
+
+      const state = useAppStore.getState();
+      const currentYear = state.currentYear || new Date().getFullYear();
+      
+      // Try to load from cached handle
+      await this.loadDataFile(currentYear);
+      return true;
+    } catch (error) {
+      // Auto-load fails silently - user will see Welcome Dialog
+      console.info('Auto-load failed:', error);
+      return false;
     }
   }
 

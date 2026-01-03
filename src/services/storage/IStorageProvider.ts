@@ -24,4 +24,15 @@ export interface IStorageProvider {
    * @returns Promise with array of years
    */
   listAvailableYears(): Promise<number[]>;
+
+  /**
+   * Check if a file handle is cached
+   * @returns True if file handle exists, false otherwise
+   */
+  hasFileHandle?(): boolean;
+
+  /**
+   * Clear cached file handle
+   */
+  clearFileHandle?(): void;
 }

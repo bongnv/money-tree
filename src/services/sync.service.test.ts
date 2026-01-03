@@ -341,4 +341,90 @@ describe('SyncService', () => {
       expect(useAppStore.getState().hasUnsavedChanges).toBe(true);
     });
   });
+
+  describe('autoLoad', () => {
+    it('should return true when file handle exists and load succeeds', async () => {
+      const mockHasFileHandle = jest.fn().mockReturnValue(true);
+      const mockDataFile: DataFile = {
+        version: '1.0.0',
+        years: {
+          '2024': {
+            transactions: [],
+            budgets: [],
+            manualAssets: [],
+          },
+        },
+        accounts: [],
+        categories: [],
+        transactionTypes: [],
+        archivedYears: [],
+        lastModified: new Date().toISOString(),
+      };
+
+      (StorageFactory.getCurrentProvider as jest.Mock).mockReturnValue({
+        saveDataFile: mockSaveDataFile,
+        loadDataFile: mockLoadDataFile.mockResolvedValue(mockDataFile),
+        listAvailableYears: jest.fn(),
+        hasFileHandle: mockHasFileHandle,
+      });
+
+      useAppStore.getState().setCurrentYear(2024);
+
+      const result = await syncService.autoLoad();
+
+      expect(result).toBe(true);
+      expect(mockHasFileHandle).toHaveBeenCalled();
+      expect(mockLoadDataFile).toHaveBeenCalled();
+    });
+
+    it('should return false when no file handle exists', async () => {
+      const mockHasFileHandle = jest.fn().mockReturnValue(false);
+
+      (StorageFactory.getCurrentProvider as jest.Mock).mockReturnValue({
+        saveDataFile: mockSaveDataFile,
+        loadDataFile: mockLoadDataFile,
+        listAvailableYears: jest.fn(),
+        hasFileHandle: mockHasFileHandle,
+      });
+
+      const result = await syncService.autoLoad();
+
+      expect(result).toBe(false);
+      expect(mockHasFileHandle).toHaveBeenCalled();
+      expect(mockLoadDataFile).not.toHaveBeenCalled();
+    });
+
+    it('should return false when load fails', async () => {
+      const mockHasFileHandle = jest.fn().mockReturnValue(true);
+
+      (StorageFactory.getCurrentProvider as jest.Mock).mockReturnValue({
+        saveDataFile: mockSaveDataFile,
+        loadDataFile: mockLoadDataFile.mockRejectedValue(new Error('Load failed')),
+        listAvailableYears: jest.fn(),
+        hasFileHandle: mockHasFileHandle,
+      });
+
+      useAppStore.getState().setCurrentYear(2024);
+
+      const result = await syncService.autoLoad();
+
+      expect(result).toBe(false);
+      expect(mockHasFileHandle).toHaveBeenCalled();
+      expect(mockLoadDataFile).toHaveBeenCalled();
+    });
+
+    it('should return false when provider does not have hasFileHandle method', async () => {
+      (StorageFactory.getCurrentProvider as jest.Mock).mockReturnValue({
+        saveDataFile: mockSaveDataFile,
+        loadDataFile: mockLoadDataFile,
+        listAvailableYears: jest.fn(),
+        // No hasFileHandle method
+      });
+
+      const result = await syncService.autoLoad();
+
+      expect(result).toBe(false);
+      expect(mockLoadDataFile).not.toHaveBeenCalled();
+    });
+  });
 });

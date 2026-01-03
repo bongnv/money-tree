@@ -5,6 +5,7 @@ import {
   TransactionTypeSchema,
   TransactionSchema,
   BudgetSchema,
+  ExchangeRateSchema,
   ManualAssetSchema,
   DataFileSchema,
 } from './models.schema';
@@ -233,6 +234,7 @@ describe('Model Schemas', () => {
         id: 'bi1',
         transactionTypeId: 'tt1',
         amount: 200.0,
+        currencyId: 'usd',
         period: 'monthly',
         startDate: '2026-01-01',
         endDate: '2026-12-31',
@@ -247,6 +249,7 @@ describe('Model Schemas', () => {
         id: 'bi1',
         transactionTypeId: 'tt1',
         amount: 600.0,
+        currencyId: 'usd',
         period: 'quarterly',
         startDate: '2026-01-01',
         endDate: '2026-12-31',
@@ -261,6 +264,7 @@ describe('Model Schemas', () => {
         id: 'bi1',
         transactionTypeId: 'tt1',
         amount: 0,
+        currencyId: 'usd',
         period: 'monthly',
         startDate: '2026-01-01',
         endDate: '2026-12-31',
@@ -268,6 +272,56 @@ describe('Model Schemas', () => {
         updatedAt: '2024-01-01T00:00:00.000Z',
       };
       expect(() => BudgetSchema.parse(invalidBudget)).toThrow();
+    });
+  });
+
+  describe('ExchangeRateSchema', () => {
+    it('should validate a valid exchange rate', () => {
+      const validRate = {
+        id: 'rate-1',
+        month: '2026-01',
+        fromCurrency: 'EUR',
+        toCurrency: 'USD',
+        rate: 1.18,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      };
+      expect(() => ExchangeRateSchema.parse(validRate)).not.toThrow();
+    });
+
+    it('should reject exchange rate with invalid month format', () => {
+      const invalidRate = {
+        id: 'rate-1',
+        month: '2026/01',
+        fromCurrency: 'EUR',
+        toCurrency: 'USD',
+        rate: 1.18,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      };
+      expect(() => ExchangeRateSchema.parse(invalidRate)).toThrow();
+    });
+
+    it('should reject exchange rate with negative or zero rate', () => {
+      const invalidRate = {
+        id: 'rate-1',
+        month: '2026-01',
+        fromCurrency: 'EUR',
+        toCurrency: 'USD',
+        rate: 0,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      };
+      expect(() => ExchangeRateSchema.parse(invalidRate)).toThrow();
+    });
+
+    it('should reject exchange rate with missing currency codes', () => {
+      const invalidRate = {
+        id: 'rate-1',
+        month: '2026-01',
+        fromCurrency: '',
+        toCurrency: 'USD',
+        rate: 1.18,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      };
+      expect(() => ExchangeRateSchema.parse(invalidRate)).toThrow();
     });
   });
 

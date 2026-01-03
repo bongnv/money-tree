@@ -4,6 +4,7 @@ const STORAGE_KEYS = {
   UNSAVED_CHANGES: 'moneytree_unsaved_changes',
   STORAGE_PROVIDER: 'moneytree_storage_provider',
   FILE_NAME: 'moneytree_file_name',
+  BASE_CURRENCY: 'moneytree_base_currency',
 } as const;
 
 export const storageService = {
@@ -50,6 +51,14 @@ export const storageService = {
 
   clearFileName(): void {
     localStorage.removeItem(STORAGE_KEYS.FILE_NAME);
+  },
+
+  getBaseCurrency(): string {
+    return localStorage.getItem(STORAGE_KEYS.BASE_CURRENCY) || 'usd';
+  },
+
+  setBaseCurrency(currencyId: string): void {
+    localStorage.setItem(STORAGE_KEYS.BASE_CURRENCY, currencyId);
   },
 
   clearAll(): void {

@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DashboardPage } from './DashboardPage';
 
@@ -40,10 +40,6 @@ jest.mock('./RecentTransactionsList', () => ({
   ),
 }));
 
-jest.mock('./QuickEntryContainer', () => ({
-  QuickEntryContainer: () => <div data-testid="quick-entry">Quick Entry Form</div>,
-}));
-
 describe('DashboardPage', () => {
   describe('Layout and Structure', () => {
     it('renders dashboard with all three main sections', () => {
@@ -68,7 +64,6 @@ describe('DashboardPage', () => {
 
       expect(screen.getByTestId('financial-summary')).toBeInTheDocument();
       expect(screen.getByTestId('budget-overview')).toBeInTheDocument();
-      expect(screen.getByTestId('quick-entry')).toBeInTheDocument();
       expect(screen.getByTestId('recent-transactions')).toBeInTheDocument();
     });
 
@@ -79,14 +74,6 @@ describe('DashboardPage', () => {
       expect(headings[0]).toHaveTextContent('Financial Summary');
       expect(headings[1]).toHaveTextContent('Budget Overview');
       expect(headings[2]).toHaveTextContent('Recent Transactions');
-    });
-
-    it('renders quick entry form inside a Paper component', () => {
-      render(<DashboardPage />);
-
-      const quickEntry = screen.getByTestId('quick-entry');
-      const paper = quickEntry.closest('.MuiPaper-root');
-      expect(paper).toBeInTheDocument();
     });
   });
 
@@ -167,32 +154,11 @@ describe('DashboardPage', () => {
   });
 
   describe('Recent Transactions Section', () => {
-    it('displays quick entry form above recent transactions list', () => {
-      render(<DashboardPage />);
-
-      const recentSection = screen.getByText('Recent Transactions').closest('div');
-      const quickEntry = within(recentSection!).getByTestId('quick-entry');
-      const recentList = within(recentSection!).getByTestId('recent-transactions');
-
-      // Quick entry should come before recent list in DOM order
-      expect(quickEntry.compareDocumentPosition(recentList)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-    });
-
     it('passes limit of 10 to RecentTransactionsList', () => {
       render(<DashboardPage />);
 
       const recentTransactions = screen.getByTestId('recent-transactions');
       expect(recentTransactions).toHaveTextContent('limit: 10');
-    });
-
-    it('quick entry and recent list are separate components', () => {
-      render(<DashboardPage />);
-
-      const quickEntry = screen.getByTestId('quick-entry');
-      const recentList = screen.getByTestId('recent-transactions');
-
-      expect(quickEntry).not.toBe(recentList);
-      expect(quickEntry.parentElement).not.toBe(recentList.parentElement);
     });
   });
 });

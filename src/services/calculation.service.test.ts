@@ -474,6 +474,7 @@ describe('CalculationService', () => {
       {
         id: '1',
         transactionTypeId: 'type-1',
+        currencyId: 'usd',
         amount: 500,
         period: 'monthly' as const,
         startDate: '2026-01-01',
@@ -484,6 +485,7 @@ describe('CalculationService', () => {
       {
         id: '2',
         transactionTypeId: 'type-1',
+        currencyId: 'usd',
         amount: 600,
         period: 'monthly' as const,
         startDate: '2026-07-01',
@@ -494,6 +496,7 @@ describe('CalculationService', () => {
       {
         id: '3',
         transactionTypeId: 'type-2',
+        currencyId: 'usd',
         amount: 300,
         period: 'monthly' as const,
         startDate: '2026-01-01',
@@ -551,6 +554,7 @@ describe('CalculationService', () => {
         {
           id: '1',
           transactionTypeId: 'type-1',
+          currencyId: 'usd',
           amount: 500,
           period: 'monthly' as const,
           startDate: '2026-01-01',
@@ -573,6 +577,7 @@ describe('CalculationService', () => {
         {
           id: '1',
           transactionTypeId: 'type-1',
+          currencyId: 'usd',
           amount: 500,
           period: 'monthly' as const,
           startDate: '2026-01-01',
@@ -638,6 +643,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
+        currencyId: 'usd',
         amount: 1500,
         period: 'monthly' as const,
         startDate: '2026-01-01',
@@ -657,6 +663,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
+        currencyId: 'usd',
         amount: 1500,
         period: 'monthly' as const,
         startDate: '2026-01-01',
@@ -676,6 +683,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
+        currencyId: 'usd',
         amount: 1500,
         period: 'monthly' as const,
         startDate: '2026-01-01',
@@ -695,6 +703,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
+        currencyId: 'usd',
         amount: 4500,
         period: 'quarterly' as const,
         startDate: '2026-01-01',
@@ -714,6 +723,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
+        currencyId: 'usd',
         amount: 4500,
         period: 'quarterly' as const,
         startDate: '2026-01-01',
@@ -733,6 +743,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
+        currencyId: 'usd',
         amount: 4500,
         period: 'quarterly' as const,
         startDate: '2026-01-01',
@@ -752,6 +763,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
+        currencyId: 'usd',
         amount: 18000,
         period: 'yearly' as const,
         startDate: '2026-01-01',
@@ -771,6 +783,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
+        currencyId: 'usd',
         amount: 18000,
         period: 'yearly' as const,
         startDate: '2026-01-01',
@@ -790,6 +803,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
+        currencyId: 'usd',
         amount: 18000,
         period: 'yearly' as const,
         startDate: '2026-01-01',
@@ -809,6 +823,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
+        currencyId: 'usd',
         amount: 1500,
         period: 'monthly' as const,
         startDate: '2026-01-01',
@@ -830,6 +845,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
+        currencyId: 'usd',
         amount: 1500,
         period: 'monthly' as const,
         startDate: '2026-01-01',

@@ -92,3 +92,56 @@ export const isValidCurrencyAmount = (amount: number, currencyId: string): boole
 
   return true;
 };
+
+/**
+ * Convert amount from one currency to another
+ */
+export const convertAmount = (
+  amount: number,
+  fromCurrencyId: string,
+  toCurrencyId: string,
+  rate: number
+): number => {
+  // If same currency or rate is 1, no conversion needed
+  if (fromCurrencyId === toCurrencyId || rate === 1) {
+    return amount;
+  }
+
+  return amount * rate;
+};
+
+/**
+ * Format currency with conversion details
+ * Example: "€1,000 (≈ $1,180)"
+ */
+export const formatCurrencyWithConversion = (
+  amount: number,
+  currencyId: string,
+  convertedAmount?: number | null,
+  baseCurrencyId?: string,
+  options?: {
+    showOriginal?: boolean;
+    showConverted?: boolean;
+  }
+): string => {
+  const showOriginal = options?.showOriginal !== false;
+  const showConverted = options?.showConverted !== false;
+
+  // If no conversion or same currency, just format normally
+  if (!convertedAmount || !baseCurrencyId || currencyId === baseCurrencyId) {
+    return formatCurrency(amount, currencyId);
+  }
+
+  const originalFormatted = formatCurrency(amount, currencyId);
+  const convertedFormatted = formatCurrency(convertedAmount, baseCurrencyId);
+
+  if (showOriginal && showConverted) {
+    return `${originalFormatted} (≈ ${convertedFormatted})`;
+  } else if (showOriginal) {
+    return originalFormatted;
+  } else if (showConverted) {
+    return convertedFormatted;
+  }
+
+  return originalFormatted;
+};

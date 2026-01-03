@@ -17,6 +17,7 @@ interface AppState {
   isLoading: boolean;
   error: string | null;
   snackbar: SnackbarState;
+  baseCurrency: string; // Currency ID for reporting (default: 'usd')
   // Conflict detection metadata
   fileContentHash: string | null;
   fileLoadedAt: string | null;
@@ -34,6 +35,7 @@ interface AppActions {
   resetState: () => void;
   showSnackbar: (message: string, severity?: AlertColor) => void;
   hideSnackbar: () => void;
+  setBaseCurrency: (currencyId: string) => void;
   // Conflict detection actions
   setFileMetadata: (hash: string, loadedAt: string, baseVersion: DataFile) => void;
   clearFileMetadata: () => void;
@@ -56,6 +58,7 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
     message: '',
     severity: 'info',
   },
+  baseCurrency: storageService.getBaseCurrency(),
   fileContentHash: null,
   fileLoadedAt: null,
   baseVersion: null,
@@ -113,6 +116,7 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
         message: '',
         severity: 'info',
       },
+      baseCurrency: 'usd',
       fileContentHash: null,
       fileLoadedAt: null,
       baseVersion: null,
@@ -125,6 +129,11 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
 
   hideSnackbar: () => {
     set((state) => ({ snackbar: { ...state.snackbar, open: false } }));
+  },
+
+  setBaseCurrency: (currencyId) => {
+    storageService.setBaseCurrency(currencyId);
+    set({ baseCurrency: currencyId });
   },
 
   setFileMetadata: (hash, loadedAt, baseVersion) => {

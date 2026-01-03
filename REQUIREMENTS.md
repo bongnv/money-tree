@@ -667,3 +667,4 @@ interface Budget {
 **B-1** [ ] Got error: "Failed to download file from OneDrive" when creating a new data file in OneDrive
 **B-2** [x] Add a new dashboard button next to Money Tree label in the navigation to improve UX
 **B-3** [ ] Permission errors when saving for local storage
+**B-4** [ ] Use USD as intermediate rate if the direct rate isn't found from API

@@ -162,6 +162,7 @@ describe('SyncService', () => {
               transactions: [],
               budgets: [],
               manualAssets: [],
+              exchangeRates: [],
             }),
           }),
         })
@@ -219,6 +220,7 @@ describe('SyncService', () => {
             transactions: [],
             budgets: [],
             manualAssets: [],
+            exchangeRates: [],
           },
         },
         accounts: [
@@ -356,6 +358,7 @@ describe('SyncService', () => {
             transactions: [],
             budgets: [],
             manualAssets: [],
+            exchangeRates: [],
           },
         },
         accounts: [],

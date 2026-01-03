@@ -26,7 +26,7 @@ describe('NotificationSnackbar', () => {
       />
     );
 
-    expect(container.querySelector('.MuiSnackbar-root')).not.toBeVisible();
+    expect(container.querySelector('.MuiSnackbar-root')).toBeNull();
   });
 
   it('should call onClose when close button is clicked', async () => {

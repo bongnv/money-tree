@@ -217,11 +217,7 @@ export const SettingsPage: React.FC = () => {
             <Typography variant="h4" component="h1">
               Categories
             </Typography>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleOpenCategoryDialog}
-            >
+            <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenCategoryDialog}>
               New Category
             </Button>
           </Box>

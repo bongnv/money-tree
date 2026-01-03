@@ -174,6 +174,7 @@ class SyncService {
             transactions: transactionStore.transactions,
             budgets: budgetStore.budgets,
             manualAssets: assetStore.manualAssets,
+            exchangeRates: this.cachedDataFile?.years[currentYearStr]?.exchangeRates || [],
           },
         },
         accounts: accountStore.accounts,

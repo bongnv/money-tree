@@ -76,6 +76,7 @@ export const BudgetSchema = z
     id: z.string().min(1, 'ID is required'),
     transactionTypeId: z.string().min(1, 'Transaction type ID is required'),
     amount: z.number().positive('Amount must be greater than 0'),
+    currencyId: z.string().min(1, 'Currency ID is required'),
     period: z.enum(['monthly', 'quarterly', 'yearly']),
     startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Start date must be in YYYY-MM-DD format'),
     endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'End date must be in YYYY-MM-DD format'),
@@ -86,6 +87,18 @@ export const BudgetSchema = z
     message: 'End date must be on or after start date',
     path: ['endDate'],
   });
+
+/**
+ * Zod schema for ExchangeRate
+ */
+export const ExchangeRateSchema = z.object({
+  id: z.string().min(1, 'ID is required'),
+  month: z.string().regex(/^\d{4}-\d{2}$/, 'Month must be in YYYY-MM format'),
+  fromCurrency: z.string().min(1, 'From currency is required').max(10),
+  toCurrency: z.string().min(1, 'To currency is required').max(10),
+  rate: z.number().positive('Rate must be positive'),
+  createdAt: z.string().datetime(),
+});
 
 /**
  * Zod schema for AssetValueHistory
@@ -178,6 +191,11 @@ export const YearDataSchema = z.object({
     .transform((val) => val ?? []),
   manualAssets: z
     .array(ManualAssetSchema)
+    .nullable()
+    .optional()
+    .transform((val) => val ?? []),
+  exchangeRates: z
+    .array(ExchangeRateSchema)
     .nullable()
     .optional()
     .transform((val) => val ?? []),

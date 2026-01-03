@@ -78,11 +78,25 @@ export interface Budget {
   id: string;
   transactionTypeId: string;
   amount: number; // Budget amount
+  currencyId: string; // Budget amount currency
   period: 'monthly' | 'quarterly' | 'yearly'; // Period type for this budget
   startDate: string; // Start date (YYYY-MM-DD)
   endDate: string; // End date (YYYY-MM-DD)
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
+}
+
+/**
+ * Exchange Rate model
+ * Represents an exchange rate for a specific month and currency pair
+ */
+export interface ExchangeRate {
+  id: string;
+  month: string; // YYYY-MM format
+  fromCurrency: string; // Currency code (e.g., 'EUR')
+  toCurrency: string; // Currency code (e.g., 'USD')
+  rate: number; // Exchange rate (e.g., 1.18)
+  createdAt: string; // ISO date string
 }
 
 /**
@@ -141,6 +155,7 @@ export interface YearData {
   transactions: Transaction[];
   budgets: Budget[];
   manualAssets: ManualAsset[];
+  exchangeRates: ExchangeRate[]; // Exchange rates for this year
 }
 
 /**

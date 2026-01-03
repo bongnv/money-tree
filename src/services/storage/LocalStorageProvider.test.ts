@@ -132,6 +132,7 @@ describe('LocalStorageProvider', () => {
           transactions: [],
           budgets: [],
           manualAssets: [],
+          exchangeRates: [],
         },
       },
       accounts: [],

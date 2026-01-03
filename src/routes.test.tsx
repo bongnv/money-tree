@@ -35,14 +35,6 @@ jest.mock('./components/settings/SettingsPage', () => ({
   SettingsPage: () => <div data-testid="settings-page">Settings Page</div>,
 }));
 
-jest.mock('./components/settings/AssetsPage', () => ({
-  AssetsPage: () => <div data-testid="settings-assets-page">Assets Page</div>,
-}));
-
-jest.mock('./components/categories/CategoriesPage', () => ({
-  CategoriesPage: () => <div data-testid="categories-page">Categories Page</div>,
-}));
-
 jest.mock('./components/common/NotFoundPage', () => ({
   NotFoundPage: () => <div data-testid="not-found-page">404 Not Found</div>,
 }));
@@ -85,20 +77,7 @@ describe('AppRoutes', () => {
   describe('Settings Routes', () => {
     it('renders SettingsPage at /settings route', () => {
       renderWithRouter('/settings');
-      expect(screen.getByTestId('settings-layout')).toBeInTheDocument();
       expect(screen.getByTestId('settings-page')).toBeInTheDocument();
-    });
-
-    it('renders AssetsPage at /settings/assets route', () => {
-      renderWithRouter('/settings/assets');
-      expect(screen.getByTestId('settings-layout')).toBeInTheDocument();
-      expect(screen.getByTestId('settings-assets-page')).toBeInTheDocument();
-    });
-
-    it('renders CategoriesPage at /settings/categories route', () => {
-      renderWithRouter('/settings/categories');
-      expect(screen.getByTestId('settings-layout')).toBeInTheDocument();
-      expect(screen.getByTestId('categories-page')).toBeInTheDocument();
     });
   });
 

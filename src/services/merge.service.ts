@@ -282,6 +282,7 @@ export function performThreeWayMerge(
       transactions: transactionsResult.merged as Transaction[],
       manualAssets: assetsResult.merged as ManualAsset[],
       budgets: budgetsResult.merged as Budget[],
+      exchangeRates: appYear?.exchangeRates || fileYear?.exchangeRates || [],
     };
   }
 

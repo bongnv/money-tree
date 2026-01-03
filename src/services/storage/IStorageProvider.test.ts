@@ -49,6 +49,7 @@ describe('IStorageProvider', () => {
           transactions: [],
           budgets: [],
           manualAssets: [],
+          exchangeRates: [],
         },
       },
       accounts: [],
@@ -75,8 +76,8 @@ describe('IStorageProvider', () => {
       const multiYearData = {
         ...mockData,
         years: {
-          '2023': { transactions: [], budgets: [], manualAssets: [] },
-          '2024': { transactions: [], budgets: [], manualAssets: [] },
+          '2023': { transactions: [], budgets: [], manualAssets: [], exchangeRates: [] },
+          '2024': { transactions: [], budgets: [], manualAssets: [], exchangeRates: [] },
         },
       };
 
@@ -109,8 +110,8 @@ describe('IStorageProvider', () => {
       const multiYearData = {
         ...mockData,
         years: {
-          '2023': { transactions: [], budgets: [], manualAssets: [] },
-          '2024': { transactions: [], budgets: [], manualAssets: [] },
+          '2023': { transactions: [], budgets: [], manualAssets: [], exchangeRates: [] },
+          '2024': { transactions: [], budgets: [], manualAssets: [], exchangeRates: [] },
         },
       };
 

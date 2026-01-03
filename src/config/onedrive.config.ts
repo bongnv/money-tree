@@ -7,16 +7,21 @@
  * 3. Name: "Money Tree App"
  * 4. Supported account types: "Accounts in any organizational directory and personal Microsoft accounts"
  * 5. Redirect URI: Select "Single-page application (SPA)" platform, add http://localhost:8080
- * 6. After registration, copy the "Application (client) ID" to clientId below
+ * 6. After registration, copy the "Application (client) ID"
  * 7. Under "API permissions", add "Microsoft Graph" -> "Delegated permissions" -> "Files.ReadWrite"
  * 8. Grant admin consent for the permissions
+ * 
+ * BUILD CONFIGURATION:
+ * Set ONEDRIVE_CLIENT_ID environment variable when building:
+ *   Development: ONEDRIVE_CLIENT_ID=your-client-id npm run dev
+ *   Production:  ONEDRIVE_CLIENT_ID=your-client-id npm run build
  */
 
 export const msalConfig = {
   auth: {
-    // TODO: Replace with your actual Azure AD application client ID after registration
-    // Leave as empty string until you complete Azure app registration
-    clientId: 'ce7ae0cb-7884-4fd9-9135-ad9452ce59b4',
+    // Client ID must be injected via ONEDRIVE_CLIENT_ID environment variable at build time
+    // Example: ONEDRIVE_CLIENT_ID=your-client-id npm run build
+    clientId: process.env.ONEDRIVE_CLIENT_ID || '',
 
     // Authority for Microsoft personal accounts only
     // Use 'consumers' for personal accounts, 'common' for both personal and organizational

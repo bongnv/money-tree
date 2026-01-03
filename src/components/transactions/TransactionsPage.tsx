@@ -175,13 +175,16 @@ export const TransactionsPage: React.FC = () => {
         onFiltersChange={setFilters}
       />
 
-      <QuickEntryRow
-        accounts={accounts}
-        categories={categories}
-        transactionTypes={transactionTypes}
-        onSubmit={handleSubmit}
-        onOpenFullDialog={handleOpenDialog}
-      />
+      <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+        <QuickEntryRow
+          accounts={accounts}
+          categories={categories}
+          transactionTypes={transactionTypes}
+          transactions={transactions}
+          onSubmit={handleSubmit}
+          onOpenFullDialog={handleOpenDialog}
+        />
+      </Box>
 
       <TransactionList
         transactions={filteredTransactions}

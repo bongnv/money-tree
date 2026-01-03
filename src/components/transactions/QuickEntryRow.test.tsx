@@ -92,6 +92,8 @@ describe('QuickEntryRow', () => {
     },
   ];
 
+  const mockTransactions: any[] = [];
+
   const mockOnSubmit = jest.fn();
   const mockOnOpenFullDialog = jest.fn();
 
@@ -106,6 +108,7 @@ describe('QuickEntryRow', () => {
         accounts={mockAccounts}
         categories={mockCategories}
         transactionTypes={mockTransactionTypes}
+        transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
       />
@@ -123,6 +126,7 @@ describe('QuickEntryRow', () => {
         accounts={mockAccounts}
         categories={mockCategories}
         transactionTypes={mockTransactionTypes}
+        transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
       />
@@ -147,6 +151,7 @@ describe('QuickEntryRow', () => {
         accounts={mockAccounts}
         categories={mockCategories}
         transactionTypes={mockTransactionTypes}
+        transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
       />
@@ -171,6 +176,7 @@ describe('QuickEntryRow', () => {
         accounts={mockAccounts}
         categories={mockCategories}
         transactionTypes={mockTransactionTypes}
+        transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
       />
@@ -195,6 +201,7 @@ describe('QuickEntryRow', () => {
         accounts={mockAccounts}
         categories={mockCategories}
         transactionTypes={mockTransactionTypes}
+        transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
       />
@@ -240,6 +247,7 @@ describe('QuickEntryRow', () => {
         accounts={mockAccounts}
         categories={mockCategories}
         transactionTypes={mockTransactionTypes}
+        transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
       />
@@ -287,6 +295,7 @@ describe('QuickEntryRow', () => {
         accounts={mockAccounts}
         categories={mockCategories}
         transactionTypes={mockTransactionTypes}
+        transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
       />
@@ -314,6 +323,7 @@ describe('QuickEntryRow', () => {
         accounts={mockAccounts}
         categories={mockCategories}
         transactionTypes={mockTransactionTypes}
+        transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
       />
@@ -332,6 +342,7 @@ describe('QuickEntryRow', () => {
         accounts={mockAccounts}
         categories={mockCategories}
         transactionTypes={mockTransactionTypes}
+        transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
       />
@@ -356,6 +367,7 @@ describe('QuickEntryRow', () => {
         accounts={mockAccounts}
         categories={mockCategories}
         transactionTypes={mockTransactionTypes}
+        transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
       />
@@ -405,6 +417,7 @@ describe('QuickEntryRow', () => {
         accounts={mockAccounts}
         categories={mockCategories}
         transactionTypes={mockTransactionTypes}
+        transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
       />
@@ -424,6 +437,7 @@ describe('QuickEntryRow', () => {
         accounts={mockAccounts}
         categories={mockCategories}
         transactionTypes={mockTransactionTypes}
+        transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
       />
@@ -440,6 +454,7 @@ describe('QuickEntryRow', () => {
         accounts={mockAccounts}
         categories={mockCategories}
         transactionTypes={mockTransactionTypes}
+        transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
       />
@@ -466,6 +481,7 @@ describe('QuickEntryRow', () => {
         accounts={mockAccounts}
         categories={mockCategories}
         transactionTypes={mockTransactionTypes}
+        transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
       />
@@ -504,6 +520,7 @@ describe('QuickEntryRow', () => {
         accounts={mockAccounts}
         categories={mockCategories}
         transactionTypes={mockTransactionTypes}
+        transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
       />
@@ -533,6 +550,7 @@ describe('QuickEntryRow', () => {
           accounts={mockAccounts}
           categories={mockCategories}
           transactionTypes={mockTransactionTypes}
+          transactions={mockTransactions}
           onSubmit={mockOnSubmit}
           onOpenFullDialog={mockOnOpenFullDialog}
         />
@@ -561,6 +579,7 @@ describe('QuickEntryRow', () => {
           accounts={mockAccounts}
           categories={mockCategories}
           transactionTypes={mockTransactionTypes}
+          transactions={mockTransactions}
           onSubmit={mockOnSubmit}
           onOpenFullDialog={mockOnOpenFullDialog}
         />
@@ -589,6 +608,7 @@ describe('QuickEntryRow', () => {
           accounts={mockAccounts}
           categories={mockCategories}
           transactionTypes={mockTransactionTypes}
+          transactions={mockTransactions}
           onSubmit={mockOnSubmit}
           onOpenFullDialog={mockOnOpenFullDialog}
         />
@@ -614,6 +634,7 @@ describe('QuickEntryRow', () => {
           accounts={mockAccounts}
           categories={mockCategories}
           transactionTypes={mockTransactionTypes}
+          transactions={mockTransactions}
           onSubmit={mockOnSubmit}
           onOpenFullDialog={mockOnOpenFullDialog}
         />

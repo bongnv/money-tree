@@ -1,10 +1,12 @@
 const path = require('path');
 const webpack = require('webpack');
-const Dotenv = require('dotenv-webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+
+// Load .env file if it exists
+require('dotenv').config();
 
 module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
@@ -14,7 +16,7 @@ module.exports = (env, argv) => {
     entry: './src/index.tsx',
     output: {
       path: path.resolve(__dirname, 'dist'),
-      filename: isProduction ? '[name].[contenthash].js' : 'bundle.js',
+      filename: isProduction ? '[name].[contenthash].js' : '[name].js',
       chunkFilename: isProduction ? '[name].[contenthash].chunk.js' : '[name].chunk.js',
       clean: true,
       publicPath: '/',
@@ -56,11 +58,6 @@ module.exports = (env, argv) => {
       ],
     },
     plugins: [
-      new Dotenv({
-        safe: false,
-        systemvars: true,
-        silent: true,
-      }),
       new webpack.DefinePlugin({
         'process.env.ONEDRIVE_CLIENT_ID': JSON.stringify(
           process.env.ONEDRIVE_CLIENT_ID || ''

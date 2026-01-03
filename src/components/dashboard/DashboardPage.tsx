@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Box, Typography, Container, Paper } from '@mui/material';
+import { Box, Typography, Container } from '@mui/material';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
 import { PeriodSelector, PeriodOption } from './PeriodSelector';
 import { FinancialSummary } from './FinancialSummary';
 import { BudgetOverview } from './BudgetOverview';
 import { RecentTransactionsList } from './RecentTransactionsList';
-import { QuickEntryContainer } from './QuickEntryContainer';
 
 export const DashboardPage: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodOption>({
@@ -41,9 +40,6 @@ export const DashboardPage: React.FC = () => {
         <Typography variant="h6" gutterBottom>
           Recent Transactions
         </Typography>
-        <Paper sx={{ p: 2, mb: 2 }}>
-          <QuickEntryContainer />
-        </Paper>
         <RecentTransactionsList limit={10} />
       </Box>
     </Container>

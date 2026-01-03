@@ -11,6 +11,7 @@ export const QuickEntryContainer: React.FC = () => {
   const accounts = useAccountStore((state) => state.accounts);
   const categories = useCategoryStore((state) => state.categories);
   const transactionTypes = useCategoryStore((state) => state.transactionTypes);
+  const transactions = useTransactionStore((state) => state.transactions);
   const addTransaction = useTransactionStore((state) => state.addTransaction);
 
   const handleSubmit = (transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -42,6 +43,7 @@ export const QuickEntryContainer: React.FC = () => {
         accounts={accounts}
         categories={categories}
         transactionTypes={transactionTypes}
+        transactions={transactions}
         onSubmit={handleSubmit}
         onOpenFullDialog={handleOpenFullDialog}
       />

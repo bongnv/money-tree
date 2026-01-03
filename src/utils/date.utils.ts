@@ -5,13 +5,22 @@ const UTC = 'UTC';
 
 /**
  * Format ISO date string for display
- * @param isoDate ISO date string
+ * @param isoDate ISO date string (YYYY-MM-DD format or full ISO timestamp)
  * @param formatString Format string (default: 'MMM dd, yyyy')
  * @returns Formatted date string
  */
 export const formatDate = (isoDate: string, formatString = 'MMM dd, yyyy'): string => {
-  const date = toZonedTime(parseISO(isoDate), UTC);
-  return format(date, formatString);
+  // For date-only strings (YYYY-MM-DD), parse directly without timezone conversion
+  // For full ISO timestamps, convert to UTC to avoid timezone shifts
+  if (/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) {
+    // Date-only format: parse as-is
+    const date = parseISO(isoDate);
+    return format(date, formatString);
+  } else {
+    // Full timestamp: convert to UTC
+    const date = toZonedTime(parseISO(isoDate), UTC);
+    return format(date, formatString);
+  }
 };
 
 /**

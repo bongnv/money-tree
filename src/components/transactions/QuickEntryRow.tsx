@@ -10,6 +10,7 @@ interface QuickEntryRowProps {
   accounts: Account[];
   categories: Category[];
   transactionTypes: TransactionType[];
+  transactions: Transaction[];
   onSubmit: (transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => void;
   onOpenFullDialog: () => void;
 }
@@ -18,9 +19,21 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
   accounts,
   categories,
   transactionTypes,
+  transactions,
   onSubmit,
   onOpenFullDialog,
 }) => {
+  // Get default date: latest transaction date or today
+  const getDefaultDate = () => {
+    if (transactions.length === 0) {
+      return getTodayDate();
+    }
+    const latestTransaction = transactions.reduce((latest, current) => {
+      return current.date > latest.date ? current : latest;
+    });
+    return latestTransaction.date;
+  };
+
   // Get stored defaults from localStorage
   const getStoredDefaults = () => {
     const stored = localStorage.getItem('quickEntryDefaults');
@@ -37,7 +50,7 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
   const storedDefaults = getStoredDefaults();
 
   const [formData, setFormData] = useState({
-    date: getTodayDate(),
+    date: getDefaultDate(),
     amount: '',
     transactionTypeId: storedDefaults.transactionTypeId || '',
     fromAccountId: storedDefaults.fromAccountId || '',
@@ -137,7 +150,7 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
 
     // Clear form and focus on amount field
     setFormData({
-      date: getTodayDate(),
+      date: getDefaultDate(),
       amount: '',
       transactionTypeId: formData.transactionTypeId, // Keep last used type
       fromAccountId: formData.fromAccountId, // Keep last used account
@@ -154,7 +167,7 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
 
   const handleClear = () => {
     setFormData({
-      date: getTodayDate(),
+      date: getDefaultDate(),
       amount: '',
       transactionTypeId: '',
       fromAccountId: '',

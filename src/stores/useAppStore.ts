@@ -1,5 +1,12 @@
 import { create } from 'zustand';
 import { storageService } from '../services/storage.service';
+import { AlertColor } from '@mui/material';
+
+interface SnackbarState {
+  open: boolean;
+  message: string;
+  severity: AlertColor;
+}
 
 interface AppState {
   currentYear: number;
@@ -8,6 +15,7 @@ interface AppState {
   hasUnsavedChanges: boolean;
   isLoading: boolean;
   error: string | null;
+  snackbar: SnackbarState;
 }
 
 interface AppActions {
@@ -19,6 +27,8 @@ interface AppActions {
   setError: (error: string | null) => void;
   markAsSaved: () => void;
   resetState: () => void;
+  showSnackbar: (message: string, severity?: AlertColor) => void;
+  hideSnackbar: () => void;
 }
 
 const getCurrentYear = (): number => {
@@ -33,6 +43,11 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
   hasUnsavedChanges: storageService.getUnsavedChanges(),
   isLoading: false,
   error: null,
+  snackbar: {
+    open: false,
+    message: '',
+    severity: 'info',
+  },
 
   setCurrentYear: (year) => {
     storageService.setCurrentYear(year);
@@ -82,6 +97,19 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
       hasUnsavedChanges: false,
       isLoading: false,
       error: null,
+      snackbar: {
+        open: false,
+        message: '',
+        severity: 'info',
+      },
     });
+  },
+
+  showSnackbar: (message, severity = 'info') => {
+    set({ snackbar: { open: true, message, severity } });
+  },
+
+  hideSnackbar: () => {
+    set((state) => ({ snackbar: { ...state.snackbar, open: false } }));
   },
 }));

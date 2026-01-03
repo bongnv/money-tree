@@ -188,14 +188,14 @@ This plan implements all requirements from REQUIREMENTS.md.
 - [x] **Test**: Click "Load" → file picker opens → select file → data appears; Click "Save" → file picker opens → save file; Make changes → see unsaved indicator → wait 1 minute → auto-saved; close browser → get warning; Make changes → load different file → prompted to save first
 
 ### 2.5 Add Auto-Load on Page Reload
-- [ ] Store last loaded file path/handle in localStorage (in storage.service.ts)
-- [ ] Add `getLastFilePath()` and `setLastFilePath()` methods to storage.service.ts
-- [ ] Update `syncService.loadDataFile()` to save file path/reference after successful load
-- [ ] Add `loadLastFile()` method to sync.service.ts that attempts to reload the last file
-- [ ] Update `App.tsx` to call `syncService.loadLastFile()` on mount (useEffect)
-- [ ] Handle case where file no longer exists or is inaccessible (show error, prompt to load new file)
-- [ ] **Write tests**: Test auto-load on mount, test file not found handling, test no previous file case
-- [ ] **Test**: Load a file → reload page → data automatically loads; Delete file → reload page → see error message
+- [x] Store last loaded file path/handle in localStorage (in storage.service.ts)
+- [x] Add `getLastFilePath()` and `setLastFilePath()` methods to storage.service.ts
+- [x] Update `syncService.loadDataFile()` to save file path/reference after successful load
+- [x] Add `loadLastFile()` method to sync.service.ts that attempts to reload the last file
+- [x] Update `App.tsx` to call `syncService.loadLastFile()` on mount (useEffect)
+- [x] Handle case where file no longer exists or is inaccessible (show error, prompt to load new file)
+- [x] **Write tests**: Test auto-load on mount, test file not found handling, test no previous file case
+- [x] **Test**: Load a file → reload page → data automatically loads; Delete file → reload page → see error message
 
 ## Phase 3: Account Management Feature (MVP)
 
@@ -660,34 +660,13 @@ This plan implements all requirements from REQUIREMENTS.md.
 
 **Goal**: Complete, polished, production-ready MVP
 
-### 10.1 Integration Testing
-- [ ] Test complete user workflows end-to-end
-- [ ] Test data flow between stores and components
-- [ ] Test interactions between different features
-- [ ] Test budget tracking with actual transactions
-- [ ] Test report calculations with real data
-
-### 10.2 Cross-Feature Validation
-- [ ] Test account deletion with existing transactions
-- [ ] Test category deletion with existing transaction types
-- [ ] Test transaction changes affecting account balances and budgets
-- [ ] Test budget updates reflecting in reports
-- [ ] Test data consistency across all features
-
-### 10.3 Test Coverage Review
-- [ ] Review unit test coverage from all phases
-- [ ] Run `npm run test:coverage` to check coverage metrics
-- [ ] Ensure minimum 80% code coverage across the codebase
-- [ ] Add tests for any gaps in critical functionality
-- [ ] **Test**: Coverage meets 80% threshold, all critical paths tested
-
 ### 10.4 UI/UX Polish
-- [ ] Add loading states (spinners, skeletons)
-- [ ] Add success/error snackbars for all operations
-- [ ] Add confirmation dialogs for destructive actions
-- [ ] Add subtle animations and transitions
-- [ ] Optimize responsive design (mobile, tablet, desktop)
-- [ ] Add accessibility (ARIA labels, keyboard navigation)
+- [x] Add loading states (spinners, skeletons)
+- [x] Add success/error snackbars for all operations
+- [x] Add confirmation dialogs for destructive actions
+- [x] Add subtle animations and transitions
+- [x] Optimize responsive design (mobile, tablet, desktop)
+- [x] Add accessibility (ARIA labels, keyboard navigation)
 - [ ] **Test**: Smooth, professional user experience
 
 ### 10.5 Performance Optimization
@@ -734,20 +713,6 @@ This plan implements all requirements from REQUIREMENTS.md.
 - [ ] Validate data integrity across all operations
 - [ ] **Test**: App is stable, no critical bugs, ready for users
 
-### 9.4 Deploy to Cloudflare Pages
-- [ ] Create Cloudflare account (if not already)
-- [ ] Connect GitHub repository to Cloudflare Pages
-- [ ] Configure build settings:
-  - [ ] Build command: `npm run build`
-  - [ ] Build output directory: `dist`
-  - [ ] Node.js version: LTS (18 or 20)
-- [ ] Add `_headers` file in `public/` for security headers (CSP, X-Frame-Options, X-Content-Type-Options)
-- [ ] Add `_redirects` file in `public/` for SPA routing (`/* /index.html 200`)
-- [ ] Configure automatic deployment from main branch
-- [ ] Configure preview deployments for pull requests
-- [ ] Deploy application
-- [ ] **Test**: Visit Cloudflare Pages URL, test all features, test on multiple browsers
-
 ### 9.5 Configure Custom Domain (Optional)
 - [ ] Add custom domain in Cloudflare Pages dashboard
 - [ ] Update DNS records
@@ -760,34 +725,13 @@ This plan implements all requirements from REQUIREMENTS.md.
 
 **Goal**: Comprehensive testing and validation of MVP
 
-### 10.1 Integration Testing
-- [ ] Test complete user workflows end-to-end
-- [ ] Test data flow between stores and components
-- [ ] Test interactions between different features
-- [ ] Test budget tracking with actual transactions
-- [ ] Test report calculations with real data
-
-### 10.2 Cross-Feature Validation
-- [ ] Test account deletion with existing transactions
-- [ ] Test category deletion with existing transaction types
-- [ ] Test transaction changes affecting account balances and budgets
-- [ ] Test budget updates reflecting in reports
-- [ ] Test data consistency across all features
-
-### 10.3 Test Coverage Review
-- [ ] Review unit test coverage from all phases
-- [ ] Run `npm run test:coverage` to check coverage metrics
-- [ ] Ensure minimum 80% code coverage across the codebase
-- [ ] Add tests for any gaps in critical functionality
-- [ ] **Test**: Coverage meets 80% threshold, all critical paths tested
-
 ### 10.4 UI/UX Polish
-- [ ] Add loading states (spinners, skeletons)
-- [ ] Add success/error snackbars for all operations
-- [ ] Add confirmation dialogs for destructive actions
-- [ ] Add subtle animations and transitions
-- [ ] Optimize responsive design (mobile, tablet, desktop)
-- [ ] Add accessibility (ARIA labels, keyboard navigation)
+- [x] Add loading states (spinners, skeletons)
+- [x] Add success/error snackbars for all operations
+- [x] Add confirmation dialogs for destructive actions
+- [x] Add subtle animations and transitions
+- [x] Optimize responsive design (mobile, tablet, desktop)
+- [x] Add accessibility (ARIA labels, keyboard navigation)
 - [ ] **Test**: Smooth, professional user experience
 
 ### 10.5 Performance Optimization
@@ -1381,85 +1325,6 @@ These features will be implemented after the MVP is validated by users.
 - [ ] **UI Test**: Unload all archives, verify memory freed (check browser dev tools)
 - [ ] **UI Test**: Archive/import operations show progress indicators
 - [ ] **UI Test**: All operations complete without errors or data loss
-
-### 10.1 Integration Testing
-- [ ] Test complete user workflows end-to-end
-- [ ] Test data flow between stores and components
-- [ ] Test interactions between different features
-- [ ] Test year switching with data dependencies
-
-### 10.2 Cross-Feature Validation
-- [ ] Test account deletion with existing transactions
-- [ ] Test category deletion with existing transaction types
-- [ ] Test transaction changes affecting account balances
-- [ ] Test data consistency across all features
-
-### 10.3 Data Persistence Integration
-- [ ] Test complete save/load workflows with local files
-- [ ] Test data integrity across multiple year files
-- [ ] Test with large datasets (100+ transactions)
-- [ ] **Test**: No data loss in any scenario
-
-### 10.4 Test Coverage Review
-- [ ] Review unit test coverage from all phases
-- [ ] Run `npm run test:coverage` to check coverage metrics
-- [ ] Ensure minimum 80% code coverage across the codebase
-- [ ] Add tests for any gaps in critical functionality
-- [ ] **Test**: Coverage meets 80% threshold, all critical paths tested
-
-### 10.5 Bug Fixes and Edge Cases
-- [ ] Fix any bugs discovered during testing
-- [ ] Handle null/undefined edge cases
-- [ ] Test with extreme values and edge cases
-- [ ] **Test**: App is stable and handles errors gracefully
-
-## Phase 11: UI/UX Polish (MVP)
-
-**Requirements**: NFR-4 (Usability), NFR-3 (Performance)
-
-**Goal**: Professional, polished user experience for MVP
-
-### 11.1 Add Loading States
-- [ ] Create `src/components/common/LoadingSpinner.tsx`
-- [ ] Create `src/components/common/SkeletonLoader.tsx`
-- [ ] Create `src/components/common/LoadingOverlay.tsx`
-- [ ] Add loading states to all async operations
-- [ ] **Test**: Verify smooth loading experience
-
-### 11.2 Add Feedback & Confirmations
-- [ ] Add success snackbars for all CRUD operations
-- [ ] Create `src/components/common/ConfirmDialog.tsx`
-- [ ] Add delete confirmations
-- [ ] Add subtle animations
-- [ ] **Test**: Verify user gets clear feedback for all actions
-
-### 11.3 Improve Responsive Design
-- [ ] Test on mobile devices (iPhone, Android)
-- [ ] Test on tablets (iPad)
-- [ ] Optimize touch targets
-- [ ] **Test**: Full app works well on all screen sizes
-
-### 11.4 Add Accessibility
-- [ ] Add ARIA labels to all interactive elements
-- [ ] Ensure keyboard navigation (Tab, Enter, ESC)
-- [ ] Add focus indicators
-- [ ] Ensure proper heading hierarchy
-- [ ] **Test**: Navigate app with keyboard only
-
-### 11.5 Performance Optimization
-- [ ] Profile app performance with React DevTools
-- [ ] Optimize re-renders with React.memo, useMemo, useCallback
-- [ ] Lazy load route components with React.lazy
-- [ ] **Test**: App is responsive and performant with large datasets
-
-### 11.6 Final Cross-Browser Testing
-- [ ] Test on Chrome (desktop & mobile)
-- [ ] Test on Firefox
-- [ ] Test on Safari (desktop & mobile)
-- [ ] Test on Edge
-- [ ] **Test**: App works consistently across all browsers
-
----
 
 # POST-MVP ENHANCEMENTS
 

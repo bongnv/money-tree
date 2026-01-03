@@ -6,6 +6,7 @@ import theme from './theme';
 import { MainLayout } from './components/layout/MainLayout';
 import { FileLoadErrorDialog } from './components/common/FileLoadErrorDialog';
 import { WelcomeDialog } from './components/common/WelcomeDialog';
+import { NotificationSnackbar } from './components/common/NotificationSnackbar';
 import { AppRoutes } from './routes';
 import { useAppStore } from './stores/useAppStore';
 import { syncService } from './services/sync.service';
@@ -16,7 +17,8 @@ import { SelectedFileInfo } from './components/onedrive/OneDriveFilePicker';
 const WELCOME_DISMISSED_KEY = 'moneyTree.welcomeDismissed';
 
 const App: React.FC = () => {
-  const { error, setError, hasUnsavedChanges, currentYear } = useAppStore();
+  const { error, setError, hasUnsavedChanges, currentYear, snackbar, hideSnackbar } =
+    useAppStore();
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
 
   useEffect(() => {
@@ -140,6 +142,12 @@ const App: React.FC = () => {
         onListOneDriveFolders={handleListOneDriveFolders}
       />
       <FileLoadErrorDialog open={!!error} error={error} onClose={handleCloseError} />
+      <NotificationSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={hideSnackbar}
+      />
     </ThemeProvider>
   );
 };

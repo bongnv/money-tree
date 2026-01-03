@@ -78,6 +78,7 @@ const themeOptions: ThemeOptions = {
         root: {
           textTransform: 'none', // Don't uppercase button text
           fontWeight: 600,
+          transition: 'all 0.2s ease-in-out',
         },
       },
     },
@@ -85,8 +86,40 @@ const themeOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          transition: 'box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out',
+          '&:hover': {
+            boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+          },
         },
       },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          transition: 'transform 0.15s ease-in-out',
+          '&:hover': {
+            transform: 'scale(1.1)',
+          },
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          transition: 'transform 0.2s ease-in-out',
+        },
+      },
+    },
+  },
+  transitions: {
+    duration: {
+      shortest: 150,
+      shorter: 200,
+      short: 250,
+      standard: 300,
+      complex: 375,
+      enteringScreen: 225,
+      leavingScreen: 195,
     },
   },
 };

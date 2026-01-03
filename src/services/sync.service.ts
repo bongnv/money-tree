@@ -102,9 +102,11 @@ class SyncService {
       const fileName = storage.getFileName();
       state.setFileName(fileName);
       state.setError(null);
+      state.showSnackbar('Data saved successfully', 'success');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to sync';
       state.setError(message);
+      state.showSnackbar(`Failed to save: ${message}`, 'error');
       throw error;
     } finally {
       this.isSaving = false;

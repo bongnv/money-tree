@@ -2,5 +2,6 @@
 - [x] BUG-2: Add a new dashboard button next to Money Tree label in the navigation to improve UX
 - [x] BUG-3: "Failed to Load File: File permission expired. Please click the Sync button to grant permission again." for auto sync when loading from local storage
 - [x] BUG-4: Use USD as intermediate rate if the direct rate isn't found from API
-- [ ] BUG-5: In balance sheet report, we should exchange rate at the valuation time for currency conversion
-- [ ] BUG-6: Some rates failed to fetch. Check console for details
+- [x] BUG-5: In balance sheet report, we should exchange rate at the valuation time for currency conversion
+- [x] BUG-6: Some rates failed to fetch. Check console for details
+- [x] BUG-7: Ensure rates are loaded before showing the report

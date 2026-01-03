@@ -14,6 +14,7 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  CircularProgress,
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
@@ -45,6 +46,7 @@ export const BalanceSheet: React.FC = () => {
   const [comparisonType, setComparisonType] = useState<ComparisonType>('none');
   const [historyDialogAssetId, setHistoryDialogAssetId] = useState<string | null>(null);
   const [conversionCurrency, setConversionCurrency] = useState<string>(baseCurrency);
+  const [loadingRates, setLoadingRates] = useState<boolean>(false);
 
   // Use the selected currency for display
   const currencyId = conversionCurrency;
@@ -53,29 +55,61 @@ export const BalanceSheet: React.FC = () => {
   const effectiveBaseCurrency = conversionCurrency;
   const effectiveGetRateForMonth = getRateForMonth;
 
-  // Automatically fetch missing exchange rates in background
+  // Automatically fetch missing exchange rates in background for all historical months
   useEffect(() => {
-    // Get the month from selected date (YYYY-MM)
-    const month = selectedDate.slice(0, 7);
+    const fetchRates = async () => {
+      setLoadingRates(true);
 
-    // Get unique currencies from accounts and manual assets
-    const currencies = new Set<string>();
-    accounts.forEach((account) => {
-      if (account.currencyId && account.currencyId !== conversionCurrency) {
-        currencies.add(account.currencyId);
-      }
-    });
-    manualAssets.forEach((asset) => {
-      if (asset.currencyId && asset.currencyId !== conversionCurrency) {
-        currencies.add(asset.currencyId);
-      }
-    });
+      // Get unique currencies from accounts and manual assets
+      const currencies = new Set<string>();
+      accounts.forEach((account) => {
+        if (account.currencyId && account.currencyId !== conversionCurrency) {
+          currencies.add(account.currencyId);
+        }
+      });
+      manualAssets.forEach((asset) => {
+        if (asset.currencyId && asset.currencyId !== conversionCurrency) {
+          currencies.add(asset.currencyId);
+        }
+      });
 
-    // Fetch missing rates for each currency
-    currencies.forEach((currency) => {
-      fetchRateIfMissing(month, currency, conversionCurrency);
-    });
-  }, [conversionCurrency, selectedDate, accounts, manualAssets, fetchRateIfMissing]);
+      if (currencies.size === 0) {
+        setLoadingRates(false);
+        return;
+      }
+
+      // Get months for trend data (past 12 months + selected month)
+      const months = new Set<string>();
+      const [year, month, day] = selectedDate.split('-').map(Number);
+      const currentDate = new Date(year, month - 1, day);
+      const oneYearAgo = new Date(currentDate);
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+      // Add all months in the trend
+      let tempDate = new Date(oneYearAgo);
+      while (tempDate <= currentDate) {
+        const monthStr = `${tempDate.getFullYear()}-${String(tempDate.getMonth() + 1).padStart(2, '0')}`;
+        months.add(monthStr);
+        tempDate.setMonth(tempDate.getMonth() + 1);
+      }
+
+      // Fetch rates for all currency-month combinations
+      const fetchPromises: Promise<number | null>[] = [];
+      currencies.forEach((currency) => {
+        months.forEach((month) => {
+          fetchPromises.push(fetchRateIfMissing(month, currency, conversionCurrency));
+        });
+      });
+
+      // Wait for all rates to be fetched or attempted
+      await Promise.allSettled(fetchPromises);
+      setLoadingRates(false);
+    };
+
+    fetchRates();
+    // Only re-fetch when currency or date changes, not when accounts/assets arrays change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversionCurrency, selectedDate, fetchRateIfMissing]);
 
   // Calculate balance sheet for selected date with currency conversion
   const balanceSheet = useMemo(
@@ -249,8 +283,20 @@ export const BalanceSheet: React.FC = () => {
         </Grid>
       </Paper>
 
+      {/* Loading indicator for exchange rates */}
+      {loadingRates && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 3, mb: 3 }}>
+          <CircularProgress size={24} sx={{ mr: 2 }} />
+          <Typography variant="body2" color="text.secondary">
+            Loading exchange rates...
+          </Typography>
+        </Box>
+      )}
+
       {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      {!loadingRates && (
+        <>
+          <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
@@ -381,6 +427,8 @@ export const BalanceSheet: React.FC = () => {
           </Grid>
         </Grid>
       </Paper>
+      </>
+      )}
 
       {/* Asset Value History Dialog */}
       <AssetValueHistoryDialog

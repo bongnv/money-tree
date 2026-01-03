@@ -125,6 +125,12 @@ export const useExchangeRateStore = create<ExchangeRateState & ExchangeRateActio
         createdAt: new Date().toISOString(),
       };
       get().addRate(newRate);
+      
+      // Clear any existing error for this rate
+      set((state) => ({
+        errors: { ...state.errors, [key]: '' },
+      }));
+      
       return fallbackRate;
     }
 
@@ -159,9 +165,10 @@ export const useExchangeRateStore = create<ExchangeRateState & ExchangeRateActio
 
       get().addRate(newRate);
 
-      // Clear loading state
+      // Clear loading and error state
       set((state) => ({
         loading: { ...state.loading, [key]: false },
+        errors: { ...state.errors, [key]: '' },
       }));
 
       return rate;

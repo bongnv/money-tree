@@ -34,6 +34,11 @@ export const ExchangeRatesSettings: React.FC = () => {
     return Object.values(loading).filter((isLoading) => isLoading).length;
   }, [loading]);
 
+  // Count actual errors (non-empty error messages)
+  const errorCount = useMemo(() => {
+    return Object.values(errors).filter((error) => error && error.length > 0).length;
+  }, [errors]);
+
   // Filter rates for selected year
   const yearRates = useMemo(() => {
     return rates.filter((rate) => rate.month.startsWith(String(selectedYear)));
@@ -100,7 +105,7 @@ export const ExchangeRatesSettings: React.FC = () => {
           )}
         </Box>
 
-        {Object.keys(errors).length > 0 && (
+        {errorCount > 0 && (
           <Alert severity="error" sx={{ mb: 2 }}>
             Some rates failed to fetch. Check console for details.
           </Alert>

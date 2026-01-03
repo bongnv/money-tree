@@ -19,6 +19,22 @@ describe('IStorageProvider', () => {
     async saveDataFile(data: DataFile): Promise<void> {
       this.dataFile = data;
     }
+
+    async initialize(): Promise<void> {
+      // Mock initialization
+    }
+
+    isReady(): boolean {
+      return true;
+    }
+
+    clearFileHandle(): void {
+      // Mock clear
+    }
+
+    getFileName(): string | null {
+      return 'mock-file.json';
+    }
   }
 
   let provider: IStorageProvider;

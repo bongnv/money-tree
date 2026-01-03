@@ -69,6 +69,14 @@ export class OneDriveProvider implements IStorageProvider {
   }
 
   /**
+   * Check if provider is ready to load/save data
+   * @returns True if authenticated, false otherwise
+   */
+  isReady(): boolean {
+    return this.isAuthenticated();
+  }
+
+  /**
    * Get authenticated user's email
    */
   getUserEmail(): string | null {
@@ -198,13 +206,6 @@ export class OneDriveProvider implements IStorageProvider {
       
       throw new Error(errorMessages.uploadFailed);
     }
-  }
-
-  /**
-   * Check if has file handle (always true for OneDrive if authenticated)
-   */
-  hasFileHandle(): boolean {
-    return this.isAuthenticated();
   }
 
   /**

@@ -20,25 +20,26 @@ export interface IStorageProvider {
   saveDataFile(data: DataFile): Promise<void>;
 
   /**
-   * Check if a file handle is cached
-   * @returns True if file handle exists, false otherwise
+   * Clear cached file handle or sign out
    */
-  hasFileHandle?(): boolean;
-
-  /**
-   * Clear cached file handle
-   */
-  clearFileHandle?(): void | Promise<void>;
+  clearFileHandle(): void | Promise<void>;
 
   /**
    * Get the name of the current file
    * @returns File name or null if no file is open
    */
-  getFileName?(): string | null;
+  getFileName(): string | null;
 
   /**
-   * Ensure any async initialization is complete
-   * Call this before checking hasFileHandle() or other operations
+   * Initialize the provider
+   * Sets up necessary state, authentication, or resources
+   * Should be called before any other operations
    */
-  ensureInitialized?(): Promise<void>;
+  initialize(): Promise<void>;
+
+  /**
+   * Check if provider is ready to load/save data
+   * @returns True if ready (has file handle, authenticated, etc.), false otherwise
+   */
+  isReady(): boolean;
 }

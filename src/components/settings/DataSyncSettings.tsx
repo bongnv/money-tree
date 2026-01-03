@@ -152,6 +152,14 @@ export const DataSyncSettings: React.FC = () => {
       await provider.authenticate();
       setIsOneDriveAuthenticated(true);
       setOneDriveUserEmail(provider.getUserEmail() || null);
+      
+      // Try to load existing file from OneDrive
+      try {
+        await syncService.loadDataFile(currentYear);
+      } catch (error) {
+        // If no file exists, that's OK - user will start with current data
+        console.log('No existing file in OneDrive, continuing with current data');
+      }
     } catch (error) {
       console.error('OneDrive authentication failed:', error);
       setAuthError(error instanceof Error ? error.message : 'Authentication failed');

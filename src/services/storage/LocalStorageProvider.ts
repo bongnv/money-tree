@@ -27,10 +27,18 @@ export class LocalStorageProvider implements IStorageProvider {
    * Wait for initialization to complete
    * Public method to allow external callers to wait for initialization
    */
-  async ensureInitialized(): Promise<void> {
+  async initialize(): Promise<void> {
     if (this.initPromise) {
       await this.initPromise;
     }
+  }
+
+  /**
+   * Check if provider is ready to load/save data
+   * @returns True if file handle is available, false otherwise
+   */
+  isReady(): boolean {
+    return this.fileHandle !== null;
   }
 
   /**
@@ -169,7 +177,7 @@ export class LocalStorageProvider implements IStorageProvider {
     this.checkSupport();
 
     // Ensure initialization is complete before checking for cached handle
-    await this.ensureInitialized();
+    await this.initialize();
 
     try {
       let fileHandle = this.fileHandle;
@@ -284,14 +292,6 @@ export class LocalStorageProvider implements IStorageProvider {
   async clearFileHandle(): Promise<void> {
     this.fileHandle = null;
     await this.removeCachedHandle();
-  }
-
-  /**
-   * Get cached file handle status
-   */
-  hasFileHandle(): boolean {
-    // Return true only if initialized and has handle
-    return this.initialized && this.fileHandle !== null;
   }
 
   /**

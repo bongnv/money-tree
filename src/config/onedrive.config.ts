@@ -6,8 +6,8 @@
  * 2. Click "New registration"
  * 3. Name: "Money Tree App"
  * 4. Supported account types: "Accounts in any organizational directory and personal Microsoft accounts"
- * 5. Redirect URI: Web platform, add your app URL (e.g., http://localhost:8080 for dev)
- * 6. After registration, copy the "Application (client) ID" to CLIENT_ID below
+ * 5. Redirect URI: Select "Single-page application (SPA)" platform, add http://localhost:8080
+ * 6. After registration, copy the "Application (client) ID" to clientId below
  * 7. Under "API permissions", add "Microsoft Graph" -> "Delegated permissions" -> "Files.ReadWrite"
  * 8. Grant admin consent for the permissions
  */
@@ -16,14 +16,14 @@ export const msalConfig = {
   auth: {
     // TODO: Replace with your actual Azure AD application client ID after registration
     // Leave as empty string until you complete Azure app registration
-    clientId: '',
+    clientId: 'ce7ae0cb-7884-4fd9-9135-ad9452ce59b4',
     
-    // Authority for Microsoft personal accounts (consumers)
-    // For organizational accounts only, use: https://login.microsoftonline.com/{tenant-id}
-    authority: 'https://login.microsoftonline.com/common',
+    // Authority for Microsoft personal accounts only
+    // Use 'consumers' for personal accounts, 'common' for both personal and organizational
+    authority: 'https://login.microsoftonline.com/consumers',
     
     // Redirect URI - must match what's configured in Azure portal
-    redirectUri: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8080',
+    redirectUri: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
   },
   cache: {
     cacheLocation: 'localStorage', // Store tokens in localStorage (more persistent than sessionStorage)

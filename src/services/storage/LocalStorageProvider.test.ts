@@ -209,7 +209,7 @@ describe('LocalStorageProvider', () => {
 
       await provider.loadDataFile();
 
-      expect(provider.hasFileHandle()).toBe(true);
+      expect(provider.isReady()).toBe(true);
     });
 
     it('should handle data file with null arrays', async () => {
@@ -327,10 +327,10 @@ describe('LocalStorageProvider', () => {
       (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
 
       await provider.loadDataFile();
-      expect(provider.hasFileHandle()).toBe(true);
+      expect(provider.isReady()).toBe(true);
 
       await provider.clearFileHandle();
-      expect(provider.hasFileHandle()).toBe(false);
+      expect(provider.isReady()).toBe(false);
     });
   });
 });

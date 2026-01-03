@@ -340,13 +340,19 @@ These features will be implemented after the MVP is complete and validated by us
 
 **FR-11.3** [x] OneDrive integration with full sync - *Post-MVP*
 - OAuth authentication via `@azure/msal-browser`
+- File location picker (browse OneDrive, select existing file or choose location for new file)
+- Support for shared folders (enables family/team collaboration)
+- Store selected file ID and path for reliable access
 - Two-way sync (upload changes, download remote changes)
 - Single file sync (main data file with all years)
 - Background sync on data changes
 - Sync status indicators (syncing, synced, offline)
+- "Change file location" option in settings
 
 **FR-11.4** [ ] Google Drive integration with full sync - *Post-MVP*
 - OAuth authentication via Google Sign-In SDK
+- File location picker (browse Google Drive, select existing file or choose location)
+- Support for shared folders (enables family/team collaboration)
 - Two-way sync (upload changes, download remote changes)
 - Single file sync (main data file with all years)
 - Background sync on data changes
@@ -354,6 +360,8 @@ These features will be implemented after the MVP is complete and validated by us
 
 **FR-11.5** [ ] Dropbox integration with full sync - *Post-MVP*
 - OAuth authentication via Dropbox SDK
+- File location picker (browse Dropbox, select existing file or choose location)
+- Support for shared folders (enables family/team collaboration)
 - Two-way sync (upload changes, download remote changes)
 - Single file sync (main data file with all years)
 - Background sync on data changes

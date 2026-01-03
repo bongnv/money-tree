@@ -99,7 +99,7 @@ class SyncService {
 
       state.markAsSaved();
       // Get the actual filename from storage provider
-      const fileName = storage.getFileName?.() || 'money-tree.json';
+      const fileName = storage.getFileName();
       state.setFileName(fileName);
       state.setError(null);
     } catch (error) {
@@ -187,7 +187,7 @@ class SyncService {
 
         state.setCurrentYear(year);
         // Get the actual filename from storage provider
-        const fileName = storage.getFileName?.() || 'money-tree.json';
+        const fileName = storage.getFileName();
         state.setFileName(fileName);
         state.markAsSaved();
       }
@@ -201,27 +201,26 @@ class SyncService {
   }
 
   /**
-   * Attempt to auto-load from cached file handle
+   * Attempt to auto-load from cached file handle or authenticated cloud provider
    * Returns true if successful, false if no cached file or load failed
    */
   async autoLoad(): Promise<boolean> {
     try {
       const storage = StorageFactory.getCurrentProvider();
 
-      // Ensure storage provider is initialized (important for LocalStorageProvider)
-      if ('ensureInitialized' in storage && typeof storage.ensureInitialized === 'function') {
-        await storage.ensureInitialized();
+      // Initialize provider (handles auth for cloud, file handle cache for local)
+      if (storage.initialize) {
+        await storage.initialize();
       }
 
-      // Check if we have a cached file handle
-      if (!storage.hasFileHandle || !storage.hasFileHandle()) {
+      // Check if provider is ready to load data
+      if (!storage.isReady()) {
         return false;
       }
 
+      // Try to load file from provider
       const state = useAppStore.getState();
       const currentYear = state.currentYear || new Date().getFullYear();
-
-      // Try to load from cached handle
       await this.loadDataFile(currentYear);
       return true;
     } catch (error) {
@@ -239,9 +238,7 @@ class SyncService {
     const storage = StorageFactory.getCurrentProvider();
     
     // Clear the cached file handle to force file picker
-    if (storage.clearFileHandle) {
-      await storage.clearFileHandle();
-    }
+    await storage.clearFileHandle();
 
     // Clear the cached data file
     this.cachedDataFile = null;
@@ -257,9 +254,7 @@ class SyncService {
   async clearCachedFile(): Promise<void> {
     const storage = StorageFactory.getCurrentProvider();
     
-    if (storage.clearFileHandle) {
-      await storage.clearFileHandle();
-    }
+    await storage.clearFileHandle();
 
     // Clear the cached data file
     this.cachedDataFile = null;

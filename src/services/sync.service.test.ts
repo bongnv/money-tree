@@ -23,6 +23,10 @@ describe('SyncService', () => {
     (StorageFactory.getCurrentProvider as jest.Mock).mockReturnValue({
       saveDataFile: mockSaveDataFile,
       loadDataFile: mockLoadDataFile,
+      initialize: jest.fn().mockResolvedValue(undefined),
+      isReady: jest.fn().mockReturnValue(true),
+      clearFileHandle: jest.fn(),
+      getFileName: jest.fn().mockReturnValue('test.json'),
     });
 
     jest.spyOn(window, 'confirm').mockReturnValue(false);
@@ -342,8 +346,9 @@ describe('SyncService', () => {
   });
 
   describe('autoLoad', () => {
-    it('should return true when file handle exists and load succeeds', async () => {
-      const mockHasFileHandle = jest.fn().mockReturnValue(true);
+    it('should return true when provider is ready and load succeeds', async () => {
+      const mockIsReady = jest.fn().mockReturnValue(true);
+      const mockInitialize = jest.fn().mockResolvedValue(undefined);
       const mockDataFile: DataFile = {
         version: '1.0.0',
         years: {
@@ -363,7 +368,10 @@ describe('SyncService', () => {
       (StorageFactory.getCurrentProvider as jest.Mock).mockReturnValue({
         saveDataFile: mockSaveDataFile,
         loadDataFile: mockLoadDataFile.mockResolvedValue(mockDataFile),
-        hasFileHandle: mockHasFileHandle,
+        isReady: mockIsReady,
+        initialize: mockInitialize,
+        clearFileHandle: jest.fn(),
+        getFileName: jest.fn().mockReturnValue('test.json'),
       });
 
       useAppStore.getState().setCurrentYear(2024);
@@ -371,33 +379,43 @@ describe('SyncService', () => {
       const result = await syncService.autoLoad();
 
       expect(result).toBe(true);
-      expect(mockHasFileHandle).toHaveBeenCalled();
+      expect(mockInitialize).toHaveBeenCalled();
+      expect(mockIsReady).toHaveBeenCalled();
       expect(mockLoadDataFile).toHaveBeenCalled();
     });
 
-    it('should return false when no file handle exists', async () => {
-      const mockHasFileHandle = jest.fn().mockReturnValue(false);
+    it('should return false when provider is not ready', async () => {
+      const mockIsReady = jest.fn().mockReturnValue(false);
+      const mockInitialize = jest.fn().mockResolvedValue(undefined);
 
       (StorageFactory.getCurrentProvider as jest.Mock).mockReturnValue({
         saveDataFile: mockSaveDataFile,
         loadDataFile: mockLoadDataFile,
-        hasFileHandle: mockHasFileHandle,
+        isReady: mockIsReady,
+        initialize: mockInitialize,
+        clearFileHandle: jest.fn(),
+        getFileName: jest.fn().mockReturnValue('test.json'),
       });
 
       const result = await syncService.autoLoad();
 
       expect(result).toBe(false);
-      expect(mockHasFileHandle).toHaveBeenCalled();
+      expect(mockInitialize).toHaveBeenCalled();
+      expect(mockIsReady).toHaveBeenCalled();
       expect(mockLoadDataFile).not.toHaveBeenCalled();
     });
 
     it('should return false when load fails', async () => {
-      const mockHasFileHandle = jest.fn().mockReturnValue(true);
+      const mockIsReady = jest.fn().mockReturnValue(true);
+      const mockInitialize = jest.fn().mockResolvedValue(undefined);
 
       (StorageFactory.getCurrentProvider as jest.Mock).mockReturnValue({
         saveDataFile: mockSaveDataFile,
         loadDataFile: mockLoadDataFile.mockRejectedValue(new Error('Load failed')),
-        hasFileHandle: mockHasFileHandle,
+        isReady: mockIsReady,
+        initialize: mockInitialize,
+        clearFileHandle: jest.fn(),
+        getFileName: jest.fn().mockReturnValue('test.json'),
       });
 
       useAppStore.getState().setCurrentYear(2024);
@@ -405,21 +423,9 @@ describe('SyncService', () => {
       const result = await syncService.autoLoad();
 
       expect(result).toBe(false);
-      expect(mockHasFileHandle).toHaveBeenCalled();
+      expect(mockInitialize).toHaveBeenCalled();
+      expect(mockIsReady).toHaveBeenCalled();
       expect(mockLoadDataFile).toHaveBeenCalled();
-    });
-
-    it('should return false when provider does not have hasFileHandle method', async () => {
-      (StorageFactory.getCurrentProvider as jest.Mock).mockReturnValue({
-        saveDataFile: mockSaveDataFile,
-        loadDataFile: mockLoadDataFile,
-        // No hasFileHandle method
-      });
-
-      const result = await syncService.autoLoad();
-
-      expect(result).toBe(false);
-      expect(mockLoadDataFile).not.toHaveBeenCalled();
     });
   });
 });

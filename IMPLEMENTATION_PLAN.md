@@ -1041,12 +1041,12 @@ These features will be implemented after the MVP is validated by users.
   - [x] WelcomeDialog OneDrive button enabled
 
 **Manual Verification** (requires Azure app registration):
-- [ ] **Pre-requisite**: Complete Azure app registration (see onedrive.config.ts instructions)
-- [ ] **Pre-requisite**: Set REACT_APP_AZURE_CLIENT_ID in environment
-- [ ] **UI Test**: In Settings → Data & Sync, select "OneDrive" from dropdown
-- [ ] **UI Test**: Click "Connect OneDrive", see Microsoft login popup
-- [ ] **UI Test**: Complete authentication, see user email displayed
-- [ ] **UI Test**: Verify "Connected to OneDrive" status message
+- [x] **Pre-requisite**: Complete Azure app registration (see onedrive.config.ts instructions)
+- [x] **Pre-requisite**: Set REACT_APP_AZURE_CLIENT_ID in environment
+- [x] **UI Test**: In Settings → Data & Sync, select "OneDrive" from dropdown
+- [x] **UI Test**: Click "Connect OneDrive", see Microsoft login popup
+- [x] **UI Test**: Complete authentication, see user email displayed
+- [x] **UI Test**: Verify "Connected to OneDrive" status message
 - [ ] **UI Test**: Make change, click "Sync", verify file uploads to OneDrive
 - [ ] **UI Test**: Open OneDrive web, verify money-tree.json file exists in root folder
 - [ ] **UI Test**: Refresh app, verify OneDrive authentication persists
@@ -1055,6 +1055,50 @@ These features will be implemented after the MVP is validated by users.
 - [ ] **UI Test**: Reconnect, verify sync resumes
 - [ ] **UI Test**: Switch back to "Local File System", verify local file sync works
 - [ ] **UI Test**: In WelcomeDialog, click "Connect to OneDrive", verify auth flow works
+
+### 11.4.1 OneDrive File Picker (FR-11.3 - File Location Selection)
+**Implementation**:
+- [ ] Create `src/components/onedrive/OneDriveFilePicker.tsx`:
+  - [ ] Dialog showing OneDrive folder tree (using Graph API `/me/drive/root/children`)
+  - [ ] Browse folders (recursively load children on expand)
+  - [ ] Show shared folders/files (access via Graph API)
+  - [ ] "Select existing file" option (filter for .json files)
+  - [ ] "Create new file here" option (select folder, name file)
+  - [ ] Display current path breadcrumb
+  - [ ] Loading states for folder navigation
+- [ ] Update `src/services/storage/OneDriveProvider.ts`:
+  - [ ] Add `listFolders(parentId?: string)` - GET `/me/drive/items/{id}/children`
+  - [ ] Add `searchFiles(query: string)` - GET `/me/drive/root/search(q='{query}')`
+  - [ ] Store selected file info: `{ fileId: string, filePath: string, fileName: string }`
+  - [ ] Update `loadDataFile()` to use fileId instead of fixed path
+  - [ ] Update `saveDataFile()` to use fileId instead of fixed path
+  - [ ] Add `setSelectedFile(fileInfo)` and `getSelectedFile()` methods
+  - [ ] Persist selected file info to localStorage
+- [ ] Update `src/components/common/WelcomeDialog.tsx`:
+  - [ ] After OneDrive authentication succeeds, show file picker
+  - [ ] Allow user to browse and select file location
+  - [ ] If file exists, load it; if new location, start with empty data
+- [ ] Update `src/components/settings/DataSyncSettings.tsx`:
+  - [ ] Add "Change OneDrive file location" button
+  - [ ] Show current file path and name
+  - [ ] Open file picker on button click
+  - [ ] Handle file location change (migrate data if needed)
+- [ ] Write automated tests:
+  - [ ] OneDriveFilePicker renders folder tree
+  - [ ] File picker handles folder navigation
+  - [ ] Selected file info is persisted
+  - [ ] File location change updates provider
+
+**Manual Verification**:
+- [ ] **UI Test**: After OneDrive auth, see file picker dialog
+- [ ] **UI Test**: Browse folders, see nested folder structure
+- [ ] **UI Test**: Select existing money-tree.json file from any folder
+- [ ] **UI Test**: Navigate to shared folder, select file from there
+- [ ] **UI Test**: Create new file in custom location (e.g., /Documents/Finances/)
+- [ ] **UI Test**: In Settings, see current file path displayed
+- [ ] **UI Test**: Click "Change file location", select different folder
+- [ ] **UI Test**: Verify data syncs to new location correctly
+- [ ] **UI Test**: Access shared file from second user/device
 
 ### 11.5 Sync Status Indicators (FR-11.3)
 **Implementation**:

@@ -10,18 +10,21 @@ describe('IStorageProvider', () => {
    * Mock implementation for testing
    */
   class MockStorageProvider implements IStorageProvider {
-    private dataFiles: Map<number, DataFile> = new Map();
+    private dataFile: DataFile | null = null;
 
-    async loadDataFile(year: number): Promise<DataFile | null> {
-      return this.dataFiles.get(year) || null;
+    async loadDataFile(): Promise<DataFile | null> {
+      return this.dataFile;
     }
 
-    async saveDataFile(year: number, data: DataFile): Promise<void> {
-      this.dataFiles.set(year, data);
+    async saveDataFile(data: DataFile): Promise<void> {
+      this.dataFile = data;
     }
 
     async listAvailableYears(): Promise<number[]> {
-      return Array.from(this.dataFiles.keys()).sort((a, b) => b - a);
+      if (!this.dataFile) return [];
+      return Object.keys(this.dataFile.years || {})
+        .map(Number)
+        .sort((a, b) => b - a);
     }
   }
 
@@ -32,93 +35,107 @@ describe('IStorageProvider', () => {
     provider = new MockStorageProvider();
     mockData = {
       version: '1.0.0',
-      year: 2024,
+      years: {
+        '2024': {
+          transactions: [],
+          budgets: [],
+          manualAssets: [],
+        },
+      },
       accounts: [],
       categories: [],
       transactionTypes: [],
-      transactions: [],
-      budgets: [],
-      manualAssets: [],
+      archivedYears: [],
       lastModified: new Date().toISOString(),
     };
   });
 
   describe('loadDataFile', () => {
     it('should return null when file does not exist', async () => {
-      const result = await provider.loadDataFile(2024);
+      const result = await provider.loadDataFile();
       expect(result).toBeNull();
     });
 
     it('should return data when file exists', async () => {
-      await provider.saveDataFile(2024, mockData);
-      const result = await provider.loadDataFile(2024);
+      await provider.saveDataFile(mockData);
+      const result = await provider.loadDataFile();
       expect(result).toEqual(mockData);
     });
 
-    it('should return correct data for specific year', async () => {
-      const data2023 = { ...mockData, year: 2023 };
-      const data2024 = { ...mockData, year: 2024 };
+    it('should return data with multiple years', async () => {
+      const multiYearData = {
+        ...mockData,
+        years: {
+          '2023': { transactions: [], budgets: [], manualAssets: [] },
+          '2024': { transactions: [], budgets: [], manualAssets: [] },
+        },
+      };
 
-      await provider.saveDataFile(2023, data2023);
-      await provider.saveDataFile(2024, data2024);
+      await provider.saveDataFile(multiYearData);
+      const result = await provider.loadDataFile();
 
-      const result2023 = await provider.loadDataFile(2023);
-      const result2024 = await provider.loadDataFile(2024);
-
-      expect(result2023?.year).toBe(2023);
-      expect(result2024?.year).toBe(2024);
+      expect(result?.years).toHaveProperty('2023');
+      expect(result?.years).toHaveProperty('2024');
     });
   });
 
   describe('saveDataFile', () => {
     it('should save data successfully', async () => {
-      await provider.saveDataFile(2024, mockData);
-      const result = await provider.loadDataFile(2024);
+      await provider.saveDataFile(mockData);
+      const result = await provider.loadDataFile();
       expect(result).toEqual(mockData);
     });
 
     it('should overwrite existing data', async () => {
-      await provider.saveDataFile(2024, mockData);
+      await provider.saveDataFile(mockData);
 
       const updatedData = { ...mockData, lastModified: new Date().toISOString() };
-      await provider.saveDataFile(2024, updatedData);
+      await provider.saveDataFile(updatedData);
 
-      const result = await provider.loadDataFile(2024);
+      const result = await provider.loadDataFile();
       expect(result).toEqual(updatedData);
     });
 
-    it('should save data for multiple years independently', async () => {
-      const data2023 = { ...mockData, year: 2023 };
-      const data2024 = { ...mockData, year: 2024 };
+    it('should save data with multiple years', async () => {
+      const multiYearData = {
+        ...mockData,
+        years: {
+          '2023': { transactions: [], budgets: [], manualAssets: [] },
+          '2024': { transactions: [], budgets: [], manualAssets: [] },
+        },
+      };
 
-      await provider.saveDataFile(2023, data2023);
-      await provider.saveDataFile(2024, data2024);
+      await provider.saveDataFile(multiYearData);
+      const result = await provider.loadDataFile();
 
-      const result2023 = await provider.loadDataFile(2023);
-      const result2024 = await provider.loadDataFile(2024);
-
-      expect(result2023).toEqual(data2023);
-      expect(result2024).toEqual(data2024);
+      expect(result?.years).toHaveProperty('2023');
+      expect(result?.years).toHaveProperty('2024');
     });
   });
 
   describe('listAvailableYears', () => {
-    it('should return empty array when no files exist', async () => {
+    it('should return empty array when no file exists', async () => {
       const result = await provider.listAvailableYears();
       expect(result).toEqual([]);
     });
 
-    it('should return single year when one file exists', async () => {
-      await provider.saveDataFile(2024, mockData);
+    it('should return single year when one year exists', async () => {
+      await provider.saveDataFile(mockData);
       const result = await provider.listAvailableYears();
       expect(result).toEqual([2024]);
     });
 
     it('should return multiple years sorted descending', async () => {
-      await provider.saveDataFile(2022, { ...mockData, year: 2022 });
-      await provider.saveDataFile(2024, { ...mockData, year: 2024 });
-      await provider.saveDataFile(2023, { ...mockData, year: 2023 });
+      const multiYearData = {
+        ...mockData,
+        years: {
+          '2022': { transactions: [], budgets: [], manualAssets: [] },
+          '2023': { transactions: [], budgets: [], manualAssets: [] },
+          '2024': { transactions: [], budgets: [], manualAssets: [] },
+        },
+      };
 
+      await provider.saveDataFile(multiYearData);
       const result = await provider.listAvailableYears();
       expect(result).toEqual([2024, 2023, 2022]);
     });

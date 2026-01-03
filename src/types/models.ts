@@ -113,18 +113,64 @@ export interface ManualAsset {
 }
 
 /**
+ * Year End Summary
+ * Stores summary information for an archived year
+ */
+export interface YearEndSummary {
+  transactionCount: number;
+  closingNetWorth: number;
+  closingBalances: Record<string, number>; // accountId -> closing balance
+}
+
+/**
+ * Archived Year Reference
+ * References an archived year file with summary data
+ */
+export interface ArchivedYearReference {
+  year: number;
+  fileName: string;
+  archivedDate: string; // ISO date string
+  summary: YearEndSummary;
+}
+
+/**
+ * Year Data
+ * Data for a single year
+ */
+export interface YearData {
+  transactions: Transaction[];
+  budgets: Budget[];
+  manualAssets: ManualAsset[];
+}
+
+/**
  * Data File model
- * Represents the complete data structure for a year
+ * Represents the complete data structure with multi-year support
  * Note: Currencies are not stored in the data file as they are fixed defaults
  */
 export interface DataFile {
   version: string; // Schema version for future compatibility
+  years: Record<string, YearData>; // year as string key -> year data
+  accounts: Account[]; // Shared across all years
+  categories: Category[]; // Shared across all years
+  transactionTypes: TransactionType[]; // Shared across all years
+  archivedYears: ArchivedYearReference[]; // References to archived years
+  lastModified: string; // ISO date string
+}
+
+/**
+ * Archive File
+ * Self-contained archive for a single year
+ */
+export interface ArchiveFile {
+  version: string;
   year: number;
-  accounts: Account[];
-  categories: Category[];
-  transactionTypes: TransactionType[];
+  accounts: Account[]; // Snapshot of accounts at archive time
+  categories: Category[]; // Snapshot of categories at archive time
+  transactionTypes: TransactionType[]; // Snapshot of transaction types at archive time
   transactions: Transaction[];
   budgets: Budget[];
   manualAssets: ManualAsset[];
-  lastModified: string; // ISO date string
+  archivedDate: string; // ISO date string
+  summary: YearEndSummary;
 }

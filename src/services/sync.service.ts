@@ -71,22 +71,38 @@ class SyncService {
       const assetStore = useAssetStore.getState();
       const budgetStore = useBudgetStore.getState();
 
+      // Get existing data file from storage or create new one
+      let existingData: DataFile | null = null;
+      
+      try {
+        existingData = await storage.loadDataFile();
+      } catch (error) {
+        // If file doesn't exist, we'll create a new one
+      }
+
+      const currentYearStr = String(state.currentYear);
+      
       const dataToSave: DataFile = {
         version: '1.0.0',
-        year: state.currentYear,
+        years: {
+          ...existingData?.years,
+          [currentYearStr]: {
+            transactions: transactionStore.transactions,
+            budgets: budgetStore.budgets,
+            manualAssets: assetStore.manualAssets,
+          },
+        },
         accounts: accountStore.accounts,
         categories: categoryStore.categories,
         transactionTypes: categoryStore.transactionTypes,
-        transactions: transactionStore.transactions,
-        budgets: budgetStore.budgets,
-        manualAssets: assetStore.manualAssets,
+        archivedYears: existingData?.archivedYears || [],
         lastModified: new Date().toISOString(),
       };
 
-      await storage.saveDataFile(dataToSave.year, dataToSave);
+      await storage.saveDataFile(dataToSave);
 
       state.markAsSaved();
-      state.setFileName(`money-tree-${dataToSave.year}.json`);
+      state.setFileName(`money-tree.json`);
       state.setError(null);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save';
@@ -138,19 +154,31 @@ class SyncService {
 
     try {
       const storage = StorageFactory.getCurrentProvider();
-      const dataFile = await storage.loadDataFile(year);
+      const dataFile = await storage.loadDataFile();
 
       if (dataFile) {
-        // Distribute data to domain stores
+        // Distribute shared data to domain stores
         useAccountStore.getState().setAccounts(dataFile.accounts || []);
         useCategoryStore.getState().setCategories(dataFile.categories || []);
         useCategoryStore.getState().setTransactionTypes(dataFile.transactionTypes || []);
-        useTransactionStore.getState().setTransactions(dataFile.transactions || []);
-        useAssetStore.getState().setManualAssets(dataFile.manualAssets || []);
-        useBudgetStore.getState().setBudgets(dataFile.budgets || []);
+        
+        // Get year-specific data
+        const yearStr = String(year);
+        const yearData = dataFile.years?.[yearStr];
+        
+        if (yearData) {
+          useTransactionStore.getState().setTransactions(yearData.transactions || []);
+          useAssetStore.getState().setManualAssets(yearData.manualAssets || []);
+          useBudgetStore.getState().setBudgets(yearData.budgets || []);
+        } else {
+          // No data for this year, initialize with empty arrays
+          useTransactionStore.getState().setTransactions([]);
+          useAssetStore.getState().setManualAssets([]);
+          useBudgetStore.getState().setBudgets([]);
+        }
 
         state.setCurrentYear(year);
-        state.setFileName(`money-tree-${year}.json`);
+        state.setFileName(`money-tree.json`);
         state.markAsSaved();
       }
     } catch (error) {

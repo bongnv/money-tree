@@ -125,15 +125,17 @@ describe('SyncService', () => {
       useAppStore.getState().setCurrentYear(2024);
       useAppStore.getState().setUnsavedChanges(true);
 
+      mockLoadDataFile.mockResolvedValue(null);
       mockSaveDataFile.mockResolvedValue(undefined);
 
       await syncService.saveNow();
 
       expect(mockSaveDataFile).toHaveBeenCalledWith(
-        2024,
         expect.objectContaining({
           version: '1.0.0',
-          year: 2024,
+          years: expect.objectContaining({
+            '2024': expect.any(Object),
+          }),
         })
       );
 
@@ -143,16 +145,22 @@ describe('SyncService', () => {
     it('should save empty data file when no domain data', async () => {
       useAppStore.getState().setCurrentYear(2024);
       useAppStore.getState().setUnsavedChanges(true);
+      mockLoadDataFile.mockResolvedValue(null);
       mockSaveDataFile.mockResolvedValue(undefined);
 
       await syncService.saveNow();
 
       expect(mockSaveDataFile).toHaveBeenCalledWith(
-        2024,
         expect.objectContaining({
           version: '1.0.0',
-          year: 2024,
           accounts: [],
+          years: expect.objectContaining({
+            '2024': expect.objectContaining({
+              transactions: [],
+              budgets: [],
+              manualAssets: [],
+            }),
+          }),
         })
       );
     });
@@ -203,7 +211,13 @@ describe('SyncService', () => {
     it('should load data file', async () => {
       const mockDataFile: DataFile = {
         version: '1.0.0',
-        year: 2024,
+        years: {
+          '2024': {
+            transactions: [],
+            budgets: [],
+            manualAssets: [],
+          },
+        },
         accounts: [
           {
             id: '1',
@@ -219,9 +233,7 @@ describe('SyncService', () => {
         ],
         categories: [],
         transactionTypes: [],
-        transactions: [],
-        manualAssets: [],
-        budgets: [],
+        archivedYears: [],
         lastModified: new Date().toISOString(),
       };
 
@@ -229,7 +241,7 @@ describe('SyncService', () => {
 
       await syncService.loadDataFile(2024);
 
-      expect(mockLoadDataFile).toHaveBeenCalledWith(2024);
+      expect(mockLoadDataFile).toHaveBeenCalled();
       expect(useAccountStore.getState().accounts).toHaveLength(1);
       expect(useAccountStore.getState().accounts[0].name).toBe('Test Account');
       expect(useAppStore.getState().currentYear).toBe(2024);

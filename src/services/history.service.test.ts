@@ -145,7 +145,7 @@ describe('history.service', () => {
       const asset: ManualAsset = {
         id: 'asset-1',
         name: 'Test Asset',
-        type: AssetType.CASH,
+        type: AssetType.OTHER,
         value: 15000,
         currencyId: 'usd',
         date: '2026-07-01',
@@ -169,7 +169,7 @@ describe('history.service', () => {
       const asset: ManualAsset = {
         id: 'asset-1',
         name: 'Test Asset',
-        type: AssetType.CASH,
+        type: AssetType.OTHER,
         value: 10000,
         currencyId: 'usd',
         date: '2026-01-01',
@@ -187,7 +187,7 @@ describe('history.service', () => {
       const asset: ManualAsset = {
         id: 'asset-1',
         name: 'Test Asset',
-        type: AssetType.CASH,
+        type: AssetType.OTHER,
         value: 10000,
         currencyId: 'usd',
         date: '2026-01-01',
@@ -207,7 +207,7 @@ describe('history.service', () => {
       const asset: ManualAsset = {
         id: 'asset-1',
         name: 'Test Asset',
-        type: AssetType.CASH,
+        type: AssetType.OTHER,
         value: 15000,
         currencyId: 'usd',
         date: '2026-07-01',
@@ -230,7 +230,7 @@ describe('history.service', () => {
       const asset: ManualAsset = {
         id: 'asset-1',
         name: 'Test Asset',
-        type: AssetType.CASH,
+        type: AssetType.OTHER,
         value: 8000,
         currencyId: 'usd',
         date: '2026-07-01',
@@ -249,7 +249,7 @@ describe('history.service', () => {
       const asset: ManualAsset = {
         id: 'asset-1',
         name: 'Test Asset',
-        type: AssetType.CASH,
+        type: AssetType.OTHER,
         value: 15000,
         currencyId: 'usd',
         date: '2026-07-01',
@@ -273,7 +273,7 @@ describe('history.service', () => {
       const asset: ManualAsset = {
         id: 'asset-1',
         name: 'Test Asset',
-        type: AssetType.CASH,
+        type: AssetType.OTHER,
         value: 15000,
         currencyId: 'usd',
         date: '2026-07-01',
@@ -297,7 +297,7 @@ describe('history.service', () => {
       const asset: ManualAsset = {
         id: 'asset-1',
         name: 'Test Asset',
-        type: AssetType.CASH,
+        type: AssetType.OTHER,
         value: 15000,
         currencyId: 'usd',
         date: '2026-07-01',
@@ -322,7 +322,7 @@ describe('history.service', () => {
       const asset: ManualAsset = {
         id: 'asset-1',
         name: 'Test Asset',
-        type: AssetType.CASH,
+        type: AssetType.OTHER,
         value: 10000,
         currencyId: 'usd',
         date: '2026-01-01',

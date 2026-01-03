@@ -7,7 +7,7 @@ import type { IStorageProvider } from './IStorageProvider';
  * Implements file-based storage on the user's local machine
  */
 export class LocalStorageProvider implements IStorageProvider {
-  private fileHandles: Map<number, FileSystemFileHandle> = new Map();
+  private fileHandle: FileSystemFileHandle | null = null;
 
   /**
    * Check if File System Access API is supported
@@ -21,10 +21,10 @@ export class LocalStorageProvider implements IStorageProvider {
   }
 
   /**
-   * Load data file for a specific year
+   * Load data file
    * Opens a file picker for the user to select the file
    */
-  async loadDataFile(year: number): Promise<DataFile | null> {
+  async loadDataFile(): Promise<DataFile | null> {
     this.checkSupport();
 
     try {
@@ -47,15 +47,10 @@ export class LocalStorageProvider implements IStorageProvider {
 
       // Parse and validate
       const data = JSON.parse(content);
-      const validatedData = DataFileSchema.parse(data);
-
-      // Verify year matches
-      if (validatedData.year !== year) {
-        throw new Error(`File year mismatch: expected ${year}, got ${validatedData.year}`);
-      }
+      const validatedData = DataFileSchema.parse(data) as DataFile;
 
       // Store file handle for future saves
-      this.fileHandles.set(year, fileHandle);
+      this.fileHandle = fileHandle;
 
       return validatedData;
     } catch (error) {
@@ -68,10 +63,10 @@ export class LocalStorageProvider implements IStorageProvider {
   }
 
   /**
-   * Save data file for a specific year
+   * Save data file
    * Opens a file picker for the user to select where to save
    */
-  async saveDataFile(year: number, data: DataFile): Promise<void> {
+  async saveDataFile(data: DataFile): Promise<void> {
     this.checkSupport();
 
     // Validate data before saving
@@ -79,12 +74,13 @@ export class LocalStorageProvider implements IStorageProvider {
 
     try {
       // Try to use existing file handle if available
-      let fileHandle = this.fileHandles.get(year);
+      let fileHandle = this.fileHandle;
 
       // If no existing handle, open save picker
       if (!fileHandle) {
+        const currentYear = new Date().getFullYear();
         fileHandle = await window.showSaveFilePicker({
-          suggestedName: `money-tree-${year}.json`,
+          suggestedName: `money-tree-${currentYear}.json`,
           types: [
             {
               description: 'Money Tree Data',
@@ -94,7 +90,7 @@ export class LocalStorageProvider implements IStorageProvider {
             },
           ],
         });
-        this.fileHandles.set(year, fileHandle);
+        this.fileHandle = fileHandle;
       }
 
       // Write to file
@@ -112,24 +108,24 @@ export class LocalStorageProvider implements IStorageProvider {
 
   /**
    * List all available years that have data files
-   * For local storage, this returns years with cached file handles
-   * Note: This is limited as we can't scan the user's filesystem
+   * For local storage with multi-year files, this would require loading the file
+   * Returns empty array as we don't track individual years
    */
   async listAvailableYears(): Promise<number[]> {
-    return Array.from(this.fileHandles.keys()).sort((a, b) => b - a);
+    return [];
   }
 
   /**
-   * Clear cached file handle for a year
+   * Clear cached file handle
    */
-  clearFileHandle(year: number): void {
-    this.fileHandles.delete(year);
+  clearFileHandle(): void {
+    this.fileHandle = null;
   }
 
   /**
-   * Clear all cached file handles
+   * Get cached file handle status
    */
-  clearAllFileHandles(): void {
-    this.fileHandles.clear();
+  hasFileHandle(): boolean {
+    return this.fileHandle !== null;
   }
 }

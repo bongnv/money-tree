@@ -483,13 +483,17 @@ describe('Model Schemas', () => {
     it('should validate a valid data file', () => {
       const validDataFile = {
         version: '1.0.0',
-        year: 2026,
+        years: {
+          '2026': {
+            transactions: [],
+            budgets: [],
+            manualAssets: [],
+          },
+        },
         accounts: [],
         categories: [],
         transactionTypes: [],
-        transactions: [],
-        budgets: [],
-        manualAssets: [],
+        archivedYears: [],
         lastModified: new Date().toISOString(),
       };
       expect(() => DataFileSchema.parse(validDataFile)).not.toThrow();
@@ -498,53 +502,40 @@ describe('Model Schemas', () => {
     it('should validate data file with manual assets', () => {
       const validDataFile = {
         version: '1.0.0',
-        year: 2026,
+        years: {
+          '2026': {
+            transactions: [],
+            budgets: [],
+            manualAssets: [
+              {
+                id: 'asset-1',
+                name: 'House',
+                type: AssetType.REAL_ESTATE,
+                value: 500000,
+                currencyId: 'usd',
+                date: getDateString(),
+                createdAt: getDateTimeString(),
+                updatedAt: getDateTimeString(),
+              },
+            ],
+          },
+        },
         accounts: [],
         categories: [],
         transactionTypes: [],
-        transactions: [],
-        budgets: [],
-        manualAssets: [
-          {
-            id: 'asset-1',
-            name: 'House',
-            type: AssetType.REAL_ESTATE,
-            value: 500000,
-            currencyId: 'usd',
-            date: getDateString(),
-            createdAt: getDateTimeString(),
-            updatedAt: getDateTimeString(),
-          },
-        ],
+        archivedYears: [],
         lastModified: getDateTimeString(),
       };
       expect(() => DataFileSchema.parse(validDataFile)).not.toThrow();
     });
 
-    it('should reject data file with invalid year', () => {
-      const invalidDataFile = {
-        version: '1.0.0',
-        year: 1800, // Too old
-        accounts: [],
-        categories: [],
-        transactionTypes: [],
-        transactions: [],
-        budgets: [],
-        manualAssets: [],
-        lastModified: new Date().toISOString(),
-      };
-      expect(() => DataFileSchema.parse(invalidDataFile)).toThrow();
-    });
-
     it('should reject data file with missing version', () => {
       const invalidDataFile = {
-        year: 2026,
+        years: {},
         accounts: [],
         categories: [],
         transactionTypes: [],
-        transactions: [],
-        budgets: [],
-        manualAssets: [],
+        archivedYears: [],
         lastModified: new Date().toISOString(),
       };
       expect(() => DataFileSchema.parse(invalidDataFile)).toThrow();
@@ -553,37 +544,31 @@ describe('Model Schemas', () => {
     it('should accept data file with missing arrays and default to empty', () => {
       const dataFileWithMissingArrays = {
         version: '1.0.0',
-        year: 2026,
+        years: {},
         lastModified: new Date().toISOString(),
       };
       const result = DataFileSchema.parse(dataFileWithMissingArrays);
       expect(result.accounts).toEqual([]);
       expect(result.categories).toEqual([]);
       expect(result.transactionTypes).toEqual([]);
-      expect(result.transactions).toEqual([]);
-      expect(result.budgets).toEqual([]);
-      expect(result.manualAssets).toEqual([]);
+      expect(result.archivedYears).toEqual([]);
     });
 
     it('should accept data file with null arrays and default to empty', () => {
       const dataFileWithNullArrays = {
         version: '1.0.0',
-        year: 2026,
+        years: {},
         accounts: null,
         categories: null,
         transactionTypes: null,
-        transactions: null,
-        budgets: null,
-        manualAssets: null,
+        archivedYears: null,
         lastModified: new Date().toISOString(),
       };
       const result = DataFileSchema.parse(dataFileWithNullArrays);
       expect(result.accounts).toEqual([]);
       expect(result.categories).toEqual([]);
       expect(result.transactionTypes).toEqual([]);
-      expect(result.transactions).toEqual([]);
-      expect(result.budgets).toEqual([]);
-      expect(result.manualAssets).toEqual([]);
+      expect(result.archivedYears).toEqual([]);
     });
   });
 });

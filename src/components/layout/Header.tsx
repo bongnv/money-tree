@@ -30,6 +30,7 @@ import {
 import { useAppStore } from '../../stores/useAppStore';
 import { syncService } from '../../services/sync.service';
 import { formatDistance } from 'date-fns';
+import { YearSelector } from '../common/YearSelector';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -149,6 +150,8 @@ export const Header: React.FC = () => {
         )}
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <YearSelector />
+
           {fileName && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="body2">{fileName}</Typography>

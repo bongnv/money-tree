@@ -144,10 +144,79 @@ export const ManualAssetSchema = z
   );
 
 /**
+ * Zod schema for YearEndSummary
+ */
+export const YearEndSummarySchema = z.object({
+  transactionCount: z.number().int().min(0),
+  closingNetWorth: z.number(),
+  closingBalances: z.record(z.string(), z.number()),
+});
+
+/**
+ * Zod schema for ArchivedYearReference
+ */
+export const ArchivedYearReferenceSchema = z.object({
+  year: z.number().int().min(1900).max(2100),
+  fileName: z.string().min(1),
+  archivedDate: z.string().datetime(),
+  summary: YearEndSummarySchema,
+});
+
+/**
+ * Zod schema for YearData
+ */
+export const YearDataSchema = z.object({
+  transactions: z
+    .array(TransactionSchema)
+    .nullable()
+    .optional()
+    .transform((val) => val ?? []),
+  budgets: z
+    .array(BudgetSchema)
+    .nullable()
+    .optional()
+    .transform((val) => val ?? []),
+  manualAssets: z
+    .array(ManualAssetSchema)
+    .nullable()
+    .optional()
+    .transform((val) => val ?? []),
+});
+
+/**
  * Zod schema for DataFile
  * Note: Currencies are not stored in the data file as they are fixed defaults
  */
 export const DataFileSchema = z.object({
+  version: z.string().min(1, 'Version is required'),
+  years: z.record(z.string(), YearDataSchema),
+  accounts: z
+    .array(AccountSchema)
+    .nullable()
+    .optional()
+    .transform((val) => val ?? []),
+  categories: z
+    .array(CategorySchema)
+    .nullable()
+    .optional()
+    .transform((val) => val ?? []),
+  transactionTypes: z
+    .array(TransactionTypeSchema)
+    .nullable()
+    .optional()
+    .transform((val) => val ?? []),
+  archivedYears: z
+    .array(ArchivedYearReferenceSchema)
+    .nullable()
+    .optional()
+    .transform((val) => val ?? []),
+  lastModified: z.string().datetime(),
+});
+
+/**
+ * Zod schema for ArchiveFile
+ */
+export const ArchiveFileSchema = z.object({
   version: z.string().min(1, 'Version is required'),
   year: z.number().int().min(1900).max(2100),
   accounts: z
@@ -180,5 +249,6 @@ export const DataFileSchema = z.object({
     .nullable()
     .optional()
     .transform((val) => val ?? []),
-  lastModified: z.string().datetime(),
+  archivedDate: z.string().datetime(),
+  summary: YearEndSummarySchema,
 });

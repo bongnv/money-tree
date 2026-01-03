@@ -12,13 +12,17 @@ describe('LocalStorageProvider', () => {
     provider = new LocalStorageProvider();
     mockData = {
       version: '1.0.0',
-      year: 2024,
+      years: {
+        '2024': {
+          transactions: [],
+          budgets: [],
+          manualAssets: [],
+        },
+      },
       accounts: [],
       categories: [],
       transactionTypes: [],
-      transactions: [],
-      budgets: [],
-      manualAssets: [],
+      archivedYears: [],
       lastModified: new Date().toISOString(),
     };
   });
@@ -33,7 +37,7 @@ describe('LocalStorageProvider', () => {
       delete (window as any).showOpenFilePicker;
       delete (window as any).showSaveFilePicker;
 
-      await expect(provider.loadDataFile(2024)).rejects.toThrow(
+      await expect(provider.loadDataFile()).rejects.toThrow(
         'File System Access API is not supported'
       );
 
@@ -50,7 +54,7 @@ describe('LocalStorageProvider', () => {
         .fn()
         .mockRejectedValue(new DOMException('User cancelled', 'AbortError'));
 
-      const result = await provider.loadDataFile(2024);
+      const result = await provider.loadDataFile();
       expect(result).toBeNull();
     });
 
@@ -65,22 +69,7 @@ describe('LocalStorageProvider', () => {
 
       (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
 
-      await expect(provider.loadDataFile(2024)).rejects.toThrow();
-    });
-
-    it('should throw error when year mismatch', async () => {
-      const wrongYearData = { ...mockData, year: 2023 };
-      const mockFile = {
-        text: jest.fn().mockResolvedValue(JSON.stringify(wrongYearData)),
-      };
-
-      const mockFileHandle = {
-        getFile: jest.fn().mockResolvedValue(mockFile),
-      };
-
-      (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
-
-      await expect(provider.loadDataFile(2024)).rejects.toThrow('File year mismatch');
+      await expect(provider.loadDataFile()).rejects.toThrow();
     });
 
     it('should successfully load valid data file', async () => {
@@ -94,7 +83,7 @@ describe('LocalStorageProvider', () => {
 
       (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
 
-      const result = await provider.loadDataFile(2024);
+      const result = await provider.loadDataFile();
       expect(result).toEqual(mockData);
     });
 
@@ -109,22 +98,19 @@ describe('LocalStorageProvider', () => {
 
       (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
 
-      await provider.loadDataFile(2024);
+      await provider.loadDataFile();
 
-      const years = await provider.listAvailableYears();
-      expect(years).toContain(2024);
+      expect(provider.hasFileHandle()).toBe(true);
     });
 
     it('should handle data file with null arrays', async () => {
       const dataWithNulls = {
         version: '1.0.0',
-        year: 2024,
+        years: {},
         accounts: null,
         categories: null,
         transactionTypes: null,
-        transactions: null,
-        budgets: null,
-        manualAssets: null,
+        archivedYears: null,
         lastModified: new Date().toISOString(),
       };
 
@@ -138,20 +124,18 @@ describe('LocalStorageProvider', () => {
 
       (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
 
-      const result = await provider.loadDataFile(2024);
+      const result = await provider.loadDataFile();
       expect(result).toBeDefined();
       expect(result?.accounts).toEqual([]);
       expect(result?.categories).toEqual([]);
       expect(result?.transactionTypes).toEqual([]);
-      expect(result?.transactions).toEqual([]);
-      expect(result?.budgets).toEqual([]);
-      expect(result?.manualAssets).toEqual([]);
+      expect(result?.archivedYears).toEqual([]);
     });
 
     it('should handle data file with missing arrays', async () => {
       const dataWithMissingArrays = {
         version: '1.0.0',
-        year: 2024,
+        years: {},
         lastModified: new Date().toISOString(),
       };
 
@@ -165,22 +149,20 @@ describe('LocalStorageProvider', () => {
 
       (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
 
-      const result = await provider.loadDataFile(2024);
+      const result = await provider.loadDataFile();
       expect(result).toBeDefined();
       expect(result?.accounts).toEqual([]);
       expect(result?.categories).toEqual([]);
       expect(result?.transactionTypes).toEqual([]);
-      expect(result?.transactions).toEqual([]);
-      expect(result?.budgets).toEqual([]);
-      expect(result?.manualAssets).toEqual([]);
+      expect(result?.archivedYears).toEqual([]);
     });
   });
 
   describe('saveDataFile', () => {
     it('should throw error for invalid data', async () => {
-      const invalidData = { ...mockData, year: 'invalid' } as any;
+      const invalidData = { ...mockData, version: 123 } as any;
 
-      await expect(provider.saveDataFile(2024, invalidData)).rejects.toThrow();
+      await expect(provider.saveDataFile(invalidData)).rejects.toThrow();
     });
 
     it('should return without error when user cancels file picker', async () => {
@@ -188,7 +170,7 @@ describe('LocalStorageProvider', () => {
         .fn()
         .mockRejectedValue(new DOMException('User cancelled', 'AbortError'));
 
-      await expect(provider.saveDataFile(2024, mockData)).resolves.not.toThrow();
+      await expect(provider.saveDataFile(mockData)).resolves.not.toThrow();
     });
 
     it('should successfully save data file', async () => {
@@ -203,7 +185,7 @@ describe('LocalStorageProvider', () => {
 
       (window as any).showSaveFilePicker = jest.fn().mockResolvedValue(mockFileHandle);
 
-      await provider.saveDataFile(2024, mockData);
+      await provider.saveDataFile(mockData);
 
       expect(mockWritable.write).toHaveBeenCalledWith(JSON.stringify(mockData, null, 2));
       expect(mockWritable.close).toHaveBeenCalled();
@@ -226,72 +208,24 @@ describe('LocalStorageProvider', () => {
 
       // First load to cache the handle
       (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
-      await provider.loadDataFile(2024);
+      await provider.loadDataFile();
 
       // Save without showing picker
-      await provider.saveDataFile(2024, mockData);
+      await provider.saveDataFile(mockData);
 
       expect(mockFileHandle.createWritable).toHaveBeenCalled();
     });
   });
 
   describe('listAvailableYears', () => {
-    it('should return empty array when no file handles cached', async () => {
+    it('should return empty array', async () => {
       const result = await provider.listAvailableYears();
       expect(result).toEqual([]);
-    });
-
-    it('should return sorted years descending', async () => {
-      (window as any).showOpenFilePicker = jest.fn().mockImplementation(() => {
-        const mockFile = {
-          text: jest.fn().mockResolvedValue(JSON.stringify(mockData)),
-        };
-
-        const mockFileHandle = {
-          getFile: jest.fn().mockResolvedValue(mockFile),
-        };
-
-        return Promise.resolve([mockFileHandle]);
-      });
-
-      // Load multiple years
-      await provider.loadDataFile(2024);
-
-      const data2023 = { ...mockData, year: 2023 };
-      (window as any).showOpenFilePicker = jest.fn().mockImplementation(() => {
-        const mockFile = {
-          text: jest.fn().mockResolvedValue(JSON.stringify(data2023)),
-        };
-
-        const mockFileHandle = {
-          getFile: jest.fn().mockResolvedValue(mockFile),
-        };
-
-        return Promise.resolve([mockFileHandle]);
-      });
-      await provider.loadDataFile(2023);
-
-      const data2022 = { ...mockData, year: 2022 };
-      (window as any).showOpenFilePicker = jest.fn().mockImplementation(() => {
-        const mockFile = {
-          text: jest.fn().mockResolvedValue(JSON.stringify(data2022)),
-        };
-
-        const mockFileHandle = {
-          getFile: jest.fn().mockResolvedValue(mockFile),
-        };
-
-        return Promise.resolve([mockFileHandle]);
-      });
-      await provider.loadDataFile(2022);
-
-      const result = await provider.listAvailableYears();
-      expect(result).toEqual([2024, 2023, 2022]);
     });
   });
 
   describe('clearFileHandle', () => {
-    it('should remove cached file handle for specific year', async () => {
+    it('should remove cached file handle', async () => {
       const mockFile = {
         text: jest.fn().mockResolvedValue(JSON.stringify(mockData)),
       };
@@ -302,49 +236,11 @@ describe('LocalStorageProvider', () => {
 
       (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
 
-      await provider.loadDataFile(2024);
-      provider.clearFileHandle(2024);
-
-      const years = await provider.listAvailableYears();
-      expect(years).not.toContain(2024);
-    });
-  });
-
-  describe('clearAllFileHandles', () => {
-    it('should remove all cached file handles', async () => {
-      // Load 2024
-      (window as any).showOpenFilePicker = jest.fn().mockImplementation(() => {
-        const mockFile = {
-          text: jest.fn().mockResolvedValue(JSON.stringify(mockData)),
-        };
-
-        const mockFileHandle = {
-          getFile: jest.fn().mockResolvedValue(mockFile),
-        };
-
-        return Promise.resolve([mockFileHandle]);
-      });
-      await provider.loadDataFile(2024);
-
-      // Load 2023
-      const data2023 = { ...mockData, year: 2023 };
-      (window as any).showOpenFilePicker = jest.fn().mockImplementation(() => {
-        const mockFile = {
-          text: jest.fn().mockResolvedValue(JSON.stringify(data2023)),
-        };
-
-        const mockFileHandle = {
-          getFile: jest.fn().mockResolvedValue(mockFile),
-        };
-
-        return Promise.resolve([mockFileHandle]);
-      });
-      await provider.loadDataFile(2023);
-
-      provider.clearAllFileHandles();
-
-      const years = await provider.listAvailableYears();
-      expect(years).toEqual([]);
+      await provider.loadDataFile();
+      expect(provider.hasFileHandle()).toBe(true);
+      
+      provider.clearFileHandle();
+      expect(provider.hasFileHandle()).toBe(false);
     });
   });
 });

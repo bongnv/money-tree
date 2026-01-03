@@ -853,141 +853,210 @@ These features will be implemented after the MVP is validated by users.
 - Quick trends use summaries (instant, no file loading)
 - Detailed analysis loads archive files on-demand
 
-### 11.1 Data Model Updates for Multi-Year Support (FR-6.10)
-- [ ] Update `src/types/models.ts`:
-  - [ ] Add `years` object structure: `{ "2025": { transactions, budgets, manualAssets }, "2026": {...} }`
-  - [ ] Add `ArchivedYearReference` type: `{ year: number, fileName: string, archivedDate: string, summary: YearEndSummary }`
-  - [ ] Add `YearEndSummary` type: `{ transactionCount: number, closingNetWorth: number, closingBalances: Record<string, number> }`
-  - [ ] Add `archivedYears` array to main data structure
-  - [ ] Add `ArchiveFile` type for self-contained archive structure
-- [ ] Update `src/schemas/models.schema.ts`:
-  - [ ] Add Zod schemas for new types
-  - [ ] Validate years structure
-  - [ ] Validate archive references
-- [ ] **Write tests**: Schema validation for multi-year structure
-- [ ] **Test**: Validate main file structure, archive reference structure
+### 11.1 Multi-Year Data Structure & Year Selector (FR-9.1, FR-6.10)
+**Implementation**:
+- [x] Update `src/types/models.ts` with multi-year structure:
+  - [x] Add `years` object: `{ "2025": { transactions, budgets, manualAssets }, "2026": {...} }`
+  - [x] Add `ArchivedYearReference` type with year, fileName, archivedDate, summary
+  - [x] Add `YearEndSummary` type with transactionCount, closingNetWorth, closingBalances
+  - [x] Add `archivedYears` array to main data structure
+- [x] Update `src/schemas/models.schema.ts` with Zod schemas for new types
+- [x] Create `src/components/common/YearSelector.tsx`:
+  - [x] Dropdown showing available years in main file
+  - [x] Badge showing current year (e.g., "2026 (Current)")
+  - [x] Auto-select current year on app open
+  - [x] Handle year switching in-memory (no file I/O)
+- [x] Add year selector to app header/navigation
+- [x] Update stores to support current year state
+- [x] Write automated tests for schema validation and component
 
-### 11.2 Archive Detection & Year-End Summary Service (FR-6.10, FR-9.2)
+**Manual Verification**:
+- [ ] **UI Test**: Open app, see year selector in header showing current year (2026)
+- [ ] **UI Test**: Create transactions in 2026, verify they appear in transaction list
+- [ ] **UI Test**: Manually add 2025 data to file, reload app, see both years in selector
+- [ ] **UI Test**: Switch to 2025 in dropdown, verify only 2025 transactions display
+- [ ] **UI Test**: Switch back to 2026, verify 2026 transactions display
+- [ ] **UI Test**: Reload app, verify it auto-selects 2026 (current year)
+
+### 11.2 Archive Detection & Prompt UI (FR-6.10, FR-9.2)
+**Implementation**:
 - [ ] Create `src/services/archive.service.ts`:
   - [ ] `detectArchiveTrigger()`: Check if 3+ years exist in main file
-  - [ ] `calculateYearEndSummary(year)`: Compute transaction count, closing net worth, closing balances
-  - [ ] `identifyArchivableYears()`: Return oldest years to archive (keep 2 most recent)
-  - [ ] `shouldPromptArchive()`: Check archive trigger and user postpone preference
-- [ ] Store postpone state in preferences
-- [ ] **Write tests**: Archive detection, year-end summary calculations
-- [ ] **Test**: Correct archive trigger with 3+ years, accurate summary calculations
+  - [ ] `calculateYearEndSummary(year)`: Compute counts and balances
+  - [ ] `identifyArchivableYears()`: Return oldest years to archive
+  - [ ] `shouldPromptArchive()`: Check conditions and user preferences
+- [ ] Create `src/components/common/ArchivePrompt.tsx`:
+  - [ ] Dialog showing oldest year to archive
+  - [ ] Display file size impact (estimated savings)
+  - [ ] "Archive Now", "Remind Me Later", "Don't Ask Again" buttons
+  - [ ] Show year-end summary (transaction count, closing net worth)
+- [ ] Store postpone preference in user settings
+- [ ] Trigger prompt on app load when conditions met
+- [ ] Write automated tests for detection logic and component
 
-### 11.3 Archive File Creation & Main File Update (FR-6.10, FR-9.2, FR-9.3)
+**Manual Verification**:
+- [ ] **UI Test**: Add 2024, 2025, 2026 data to file (3 years), reload app
+- [ ] **UI Test**: See archive prompt dialog appear automatically
+- [ ] **UI Test**: Verify prompt shows "2024" as year to archive
+- [ ] **UI Test**: Verify prompt displays transaction count and net worth for 2024
+- [ ] **UI Test**: Click "Remind Me Later", reload app, see prompt appear again
+- [ ] **UI Test**: Click "Don't Ask Again", reload app, verify no prompt
+- [ ] **UI Test**: In settings, reset "Don't Ask Again", reload, see prompt return
+
+### 11.3 Archive File Creation & Export (FR-6.10, FR-9.2, FR-9.6)
+**Implementation**:
 - [ ] Implement `createArchiveFile(year)` in archive service:
   - [ ] Extract year data from main file
-  - [ ] Create snapshot of accounts, categories, transaction types (state at archive time)
-  - [ ] Build self-contained archive file structure
-  - [ ] Generate archive file JSON
+  - [ ] Create snapshot of accounts, categories, transaction types
+  - [ ] Build self-contained archive JSON structure
+  - [ ] Add `ArchiveFile` type for archive structure
 - [ ] Implement `updateMainFileAfterArchive(year, archiveReference)`:
   - [ ] Remove archived year from years object
-  - [ ] Add archive reference to archivedYears array
+  - [ ] Add reference to archivedYears array with summary
   - [ ] Maintain data integrity
-- [ ] Use File System Access API to save archive file (user selects location)
-- [ ] **Write tests**: Archive file creation, main file update
-- [ ] **Test**: Archive file is self-contained, main file correctly updated
-
-### 11.4 Seamless Year Switching UI (FR-9.1)
-- [ ] Create `src/components/common/YearSelector.tsx`:
-  - [ ] Dropdown showing years in main file (instant switch)
-  - [ ] Option to load archived years (file picker)
-  - [ ] Badge indicating archived vs active years
-  - [ ] Auto-switch to current year on app open
-- [ ] Add to header/navigation
-- [ ] Connect to app store (current year state)
-- [ ] Implement instant year switching (in-memory, no file I/O)
-- [ ] **Write tests**: Year selector component, switching logic
-- [ ] **Test**: Switch between years instantly, UI updates correctly
-
-### 11.5 Archive Workflow UI (FR-9.2)
-- [ ] Create `src/components/common/ArchivePrompt.tsx`:
-  - [ ] Dialog prompting to archive oldest year
-  - [ ] Show year to archive and file size impact
-  - [ ] "Archive Now", "Remind Later", "Don't Ask Again" options
-  - [ ] File picker integration for archive save location
-- [ ] Create banner reminder for postponed archives
-- [ ] Trigger prompt on app load when archive conditions met
-- [ ] Show success message with archive file name after creation
-- [ ] **Write tests**: Archive prompt component, workflow states
-- [ ] **Test**: Prompt appears correctly, postpone works, archive creation flow
-
-### 11.6 Archive Loading & Management (FR-9.3)
-- [ ] Implement `loadArchiveFile()` in archive service:
-  - [ ] File picker to select archive file
-  - [ ] Validate archive file structure
-  - [ ] Load into temporary store (separate from main data)
-  - [ ] Handle missing files gracefully (show error, allow browsing)
-- [ ] Create `src/stores/useArchiveStore.ts`:
-  - [ ] Store loaded archive data temporarily
-  - [ ] Track which archives are currently loaded
-  - [ ] Unload archives method (free memory)
-- [ ] **Write tests**: Archive loading, validation, store management
-- [ ] **Test**: Load archive file, validate structure, unload successfully
-
-### 11.7 Quick Trends Dashboard (FR-9.4)
-- [ ] Update `src/components/dashboard/Dashboard.tsx`:
-  - [ ] Add "Year-over-Year Trends" section
-  - [ ] Display net worth progression using archive summaries
-  - [ ] Show "2023: $40k → 2024: $45k → 2025: $52k → 2026: $58k"
-  - [ ] Use archivedYears array from main file (instant, no loading)
-- [ ] Create `src/services/trend.service.ts`:
-  - [ ] `calculateYearOverYearTrends()`: Use archive summaries
-  - [ ] `getClosingBalanceTrends()`: Per-account trends
-  - [ ] All calculations from summaries (no archive file loading)
-- [ ] **Write tests**: Trend calculations from summaries
-- [ ] **Test**: Dashboard shows trends instantly, no archive loading required
-
-### 11.8 Detailed Multi-Year Analysis (FR-9.5)
-- [ ] Create `src/components/reports/MultiYearAnalysis.tsx`:
-  - [ ] "Load Archives" button to prompt for files
-  - [ ] File picker to select multiple archive files
-  - [ ] Load archives into temporary store
-  - [ ] Generate comprehensive reports:
-    - [ ] Month-by-month trends across all loaded years
-    - [ ] Category breakdown spanning years
-    - [ ] Account history with full transaction details
-  - [ ] "Unload Archives" button to free memory
-- [ ] Integrate with archive store
-- [ ] Add to Reports page
-- [ ] **Write tests**: Multi-year report generation, archive integration
-- [ ] **Test**: Load multiple archives, generate detailed reports, unload successfully
-
-### 11.9 Archive Utilities (FR-9.6)
+- [ ] Integrate File System Access API for save location
+- [ ] Add success notification with file name
 - [ ] Create `src/components/settings/ArchiveManager.tsx`:
-  - [ ] List archived years from archivedYears array
-  - [ ] "Export Year" button (save current year as standalone archive)
-  - [ ] "Import Year" button (load archive back into main file)
-  - [ ] "Browse Archives" button (view available archive files)
-  - [ ] User preference: years to keep in main file (default: 2)
-- [ ] Implement export/import functionality in archive service
-- [ ] Add to Settings page
-- [ ] **Write tests**: Export year, import year, preferences
-- [ ] **Test**: Export single year, import archived year, adjust preferences
+  - [ ] "Export Year" button for manual archive creation
+  - [ ] List of archived years from archivedYears array
+- [ ] Add Archive Manager to Settings page
+- [ ] Write automated tests for archive creation and main file update
 
-### 11.10 Integration Testing
-- [ ] Test complete archive workflow end-to-end:
-  - [ ] Create 3 years of data
-  - [ ] Trigger archive prompt
-  - [ ] Archive oldest year
-  - [ ] Verify main file size reduced (~900 KB)
-  - [ ] Verify quick trends work without loading
-  - [ ] Load archive for detailed analysis
-  - [ ] Unload archive
-- [ ] Test year switching with archived years
-- [ ] Test data integrity across main file and archives
-- [ ] **Test**: All workflows complete successfully, no data loss
+**Manual Verification**:
+- [ ] **UI Test**: With 3 years of data, click "Archive Now" in prompt
+- [ ] **UI Test**: Select save location in file picker, verify archive file saved (e.g., "money-tree-2024.json")
+- [ ] **UI Test**: See success message: "Year 2024 archived successfully"
+- [ ] **UI Test**: Verify year selector now only shows 2025, 2026
+- [ ] **UI Test**: Open Settings → Archive Manager, see "2024" listed as archived
+- [ ] **UI Test**: Open main file in text editor, verify 2024 data removed, archive reference present
+- [ ] **UI Test**: Open archive file in text editor, verify it contains complete 2024 data
+- [ ] **UI Test**: In Archive Manager, click "Export Year" for 2025, verify standalone archive created
 
-### 11.11 Performance Validation
-- [ ] Measure auto-save performance with 2-year main file (~900 KB)
-- [ ] Verify auto-save completes under 200ms
-- [ ] Test with 10+ archived years (simulating long-term use)
-- [ ] Verify quick trends remain instant regardless of archive count
-- [ ] Validate memory usage during archive loading/unloading
-- [ ] **Test**: Performance targets met, scalable to decades of data
+### 11.4 Quick Trends Dashboard with Summaries (FR-9.4)
+**Implementation**:
+- [ ] Create `src/services/trend.service.ts`:
+  - [ ] `calculateYearOverYearTrends()`: Use archive summaries from archivedYears array
+  - [ ] `getClosingBalanceTrends()`: Per-account yearly trends
+  - [ ] All calculations from summaries (no file loading required)
+- [ ] Update `src/components/dashboard/Dashboard.tsx`:
+  - [ ] Add "Year-over-Year Trends" card/section
+  - [ ] Display net worth progression: "2023: $40k → 2024: $45k → 2025: $52k → 2026: $58k"
+  - [ ] Show transaction count trends per year
+  - [ ] Display as chart (line graph) or table
+  - [ ] Add tooltip explaining data is from summaries (no archive loading needed)
+- [ ] Write automated tests for trend calculations
+
+**Manual Verification**:
+- [ ] **UI Test**: With 2024 archived and 2025-2026 active, open Dashboard
+- [ ] **UI Test**: See "Year-over-Year Trends" section appear
+- [ ] **UI Test**: Verify 2024 closing net worth shown (from archive summary)
+- [ ] **UI Test**: Verify 2025 and 2026 net worth shown (from active data)
+- [ ] **UI Test**: Verify trends display instantly (no loading spinner)
+- [ ] **UI Test**: Archive 2025, reload, verify trends now show 2024-2025-2026
+- [ ] **UI Test**: Add transactions to 2026, verify current year net worth updates in trends
+
+### 11.5 Archive Loading & Year Selector Integration (FR-9.1, FR-9.3)
+**Implementation**:
+- [ ] Implement `loadArchiveFile()` in archive service:
+  - [ ] File picker to select archive JSON file
+  - [ ] Validate archive file structure
+  - [ ] Parse and validate with Zod schema
+  - [ ] Return archive data for temporary use
+- [ ] Create `src/stores/useArchiveStore.ts`:
+  - [ ] Store loaded archive data separately from main data
+  - [ ] Track which archives are currently loaded
+  - [ ] `unloadArchive(year)` method to free memory
+  - [ ] `isArchiveLoaded(year)` helper
+- [ ] Update YearSelector component:
+  - [ ] Show archived years with "Archive" badge
+  - [ ] "Load Archive" option for archived years
+  - [ ] File picker integration when selecting archived year
+  - [ ] Success notification when archive loaded
+- [ ] Handle missing files gracefully with error messages
+- [ ] Write automated tests for loading and store management
+
+**Manual Verification**:
+- [ ] **UI Test**: With 2024 archived, see "2024 (Archive)" in year selector
+- [ ] **UI Test**: Click on 2024, see file picker dialog appear
+- [ ] **UI Test**: Select wrong file type, see error: "Invalid archive file"
+- [ ] **UI Test**: Cancel file picker, verify year remains on 2026
+- [ ] **UI Test**: Select correct 2024 archive file, see success: "Year 2024 loaded"
+- [ ] **UI Test**: Verify year selector switches to 2024
+- [ ] **UI Test**: Verify transaction list shows 2024 transactions
+- [ ] **UI Test**: Verify dashboard shows 2024 stats (read-only from archive)
+- [ ] **UI Test**: Switch back to 2026, verify live data appears
+- [ ] **UI Test**: Switch to 2024 again, verify archive still loaded (no file picker)
+
+### 11.6 Detailed Multi-Year Analysis Reports (FR-9.5)
+**Implementation**:
+- [ ] Create `src/components/reports/MultiYearAnalysis.tsx`:
+  - [ ] "Load Archives" button with file picker (multi-select)
+  - [ ] List of currently loaded archives with "Unload" buttons
+  - [ ] Generate comprehensive reports across loaded years:
+    - [ ] Month-by-month trend chart spanning all years
+    - [ ] Category breakdown table with year columns
+    - [ ] Account history graph showing all loaded years
+  - [ ] "Unload All Archives" button to free memory
+  - [ ] Empty state: "Load archives to view detailed analysis"
+- [ ] Integrate with useArchiveStore
+- [ ] Add Multi-Year Analysis tab to Reports page
+- [ ] Write automated tests for report generation
+
+**Manual Verification**:
+- [ ] **UI Test**: Open Reports → Multi-Year Analysis, see empty state
+- [ ] **UI Test**: Click "Load Archives", select 2024 archive in file picker
+- [ ] **UI Test**: See 2024 listed as loaded, verify reports generate with 2024-2026 data
+- [ ] **UI Test**: Click "Load Archives" again, add 2023 archive
+- [ ] **UI Test**: Verify reports now span 2023-2024-2026 (three years)
+- [ ] **UI Test**: Verify month-by-month chart shows all three years
+- [ ] **UI Test**: Verify category breakdown compares spending across years
+- [ ] **UI Test**: Click "Unload" on 2023, verify reports update to 2024-2026 only
+- [ ] **UI Test**: Click "Unload All Archives", see empty state return
+
+### 11.7 Archive Import & Settings (FR-9.6)
+**Implementation**:
+- [ ] Implement `importYearFromArchive(archiveFile)` in archive service:
+  - [ ] Validate archive file
+  - [ ] Check for year conflicts in main file
+  - [ ] Import year data into main file years object
+  - [ ] Remove from archivedYears array if present
+  - [ ] Prompt user to save updated main file
+- [ ] Update Archive Manager component:
+  - [ ] "Import Year" button to merge archive back into main file
+  - [ ] "Browse Archives" button to open archive file in read-only view
+  - [ ] User preference: "Keep X years in main file" (default: 2)
+  - [ ] Warning when importing would exceed preferred year count
+- [ ] Write automated tests for import functionality
+
+**Manual Verification**:
+- [ ] **UI Test**: In Archive Manager, click "Import Year" for 2024 archive
+- [ ] **UI Test**: Select archive file, see confirmation: "Import 2024 back into main file?"
+- [ ] **UI Test**: Click "Import", see prompt to save updated main file
+- [ ] **UI Test**: Save file, verify year selector now shows 2024-2025-2026 (all active)
+- [ ] **UI Test**: Verify 2024 no longer listed as archived in Archive Manager
+- [ ] **UI Test**: Switch to 2024 in year selector, verify transactions appear instantly (no loading)
+- [ ] **UI Test**: With 3 active years, see archive prompt appear again
+- [ ] **UI Test**: In Archive Manager, change "Keep 2 years" to "Keep 3 years"
+- [ ] **UI Test**: Reload app, verify archive prompt doesn't appear with 3 years
+
+### 11.8 Performance Validation & Polish
+**Implementation**:
+- [ ] Add loading states for all archive operations
+- [ ] Add file size indicators in Archive Manager
+- [ ] Optimize year switching performance
+- [ ] Add keyboard shortcuts (e.g., Ctrl+Y for year selector)
+- [ ] Add archive operation progress indicators
+- [ ] Write performance tests
+
+**Manual Verification**:
+- [ ] **UI Test**: With 2 active years (~900 KB), make edit, verify auto-save < 200ms
+- [ ] **UI Test**: Create 10 mock archived years in archivedYears array
+- [ ] **UI Test**: Open Dashboard, verify year-over-year trends display instantly
+- [ ] **UI Test**: Switch between active years 100 times rapidly, verify no lag
+- [ ] **UI Test**: Load 5 archives in Multi-Year Analysis, verify smooth scrolling
+- [ ] **UI Test**: Unload all archives, verify memory freed (check browser dev tools)
+- [ ] **UI Test**: Archive/import operations show progress indicators
+- [ ] **UI Test**: All operations complete without errors or data loss
 
 ### 10.1 Integration Testing
 - [ ] Test complete user workflows end-to-end

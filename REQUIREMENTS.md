@@ -81,7 +81,7 @@ The MVP focuses on core personal finance tracking functionality with local file 
 - Types: Real Estate, Superannuation, Investment, Liability, Other
 - Add, edit, and delete manual assets
 
-**FR-3.6** [ ] Manual asset value tracking over time
+**FR-3.6** [x] Manual asset value tracking over time
 
 **Architecture Note:** Data models remain separate (Account and ManualAsset are distinct types with separate Zustand stores) for clear business logic separation. UI layer provides unified view through tabs and combined displays.
 

@@ -1573,110 +1573,88 @@ These features will be implemented after the MVP is validated by users.
 
 **Goal**: Intelligent conflict detection and automatic merging for concurrent modifications
 
-**Conflict Detection:**
-- [ ] Add conflict detection to `src/services/sync.service.ts`:
-  - [ ] Create `calculateMD5Hash()` utility function using Web Crypto API
-  - [ ] Store file content hash when loading file in `useAppStore`
-  - [ ] Store original loaded data as base version for three-way merge
-  - [ ] Before saving, detect conflicts by:
-    - [ ] Re-reading the current file content
-    - [ ] Calculating MD5 hash of current file
-    - [ ] Comparing with stored hash from load time
-  - [ ] If hashes differ, trigger auto-merge flow
-  - [ ] Handle file not found/deleted scenarios
-  - [ ] Handle permission errors gracefully
-- [ ] Add conflict metadata to `useAppStore`:
-  - [ ] `fileContentHash: string | null` - MD5 hash of loaded file
-  - [ ] `fileLoadedAt: string | null` - ISO timestamp when file was loaded
-  - [ ] `baseVersion: DataFile | null` - Original loaded data for three-way merge
+### 17.1 File Hash & Conflict Detection Infrastructure
+- [x] Create `calculateMD5Hash()` utility function in `src/utils/hash.utils.ts`
+  - [ ] Use Web Crypto API for MD5 hash calculation
+  - [ ] Add unit tests for hash calculation
+- [x] Add conflict metadata to `useAppStore`:
+  - [x] `fileContentHash: string | null` - MD5 hash of loaded file
+  - [x] `fileLoadedAt: string | null` - ISO timestamp when file was loaded
+  - [x] `baseVersion: DataFile | null` - Original loaded data for three-way merge
+- [x] Update `syncService.loadDataFile()` to store hash and base version
+  - [x] Calculate and store file hash after successful load
+  - [x] Store copy of loaded data as base version
+- [ ] **Test UI**: Load a file → verify hash is stored in state (check via React DevTools)
 
-**Three-Way Merge Algorithm:**
-- [ ] Create `src/services/merge.service.ts` with entity-level merge logic:
-  - [ ] Implement `performThreeWayMerge(base, fileVersion, appVersion)`:
-    - [ ] Compare each entity collection (accounts, transactions, categories, etc.)
-    - [ ] For each entity ID:
-      - [ ] **New in file only** → include from file
-      - [ ] **New in app only** → include from app
-      - [ ] **Exists in both:**
-        - [ ] If unchanged in app → use file version (file wins)
-        - [ ] If unchanged in file → use app version (app wins)
-        - [ ] If changed in both → check field-level changes:
-          - [ ] Different fields changed → merge both changes (auto-merge)
-          - [ ] Same fields changed to same value → use either
-          - [ ] Same fields changed to different values → flag as conflict
-      - [ ] **Deleted in file, modified in app** → flag as conflict
-      - [ ] **Deleted in app, modified in file** → flag as conflict
-      - [ ] **Deleted in both** → remove from result
-  - [ ] Return merge result: `{ merged: DataFile, conflicts: Conflict[] }`
-  - [ ] Create `Conflict` type with entity information and conflict details
-  - [ ] Implement field-level comparison for entities
-  - [ ] Special handling for computed fields (balances, totals)
+### 17.2 Conflict Detection Logic
+- [x] Add conflict detection to `syncService.syncNow()`:
+  - [x] Before saving, re-read current file content
+  - [ ] Calculate MD5 hash of current file content
+  - [ ] Compare with stored hash from load time
+  - [x] If hashes differ, trigger merge flow instead of direct save
+- [x] Handle edge cases:
+  - [x] File not found/deleted → show error dialog
+  - [x] Permission errors → show helpful error message
+  - [x] Hash calculation errors → log and continue with save
+- [ ] **Test UI**: 
+  - [ ] Load file → manually edit file externally → save in app → see conflict detection triggered
+  - [ ] Verify error dialog appears when file is deleted
 
-**Data Consistency Validation:**
-- [ ] Add data consistency validation functions
-- [ ] Check account balances match transaction history
-- [ ] Verify all references are valid
-- [ ] Offer auto-fix options where possible
+### 17.3 Three-Way Merge Service
+- [x] Create `src/services/merge.service.ts`
+- [x] Implement `Conflict` interface for conflict metadata
+- [x] Implement `performThreeWayMerge(base, fileVersion, appVersion)`:
+  - [x] For each entity type (accounts, categories, transactions, etc.):
+    - [x] Compare entities by ID
+    - [x] Detect additions (new in file only, new in app only)
+    - [x] Detect modifications (changed in file, changed in app, changed in both)
+    - [x] Detect deletions (deleted in file, deleted in app)
+  - [x] Apply merge rules:
+    - [x] New entities: auto-include (added in file or app)
+    - [x] One-sided changes: auto-merge (changed in file or app, but not both)
+    - [x] Both-sided changes: flag as conflict requiring user resolution
+    - [x] Delete + modify: flag as conflict
+  - [x] Return `{ merged: DataFile, conflicts: Conflict[] }`
+- [x] Add unit tests for all merge scenarios
+- [ ] **Test UI**: Not directly testable yet (no UI), verify via unit tests
 
-**Merge Preview UI:**
-- [ ] Create `src/components/common/MergePreviewDialog.tsx`:
-  - [ ] Show merge preview with tabs for different sections
-  - [ ] Display auto-merged changes
-  - [ ] Interactive resolution for conflicts
-  - [ ] Validation warnings with auto-fix options
+### 17.4 Merge Preview Dialog
+- [x] Create `src/components/common/MergePreviewDialog.tsx`
+- [x] Display merge preview with sections:
+  - [x] Auto-merged changes (read-only, informational)
+  - [x] Conflicts requiring user resolution (interactive)
+  - [x] Data validation warnings (with auto-fix buttons)
+- [x] For each conflict:
+  - [x] Show entity type and name/description
+  - [x] Show both versions side-by-side (file version vs app version)
+  - [x] Allow user to choose: Keep file version / Keep app version
+- [x] Show summary: X auto-merged, Y conflicts, Z validation warnings
+- [x] Action buttons: Cancel / Apply merge
+- [ ] **Test UI**: 
+  - [ ] Create conflicting changes (edit same transaction in file and app)
+  - [ ] Trigger save → see merge dialog appear
+  - [ ] Verify auto-merged items shown correctly
+  - [ ] Verify conflicts shown with side-by-side comparison
+  - [ ] Test resolving conflicts and applying merge
 
-**Integration:**
-- [ ] Update `saveNow()` in sync.service to use merge logic
-- [ ] Handle auto-save with conflict detection
-- [ ] Never auto-save with unresolved conflicts
-
-**Testing:**
-- [ ] Test MD5 hash calculation
-- [ ] Test three-way merge scenarios
-- [ ] Test conflict detection and resolution
-- [ ] Integration tests with concurrent modifications
-
-## Phase 15: User Documentation (Post-MVP)
-
-**Requirements**: NFR-4 (Usability)
-
-**Goal**: Complete user documentation
-
-### 15.1 Add User Documentation
-- [ ] Add help tooltips in UI for complex features
-- [ ] Create FAQ section in settings or help page
-- [ ] Create user guide (optional) with screenshots
-- [ ] **Test**: New user can understand how to use each feature
-
-## Phase 16: Advanced Error Handling & Validation (Post-MVP)
-
-**Requirements**: NFR-6 (Reliability), NFR-4 (Usability)
-
-**Goal**: Enhanced error handling and validation
-
-### 16.1 Add Error Boundary
-- [ ] Create `src/components/common/ErrorBoundary.tsx`
-- [ ] Create `src/components/common/ErrorMessage.tsx`
-- [ ] Create `src/components/common/NotificationSnackbar.tsx`
-- [ ] Wrap major sections in error boundaries
-- [ ] **Test**: Simulate errors, verify user sees helpful messages
-
-### 16.2 Enhanced Validation
-- [ ] Add comprehensive Zod validation to all forms
-- [ ] Validate business rules
-- [ ] Prevent deletion of referenced entities
-- [ ] Add user-friendly error messages
-- [ ] **Test**: Try to submit invalid data, try to delete referenced entities
-
-## Phase 17: Cloud Storage Integration (Post-MVP, Optional)
-
-**Requirements**: FR-11 (Cloud Storage Integration), NFR-8 (Cloud Security)
-
-**Goal**: Add optional cloud storage providers (OneDrive, Google Drive) for users who want automatic sync
-
-**Important**: This phase is completely optional. The app is fully functional with local storage. This phase adds cloud sync as an opt-in feature.
-
-**Note on Authentication**: Authentication is NOT implemented by Money Tree. It is provided by the cloud storage provider's SDK. Money Tree simply integrates these SDKs to enable file access.
+### 17.5 Integration & Final Polish
+- [x] Integrate merge service into `syncService.syncNow()`:
+  - [x] On conflict detection → call merge service
+  - [x] Show merge preview dialog
+  - [x] Wait for user resolution
+  - [x] Apply merged result
+- [x] Update auto-save logic:
+  - [x] Disable auto-save when conflicts exist
+  - [x] Show indicator that auto-save is paused
+  - [x] Re-enable after conflicts resolved
+- [x] Add user notifications:
+  - [x] Snackbar on successful auto-merge (no conflicts)
+  - [x] Persistent notice when conflicts require resolution
+- [ ] **Test UI**:
+  - [ ] Full workflow: Load file → edit externally and in app → save → resolve conflicts → verify merged data
+  - [ ] Test auto-save behavior with conflicts
+  - [ ] Verify all snackbars and notifications appear correctly
+  - [ ] Test with multiple conflict scenarios
 
 ### 19.1 Implement OneDrive Storage Provider
 - [ ] Install dependencies: `@azure/msal-browser`, `@microsoft/microsoft-graph-client`
@@ -1719,79 +1697,3 @@ These features will be implemented after the MVP is validated by users.
 - [ ] Add migration guide: how to move from local to cloud storage
 - [ ] Add FAQ about authentication requirements
 - [ ] **Test**: Users can migrate their local data to cloud storage
-
----
-
-## MVP Completion Checklist
-
-- [ ] All MVP phases (1-10) completed
-- [ ] All MVP features implemented and tested:
-  - [ ] Transaction Management
-  - [ ] Account Management
-  - [ ] Category & Transaction Type Management
-  - [ ] Dashboard with Quick Entry
-  - [ ] Financial Reports (Balance Sheet, Cash Flow)
-  - [ ] Budget Planning & Review
-- [ ] All tests passing with 80%+ coverage
-- [ ] Documentation complete
-- [ ] Production build deployed
-- [ ] No critical bugs
-- [ ] App is usable for daily personal finance tracking with budgeting and reporting
-  - [ ] Category & Transaction Type Management
-  - [ ] Dashboard with Quick Entry
-  - [ ] Financial Reports (Balance Sheet, Cash Flow)
-  - [ ] Budget Planning & Review
-- [ ] All tests passing with 80%+ coverage
-- [ ] Documentation complete
-- [ ] Production build deployed
-- [ ] No critical bugs
-- [ ] App is usable for daily personal finance tracking with budgeting and reporting
-
-## Post-MVP Completion Checklist
-
-- [ ] Year management and multi-year support complete
-- [ ] Account overview report with multi-year view
-- [ ] Settings and advanced data management
-- [ ] Conflict detection and auto-merge complete
-- [ ] User documentation and error handling enhanced
-- [ ] All enhancements tested
-- [ ] Optional: Cloud storage integration complete
-
----
-
-## Notes for AI Implementation
-
-**MVP Priority:**
-- Focus on completing MVP (Phases 1-11) first
-- MVP should be fully functional and deployable
-- Users can track finances completely with MVP features
-- Post-MVP features are enhancements, not requirements
-
-**Verification Methods:**
-- Run `npm run build` - should complete without errors
-- Run `npm run lint` - should pass without errors
-- Run `npm test` - all tests should pass
-- Run `npm test -- --coverage` - should meet 80% threshold
-- Run `npm start` - app should load in browser
-- Test each feature manually in the browser
-- Check browser console for errors
-- Test with sample data
-
-**Best Practices:**
-- Commit after each completed step
-- Test thoroughly before moving to next step
-- Keep components small and focused
-- Follow TypeScript strict mode
-- Use Material-UI components consistently
-- Handle errors gracefully
-- Provide user feedback for all actions
-
-**Common Issues to Watch For:**
-- TypeScript type errors
-- Missing dependencies
-- Incorrect import paths
-- Zustand store not updating UI
-- Date timezone issues
-- Decimal precision in calculations
-- Race conditions in async operations
-

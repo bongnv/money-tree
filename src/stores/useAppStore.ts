@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { storageService } from '../services/storage.service';
 import { AlertColor } from '@mui/material';
+import { DataFile } from '../types/models';
 
 interface SnackbarState {
   open: boolean;
@@ -16,6 +17,10 @@ interface AppState {
   isLoading: boolean;
   error: string | null;
   snackbar: SnackbarState;
+  // Conflict detection metadata
+  fileContentHash: string | null;
+  fileLoadedAt: string | null;
+  baseVersion: DataFile | null;
 }
 
 interface AppActions {
@@ -29,6 +34,9 @@ interface AppActions {
   resetState: () => void;
   showSnackbar: (message: string, severity?: AlertColor) => void;
   hideSnackbar: () => void;
+  // Conflict detection actions
+  setFileMetadata: (hash: string, loadedAt: string, baseVersion: DataFile) => void;
+  clearFileMetadata: () => void;
 }
 
 const getCurrentYear = (): number => {
@@ -48,6 +56,9 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
     message: '',
     severity: 'info',
   },
+  fileContentHash: null,
+  fileLoadedAt: null,
+  baseVersion: null,
 
   setCurrentYear: (year) => {
     storageService.setCurrentYear(year);
@@ -102,6 +113,9 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
         message: '',
         severity: 'info',
       },
+      fileContentHash: null,
+      fileLoadedAt: null,
+      baseVersion: null,
     });
   },
 
@@ -111,5 +125,13 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
 
   hideSnackbar: () => {
     set((state) => ({ snackbar: { ...state.snackbar, open: false } }));
+  },
+
+  setFileMetadata: (hash, loadedAt, baseVersion) => {
+    set({ fileContentHash: hash, fileLoadedAt: loadedAt, baseVersion });
+  },
+
+  clearFileMetadata: () => {
+    set({ fileContentHash: null, fileLoadedAt: null, baseVersion: null });
   },
 }));

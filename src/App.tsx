@@ -7,22 +7,43 @@ import { MainLayout } from './components/layout/MainLayout';
 import { FileLoadErrorDialog } from './components/common/FileLoadErrorDialog';
 import { WelcomeDialog } from './components/common/WelcomeDialog';
 import { NotificationSnackbar } from './components/common/NotificationSnackbar';
+import { MergePreviewDialog, ConflictResolution } from './components/common/MergePreviewDialog';
 import { AppRoutes } from './routes';
 import { useAppStore } from './stores/useAppStore';
 import { syncService } from './services/sync.service';
 import { StorageFactory, StorageProviderType } from './services/storage/StorageFactory';
 import { OneDriveProvider } from './services/storage/OneDriveProvider';
 import { SelectedFileInfo } from './components/onedrive/OneDriveFilePicker';
+import { MergeResult } from './services/merge.service';
 
 const WELCOME_DISMISSED_KEY = 'moneyTree.welcomeDismissed';
 
 const App: React.FC = () => {
-  const { error, setError, hasUnsavedChanges, currentYear, snackbar, hideSnackbar } =
-    useAppStore();
+  const { error, setError, hasUnsavedChanges, currentYear, snackbar, hideSnackbar } = useAppStore();
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
+  const [mergeDialogState, setMergeDialogState] = useState<{
+    open: boolean;
+    mergeResult: MergeResult | null;
+    resolve: ((value: ConflictResolution[] | null) => void) | null;
+  }>({
+    open: false,
+    mergeResult: null,
+    resolve: null,
+  });
 
   useEffect(() => {
     const initializeApp = async () => {
+      // Set up merge handler
+      syncService.setMergeHandler(async (mergeResult: MergeResult) => {
+        return new Promise<ConflictResolution[] | null>((resolve) => {
+          setMergeDialogState({
+            open: true,
+            mergeResult,
+            resolve,
+          });
+        });
+      });
+
       // Try to auto-load from cached file
       const loaded = await syncService.autoLoad();
 
@@ -40,6 +61,7 @@ const App: React.FC = () => {
 
     return () => {
       syncService.stopAutoSave();
+      syncService.setMergeHandler(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
@@ -126,6 +148,20 @@ const App: React.FC = () => {
     setError(null);
   };
 
+  const handleMergeCancel = () => {
+    if (mergeDialogState.resolve) {
+      mergeDialogState.resolve(null);
+    }
+    setMergeDialogState({ open: false, mergeResult: null, resolve: null });
+  };
+
+  const handleMergeApply = (resolutions: ConflictResolution[]) => {
+    if (mergeDialogState.resolve) {
+      mergeDialogState.resolve(resolutions);
+    }
+    setMergeDialogState({ open: false, mergeResult: null, resolve: null });
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -147,6 +183,13 @@ const App: React.FC = () => {
         message={snackbar.message}
         severity={snackbar.severity}
         onClose={hideSnackbar}
+      />
+      <MergePreviewDialog
+        open={mergeDialogState.open}
+        conflicts={mergeDialogState.mergeResult?.conflicts || []}
+        autoMergedCount={mergeDialogState.mergeResult?.autoMergedCount || 0}
+        onCancel={handleMergeCancel}
+        onApply={handleMergeApply}
       />
     </ThemeProvider>
   );

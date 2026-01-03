@@ -6,13 +6,19 @@ import { useAssetStore } from '../stores/useAssetStore';
 import { useBudgetStore } from '../stores/useBudgetStore';
 import { StorageFactory } from './storage/StorageFactory';
 import type { DataFile } from '../types/models';
+import { calculateDataFileHash } from '../utils/hash.utils';
+import { performThreeWayMerge, Conflict, MergeResult } from './merge.service';
+import { ConflictResolution } from '../components/common/MergePreviewDialog';
 
 const AUTO_SAVE_INTERVAL = 1 * 60 * 1000; // 1 minute in milliseconds
+
+type MergeHandler = (mergeResult: MergeResult) => Promise<ConflictResolution[] | null>;
 
 class SyncService {
   private autoSaveTimerId: NodeJS.Timeout | null = null;
   private isSaving = false;
   private cachedDataFile: DataFile | null = null;
+  private mergeHandler: MergeHandler | null = null;
 
   /**
    * Check if there are unsaved changes and prompt user if needed
@@ -46,6 +52,91 @@ class SyncService {
   }
 
   /**
+   * Apply conflict resolutions chosen by the user
+   */
+  private applyConflictResolutions(
+    mergedData: DataFile,
+    conflicts: Conflict[],
+    resolutions: ConflictResolution[]
+  ): DataFile {
+    const result = structuredClone(mergedData);
+
+    // Create a map of resolutions for quick lookup
+    const resolutionMap = new Map(resolutions.map((r) => [r.conflictIndex, r.resolution]));
+
+    conflicts.forEach((conflict, index) => {
+      const resolution = resolutionMap.get(index);
+      if (!resolution) return;
+
+      const chosenVersion = resolution === 'file' ? conflict.fileVersion : conflict.appVersion;
+
+      // If user chose to delete (null version), skip adding it
+      if (chosenVersion === null) return;
+
+      // Apply resolution based on entity type
+      switch (conflict.type) {
+        case 'account':
+          if (!result.accounts) result.accounts = [];
+          // Remove existing if present
+          result.accounts = result.accounts.filter((a) => a.id !== conflict.entityId);
+          // Add chosen version
+          result.accounts.push(chosenVersion as any);
+          break;
+
+        case 'category':
+          if (!result.categories) result.categories = [];
+          result.categories = result.categories.filter((c) => c.id !== conflict.entityId);
+          result.categories.push(chosenVersion as any);
+          break;
+
+        case 'transactionType':
+          if (!result.transactionTypes) result.transactionTypes = [];
+          result.transactionTypes = result.transactionTypes.filter(
+            (t) => t.id !== conflict.entityId
+          );
+          result.transactionTypes.push(chosenVersion as any);
+          break;
+
+        case 'transaction':
+        case 'asset':
+        case 'budget':
+          // Find which year this entity belongs to
+          const years = Object.keys(result.years || {});
+          for (const year of years) {
+            const yearData = result.years?.[year];
+            if (!yearData) continue;
+
+            if (conflict.type === 'transaction') {
+              yearData.transactions = yearData.transactions.filter(
+                (t) => t.id !== conflict.entityId
+              );
+              yearData.transactions.push(chosenVersion as any);
+            } else if (conflict.type === 'asset') {
+              yearData.manualAssets = yearData.manualAssets.filter(
+                (a) => a.id !== conflict.entityId
+              );
+              yearData.manualAssets.push(chosenVersion as any);
+            } else if (conflict.type === 'budget') {
+              yearData.budgets = yearData.budgets.filter((b) => b.id !== conflict.entityId);
+              yearData.budgets.push(chosenVersion as any);
+            }
+          }
+          break;
+      }
+    });
+
+    return result;
+  }
+
+  /**
+   * Set the merge handler callback
+   * This allows the UI to handle merge conflicts
+   */
+  setMergeHandler(handler: MergeHandler | null): void {
+    this.mergeHandler = handler;
+  }
+
+  /**
    * Sync data immediately
    * Saves current state to storage provider
    */
@@ -66,7 +157,7 @@ class SyncService {
     try {
       const storage = StorageFactory.getCurrentProvider();
 
-      // Gather data from all domain stores
+      // Gather data from all domain stores to create app version
       const accountStore = useAccountStore.getState();
       const categoryStore = useCategoryStore.getState();
       const transactionStore = useTransactionStore.getState();
@@ -75,7 +166,7 @@ class SyncService {
 
       const currentYearStr = String(state.currentYear);
 
-      const dataToSave: DataFile = {
+      const appVersion: DataFile = {
         version: '1.0.0',
         years: {
           ...this.cachedDataFile?.years,
@@ -92,10 +183,76 @@ class SyncService {
         lastModified: new Date().toISOString(),
       };
 
+      // Conflict detection: check if file has been modified externally
+      let dataToSave = appVersion;
+
+      if (state.fileContentHash && state.baseVersion) {
+        try {
+          // Re-read current file content
+          const currentFileData = await storage.loadDataFile();
+
+          if (currentFileData) {
+            // Calculate current file hash
+            const currentHash = await calculateDataFileHash(currentFileData);
+
+            // If hashes differ, file was modified externally
+            if (currentHash !== state.fileContentHash) {
+              // Perform three-way merge
+              const mergeResult = performThreeWayMerge(
+                state.baseVersion,
+                currentFileData,
+                appVersion
+              );
+
+              if (mergeResult.conflicts.length > 0 && this.mergeHandler) {
+                // There are conflicts, ask user to resolve them
+                const resolutions = await this.mergeHandler(mergeResult);
+
+                if (!resolutions) {
+                  // User cancelled the merge
+                  this.isSaving = false;
+                  state.setLoading(false);
+                  return;
+                }
+
+                // Apply user resolutions to conflicts
+                dataToSave = this.applyConflictResolutions(
+                  mergeResult.merged,
+                  mergeResult.conflicts,
+                  resolutions
+                );
+              } else if (mergeResult.conflicts.length > 0) {
+                // No merge handler available, show warning
+                state.showSnackbar(
+                  'File was modified externally but no merge handler available',
+                  'warning'
+                );
+              } else {
+                // No conflicts, use auto-merged result
+                dataToSave = mergeResult.merged;
+                state.showSnackbar(
+                  `Auto-merged ${mergeResult.autoMergedCount} changes successfully`,
+                  'success'
+                );
+              }
+            }
+          }
+        } catch (error) {
+          // If we can't read file (deleted, permission error), log and continue
+          console.error('Error checking for conflicts:', error);
+          // Continue with save attempt using appVersion
+        }
+      }
+
       await storage.saveDataFile(dataToSave);
 
       // Update cache with what we just saved
       this.cachedDataFile = dataToSave;
+
+      // Update file hash and base version after successful save
+      const newHash = await calculateDataFileHash(dataToSave);
+      const savedAt = new Date().toISOString();
+      state.setFileMetadata(newHash, savedAt, structuredClone(dataToSave));
 
       state.markAsSaved();
       // Get the actual filename from storage provider
@@ -166,6 +323,11 @@ class SyncService {
       if (dataFile) {
         // Cache the loaded data file
         this.cachedDataFile = dataFile;
+
+        // Calculate and store file hash for conflict detection
+        const fileHash = await calculateDataFileHash(dataFile);
+        const loadedAt = new Date().toISOString();
+        state.setFileMetadata(fileHash, loadedAt, structuredClone(dataFile));
 
         // Distribute shared data to domain stores
         useAccountStore.getState().setAccounts(dataFile.accounts || []);

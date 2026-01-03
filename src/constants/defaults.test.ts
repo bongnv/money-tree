@@ -32,19 +32,6 @@ describe('Default Data', () => {
       expect(usd?.decimalPlaces).toBe(2);
     });
 
-    it('should include EUR', () => {
-      const eur = DEFAULT_CURRENCIES.find((c) => c.code === 'EUR');
-      expect(eur).toBeDefined();
-      expect(eur?.symbol).toBe('€');
-      expect(eur?.decimalPlaces).toBe(2);
-    });
-
-    it('should include JPY with 0 decimal places', () => {
-      const jpy = DEFAULT_CURRENCIES.find((c) => c.code === 'JPY');
-      expect(jpy).toBeDefined();
-      expect(jpy?.decimalPlaces).toBe(0);
-    });
-
     it('should include VND with 0 decimal places', () => {
       const vnd = DEFAULT_CURRENCIES.find((c) => c.code === 'VND');
       expect(vnd).toBeDefined();
@@ -57,6 +44,13 @@ describe('Default Data', () => {
       expect(sgd).toBeDefined();
       expect(sgd?.symbol).toBe('S$');
       expect(sgd?.decimalPlaces).toBe(2);
+    });
+
+    it('should include AUD', () => {
+      const aud = DEFAULT_CURRENCIES.find((c) => c.code === 'AUD');
+      expect(aud).toBeDefined();
+      expect(aud?.symbol).toBe('A$');
+      expect(aud?.decimalPlaces).toBe(2);
     });
   });
 });

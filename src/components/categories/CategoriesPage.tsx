@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import {
   Box,
-  Container,
-  Typography,
   Button,
   Dialog,
   DialogTitle,
@@ -181,11 +179,8 @@ export const CategoriesPage: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Categories & Transaction Types
-        </Typography>
+    <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
@@ -272,6 +267,6 @@ export const CategoriesPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 };

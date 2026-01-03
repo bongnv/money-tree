@@ -650,3 +650,8 @@ These features will be implemented after the MVP is complete and validated by us
 5. **Simple MVP:** Start with single file, add archiving later when needed
 6. **User control:** Archive prompts give visibility and control
 7. **Portable archives:** Each archive is self-contained and shareable
+
+## Bug fixes
+
+**B-1** [ ] Got error: "Failed to download file from OneDrive" when creating a new data file in OneDrive
+**B-2** [ ] Add a new dashboard button next to Money Tree label in the navigation to improve UX

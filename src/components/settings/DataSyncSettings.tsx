@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Container,
+  Box,
   Typography,
   Card,
   CardContent,
   Grid,
-  Box,
   Button,
   FormControl,
   InputLabel,
@@ -219,14 +218,7 @@ export const DataSyncSettings: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="md">
-      <Typography variant="h4" gutterBottom>
-        Data & Sync Settings
-      </Typography>
-      <Typography variant="body1" color="text.secondary" paragraph>
-        Manage your data file and sync preferences
-      </Typography>
-
+    <Box>
       <Grid container spacing={3}>
         {/* Section 1: Current File */}
         <Grid item xs={12}>
@@ -457,6 +449,6 @@ export const DataSyncSettings: React.FC = () => {
         onCancel={() => setShowFilePicker(false)}
         onListFolders={handleListOneDriveFolders}
       />
-    </Container>
+    </Box>
   );
 };

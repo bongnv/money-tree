@@ -1,4 +1,5 @@
 import {
+  areCurrenciesEqual,
   getCurrencyById,
   getCurrencyByCode,
   formatCurrency,
@@ -11,6 +12,33 @@ import {
 import { DEFAULT_CURRENCIES } from '../constants/defaults';
 
 describe('currency.utils', () => {
+  describe('areCurrenciesEqual', () => {
+    it('should return true for identical currencies (same case)', () => {
+      expect(areCurrenciesEqual('USD', 'USD')).toBe(true);
+      expect(areCurrenciesEqual('usd', 'usd')).toBe(true);
+    });
+
+    it('should return true for identical currencies (different case)', () => {
+      expect(areCurrenciesEqual('USD', 'usd')).toBe(true);
+      expect(areCurrenciesEqual('usd', 'USD')).toBe(true);
+      expect(areCurrenciesEqual('vNd', 'VND')).toBe(true);
+    });
+
+    it('should return false for different currencies', () => {
+      expect(areCurrenciesEqual('USD', 'VND')).toBe(false);
+      expect(areCurrenciesEqual('usd', 'vnd')).toBe(false);
+    });
+
+    it('should return false for null/undefined values', () => {
+      expect(areCurrenciesEqual(null, 'USD')).toBe(false);
+      expect(areCurrenciesEqual('USD', null)).toBe(false);
+      expect(areCurrenciesEqual(undefined, 'USD')).toBe(false);
+      expect(areCurrenciesEqual('USD', undefined)).toBe(false);
+      expect(areCurrenciesEqual(null, null)).toBe(false);
+      expect(areCurrenciesEqual(undefined, undefined)).toBe(false);
+    });
+  });
+
   describe('getCurrencyById', () => {
     it('should return currency for valid id', () => {
       const currency = getCurrencyById('usd');

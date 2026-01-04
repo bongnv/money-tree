@@ -142,6 +142,7 @@ export function findFallbackRate(
     const checkDate = new Date(targetYear, targetMonth - 1 - i, 1);
     const checkMonth = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}`;
 
+    // Try exact match
     const rate = exchangeRates.find(
       (r) =>
         r.month === checkMonth && r.fromCurrency === fromCurrency && r.toCurrency === toCurrency
@@ -149,6 +150,30 @@ export function findFallbackRate(
 
     if (rate) {
       return rate.rate;
+    }
+
+    // Try inverse rate
+    const inverseRate = exchangeRates.find(
+      (r) =>
+        r.month === checkMonth && r.fromCurrency === toCurrency && r.toCurrency === fromCurrency
+    );
+
+    if (inverseRate) {
+      return 1 / inverseRate.rate;
+    }
+
+    // Try calculating through USD
+    if (fromCurrency !== 'USD' && toCurrency !== 'USD') {
+      const fromToUsd = exchangeRates.find(
+        (r) => r.month === checkMonth && r.fromCurrency === fromCurrency && r.toCurrency === 'USD'
+      );
+      const toToUsd = exchangeRates.find(
+        (r) => r.month === checkMonth && r.fromCurrency === toCurrency && r.toCurrency === 'USD'
+      );
+
+      if (fromToUsd && toToUsd) {
+        return fromToUsd.rate / toToUsd.rate;
+      }
     }
   }
 

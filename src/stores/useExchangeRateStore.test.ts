@@ -119,14 +119,15 @@ describe('useExchangeRateStore', () => {
       expect(rate).toBe(1.19);
       expect(mockFetchCurrentRate).not.toHaveBeenCalled(); // Should not call API
       expect(mockFindFallbackRate).toHaveBeenCalled();
-      // Verify it was stored with the requested month
-      const storedRate = useExchangeRateStore
+      // Fallback rate is returned but not stored (to save space)
+      const storedRateForMarch = useExchangeRateStore
         .getState()
         .rates.find(
           (r) => r.month === '2026-03' && r.fromCurrency === 'EUR' && r.toCurrency === 'USD'
         );
-      expect(storedRate).toBeDefined();
-      expect(storedRate?.rate).toBe(1.19);
+      expect(storedRateForMarch).toBeUndefined();
+      // Original rate still exists
+      expect(useExchangeRateStore.getState().rates).toHaveLength(1);
     });
 
     it('should fetch from API when no fallback available', async () => {
@@ -188,54 +189,6 @@ describe('useExchangeRateStore', () => {
     });
   });
 
-  describe('listMissingRates', () => {
-    beforeEach(() => {
-      const rates = [
-        {
-          id: 'rate-1',
-          month: '2026-01',
-          fromCurrency: 'EUR',
-          toCurrency: 'USD',
-          rate: 1.18,
-          createdAt: '2026-01-01T00:00:00.000Z',
-        },
-      ];
-      useExchangeRateStore.getState().setRates(rates);
-
-      // Mock findFallbackRate to return null for missing rates
-      jest
-        .spyOn(exchangeRateService, 'findFallbackRate')
-        .mockImplementation((rates, month, from, to) => {
-          const found = rates.find(
-            (r) => r.month === month && r.fromCurrency === from && r.toCurrency === to
-          );
-          return found ? found.rate : null;
-        });
-    });
-
-    it('should identify missing rates', () => {
-      const requiredRates = [
-        { month: '2026-01', fromCurrency: 'EUR', toCurrency: 'USD' }, // exists
-        { month: '2026-02', fromCurrency: 'EUR', toCurrency: 'USD' }, // missing
-        { month: '2026-01', fromCurrency: 'GBP', toCurrency: 'USD' }, // missing
-        { month: '2026-01', fromCurrency: 'USD', toCurrency: 'USD' }, // same currency, skip
-      ];
-
-      const missing = useExchangeRateStore.getState().listMissingRates(requiredRates);
-
-      expect(missing).toHaveLength(2);
-      expect(missing).toContainEqual({ month: '2026-02', fromCurrency: 'EUR', toCurrency: 'USD' });
-      expect(missing).toContainEqual({ month: '2026-01', fromCurrency: 'GBP', toCurrency: 'USD' });
-    });
-
-    it('should return empty array when all rates exist', () => {
-      const requiredRates = [{ month: '2026-01', fromCurrency: 'EUR', toCurrency: 'USD' }];
-
-      const missing = useExchangeRateStore.getState().listMissingRates(requiredRates);
-      expect(missing).toHaveLength(0);
-    });
-  });
-
   describe('addRate', () => {
     it('should add a new rate', () => {
       const newRate = {
@@ -250,41 +203,6 @@ describe('useExchangeRateStore', () => {
       useExchangeRateStore.getState().addRate(newRate);
       expect(useExchangeRateStore.getState().rates).toHaveLength(1);
       expect(useExchangeRateStore.getState().rates[0]).toEqual(newRate);
-    });
-  });
-
-  describe('updateRate', () => {
-    it('should update an existing rate', () => {
-      const initialRate = {
-        id: 'rate-1',
-        month: '2026-01',
-        fromCurrency: 'EUR',
-        toCurrency: 'USD',
-        rate: 1.18,
-        createdAt: '2026-01-01T00:00:00.000Z',
-      };
-      useExchangeRateStore.getState().setRates([initialRate]);
-
-      useExchangeRateStore.getState().updateRate('rate-1', { rate: 1.2 });
-
-      expect(useExchangeRateStore.getState().rates[0].rate).toBe(1.2);
-    });
-  });
-
-  describe('deleteRate', () => {
-    it('should delete a rate', () => {
-      const rate = {
-        id: 'rate-1',
-        month: '2026-01',
-        fromCurrency: 'EUR',
-        toCurrency: 'USD',
-        rate: 1.18,
-        createdAt: '2026-01-01T00:00:00.000Z',
-      };
-      useExchangeRateStore.getState().setRates([rate]);
-
-      useExchangeRateStore.getState().deleteRate('rate-1');
-      expect(useExchangeRateStore.getState().rates).toHaveLength(0);
     });
   });
 

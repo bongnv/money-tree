@@ -1,11 +1,7 @@
 import { create } from 'zustand';
 import type { ExchangeRate } from '../types/models';
 import { useAppStore } from './useAppStore';
-import {
-  fetchCurrentRate,
-  findFallbackRate,
-  getCurrentMonth,
-} from '../services/exchangeRate.service';
+import { fetchCurrentRate, findFallbackRate } from '../services/exchangeRate.service';
 
 interface ExchangeRateState {
   rates: ExchangeRate[];
@@ -13,26 +9,17 @@ interface ExchangeRateState {
   errors: Record<string, string>; // key: 'YYYY-MM-EUR-USD'
 }
 
-interface MissingRate {
-  month: string;
-  fromCurrency: string;
-  toCurrency: string;
-}
-
 interface ExchangeRateActions {
   setRates: (rates: ExchangeRate[]) => void;
   addRate: (rate: ExchangeRate) => void;
-  updateRate: (id: string, updates: Partial<ExchangeRate>) => void;
-  deleteRate: (id: string) => void;
+  // Get conversion rate between any two currencies through USD
   getRateForMonth: (month: string, fromCurrency: string, toCurrency: string) => number | null;
+  // Fetch exchange rate if missing, handles any currency pair through USD
   fetchRateIfMissing: (
     month: string,
     fromCurrency: string,
     toCurrency: string
   ) => Promise<number | null>;
-  fetchMissingRatesForYear: (year: number, currencyPairs: Array<[string, string]>) => Promise<void>;
-  refreshRatesForYear: (year: number, currencyPairs: Array<[string, string]>) => Promise<void>;
-  listMissingRates: (requiredRates: MissingRate[]) => MissingRate[];
   resetRates: () => void;
 }
 
@@ -40,7 +27,7 @@ interface ExchangeRateActions {
  * Generate a unique key for rate lookup
  */
 function getRateKey(month: string, fromCurrency: string, toCurrency: string): string {
-  return `${month}-${fromCurrency}-${toCurrency}`;
+  return `${month}-${fromCurrency.toUpperCase()}-${toCurrency.toUpperCase()}`;
 }
 
 export const useExchangeRateStore = create<ExchangeRateState & ExchangeRateActions>((set, get) => ({
@@ -59,195 +46,186 @@ export const useExchangeRateStore = create<ExchangeRateState & ExchangeRateActio
     useAppStore.getState().setUnsavedChanges(true);
   },
 
-  updateRate: (id, updates) => {
-    set((state) => ({
-      rates: state.rates.map((rate) => (rate.id === id ? { ...rate, ...updates } : rate)),
-    }));
-    useAppStore.getState().setUnsavedChanges(true);
-  },
-
-  deleteRate: (id) => {
-    set((state) => ({
-      rates: state.rates.filter((rate) => rate.id !== id),
-    }));
-    useAppStore.getState().setUnsavedChanges(true);
-  },
-
   getRateForMonth: (month, fromCurrency, toCurrency) => {
     const { rates } = get();
+    const from = fromCurrency.toUpperCase();
+    const to = toCurrency.toUpperCase();
 
-    // If same currency, rate is always 1
-    if (fromCurrency === toCurrency) {
+    // Same currency, rate is 1
+    if (from === to) {
       return 1;
     }
 
-    // Try to find exact rate for the month
-    const exactRate = rates.find(
-      (r) => r.month === month && r.fromCurrency === fromCurrency && r.toCurrency === toCurrency
-    );
+    // Helper to get X->USD rate
+    const getToUsdRate = (currency: string): number | null => {
+      if (currency === 'USD') {
+        return 1;
+      }
 
-    if (exactRate) {
-      return exactRate.rate;
+      // Try to find exact X->USD rate for the month
+      const exactRate = rates.find(
+        (r) => r.month === month && r.fromCurrency === currency && r.toCurrency === 'USD'
+      );
+
+      if (exactRate) {
+        return exactRate.rate;
+      }
+
+      // Try fallback to previous months
+      return findFallbackRate(rates, month, currency, 'USD');
+    };
+
+    // If converting to USD, use direct method
+    if (to === 'USD') {
+      return getToUsdRate(from);
     }
 
-    // Try fallback to previous months
-    return findFallbackRate(rates, month, fromCurrency, toCurrency);
+    // If converting from USD, get inverse of target->USD rate
+    if (from === 'USD') {
+      const toUsdRate = getToUsdRate(to);
+      return toUsdRate !== null ? 1 / toUsdRate : null;
+    }
+
+    // For X->Y, calculate through USD: X->USD / Y->USD
+    const fromToUsd = getToUsdRate(from);
+    const toToUsd = getToUsdRate(to);
+
+    if (fromToUsd !== null && toToUsd !== null) {
+      return fromToUsd / toToUsd;
+    }
+
+    return null;
   },
 
   fetchRateIfMissing: async (month, fromCurrency, toCurrency) => {
     const { rates, loading } = get();
-    const key = getRateKey(month, fromCurrency, toCurrency);
+    const from = fromCurrency.toUpperCase();
+    const to = toCurrency.toUpperCase();
 
-    // If already loading, return
-    if (loading[key]) {
-      return null;
+    // Same currency doesn't need fetching
+    if (from === to) {
+      return 1;
     }
 
-    // Check if rate already exists
-    const existingRate = rates.find(
-      (r) => r.month === month && r.fromCurrency === fromCurrency && r.toCurrency === toCurrency
-    );
+    // For X->Y conversions, we need both X->USD and Y->USD (unless one is USD)
+    // Fetch them individually
+    const fetchPromises: Promise<number | null>[] = [];
 
-    if (existingRate) {
-      return existingRate.rate;
-    }
+    // Fetch from->USD if not USD and not already present
+    if (from !== 'USD') {
+      const fromKey = getRateKey(month, from, 'USD');
+      const existingFromRate = get().getRateForMonth(month, from, 'USD');
 
-    // Try to find nearest available rate first (saves API call)
-    const fallbackRate = findFallbackRate(rates, month, fromCurrency, toCurrency);
-    if (fallbackRate !== null) {
-      // Store the fallback rate for this month to avoid future lookups
-      const newRate: ExchangeRate = {
-        id: `rate-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        month,
-        fromCurrency,
-        toCurrency,
-        rate: fallbackRate,
-        createdAt: new Date().toISOString(),
-      };
-      get().addRate(newRate);
+      if (existingFromRate === null && !loading[fromKey]) {
+        const fallbackFromRate = findFallbackRate(rates, month, from, 'USD');
+        if (fallbackFromRate === null) {
+          // Mark as loading and fetch
+          set((state) => ({
+            loading: { ...state.loading, [fromKey]: true },
+            errors: { ...state.errors, [fromKey]: '' },
+          }));
 
-      // Clear any existing error for this rate
-      set((state) => ({
-        errors: { ...state.errors, [key]: '' },
-      }));
-
-      return fallbackRate;
-    }
-
-    // No fallback available, fetch from API
-    // Set loading state
-    set((state) => ({
-      loading: { ...state.loading, [key]: true },
-      errors: { ...state.errors, [key]: '' },
-    }));
-
-    try {
-      const rate = await fetchCurrentRate(fromCurrency, toCurrency);
-
-      if (rate === null) {
-        const error = `Failed to fetch rate for ${fromCurrency}/${toCurrency} in ${month}`;
-        set((state) => ({
-          loading: { ...state.loading, [key]: false },
-          errors: { ...state.errors, [key]: error },
-        }));
-        return null;
-      }
-
-      // Add the new rate
-      const newRate: ExchangeRate = {
-        id: `rate-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        month,
-        fromCurrency,
-        toCurrency,
-        rate,
-        createdAt: new Date().toISOString(),
-      };
-
-      get().addRate(newRate);
-
-      // Clear loading and error state
-      set((state) => ({
-        loading: { ...state.loading, [key]: false },
-        errors: { ...state.errors, [key]: '' },
-      }));
-
-      return rate;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      set((state) => ({
-        loading: { ...state.loading, [key]: false },
-        errors: { ...state.errors, [key]: errorMessage },
-      }));
-      return null;
-    }
-  },
-
-  fetchMissingRatesForYear: async (year, currencyPairs) => {
-    const months = Array.from({ length: 12 }, (_, i) => {
-      const month = String(i + 1).padStart(2, '0');
-      return `${year}-${month}`;
-    });
-
-    const fetchPromises: Promise<unknown>[] = [];
-
-    for (const month of months) {
-      for (const [fromCurrency, toCurrency] of currencyPairs) {
-        const rate = get().getRateForMonth(month, fromCurrency, toCurrency);
-        if (rate === null) {
-          fetchPromises.push(get().fetchRateIfMissing(month, fromCurrency, toCurrency));
+          fetchPromises.push(
+            fetchCurrentRate(from, 'USD')
+              .then((rate) => {
+                if (rate !== null) {
+                  const newRate: ExchangeRate = {
+                    id: `rate-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    month,
+                    fromCurrency: from,
+                    toCurrency: 'USD',
+                    rate,
+                    createdAt: new Date().toISOString(),
+                  };
+                  get().addRate(newRate);
+                  set((state) => ({
+                    loading: { ...state.loading, [fromKey]: false },
+                    errors: { ...state.errors, [fromKey]: '' },
+                  }));
+                  return rate;
+                } else {
+                  const error = `Failed to fetch rate for ${from}/USD in ${month}`;
+                  set((state) => ({
+                    loading: { ...state.loading, [fromKey]: false },
+                    errors: { ...state.errors, [fromKey]: error },
+                  }));
+                  return null;
+                }
+              })
+              .catch((error) => {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                set((state) => ({
+                  loading: { ...state.loading, [fromKey]: false },
+                  errors: { ...state.errors, [fromKey]: errorMessage },
+                }));
+                return null;
+              })
+          );
         }
       }
     }
 
-    await Promise.allSettled(fetchPromises);
-  },
+    // Fetch to->USD if not USD and not already present
+    if (to !== 'USD') {
+      const toKey = getRateKey(month, to, 'USD');
+      const existingToRate = get().getRateForMonth(month, to, 'USD');
 
-  refreshRatesForYear: async (year, currencyPairs) => {
-    // Don't update existing rates to save API calls
-    // Only fetch rates that are truly missing
-    const currentMonth = getCurrentMonth();
-    const [currentYear] = currentMonth.split('-').map(Number);
+      if (existingToRate === null && !loading[toKey]) {
+        const fallbackToRate = findFallbackRate(rates, month, to, 'USD');
+        if (fallbackToRate === null) {
+          // Mark as loading and fetch
+          set((state) => ({
+            loading: { ...state.loading, [toKey]: true },
+            errors: { ...state.errors, [toKey]: '' },
+          }));
 
-    // If refreshing a year that's not current, do nothing (preserve historical data)
-    if (year !== currentYear) {
-      return;
-    }
-
-    const fetchPromises: Promise<unknown>[] = [];
-
-    for (const [fromCurrency, toCurrency] of currencyPairs) {
-      // Only fetch if rate doesn't exist - don't delete and refetch
-      const existingRate = get().rates.find(
-        (r) =>
-          r.month === currentMonth && r.fromCurrency === fromCurrency && r.toCurrency === toCurrency
-      );
-      if (!existingRate) {
-        fetchPromises.push(get().fetchRateIfMissing(currentMonth, fromCurrency, toCurrency));
+          fetchPromises.push(
+            fetchCurrentRate(to, 'USD')
+              .then((rate) => {
+                if (rate !== null) {
+                  const newRate: ExchangeRate = {
+                    id: `rate-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    month,
+                    fromCurrency: to,
+                    toCurrency: 'USD',
+                    rate,
+                    createdAt: new Date().toISOString(),
+                  };
+                  get().addRate(newRate);
+                  set((state) => ({
+                    loading: { ...state.loading, [toKey]: false },
+                    errors: { ...state.errors, [toKey]: '' },
+                  }));
+                  return rate;
+                } else {
+                  const error = `Failed to fetch rate for ${to}/USD in ${month}`;
+                  set((state) => ({
+                    loading: { ...state.loading, [toKey]: false },
+                    errors: { ...state.errors, [toKey]: error },
+                  }));
+                  return null;
+                }
+              })
+              .catch((error) => {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                set((state) => ({
+                  loading: { ...state.loading, [toKey]: false },
+                  errors: { ...state.errors, [toKey]: errorMessage },
+                }));
+                return null;
+              })
+          );
+        }
       }
     }
 
-    await Promise.allSettled(fetchPromises);
-  },
-
-  listMissingRates: (requiredRates) => {
-    const missing: MissingRate[] = [];
-
-    for (const required of requiredRates) {
-      const { month, fromCurrency, toCurrency } = required;
-
-      // Skip if same currency
-      if (fromCurrency === toCurrency) {
-        continue;
-      }
-
-      // Check if rate exists
-      const rate = get().getRateForMonth(month, fromCurrency, toCurrency);
-      if (rate === null) {
-        missing.push(required);
-      }
+    // Wait for all fetches to complete
+    if (fetchPromises.length > 0) {
+      await Promise.allSettled(fetchPromises);
     }
 
-    return missing;
+    // Return the converted rate
+    return get().getRateForMonth(month, from, to);
   },
 
   resetRates: () => {

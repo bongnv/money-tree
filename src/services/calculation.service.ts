@@ -1,4 +1,5 @@
 import type { Transaction, Account, Budget, ManualAsset } from '../types/models';
+import { areCurrenciesEqual } from '../utils/currency.utils';
 
 /**
  * Calculation service for account balances and transaction totals
@@ -355,12 +356,16 @@ class CalculationService {
     for (const account of accounts) {
       const balance = accountBalances.get(account.id) || 0;
 
-      if (baseCurrency && getRateForMonth && currentMonth && account.currencyId !== baseCurrency) {
-        const rate = getRateForMonth(currentMonth, account.currencyId, baseCurrency);
-        if (rate !== null) {
+      if (baseCurrency && getRateForMonth && currentMonth && account.currencyId) {
+        if (!areCurrenciesEqual(account.currencyId, baseCurrency)) {
+          const rate = getRateForMonth(currentMonth, account.currencyId, baseCurrency);
+          if (rate === null) {
+            throw new Error(
+              `Missing exchange rate for ${account.currencyId.toUpperCase()} → ${baseCurrency.toUpperCase()} in ${currentMonth}. Please fetch exchange rates in Settings → Exchange Rates.`
+            );
+          }
           totalAccountBalance += balance * rate;
         } else {
-          // If no rate found, add unconverted (fallback)
           totalAccountBalance += balance;
         }
       } else {
@@ -370,12 +375,16 @@ class CalculationService {
 
     let totalAssets = 0;
     for (const asset of manualAssets) {
-      if (baseCurrency && getRateForMonth && currentMonth && asset.currencyId !== baseCurrency) {
-        const rate = getRateForMonth(currentMonth, asset.currencyId, baseCurrency);
-        if (rate !== null) {
+      if (baseCurrency && getRateForMonth && currentMonth && asset.currencyId) {
+        if (!areCurrenciesEqual(asset.currencyId, baseCurrency)) {
+          const rate = getRateForMonth(currentMonth, asset.currencyId, baseCurrency);
+          if (rate === null) {
+            throw new Error(
+              `Missing exchange rate for ${asset.currencyId.toUpperCase()} → ${baseCurrency.toUpperCase()} in ${currentMonth}. Please fetch exchange rates in Settings → Exchange Rates.`
+            );
+          }
           totalAssets += asset.value * rate;
         } else {
-          // If no rate found, add unconverted (fallback)
           totalAssets += asset.value;
         }
       } else {

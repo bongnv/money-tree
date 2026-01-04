@@ -97,10 +97,14 @@ const App: React.FC = () => {
       // Switch to OneDrive provider
       StorageFactory.setProviderType(StorageProviderType.ONEDRIVE);
 
-      // Get OneDrive provider and authenticate
+      // Get OneDrive provider and authenticate if needed
       const provider = StorageFactory.getCurrentProvider() as OneDriveProvider;
       await provider.initialize();
-      await provider.authenticate();
+
+      // Only authenticate if not already authenticated (prevents double auth popup)
+      if (!provider.isAuthenticated()) {
+        await provider.authenticate();
+      }
 
       // Set selected file location if provided
       if (fileInfo) {

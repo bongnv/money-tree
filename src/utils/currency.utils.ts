@@ -2,6 +2,18 @@ import { DEFAULT_CURRENCIES } from '../constants/defaults';
 import type { Currency } from '../types/models';
 
 /**
+ * Compare two currency IDs case-insensitively
+ * Handles null/undefined by returning false
+ */
+export const areCurrenciesEqual = (
+  currency1: string | null | undefined,
+  currency2: string | null | undefined
+): boolean => {
+  if (!currency1 || !currency2) return false;
+  return currency1.toUpperCase() === currency2.toUpperCase();
+};
+
+/**
  * Get currency by ID
  */
 export const getCurrencyById = (currencyId: string): Currency | undefined => {

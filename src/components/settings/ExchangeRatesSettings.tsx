@@ -111,10 +111,10 @@ export const ExchangeRatesSettings: React.FC = () => {
           </Alert>
         )}
 
-        {yearRates.length === 0 ? (
+        {ratesByPairAndMonth.size === 0 ? (
           <Alert severity="info">
-            No exchange rates found for {selectedYear}. Rates will be automatically fetched when
-            viewing reports with foreign currency accounts.
+            No exchange rates to USD found for {selectedYear}. Rates will be automatically fetched
+            when viewing reports with foreign currency accounts.
           </Alert>
         ) : (
           <TableContainer>
@@ -172,9 +172,10 @@ export const ExchangeRatesSettings: React.FC = () => {
 
         <Box sx={{ mt: 2 }}>
           <Typography variant="caption" color="text.secondary">
-            Exchange rates are automatically fetched from exchangerate-api.com when viewing reports
-            and cached locally. Rates are used to convert foreign currency transactions and balances
-            to your base currency ({baseCurrency.toUpperCase()}).
+            Exchange rates to USD are automatically fetched from exchangerate-api.com when viewing
+            reports and cached locally. Cross-currency conversions are calculated dynamically
+            through USD. Rates are used to convert foreign currency transactions and balances to
+            your base currency ({baseCurrency.toUpperCase()}).
           </Typography>
         </Box>
       </Paper>

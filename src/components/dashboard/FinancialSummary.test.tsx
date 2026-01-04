@@ -3,6 +3,8 @@ import { FinancialSummary } from './FinancialSummary';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useAssetStore } from '../../stores/useAssetStore';
+import { useAppStore } from '../../stores/useAppStore';
+import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
 import { AccountType } from '../../types/enums';
 import type { PeriodOption } from './PeriodSelector';
 
@@ -10,12 +12,18 @@ import type { PeriodOption } from './PeriodSelector';
 jest.mock('../../stores/useAccountStore');
 jest.mock('../../stores/useTransactionStore');
 jest.mock('../../stores/useAssetStore');
+jest.mock('../../stores/useAppStore');
+jest.mock('../../stores/useExchangeRateStore');
 
 const mockUseAccountStore = useAccountStore as jest.MockedFunction<typeof useAccountStore>;
 const mockUseTransactionStore = useTransactionStore as jest.MockedFunction<
   typeof useTransactionStore
 >;
 const mockUseAssetStore = useAssetStore as jest.MockedFunction<typeof useAssetStore>;
+const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>;
+const mockUseExchangeRateStore = useExchangeRateStore as jest.MockedFunction<
+  typeof useExchangeRateStore
+>;
 
 describe('FinancialSummary', () => {
   const mockPeriod: PeriodOption = {
@@ -85,6 +93,18 @@ describe('FinancialSummary', () => {
             updatedAt: '2026-01-01T00:00:00.000Z',
           },
         ],
+      })
+    );
+
+    mockUseAppStore.mockImplementation((selector: any) =>
+      selector({
+        baseCurrency: null,
+      })
+    );
+
+    mockUseExchangeRateStore.mockImplementation((selector: any) =>
+      selector({
+        getRateForMonth: jest.fn(() => 1),
       })
     );
   });

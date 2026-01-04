@@ -200,6 +200,7 @@ class SyncService {
         categories: categoryStore.categories,
         transactionTypes: categoryStore.transactionTypes,
         archivedYears: this.cachedDataFile?.archivedYears || [],
+        baseCurrency: state.baseCurrency,
         lastModified: new Date().toISOString(),
       };
 
@@ -353,6 +354,11 @@ class SyncService {
         useAccountStore.getState().setAccounts(dataFile.accounts || []);
         useCategoryStore.getState().setCategories(dataFile.categories || []);
         useCategoryStore.getState().setTransactionTypes(dataFile.transactionTypes || []);
+
+        // Load base currency from data file
+        if (dataFile.baseCurrency) {
+          state.setBaseCurrency(dataFile.baseCurrency);
+        }
 
         // Get year-specific data
         const yearStr = String(year);

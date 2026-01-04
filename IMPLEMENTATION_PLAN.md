@@ -1536,31 +1536,16 @@ These features will be implemented after the MVP is validated by users.
 **Goal**: Users can customize app settings and preferences
 
 ### 15.1 Create Preferences Page
-- [ ] Create `src/components/settings/PreferencesPage.tsx`:
-  - [ ] Default currency selection
-  - [ ] Date format preferences (MM/DD/YYYY vs DD/MM/YYYY)
-  - [ ] Number format (comma vs period separator)
-  - [ ] Theme selection (light/dark mode)
-  - [ ] Language selection (future internationalization)
-- [ ] Add preferences to useAppStore or create usePreferencesStore
-- [ ] Store preferences in localStorage
-- [ ] Apply preferences across the app
-- [ ] Add preferences route to /settings/preferences
-- [ ] Update SettingsLayout sidebar to include Preferences item
-- [ ] **Write tests**: Preferences page, store, localStorage persistence
-- [ ] **Test**: Change preferences and verify they persist across page reloads
+- [x] Create `src/components/settings/PreferencesPage.tsx`:
+  - [x] Default currency selection
+- [x] Add preferences to useAppStore or create usePreferencesStore
+- [x] Store preferences in localStorage
+- [x] Apply preferences across the app
+- [x] Add preferences route to /settings/preferences
+- [x] Update SettingsLayout sidebar to include Preferences item
+- [x] **Write tests**: Preferences page, store, localStorage persistence
+- [x] **Test**: Change preferences and verify they persist across page reloads
 
-## Phase 16: Settings & Data Management Feature (Post-MVP)
-
-**Requirements**: Data Import/Export
-
-**Goal**: Users can manage app settings and advanced data operations
-
-### 16.1 Build Settings UI
-- [ ] Create `src/components/settings/DataManagement.tsx` with import/export
-- [ ] Create `src/components/settings/SettingsPage.tsx`
-- [ ] Add route `/settings`
-- [ ] **Test**: Export all data, import data, clear data
 
 ## Phase 17: Conflict Detection & Auto-Merge (Post-MVP)
 
@@ -1809,22 +1794,3 @@ These features will be implemented after the MVP is validated by users.
   - [ ] View report → see loading indicator
   - [ ] Verify rate auto-fetched and report updated
   - [ ] Test with API failure → verify fallback works
-
-### 18.12 Integration & Final Polish
-- [ ] Update Quick Entry to show transaction currency (from account)
-- [ ] Add currency indicator in Transaction list
-- [ ] Update Budget progress calculations to handle currency conversion
-- [ ] Add migration logic for existing data (add empty exchangeRates array)
-- [ ] Performance optimization: Cache conversion results per render
-- [ ] Add comprehensive error boundaries for currency operations
-- [ ] **Write tests**: Integration tests for multi-currency workflows
-- [ ] **Test UI**: Full multi-currency workflow:
-  - [ ] Set base currency to USD
-  - [ ] Create EUR and GBP accounts
-  - [ ] Add transactions in both currencies
-  - [ ] Create budgets in different currencies
-  - [ ] View all reports in base currency
-  - [ ] Verify conversions accurate
-  - [ ] Test with missing rates → see auto-fetch
-  - [ ] Verify offline behavior (uses cached rates)
-

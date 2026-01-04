@@ -544,11 +544,12 @@ These features will be implemented after the MVP is complete and validated by us
 
 ### FR-11: Multi-Currency Support (Future Enhancement)
 
-**FR-11.1** [ ] Base Currency Configuration
+**FR-11.1** [x] Base Currency Configuration
 - User selects a primary "reporting currency" (default: USD)
-- All reports consolidate to this base currency
-- Setting stored in user preferences
-- Can be changed at any time (recalculates all reports)
+- All reports default to displaying in this base currency
+- Setting stored in data file (syncs across devices)
+- Can be changed at any time in Settings (triggers file save, recalculates all reports)
+- Each report can temporarily display in a different currency (resets to base currency on navigation)
 
 **FR-11.2** [ ] Exchange Rate Management (Simplified Monthly Rates)
 - Store one exchange rate per month per currency pair in each year's data
@@ -615,10 +616,12 @@ interface Budget {
 - "Fetch Missing Rates" button to trigger API fetch for selected year
 - All rate values are sourced from API only (no manual entry/override)
 
-**FR-11.8** [ ] Report Display Options
-- Toggle: "Show in base currency" vs "Show original currencies"
-- Visual indicator for converted values (e.g., "(converted)" label)
-- Warning icon when rate is estimated/missing
+**FR-11.8** [x] Report Display Options
+- Currency selector dropdown in each report to temporarily view in different currency
+- Defaults to base currency setting from user preferences
+- Selection resets to base currency when navigating away from report
+- Visual indicator showing which currency is being displayed
+- To permanently change currency for all reports, user changes base currency in Settings (triggers sync)
 
 **FR-11.9** [ ] Missing Rate Handling
 - Report shows clear message: "Exchange rate not set for [Month] [Currency]"

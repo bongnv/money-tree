@@ -187,6 +187,10 @@ export const CashFlowReport: React.FC = () => {
     effectiveGetRateForMonth,
   ]);
 
+  const handleCurrencyChange = (newCurrency: string) => {
+    setConversionCurrency(newCurrency);
+  };
+
   // Prepare pie chart data
   const incomePieData = cashFlow.income.map((cat) => ({
     name: cat.categoryName,
@@ -260,7 +264,7 @@ export const CashFlowReport: React.FC = () => {
               <Select
                 value={conversionCurrency}
                 label="Currency"
-                onChange={(e) => setConversionCurrency(e.target.value)}
+                onChange={(e) => handleCurrencyChange(e.target.value)}
               >
                 {DEFAULT_CURRENCIES.map((curr) => (
                   <MenuItem key={curr.id} value={curr.id}>

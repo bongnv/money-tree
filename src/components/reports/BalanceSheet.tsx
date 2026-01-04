@@ -211,6 +211,10 @@ export const BalanceSheet: React.FC = () => {
     }
   };
 
+  const handleCurrencyChange = (newCurrency: string) => {
+    setConversionCurrency(newCurrency);
+  };
+
   const handleManageHistory = (assetId: string) => {
     setHistoryDialogAssetId(assetId);
   };
@@ -267,7 +271,7 @@ export const BalanceSheet: React.FC = () => {
               <Select
                 value={conversionCurrency}
                 label="Display Currency"
-                onChange={(e) => setConversionCurrency(e.target.value)}
+                onChange={(e) => handleCurrencyChange(e.target.value)}
               >
                 {DEFAULT_CURRENCIES.map((curr) => (
                   <MenuItem key={curr.id} value={curr.id}>
@@ -297,137 +301,141 @@ export const BalanceSheet: React.FC = () => {
       {!loadingRates && (
         <>
           <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
-                Total Assets
-              </Typography>
-              <Typography variant="h4" component="div">
-                {formatCurrency(balanceSheet.totalAssets, currencyId)}
-              </Typography>
-              {comparison && (
-                <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                  {comparison.current.totalAssets >= comparison.previous.totalAssets ? (
-                    <TrendingUpIcon color="success" fontSize="small" />
-                  ) : (
-                    <TrendingDownIcon color="error" fontSize="small" />
-                  )}
-                  <Typography variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
-                    {formatCurrency(
-                      comparison.current.totalAssets - comparison.previous.totalAssets,
-                      currencyId
-                    )}
+            <Grid item xs={12} md={4}>
+              <Card>
+                <CardContent>
+                  <Typography color="text.secondary" gutterBottom>
+                    Total Assets
                   </Typography>
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
-                Total Liabilities
-              </Typography>
-              <Typography variant="h4" component="div">
-                {formatCurrency(balanceSheet.totalLiabilities, currencyId)}
-              </Typography>
-              {comparison && (
-                <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                  {comparison.current.totalLiabilities <= comparison.previous.totalLiabilities ? (
-                    <TrendingDownIcon color="success" fontSize="small" />
-                  ) : (
-                    <TrendingUpIcon color="error" fontSize="small" />
-                  )}
-                  <Typography variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
-                    {formatCurrency(
-                      comparison.current.totalLiabilities - comparison.previous.totalLiabilities,
-                      currencyId
-                    )}
+                  <Typography variant="h4" component="div">
+                    {formatCurrency(balanceSheet.totalAssets, currencyId)}
                   </Typography>
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card sx={{ backgroundColor: 'primary.main', color: 'primary.contrastText' }}>
-            <CardContent>
-              <Typography gutterBottom>Net Worth</Typography>
-              <Typography variant="h4" component="div">
-                {formatCurrency(balanceSheet.netWorth, currencyId)}
-              </Typography>
-              {comparison && (
-                <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                  {comparison.change >= 0 ? (
-                    <TrendingUpIcon fontSize="small" />
-                  ) : (
-                    <TrendingDownIcon fontSize="small" />
+                  {comparison && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                      {comparison.current.totalAssets >= comparison.previous.totalAssets ? (
+                        <TrendingUpIcon color="success" fontSize="small" />
+                      ) : (
+                        <TrendingDownIcon color="error" fontSize="small" />
+                      )}
+                      <Typography variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
+                        {formatCurrency(
+                          comparison.current.totalAssets - comparison.previous.totalAssets,
+                          currencyId
+                        )}
+                      </Typography>
+                    </Box>
                   )}
-                  <Typography variant="body2" sx={{ ml: 0.5 }}>
-                    {formatCurrency(comparison.change, currencyId)} (
-                    {comparison.changePercent.toFixed(1)}%)
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Card>
+                <CardContent>
+                  <Typography color="text.secondary" gutterBottom>
+                    Total Liabilities
                   </Typography>
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+                  <Typography variant="h4" component="div">
+                    {formatCurrency(balanceSheet.totalLiabilities, currencyId)}
+                  </Typography>
+                  {comparison && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                      {comparison.current.totalLiabilities <=
+                      comparison.previous.totalLiabilities ? (
+                        <TrendingDownIcon color="success" fontSize="small" />
+                      ) : (
+                        <TrendingUpIcon color="error" fontSize="small" />
+                      )}
+                      <Typography variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
+                        {formatCurrency(
+                          comparison.current.totalLiabilities -
+                            comparison.previous.totalLiabilities,
+                          currencyId
+                        )}
+                      </Typography>
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Card sx={{ backgroundColor: 'primary.main', color: 'primary.contrastText' }}>
+                <CardContent>
+                  <Typography gutterBottom>Net Worth</Typography>
+                  <Typography variant="h4" component="div">
+                    {formatCurrency(balanceSheet.netWorth, currencyId)}
+                  </Typography>
+                  {comparison && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                      {comparison.change >= 0 ? (
+                        <TrendingUpIcon fontSize="small" />
+                      ) : (
+                        <TrendingDownIcon fontSize="small" />
+                      )}
+                      <Typography variant="body2" sx={{ ml: 0.5 }}>
+                        {formatCurrency(comparison.change, currencyId)} (
+                        {comparison.changePercent.toFixed(1)}%)
+                      </Typography>
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
 
-      {/* Net Worth Trend Chart */}
-      {trendData.length > 1 && (
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Net Worth Trend (Past 12 Months)
-          </Typography>
-          <LineChart
-            data={trendData}
-            lines={[
-              { dataKey: 'Net Worth', name: 'Net Worth', color: '#2e7d32' },
-              { dataKey: 'Assets', name: 'Assets', color: '#1976d2' },
-              { dataKey: 'Liabilities', name: 'Liabilities', color: '#d32f2f' },
-            ]}
-            height={400}
-            formatValue={(value) => formatCurrency(value, currencyId)}
+          {/* Net Worth Trend Chart */}
+          {trendData.length > 1 && (
+            <Paper sx={{ p: 3, mb: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                Net Worth Trend (Past 12 Months)
+              </Typography>
+              <LineChart
+                data={trendData}
+                lines={[
+                  { dataKey: 'Net Worth', name: 'Net Worth', color: '#2e7d32' },
+                  { dataKey: 'Assets', name: 'Assets', color: '#1976d2' },
+                  { dataKey: 'Liabilities', name: 'Liabilities', color: '#d32f2f' },
+                ]}
+                height={400}
+                formatValue={(value) => formatCurrency(value, currencyId)}
+              />
+            </Paper>
+          )}
+
+          {/* Assets Section */}
+          <ManualAssetSection
+            title="Assets"
+            groups={balanceSheet.assets}
+            currencyId={currencyId}
+            onManageHistory={handleManageHistory}
           />
-        </Paper>
-      )}
 
-      {/* Assets Section */}
-      <ManualAssetSection
-        title="Assets"
-        groups={balanceSheet.assets}
-        currencyId={currencyId}
-        onManageHistory={handleManageHistory}
-      />
+          <Divider sx={{ my: 4 }} />
 
-      <Divider sx={{ my: 4 }} />
+          {/* Liabilities Section */}
+          <ManualAssetSection
+            title="Liabilities"
+            groups={balanceSheet.liabilities}
+            currencyId={currencyId}
+            onManageHistory={handleManageHistory}
+          />
 
-      {/* Liabilities Section */}
-      <ManualAssetSection
-        title="Liabilities"
-        groups={balanceSheet.liabilities}
-        currencyId={currencyId}
-        onManageHistory={handleManageHistory}
-      />
-
-      {/* Net Worth Summary */}
-      <Paper sx={{ p: 3, mt: 3, backgroundColor: 'primary.main', color: 'primary.contrastText' }}>
-        <Grid container justifyContent="space-between" alignItems="center">
-          <Grid item>
-            <Typography variant="h5">Net Worth</Typography>
-            <Typography variant="caption">Total Assets - Total Liabilities</Typography>
-          </Grid>
-          <Grid item>
-            <Typography variant="h3">
-              {formatCurrency(balanceSheet.netWorth, currencyId)}
-            </Typography>
-          </Grid>
-        </Grid>
-      </Paper>
-      </>
+          {/* Net Worth Summary */}
+          <Paper
+            sx={{ p: 3, mt: 3, backgroundColor: 'primary.main', color: 'primary.contrastText' }}
+          >
+            <Grid container justifyContent="space-between" alignItems="center">
+              <Grid item>
+                <Typography variant="h5">Net Worth</Typography>
+                <Typography variant="caption">Total Assets - Total Liabilities</Typography>
+              </Grid>
+              <Grid item>
+                <Typography variant="h3">
+                  {formatCurrency(balanceSheet.netWorth, currencyId)}
+                </Typography>
+              </Grid>
+            </Grid>
+          </Paper>
+        </>
       )}
 
       {/* Asset Value History Dialog */}

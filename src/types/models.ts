@@ -170,6 +170,7 @@ export interface DataFile {
   categories: Category[]; // Shared across all years
   transactionTypes: TransactionType[]; // Shared across all years
   archivedYears: ArchivedYearReference[]; // References to archived years
+  baseCurrency?: string; // Base currency for reporting (default: 'usd')
   lastModified: string; // ISO date string
 }
 

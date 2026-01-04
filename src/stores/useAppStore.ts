@@ -133,7 +133,8 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
 
   setBaseCurrency: (currencyId) => {
     storageService.setBaseCurrency(currencyId);
-    set({ baseCurrency: currencyId });
+    set({ baseCurrency: currencyId, hasUnsavedChanges: true });
+    storageService.setUnsavedChanges(true);
   },
 
   setFileMetadata: (hash, loadedAt, baseVersion) => {

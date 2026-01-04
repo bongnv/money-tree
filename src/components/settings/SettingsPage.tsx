@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
 import { Container, Typography, Tabs, Tab, Box } from '@mui/material';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import CategoryIcon from '@mui/icons-material/Category';
-import ReceiptIcon from '@mui/icons-material/Receipt';
-import SyncIcon from '@mui/icons-material/Sync';
 import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { AccountsPage } from '../accounts/AccountsPage';
 import { ManualAssetsPage } from '../assets/ManualAssetsPage';
 import { CategoryList } from '../categories/CategoryList';
 import { CategoryDialog } from '../categories/CategoryDialog';
 import { TransactionTypeList } from '../categories/TransactionTypeList';
 import { TransactionTypeDialog } from '../categories/TransactionTypeDialog';
-import { DataSyncSettings } from './DataSyncSettings';
 import { ExchangeRatesSettings } from './ExchangeRatesSettings';
+import { PreferencesPage } from './PreferencesPage';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import type { Category, TransactionType } from '../../types/models';
 import { Add as AddIcon } from '@mui/icons-material';
@@ -195,75 +193,77 @@ export const SettingsPage: React.FC = () => {
           variant="scrollable"
           scrollButtons="auto"
         >
-          <Tab icon={<AccountBalanceWalletIcon />} label="Transactional" iconPosition="start" />
-          <Tab icon={<AccountBalanceIcon />} label="Manual Assets" iconPosition="start" />
+          <Tab icon={<AccountBalanceWalletIcon />} label="Assets" iconPosition="start" />
           <Tab icon={<CategoryIcon />} label="Categories" iconPosition="start" />
-          <Tab icon={<ReceiptIcon />} label="Transaction Types" iconPosition="start" />
-          <Tab icon={<SyncIcon />} label="Data & Sync" iconPosition="start" />
           <Tab icon={<CurrencyExchangeIcon />} label="Exchange Rates" iconPosition="start" />
+          <Tab icon={<SettingsIcon />} label="Preferences" iconPosition="start" />
         </Tabs>
       </Box>
 
       <TabPanel value={activeTab} index={0}>
         <AccountsPage />
+        <Box sx={{ mt: 6 }}>
+          <ManualAssetsPage />
+        </Box>
       </TabPanel>
 
       <TabPanel value={activeTab} index={1}>
-        <ManualAssetsPage />
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 3,
+          }}
+        >
+          <Typography variant="h4" component="h1">
+            Categories
+          </Typography>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenCategoryDialog}>
+            New Category
+          </Button>
+        </Box>
+        <CategoryList
+          categories={categories}
+          transactionTypes={transactionTypes}
+          onEdit={handleEditCategory}
+          onDelete={handleDeleteCategory}
+        />
+
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mt: 6,
+            mb: 3,
+          }}
+        >
+          <Typography variant="h4" component="h1">
+            Transaction Types
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleOpenTransactionTypeDialog}
+          >
+            New Transaction Type
+          </Button>
+        </Box>
+        <TransactionTypeList
+          transactionTypes={transactionTypes}
+          categories={categories}
+          onEdit={handleEditTransactionType}
+          onDelete={handleDeleteTransactionType}
+        />
       </TabPanel>
 
       <TabPanel value={activeTab} index={2}>
-        <Box>
-          <Box
-            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
-          >
-            <Typography variant="h4" component="h1">
-              Categories
-            </Typography>
-            <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenCategoryDialog}>
-              New Category
-            </Button>
-          </Box>
-          <CategoryList
-            categories={categories}
-            transactionTypes={transactionTypes}
-            onEdit={handleEditCategory}
-            onDelete={handleDeleteCategory}
-          />
-        </Box>
+        <ExchangeRatesSettings />
       </TabPanel>
 
       <TabPanel value={activeTab} index={3}>
-        <Box>
-          <Box
-            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
-          >
-            <Typography variant="h4" component="h1">
-              Transaction Types
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleOpenTransactionTypeDialog}
-            >
-              New Transaction Type
-            </Button>
-          </Box>
-          <TransactionTypeList
-            transactionTypes={transactionTypes}
-            categories={categories}
-            onEdit={handleEditTransactionType}
-            onDelete={handleDeleteTransactionType}
-          />
-        </Box>
-      </TabPanel>
-
-      <TabPanel value={activeTab} index={4}>
-        <DataSyncSettings />
-      </TabPanel>
-
-      <TabPanel value={activeTab} index={5}>
-        <ExchangeRatesSettings />
+        <PreferencesPage />
       </TabPanel>
 
       {/* Category Dialogs */}

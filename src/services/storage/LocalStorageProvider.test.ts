@@ -139,6 +139,7 @@ describe('LocalStorageProvider', () => {
       categories: [],
       transactionTypes: [],
       archivedYears: [],
+      baseCurrency: 'usd',
       lastModified: new Date().toISOString(),
     };
   });

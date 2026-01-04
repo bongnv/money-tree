@@ -96,14 +96,16 @@ describe('useExchangeRateStore', () => {
 
     it('should use fallback rate when available instead of fetching', async () => {
       // Set up existing rate for February
-      useExchangeRateStore.getState().setRates([{
-        id: 'rate-1',
-        month: '2026-02',
-        fromCurrency: 'EUR',
-        toCurrency: 'USD',
-        rate: 1.19,
-        createdAt: '2026-02-01T00:00:00.000Z',
-      }]);
+      useExchangeRateStore.getState().setRates([
+        {
+          id: 'rate-1',
+          month: '2026-02',
+          fromCurrency: 'EUR',
+          toCurrency: 'USD',
+          rate: 1.19,
+          createdAt: '2026-02-01T00:00:00.000Z',
+        },
+      ]);
 
       const mockFetchCurrentRate = jest.spyOn(exchangeRateService, 'fetchCurrentRate');
       const mockFindFallbackRate = jest.spyOn(exchangeRateService, 'findFallbackRate');

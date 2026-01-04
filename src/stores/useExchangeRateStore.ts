@@ -125,12 +125,12 @@ export const useExchangeRateStore = create<ExchangeRateState & ExchangeRateActio
         createdAt: new Date().toISOString(),
       };
       get().addRate(newRate);
-      
+
       // Clear any existing error for this rate
       set((state) => ({
         errors: { ...state.errors, [key]: '' },
       }));
-      
+
       return fallbackRate;
     }
 

@@ -30,36 +30,27 @@ describe('SettingsPage', () => {
         <SettingsPage />
       </BrowserRouter>
     );
-    expect(screen.getByRole('tab', { name: /transactional/i })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /manual assets/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /^assets$/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /^categories$/i })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /transaction types/i })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /data & sync/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /exchange rates/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /preferences/i })).toBeInTheDocument();
   });
 
-  it('displays Accounts content by default', () => {
+  it('displays Assets content by default with both Accounts and Manual Assets', () => {
     render(
       <BrowserRouter>
         <SettingsPage />
       </BrowserRouter>
     );
-    expect(screen.getByText('Accounts')).toBeInTheDocument();
+    // Check for both component headings
+    expect(screen.getByRole('heading', { name: /^Accounts$/i, level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /^Manual Assets$/i, level: 1 })).toBeInTheDocument();
+    // Check for both action buttons
     expect(screen.getByRole('button', { name: /new account/i })).toBeInTheDocument();
-  });
-
-  it('switches to Manual Assets tab when clicked', async () => {
-    const user = userEvent.setup();
-    render(
-      <BrowserRouter>
-        <SettingsPage />
-      </BrowserRouter>
-    );
-
-    await user.click(screen.getByRole('tab', { name: /manual assets/i }));
     expect(screen.getByRole('button', { name: /add asset/i })).toBeInTheDocument();
   });
 
-  it('switches to Categories tab and shows New Category button', async () => {
+  it('switches to Categories tab and shows both Categories and Transaction Types', async () => {
     const user = userEvent.setup();
     render(
       <BrowserRouter>
@@ -68,22 +59,15 @@ describe('SettingsPage', () => {
     );
 
     await user.click(screen.getByRole('tab', { name: /^categories$/i }));
+    expect(screen.getByRole('heading', { name: /^Categories$/i, level: 1 })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /^Transaction Types$/i, level: 1 })
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /new category/i })).toBeInTheDocument();
-  });
-
-  it('switches to Transaction Types tab and shows New Transaction Type button', async () => {
-    const user = userEvent.setup();
-    render(
-      <BrowserRouter>
-        <SettingsPage />
-      </BrowserRouter>
-    );
-
-    await user.click(screen.getByRole('tab', { name: /transaction types/i }));
     expect(screen.getByRole('button', { name: /new transaction type/i })).toBeInTheDocument();
   });
 
-  it('switches to Data & Sync tab', async () => {
+  it('switches to Preferences tab and shows Data & Sync section', async () => {
     const user = userEvent.setup();
     render(
       <BrowserRouter>
@@ -91,7 +75,8 @@ describe('SettingsPage', () => {
       </BrowserRouter>
     );
 
-    await user.click(screen.getByRole('tab', { name: /data & sync/i }));
+    await user.click(screen.getByRole('tab', { name: /preferences/i }));
+    expect(screen.getByText(/Currency Settings/i)).toBeInTheDocument();
     expect(screen.getByText(/Storage Provider/i)).toBeInTheDocument();
   });
 });

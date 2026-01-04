@@ -167,8 +167,12 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
       });
     } else if (selectionMode === 'new' && currentFolder) {
       // Create new file in current folder
-      const folderPath = breadcrumbs.map((b) => b.name).join('/');
-      const filePath = `${folderPath}/${newFileName}`;
+      // Skip the root 'OneDrive' breadcrumb (index 0) when building the path
+      const folderPath = breadcrumbs
+        .slice(1)
+        .map((b) => b.name)
+        .join('/');
+      const filePath = folderPath ? `${folderPath}/${newFileName}` : newFileName;
 
       onSelect({
         fileId: 'new', // Will be created on first save

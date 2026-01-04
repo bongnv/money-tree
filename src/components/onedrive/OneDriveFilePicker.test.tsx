@@ -179,7 +179,7 @@ describe('OneDriveFilePicker', () => {
 
     expect(mockOnSelect).toHaveBeenCalledWith({
       fileId: 'new',
-      filePath: 'OneDrive/test.json',
+      filePath: 'test.json',
       fileName: 'test.json',
       isNew: true,
     });

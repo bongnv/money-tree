@@ -95,7 +95,6 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
       setErrorMessage(null);
     } catch (error) {
       if (error instanceof Error) {
-         
         setErrorMessage(error.message);
       }
     }

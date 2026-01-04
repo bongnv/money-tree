@@ -137,7 +137,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
     return (
       <Box sx={{ textAlign: 'center', py: 8 }}>
         <Typography variant="body1" color="text.secondary">
-          No transactions yet. Click "New Transaction" to add one.
+          No transactions yet. Click &quot;New Transaction&quot; to add one.
         </Typography>
       </Box>
     );

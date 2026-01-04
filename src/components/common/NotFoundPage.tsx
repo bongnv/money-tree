@@ -47,7 +47,7 @@ export const NotFoundPage: React.FC = () => {
             Page Not Found
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-            The page you're looking for doesn't exist or has been moved.
+            The page you&apos;re looking for doesn&apos;t exist or has been moved.
           </Typography>
           <Button variant="contained" size="large" startIcon={<HomeIcon />} onClick={handleGoHome}>
             Go to Dashboard

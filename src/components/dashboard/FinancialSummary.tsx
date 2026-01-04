@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Box, Grid, Alert } from '@mui/material';
 import { FinancialSummaryCard } from './FinancialSummaryCard';
 import { useAccountStore } from '../../stores/useAccountStore';
@@ -27,7 +27,6 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
   const manualAssets = useAssetStore((state) => state.manualAssets);
   const baseCurrency = useAppStore((state) => state.baseCurrency);
   const getRateForMonth = useExchangeRateStore((state) => state.getRateForMonth);
-  const rates = useExchangeRateStore((state) => state.rates);
   const fetchRateIfMissing = useExchangeRateStore((state) => state.fetchRateIfMissing);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -64,12 +63,10 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
     fetchRates();
   }, [accounts, manualAssets, baseCurrency, currentMonth, fetchRateIfMissing]);
 
-  // Calculate net worth with currency conversion - wrapped in useEffect to avoid infinite loop
-  const [netWorth, setNetWorth] = useState(0);
-
-  useEffect(() => {
+  // Calculate net worth with currency conversion - use useMemo to avoid infinite loop
+  const netWorth = useMemo(() => {
     try {
-      const calculatedNetWorth = calculationService.calculateNetWorth(
+      return calculationService.calculateNetWorth(
         accounts,
         transactions,
         manualAssets,
@@ -77,17 +74,32 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
         getRateForMonth,
         currentMonth
       );
-      setNetWorth(calculatedNetWorth);
-      // Clear error if calculation succeeds
+    } catch {
+      // Return 0 on error, error message handled in useEffect
+      return 0;
+    }
+  }, [accounts, transactions, manualAssets, baseCurrency, getRateForMonth, currentMonth]);
+
+  // Handle error messages separately to avoid setState in useMemo
+  useEffect(() => {
+    try {
+      calculationService.calculateNetWorth(
+        accounts,
+        transactions,
+        manualAssets,
+        baseCurrency,
+        getRateForMonth,
+        currentMonth
+      );
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setErrorMessage(null);
     } catch (error) {
-      // Capture the error message to display to user
       if (error instanceof Error) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setErrorMessage(error.message);
       }
-      setNetWorth(0);
     }
-  }, [accounts, transactions, manualAssets, baseCurrency, getRateForMonth, currentMonth, rates]);
+  }, [accounts, transactions, manualAssets, baseCurrency, getRateForMonth, currentMonth]);
 
   // Calculate cash flow for current period
   const periodTransactions = transactions.filter(

@@ -5,4 +5,5 @@
 - [x] BUG-5: In balance sheet report, we should exchange rate at the valuation time for currency conversion
 - [x] BUG-6: Some rates failed to fetch. Check console for details
 - [x] BUG-7: Ensure rates are loaded before showing the report
-- [ ] BUG-8: No currency conversion in the dashboard (i,e: networth)
+- [x] BUG-8: No currency conversion in the dashboard (i,e: networth)
+- [ ] BUG-9: "Invalid time value" when editing time field

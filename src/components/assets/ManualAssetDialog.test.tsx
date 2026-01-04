@@ -110,12 +110,6 @@ describe('ManualAssetDialog', () => {
         expect(mockOnClose).toHaveBeenCalled();
       });
     });
-
-    it('should show checkbox to enable update mode', () => {
-      render(<ManualAssetDialog open={true} asset={existingAsset} onClose={mockOnClose} />);
-
-      expect(screen.getByLabelText(/update existing value/i)).toBeInTheDocument();
-    });
   });
 
   describe('Update Value mode', () => {

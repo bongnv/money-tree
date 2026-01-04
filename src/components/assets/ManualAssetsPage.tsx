@@ -94,7 +94,8 @@ export const ManualAssetsPage: React.FC = () => {
         <DialogTitle>Delete Asset</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete "{assetToDelete?.name}"? This action cannot be undone.
+            Are you sure you want to delete &quot;{assetToDelete?.name}&quot;? This action cannot be
+            undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

@@ -117,7 +117,7 @@ class SyncService {
 
         case 'transaction':
         case 'asset':
-        case 'budget':
+        case 'budget': {
           // Find which year this entity belongs to
           const years = Object.keys(result.years || {});
           for (const year of years) {
@@ -140,6 +140,7 @@ class SyncService {
             }
           }
           break;
+        }
       }
     });
 

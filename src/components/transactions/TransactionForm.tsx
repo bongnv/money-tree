@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Box, Button, MenuItem } from '@mui/material';
 import { FormTextField } from '../common/FormTextField';
 import type { Transaction, Account, TransactionType, Category } from '../../types/models';
@@ -33,21 +33,19 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
 
-  // Update selected group when transaction type changes
-  useEffect(() => {
+  // Derive selected group from transaction type
+  const selectedGroup = useMemo(() => {
     if (formData.transactionTypeId) {
       const transactionType = transactionTypes.find((tt) => tt.id === formData.transactionTypeId);
       if (transactionType) {
         const category = categories.find((c) => c.id === transactionType.categoryId);
         if (category) {
-          setSelectedGroup(category.group);
+          return category.group;
         }
       }
-    } else {
-      setSelectedGroup(null);
     }
+    return null;
   }, [formData.transactionTypeId, transactionTypes, categories]);
 
   const validate = (): boolean => {

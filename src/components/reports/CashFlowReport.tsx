@@ -99,10 +99,11 @@ export const CashFlowReport: React.FC = () => {
       case 'monthly':
         newStartDate = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
         break;
-      case 'quarterly':
+      case 'quarterly': {
         const quarterStartMonth = Math.floor(todayDate.getMonth() / 3) * 3;
         newStartDate = new Date(todayDate.getFullYear(), quarterStartMonth, 1);
         break;
+      }
       case 'yearly':
         newStartDate = new Date(todayDate.getFullYear(), 0, 1);
         break;

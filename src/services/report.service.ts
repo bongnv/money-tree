@@ -412,7 +412,7 @@ class ReportService {
     const start = new Date(startYear, startMonth - 1, startDay);
     const end = new Date(endYear, endMonth - 1, endDay);
 
-    let currentDate = new Date(start);
+    const currentDate = new Date(start);
     while (currentDate <= end) {
       // Format date in local timezone
       const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
@@ -694,7 +694,7 @@ class ReportService {
     if (start > end) return [];
 
     const trendPoints: CashFlowTrendPoint[] = [];
-    let currentDate = new Date(start);
+    const currentDate = new Date(start);
 
     while (currentDate <= end) {
       const periodEnd = new Date(currentDate);

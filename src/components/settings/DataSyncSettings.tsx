@@ -23,6 +23,11 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FolderIcon from '@mui/icons-material/Folder';
 import { useAppStore } from '../../stores/useAppStore';
+import { useAccountStore } from '../../stores/useAccountStore';
+import { useCategoryStore } from '../../stores/useCategoryStore';
+import { useTransactionStore } from '../../stores/useTransactionStore';
+import { useAssetStore } from '../../stores/useAssetStore';
+import { useBudgetStore } from '../../stores/useBudgetStore';
 import { syncService } from '../../services/sync.service';
 import { formatDistance } from 'date-fns';
 import { StorageFactory, StorageProviderType } from '../../services/storage/StorageFactory';
@@ -98,12 +103,11 @@ export const DataSyncSettings: React.FC = () => {
     // Calculate approximate file size from store data
     // This is a rough estimate - actual file may be larger due to formatting
     try {
-      const accountStore = require('../../stores/useAccountStore').useAccountStore.getState();
-      const categoryStore = require('../../stores/useCategoryStore').useCategoryStore.getState();
-      const transactionStore =
-        require('../../stores/useTransactionStore').useTransactionStore.getState();
-      const assetStore = require('../../stores/useAssetStore').useAssetStore.getState();
-      const budgetStore = require('../../stores/useBudgetStore').useBudgetStore.getState();
+      const accountStore = useAccountStore.getState();
+      const categoryStore = useCategoryStore.getState();
+      const transactionStore = useTransactionStore.getState();
+      const assetStore = useAssetStore.getState();
+      const budgetStore = useBudgetStore.getState();
 
       const dataObj = {
         accounts: accountStore.accounts,
@@ -427,8 +431,8 @@ export const DataSyncSettings: React.FC = () => {
         <DialogTitle>Clear Cached File</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            This will remove the cached file reference. The next time you open the app, you'll need
-            to select your data file again. The file itself will not be deleted.
+            This will remove the cached file reference. The next time you open the app, you&apos;ll
+            need to select your data file again. The file itself will not be deleted.
           </DialogContentText>
           <DialogContentText sx={{ mt: 2, fontWeight: 'bold' }}>
             Are you sure you want to continue?

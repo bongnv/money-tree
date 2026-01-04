@@ -89,7 +89,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
         </DialogTitle>
         <DialogContent>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Choose how you'd like to manage your financial data:
+            Choose how you&apos;d like to manage your financial data:
           </Typography>
 
           {authError && (
@@ -191,7 +191,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
                   }
                   label={
                     <Typography variant="body2" color="text.secondary">
-                      Don't show this dialog again
+                      Don&apos;t show this dialog again
                     </Typography>
                   }
                   sx={{ mt: 1 }}

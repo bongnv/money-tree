@@ -85,6 +85,7 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
     if (open) {
       loadFolder();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const loadFolder = async (folderItem?: DriveItem | null) => {

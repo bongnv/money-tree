@@ -19,17 +19,17 @@ jest.mock('./components/budgets/BudgetsPage', () => ({
   BudgetsPage: () => <div data-testid="budgets-page">Budgets Page</div>,
 }));
 
-jest.mock('./components/settings/SettingsLayout', () => ({
-  SettingsLayout: () => {
-    const { Outlet } = require('react-router-dom');
-    return (
+jest.mock('./components/settings/SettingsLayout', () => {
+  const { Outlet } = jest.requireActual('react-router-dom');
+  return {
+    SettingsLayout: () => (
       <div data-testid="settings-layout">
         Settings Layout
         <Outlet />
       </div>
-    );
-  },
-}));
+    ),
+  };
+});
 
 jest.mock('./components/settings/SettingsPage', () => ({
   SettingsPage: () => <div data-testid="settings-page">Settings Page</div>,

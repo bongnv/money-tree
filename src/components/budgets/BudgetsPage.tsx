@@ -227,7 +227,7 @@ export const BudgetsPage: React.FC = () => {
             No budgets set
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Click "Add Budget" to get started with budget planning
+            Click &quot;Add Budget&quot; to get started with budget planning
           </Typography>
           <Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd}>
             Add Budget

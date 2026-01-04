@@ -1,14 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  FormControlLabel,
-  Checkbox,
-  Box,
-  Typography,
-  Alert,
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, Box, Typography, Alert } from '@mui/material';
 import { ManualAssetForm } from './ManualAssetForm';
 import { useAssetStore } from '../../stores/useAssetStore';
 import type { ManualAsset } from '../../types/models';
@@ -29,19 +20,21 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
   mode = 'create',
 }) => {
   const { addManualAsset, updateManualAsset, updateAssetValue } = useAssetStore();
-  const [isUpdateMode, setIsUpdateMode] = useState(mode === 'update-value');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [previousValue, setPreviousValue] = useState<{ value: number; date: string } | null>(null);
 
   // Sync internal state with mode prop when it changes
   useEffect(() => {
-    setIsUpdateMode(mode === 'update-value');
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShowSuccessMessage(false);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPreviousValue(null);
   }, [mode, open]);
 
+  // Derive isUpdateMode from props instead of state
+  const isUpdateMode = mode === 'update-value';
+
   const handleClose = () => {
-    setIsUpdateMode(mode === 'update-value');
     setShowSuccessMessage(false);
     setPreviousValue(null);
     onClose();
@@ -91,20 +84,6 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
             {formatCurrency(previousValue.value, asset?.currencyId || 'usd')} on{' '}
             {formatDate(previousValue.date)}) saved to history.
           </Alert>
-        )}
-
-        {asset && !isUpdateMode && mode !== 'update-value' && (
-          <Box sx={{ mb: 2 }}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={isUpdateMode}
-                  onChange={(e) => setIsUpdateMode(e.target.checked)}
-                />
-              }
-              label="Update existing value (move current value to history)"
-            />
-          </Box>
         )}
 
         {asset && isUpdateMode && (

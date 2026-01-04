@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { TextField, MenuItem, Box, Button } from '@mui/material';
 import type { ManualAsset } from '../../types/models';
 import { AssetType } from '../../types/enums';
@@ -28,17 +28,8 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
     notes: asset?.notes || '',
   });
 
-  // Update form data when asset prop changes
-  useEffect(() => {
-    setFormData({
-      name: asset?.name || '',
-      type: asset?.type || AssetType.OTHER,
-      value: asset?.value?.toString() || '0',
-      currencyId: asset?.currencyId || 'usd',
-      date: asset?.date || getTodayDate(),
-      notes: asset?.notes || '',
-    });
-  }, [asset]);
+  // Form data is initialized from asset prop
+  // Parent component should use key prop to reset form when asset changes
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 

@@ -37,7 +37,7 @@ export const PreferencesPage: React.FC = () => {
 
       {showSaveNotice && (
         <Alert severity="info" sx={{ mb: 3 }}>
-          Base currency changed. Don't forget to save your data file to persist this change.
+          Base currency changed. Don&apos;t forget to save your data file to persist this change.
         </Alert>
       )}
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { Box, TextField, IconButton, Tooltip, Autocomplete } from '@mui/material';
 import { Add as AddIcon, Clear as ClearIcon, MoreHoriz as MoreIcon } from '@mui/icons-material';
 import type { Transaction, Account, TransactionType, Category } from '../../types/models';
@@ -59,7 +59,6 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const amountRef = useRef<HTMLInputElement>(null);
   const dateRef = useRef<HTMLInputElement>(null);
   const typeRef = useRef<HTMLInputElement>(null);
@@ -67,19 +66,18 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
   const toAccountRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLInputElement>(null);
 
-  // Update selected group when transaction type changes
-  useEffect(() => {
+  // Derive selected group from transaction type
+  const selectedGroup = useMemo(() => {
     if (formData.transactionTypeId) {
       const transactionType = transactionTypes.find((tt) => tt.id === formData.transactionTypeId);
       if (transactionType) {
         const category = categories.find((c) => c.id === transactionType.categoryId);
         if (category) {
-          setSelectedGroup(category.group);
+          return category.group;
         }
       }
-    } else {
-      setSelectedGroup(null);
     }
+    return null;
   }, [formData.transactionTypeId, transactionTypes, categories]);
 
   const validate = (): boolean => {

@@ -86,7 +86,7 @@ export const BalanceSheet: React.FC = () => {
       oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
       // Add all months in the trend
-      let tempDate = new Date(oneYearAgo);
+      const tempDate = new Date(oneYearAgo);
       while (tempDate <= currentDate) {
         const monthStr = `${tempDate.getFullYear()}-${String(tempDate.getMonth() + 1).padStart(2, '0')}`;
         months.add(monthStr);
@@ -200,7 +200,14 @@ export const BalanceSheet: React.FC = () => {
       Assets: point.assets,
       Liabilities: point.liabilities,
     }));
-  }, [accounts, manualAssets, transactions, selectedDate]);
+  }, [
+    accounts,
+    manualAssets,
+    transactions,
+    selectedDate,
+    effectiveBaseCurrency,
+    effectiveGetRateForMonth,
+  ]);
 
   const handleComparisonChange = (
     _event: React.MouseEvent<HTMLElement>,

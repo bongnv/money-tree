@@ -155,7 +155,7 @@ describe('ManualAssetDialog', () => {
       );
 
       expect(screen.getByText(/current value/i)).toBeInTheDocument();
-      expect(screen.getByText(/\$500000\.00/)).toBeInTheDocument();
+      expect(screen.getByText(/\$500,000\.00/)).toBeInTheDocument();
     });
 
     it('should call updateAssetValue when form is submitted in update mode', async () => {

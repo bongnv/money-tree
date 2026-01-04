@@ -97,8 +97,8 @@ describe('ArchivePrompt', () => {
       />
     );
 
-    // Check for formatted currency (no comma formatting, just $ and amount)
-    expect(screen.getByText('$50000.00')).toBeInTheDocument();
+    // Check for formatted currency with comma
+    expect(screen.getByText('$50,000.00')).toBeInTheDocument();
   });
 
   it('should display archive explanation text', () => {
@@ -115,8 +115,6 @@ describe('ArchivePrompt', () => {
     expect(
       screen.getByText(/You have 3 or more years of data in your main file/)
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Archived data will be saved to a separate file/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Archived data will be saved to a separate file/)).toBeInTheDocument();
   });
 });

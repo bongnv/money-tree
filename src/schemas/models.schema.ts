@@ -59,7 +59,7 @@ export const TransactionSchema = z.object({
   id: z.string().min(1, 'ID is required'),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
   description: z.string().optional(),
-  amount: z.number().positive('Amount must be positive'),
+  amount: z.number(),
   transactionTypeId: z.string().min(1, 'Transaction type ID is required'),
   fromAccountId: z.string().optional(),
   toAccountId: z.string().optional(),

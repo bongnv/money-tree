@@ -46,7 +46,7 @@ describe('AccountCard', () => {
     render(<AccountCard account={mockAccount} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 
     expect(screen.getByText('Checking Account')).toBeInTheDocument();
-    expect(screen.getByText('$1000.00')).toBeInTheDocument();
+    expect(screen.getByText('$1,000.00')).toBeInTheDocument();
     expect(screen.getByText('My main checking account')).toBeInTheDocument();
     expect(screen.getByText('BANK ACCOUNT')).toBeInTheDocument();
   });
@@ -131,6 +131,6 @@ describe('AccountCard', () => {
     render(<AccountCard account={mockAccount} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 
     // Initial balance: $1000 + $200 (in) - $50 (out) = $1150
-    expect(screen.getByText('$1150.00')).toBeInTheDocument();
+    expect(screen.getByText('$1,150.00')).toBeInTheDocument();
   });
 });

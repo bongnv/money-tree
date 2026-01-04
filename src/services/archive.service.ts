@@ -21,14 +21,14 @@ export interface YearEndSummary {
  */
 export function detectArchiveTrigger(): boolean {
   const transactions = useTransactionStore.getState().transactions;
-  
+
   // Get unique years from transactions
   const years = new Set<number>();
   transactions.forEach((transaction) => {
     const year = new Date(transaction.date).getFullYear();
     years.add(year);
   });
-  
+
   return years.size >= 3;
 }
 
@@ -40,15 +40,15 @@ export function calculateYearEndSummary(year: number, baseCurrency: string): Yea
   const accounts = useAccountStore.getState().accounts;
   const manualAssets = useAssetStore.getState().manualAssets;
   const { getRateForMonth } = useExchangeRateStore.getState();
-  
+
   // Count transactions for the year
   const yearTransactions = transactions.filter((transaction) => {
     const txYear = new Date(transaction.date).getFullYear();
     return txYear === year;
   });
-  
+
   const transactionCount = yearTransactions.length;
-  
+
   // Calculate net worth at year end
   const yearEndMonth = `${year}-12`;
   const netWorth = calculationService.calculateNetWorth(
@@ -59,10 +59,10 @@ export function calculateYearEndSummary(year: number, baseCurrency: string): Yea
     getRateForMonth,
     yearEndMonth
   );
-  
+
   // Estimate file size (rough approximation: 500 bytes per transaction)
   const estimatedSizeKB = Math.round((transactionCount * 500) / 1024);
-  
+
   return {
     year,
     transactionCount,
@@ -77,14 +77,14 @@ export function calculateYearEndSummary(year: number, baseCurrency: string): Yea
  */
 export function identifyArchivableYears(): number[] {
   const transactions = useTransactionStore.getState().transactions;
-  
+
   // Get unique years from transactions
   const years = new Set<number>();
   transactions.forEach((transaction) => {
     const year = new Date(transaction.date).getFullYear();
     years.add(year);
   });
-  
+
   // Convert to sorted array (oldest first)
   return Array.from(years).sort((a, b) => a - b);
 }
@@ -98,18 +98,18 @@ export function shouldPromptArchive(lastPostponedDate: string | null): boolean {
   if (!detectArchiveTrigger()) {
     return false;
   }
-  
+
   // If never postponed, show prompt
   if (!lastPostponedDate) {
     return true;
   }
-  
+
   // Check if 30 days have passed since last postpone
   const lastPostponed = new Date(lastPostponedDate);
   const now = new Date();
   const daysSincePostpone = Math.floor(
     (now.getTime() - lastPostponed.getTime()) / (1000 * 60 * 60 * 24)
   );
-  
+
   return daysSincePostpone >= 30;
 }

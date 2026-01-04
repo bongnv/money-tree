@@ -73,22 +73,22 @@ describe('currency.utils', () => {
   describe('formatCurrency', () => {
     it('should format USD with symbol by default', () => {
       const formatted = formatCurrency(1234.56, 'usd');
-      expect(formatted).toBe('$1234.56');
+      expect(formatted).toBe('$1,234.56');
     });
 
     it('should format SGD with symbol', () => {
       const formatted = formatCurrency(1234.56, 'sgd');
-      expect(formatted).toBe('S$1234.56');
+      expect(formatted).toBe('S$1,234.56');
     });
 
     it('should format VND with 0 decimal places', () => {
       const formatted = formatCurrency(1234, 'vnd');
-      expect(formatted).toBe('₫1234');
+      expect(formatted).toBe('₫1,234');
     });
 
     it('should format VND with 0 decimal places', () => {
       const formatted = formatCurrency(10000, 'vnd');
-      expect(formatted).toBe('₫10000');
+      expect(formatted).toBe('₫10,000');
     });
 
     it('should format with symbol and code when both options enabled', () => {
@@ -96,7 +96,7 @@ describe('currency.utils', () => {
         showSymbol: true,
         showCode: true,
       });
-      expect(formatted).toBe('$1234.56 USD');
+      expect(formatted).toBe('$1,234.56 USD');
     });
 
     it('should format with code only when showSymbol is false', () => {
@@ -104,7 +104,7 @@ describe('currency.utils', () => {
         showSymbol: false,
         showCode: true,
       });
-      expect(formatted).toBe('1234.56 USD');
+      expect(formatted).toBe('1,234.56 USD');
     });
 
     it('should format without symbol or code when both disabled', () => {
@@ -112,22 +112,22 @@ describe('currency.utils', () => {
         showSymbol: false,
         showCode: false,
       });
-      expect(formatted).toBe('1234.56');
+      expect(formatted).toBe('1,234.56');
     });
 
     it('should handle unknown currency gracefully', () => {
       const formatted = formatCurrency(1234.56, 'unknown');
-      expect(formatted).toBe('1234.56');
+      expect(formatted).toBe('1,234.56');
     });
 
     it('should round to correct decimal places', () => {
       const formatted = formatCurrency(1234.567, 'usd');
-      expect(formatted).toBe('$1234.57');
+      expect(formatted).toBe('$1,234.57');
     });
 
     it('should handle negative amounts', () => {
       const formatted = formatCurrency(-1234.56, 'usd');
-      expect(formatted).toBe('$-1234.56');
+      expect(formatted).toBe('$-1,234.56');
     });
 
     it('should handle zero', () => {
@@ -278,26 +278,26 @@ describe('currency.utils', () => {
   describe('formatCurrencyWithConversion', () => {
     it('should format with conversion when different currencies', () => {
       const formatted = formatCurrencyWithConversion(1000, 'eur', 1180, 'usd');
-      expect(formatted).toContain('1000');
-      expect(formatted).toContain('1180');
+      expect(formatted).toContain('1,000');
+      expect(formatted).toContain('1,180');
       expect(formatted).toContain('≈');
     });
 
     it('should format without conversion when same currency', () => {
       const formatted = formatCurrencyWithConversion(1000, 'usd', 1000, 'usd');
-      expect(formatted).toBe('$1000.00');
+      expect(formatted).toBe('$1,000.00');
       expect(formatted).not.toContain('≈');
     });
 
     it('should format without conversion when no converted amount', () => {
       const formatted = formatCurrencyWithConversion(1000, 'usd', null, 'usd');
-      expect(formatted).toBe('$1000.00');
+      expect(formatted).toBe('$1,000.00');
       expect(formatted).not.toContain('≈');
     });
 
     it('should format without conversion when no base currency', () => {
       const formatted = formatCurrencyWithConversion(1000, 'usd', 1180);
-      expect(formatted).toBe('$1000.00');
+      expect(formatted).toBe('$1,000.00');
       expect(formatted).not.toContain('≈');
     });
 
@@ -313,7 +313,7 @@ describe('currency.utils', () => {
       const formatted = formatCurrencyWithConversion(1000, 'eur', 1180, 'usd', {
         showOriginal: false,
       });
-      expect(formatted).toBe('$1180.00');
+      expect(formatted).toBe('$1,180.00');
       expect(formatted).not.toContain('≈');
     });
   });

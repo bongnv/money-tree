@@ -354,7 +354,7 @@ describe('QuickEntryRow', () => {
 
     // Should show validation errors
     await waitFor(() => {
-      expect(screen.getByText('Amount must be greater than 0')).toBeInTheDocument();
+      expect(screen.getByText('Amount is required')).toBeInTheDocument();
     });
 
     expect(mockOnSubmit).not.toHaveBeenCalled();

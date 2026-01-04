@@ -73,17 +73,17 @@ describe('ValidationService', () => {
       expect(errors.find((e) => e.field === 'transactionTypeId')).toBeDefined();
     });
 
-    it('should validate amount is positive', () => {
+    it('should allow negative amounts (for refunds)', () => {
       const transaction: Partial<Transaction> = {
         date: '2024-03-15T00:00:00.000Z',
-        description: 'Test',
-        amount: 0,
+        description: 'Refund',
+        amount: -50,
         transactionTypeId: 'type-1',
       };
 
       const errors = validationService.validateTransaction(transaction);
 
-      expect(errors.find((e) => e.field === 'amount')).toBeDefined();
+      expect(errors.find((e) => e.field === 'amount')).toBeUndefined();
     });
 
     describe('Expense validation', () => {

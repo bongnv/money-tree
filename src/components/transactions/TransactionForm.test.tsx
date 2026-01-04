@@ -159,7 +159,7 @@ describe('TransactionForm', () => {
     await user.click(screen.getByRole('button', { name: /create/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/amount must be greater than 0/i)).toBeInTheDocument();
+      expect(screen.getByText(/amount is required/i)).toBeInTheDocument();
     });
   });
 
@@ -382,13 +382,13 @@ describe('TransactionForm', () => {
     await user.click(screen.getByRole('button', { name: /create/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/amount must be greater than 0/i)).toBeInTheDocument();
+      expect(screen.getByText(/amount is required/i)).toBeInTheDocument();
     });
 
     await user.type(screen.getByLabelText(/amount/i), '100');
 
     await waitFor(() => {
-      expect(screen.queryByText(/amount must be greater than 0/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/amount is required/i)).not.toBeInTheDocument();
     });
   });
 });

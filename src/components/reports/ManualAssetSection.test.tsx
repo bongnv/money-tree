@@ -59,14 +59,14 @@ describe('ManualAssetSection', () => {
   it('should format currency values', () => {
     render(<ManualAssetSection title="Assets" groups={mockGroups} currencyId="usd" />);
     // Values should be formatted with currency symbol
-    expect(screen.getByText(/\$2000\.00/)).toBeInTheDocument();
-    expect(screen.getByText(/\$3000\.00/)).toBeInTheDocument();
+    expect(screen.getByText(/\$2,000\.00/)).toBeInTheDocument();
+    expect(screen.getByText(/\$3,000\.00/)).toBeInTheDocument();
   });
 
   it('should calculate and display correct total', () => {
     render(<ManualAssetSection title="Assets" groups={mockGroups} currencyId="usd" />);
     // Total should be sum of all group totals (5000 + 10000 = 15000)
-    expect(screen.getByText(/\$15000\.00/)).toBeInTheDocument();
+    expect(screen.getByText(/\$15,000\.00/)).toBeInTheDocument();
   });
 
   it('should render table structure', () => {
@@ -98,6 +98,6 @@ describe('ManualAssetSection', () => {
     ];
     render(<ManualAssetSection title="Assets" groups={singleItemGroup} currencyId="usd" />);
     expect(screen.getByText('Wallet')).toBeInTheDocument();
-    expect(screen.getAllByText(/\$1000\.00/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/\$1,000\.00/).length).toBeGreaterThan(0);
   });
 });

@@ -61,7 +61,7 @@ describe('Archive Service', () => {
             amount: 100,
             accountId: 'acc1',
             transactionTypeId: 'type1',
-            
+
             createdAt: '2023-01-15T00:00:00Z',
             updatedAt: '2023-01-15T00:00:00Z',
           },
@@ -72,7 +72,7 @@ describe('Archive Service', () => {
             amount: 200,
             accountId: 'acc1',
             transactionTypeId: 'type1',
-            
+
             createdAt: '2024-03-20T00:00:00Z',
             updatedAt: '2024-03-20T00:00:00Z',
           },
@@ -83,7 +83,7 @@ describe('Archive Service', () => {
             amount: 300,
             accountId: 'acc1',
             transactionTypeId: 'type1',
-            
+
             createdAt: '2025-06-10T00:00:00Z',
             updatedAt: '2025-06-10T00:00:00Z',
           },
@@ -105,7 +105,7 @@ describe('Archive Service', () => {
             amount: 100,
             accountId: 'acc1',
             transactionTypeId: 'type1',
-            
+
             createdAt: '2025-01-15T00:00:00Z',
             updatedAt: '2025-01-15T00:00:00Z',
           },
@@ -116,7 +116,7 @@ describe('Archive Service', () => {
             amount: 200,
             accountId: 'acc1',
             transactionTypeId: 'type1',
-            
+
             createdAt: '2023-03-20T00:00:00Z',
             updatedAt: '2023-03-20T00:00:00Z',
           },
@@ -127,7 +127,7 @@ describe('Archive Service', () => {
             amount: 300,
             accountId: 'acc1',
             transactionTypeId: 'type1',
-            
+
             createdAt: '2024-06-10T00:00:00Z',
             updatedAt: '2024-06-10T00:00:00Z',
           },
@@ -160,7 +160,7 @@ describe('Archive Service', () => {
             amount: 100,
             accountId: 'acc1',
             transactionTypeId: 'type1',
-            
+
             createdAt: '2023-01-15T00:00:00Z',
             updatedAt: '2023-01-15T00:00:00Z',
           },
@@ -171,7 +171,7 @@ describe('Archive Service', () => {
             amount: 200,
             accountId: 'acc1',
             transactionTypeId: 'type1',
-            
+
             createdAt: '2024-03-20T00:00:00Z',
             updatedAt: '2024-03-20T00:00:00Z',
           },
@@ -182,7 +182,7 @@ describe('Archive Service', () => {
             amount: 300,
             accountId: 'acc1',
             transactionTypeId: 'type1',
-            
+
             createdAt: '2025-06-10T00:00:00Z',
             updatedAt: '2025-06-10T00:00:00Z',
           },
@@ -218,7 +218,7 @@ describe('Archive Service', () => {
             amount: 100,
             accountId: 'acc1',
             transactionTypeId: 'type1',
-            
+
             createdAt: '2024-01-15T00:00:00Z',
             updatedAt: '2024-01-15T00:00:00Z',
           },
@@ -240,7 +240,7 @@ describe('Archive Service', () => {
             amount: 100,
             accountId: 'acc1',
             transactionTypeId: 'type1',
-            
+
             createdAt: '2024-01-15T00:00:00Z',
             updatedAt: '2024-01-15T00:00:00Z',
           },
@@ -251,7 +251,7 @@ describe('Archive Service', () => {
             amount: 200,
             accountId: 'acc1',
             transactionTypeId: 'type1',
-            
+
             createdAt: '2024-06-20T00:00:00Z',
             updatedAt: '2024-06-20T00:00:00Z',
           },
@@ -262,7 +262,7 @@ describe('Archive Service', () => {
             amount: 300,
             accountId: 'acc1',
             transactionTypeId: 'type1',
-            
+
             createdAt: '2025-03-10T00:00:00Z',
             updatedAt: '2025-03-10T00:00:00Z',
           },

@@ -40,10 +40,16 @@ export const formatCurrency = (
 ): string => {
   const currency = getCurrencyById(currencyId);
   if (!currency) {
-    return amount.toFixed(2);
+    return amount.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   }
 
-  const formattedAmount = amount.toFixed(currency.decimalPlaces);
+  const formattedAmount = amount.toLocaleString('en-US', {
+    minimumFractionDigits: currency.decimalPlaces,
+    maximumFractionDigits: currency.decimalPlaces,
+  });
   const showSymbol = options?.showSymbol !== false;
   const showCode = options?.showCode || false;
 

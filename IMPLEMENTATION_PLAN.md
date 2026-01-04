@@ -1143,28 +1143,27 @@ These features will be implemented after the MVP is validated by users.
 
 ### 12.2 Archive Detection & Prompt UI (FR-6.10, FR-9.2)
 **Implementation**:
-- [ ] Create `src/services/archive.service.ts`:
-  - [ ] `detectArchiveTrigger()`: Check if 3+ years exist in main file
-  - [ ] `calculateYearEndSummary(year)`: Compute counts and balances
-  - [ ] `identifyArchivableYears()`: Return oldest years to archive
-  - [ ] `shouldPromptArchive()`: Check conditions and user preferences
-- [ ] Create `src/components/common/ArchivePrompt.tsx`:
-  - [ ] Dialog showing oldest year to archive
-  - [ ] Display file size impact (estimated savings)
-  - [ ] "Archive Now", "Remind Me Later", "Don't Ask Again" buttons
-  - [ ] Show year-end summary (transaction count, closing net worth)
-- [ ] Store postpone preference in user settings
-- [ ] Trigger prompt on app load when conditions met
-- [ ] Write automated tests for detection logic and component
+- [x] Create `src/services/archive.service.ts`:
+  - [x] `detectArchiveTrigger()`: Check if 3+ years exist in main file
+  - [x] `calculateYearEndSummary(year)`: Compute counts and balances
+  - [x] `identifyArchivableYears()`: Return oldest years to archive
+  - [x] `shouldPromptArchive()`: Check conditions and user preferences
+- [x] Create `src/components/common/ArchivePrompt.tsx`:
+  - [x] Dialog showing oldest year to archive
+  - [x] Display file size impact (estimated savings)
+  - [x] "Archive Now", "Remind Me Later" buttons
+  - [x] Show year-end summary (transaction count, closing net worth)
+- [x] Store postpone preference in user settings
+- [x] Trigger prompt on app load when conditions met
+- [x] Write automated tests for detection logic and component
 
 **Manual Verification**:
 - [ ] **UI Test**: Add 2024, 2025, 2026 data to file (3 years), reload app
 - [ ] **UI Test**: See archive prompt dialog appear automatically
 - [ ] **UI Test**: Verify prompt shows "2024" as year to archive
 - [ ] **UI Test**: Verify prompt displays transaction count and net worth for 2024
-- [ ] **UI Test**: Click "Remind Me Later", reload app, see prompt appear again
-- [ ] **UI Test**: Click "Don't Ask Again", reload app, verify no prompt
-- [ ] **UI Test**: In settings, reset "Don't Ask Again", reload, see prompt return
+- [ ] **UI Test**: Click "Remind Me Later", reload app after 30 days, see prompt appear again
+- [ ] **UI Test**: Click "Remind Me Later", reload app before 30 days, verify no prompt
 
 ### 12.3 Archive File Creation & Export (FR-6.10, FR-9.2, FR-9.6)
 **Implementation**:

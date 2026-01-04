@@ -22,6 +22,8 @@ interface AppState {
   fileContentHash: string | null;
   fileLoadedAt: string | null;
   baseVersion: DataFile | null;
+  // Archive settings
+  archivePromptPostponedAt: string | null; // ISO date when user clicked "Remind Me Later"
 }
 
 interface AppActions {
@@ -39,6 +41,8 @@ interface AppActions {
   // Conflict detection actions
   setFileMetadata: (hash: string, loadedAt: string, baseVersion: DataFile) => void;
   clearFileMetadata: () => void;
+  // Archive actions
+  setArchivePromptPostponedAt: (timestamp: string | null) => void;
 }
 
 const getCurrentYear = (): number => {
@@ -62,6 +66,7 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
   fileContentHash: null,
   fileLoadedAt: null,
   baseVersion: null,
+  archivePromptPostponedAt: storageService.getArchivePromptPostponedAt(),
 
   setCurrentYear: (year) => {
     storageService.setCurrentYear(year);
@@ -143,5 +148,14 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
 
   clearFileMetadata: () => {
     set({ fileContentHash: null, fileLoadedAt: null, baseVersion: null });
+  },
+
+  setArchivePromptPostponedAt: (timestamp) => {
+    if (timestamp) {
+      storageService.setArchivePromptPostponedAt(timestamp);
+    } else {
+      storageService.clearArchivePromptPostponedAt();
+    }
+    set({ archivePromptPostponedAt: timestamp });
   },
 }));

@@ -5,6 +5,7 @@ const STORAGE_KEYS = {
   STORAGE_PROVIDER: 'moneytree_storage_provider',
   FILE_NAME: 'moneytree_file_name',
   BASE_CURRENCY: 'moneytree_base_currency',
+  ARCHIVE_PROMPT_POSTPONED_AT: 'moneytree_archive_prompt_postponed_at',
 } as const;
 
 export const storageService = {
@@ -59,6 +60,18 @@ export const storageService = {
 
   setBaseCurrency(currencyId: string): void {
     localStorage.setItem(STORAGE_KEYS.BASE_CURRENCY, currencyId);
+  },
+
+  getArchivePromptPostponedAt(): string | null {
+    return localStorage.getItem(STORAGE_KEYS.ARCHIVE_PROMPT_POSTPONED_AT);
+  },
+
+  setArchivePromptPostponedAt(timestamp: string): void {
+    localStorage.setItem(STORAGE_KEYS.ARCHIVE_PROMPT_POSTPONED_AT, timestamp);
+  },
+
+  clearArchivePromptPostponedAt(): void {
+    localStorage.removeItem(STORAGE_KEYS.ARCHIVE_PROMPT_POSTPONED_AT);
   },
 
   clearAll(): void {

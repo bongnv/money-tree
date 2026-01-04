@@ -8,6 +8,7 @@ import { FileLoadErrorDialog } from './components/common/FileLoadErrorDialog';
 import { WelcomeDialog } from './components/common/WelcomeDialog';
 import { NotificationSnackbar } from './components/common/NotificationSnackbar';
 import { MergePreviewDialog, ConflictResolution } from './components/common/MergePreviewDialog';
+import { ArchivePrompt } from './components/common/ArchivePrompt';
 import { AppRoutes } from './routes';
 import { useAppStore } from './stores/useAppStore';
 import { syncService } from './services/sync.service';
@@ -15,12 +16,29 @@ import { StorageFactory, StorageProviderType } from './services/storage/StorageF
 import { OneDriveProvider } from './services/storage/OneDriveProvider';
 import { SelectedFileInfo } from './components/onedrive/OneDriveFilePicker';
 import { MergeResult } from './services/merge.service';
+import {
+  shouldPromptArchive,
+  identifyArchivableYears,
+  calculateYearEndSummary,
+} from './services/archive.service';
 
 const WELCOME_DISMISSED_KEY = 'moneyTree.welcomeDismissed';
 
 const App: React.FC = () => {
-  const { error, setError, hasUnsavedChanges, currentYear, snackbar, hideSnackbar } = useAppStore();
+  const {
+    error,
+    setError,
+    hasUnsavedChanges,
+    currentYear,
+    snackbar,
+    hideSnackbar,
+    baseCurrency,
+    archivePromptPostponedAt,
+    setArchivePromptPostponedAt,
+  } = useAppStore();
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
+  const [showArchivePrompt, setShowArchivePrompt] = useState(false);
+  const [archiveYearSummary, setArchiveYearSummary] = useState<any>(null);
   const [mergeDialogState, setMergeDialogState] = useState<{
     open: boolean;
     mergeResult: MergeResult | null;
@@ -53,6 +71,9 @@ const App: React.FC = () => {
         if (!dismissed) {
           setShowWelcomeDialog(true);
         }
+      } else {
+        // File loaded successfully, check if archive prompt should be shown
+        checkArchivePrompt();
       }
     };
 
@@ -65,6 +86,18 @@ const App: React.FC = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
+
+  const checkArchivePrompt = () => {
+    if (shouldPromptArchive(archivePromptPostponedAt)) {
+      const archivableYears = identifyArchivableYears();
+      if (archivableYears.length > 0) {
+        const oldestYear = archivableYears[0];
+        const summary = calculateYearEndSummary(oldestYear, baseCurrency);
+        setArchiveYearSummary(summary);
+        setShowArchivePrompt(true);
+      }
+    }
+  };
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -166,6 +199,17 @@ const App: React.FC = () => {
     setMergeDialogState({ open: false, mergeResult: null, resolve: null });
   };
 
+  const handleArchiveNow = () => {
+    setShowArchivePrompt(false);
+    // TODO: Implement actual archiving in step 12.3
+    alert('Archive functionality will be implemented in step 12.3');
+  };
+
+  const handleArchiveRemindLater = () => {
+    setShowArchivePrompt(false);
+    setArchivePromptPostponedAt(new Date().toISOString());
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -195,6 +239,15 @@ const App: React.FC = () => {
         onCancel={handleMergeCancel}
         onApply={handleMergeApply}
       />
+      {archiveYearSummary && (
+        <ArchivePrompt
+          open={showArchivePrompt}
+          yearSummary={archiveYearSummary}
+          baseCurrency={baseCurrency}
+          onArchiveNow={handleArchiveNow}
+          onRemindLater={handleArchiveRemindLater}
+        />
+      )}
     </ThemeProvider>
   );
 };

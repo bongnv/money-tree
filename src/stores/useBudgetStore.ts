@@ -75,7 +75,13 @@ export const useBudgetStore = create<BudgetState & BudgetActions>((set, get) => 
 
     set((state) => ({
       budgets: state.budgets.map((item) =>
-        item.id === id ? { ...item, ...updates, updatedAt: new Date().toISOString() } : item
+        item.id === id
+          ? {
+              ...item,
+              ...updates,
+              updatedAt: updates.updatedAt ?? new Date().toISOString(),
+            }
+          : item
       ),
     }));
     useAppStore.getState().setUnsavedChanges(true);

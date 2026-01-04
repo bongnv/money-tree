@@ -95,7 +95,7 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
       setErrorMessage(null);
     } catch (error) {
       if (error instanceof Error) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+         
         setErrorMessage(error.message);
       }
     }

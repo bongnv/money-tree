@@ -46,7 +46,11 @@ export const useCategoryStore = create<CategoryState & CategoryActions>((set, ge
     set((state) => ({
       categories: state.categories.map((category) =>
         category.id === id
-          ? { ...category, ...updates, updatedAt: new Date().toISOString() }
+          ? {
+              ...category,
+              ...updates,
+              updatedAt: updates.updatedAt ?? new Date().toISOString(),
+            }
           : category
       ),
     }));
@@ -79,7 +83,11 @@ export const useCategoryStore = create<CategoryState & CategoryActions>((set, ge
     set((state) => ({
       transactionTypes: state.transactionTypes.map((transactionType) =>
         transactionType.id === id
-          ? { ...transactionType, ...updates, updatedAt: new Date().toISOString() }
+          ? {
+              ...transactionType,
+              ...updates,
+              updatedAt: updates.updatedAt ?? new Date().toISOString(),
+            }
           : transactionType
       ),
     }));

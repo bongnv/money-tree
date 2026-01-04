@@ -61,12 +61,9 @@ describe('useExchangeRateStore', () => {
       expect(rate).toBe(1.18);
     });
 
-    it('should use findFallbackRate when exact rate not found', () => {
-      const mockFindFallbackRate = jest.spyOn(exchangeRateService, 'findFallbackRate');
-      mockFindFallbackRate.mockReturnValue(1.19);
-
-      useExchangeRateStore.getState().getRateForMonth('2026-03', 'EUR', 'USD');
-      expect(mockFindFallbackRate).toHaveBeenCalledWith(expect.any(Array), '2026-03', 'EUR', 'USD');
+    it('should return null when exact rate not found (no fallback in getRateForMonth)', () => {
+      const rate = useExchangeRateStore.getState().getRateForMonth('2026-03', 'EUR', 'USD');
+      expect(rate).toBeNull();
     });
   });
 
@@ -94,7 +91,7 @@ describe('useExchangeRateStore', () => {
       expect(useExchangeRateStore.getState().rates[0].rate).toBe(1.2);
     });
 
-    it('should use fallback rate when available instead of fetching', async () => {
+    it('should use fallback rate when available and store it for the requested month', async () => {
       // Set up existing rate for February
       useExchangeRateStore.getState().setRates([
         {
@@ -111,7 +108,7 @@ describe('useExchangeRateStore', () => {
       const mockFindFallbackRate = jest.spyOn(exchangeRateService, 'findFallbackRate');
       mockFindFallbackRate.mockReturnValue(1.19); // Mock fallback finding the Feb rate
 
-      // Try to fetch for March - should use fallback instead of API
+      // Try to fetch for March - should use fallback and store it
       const rate = await useExchangeRateStore
         .getState()
         .fetchRateIfMissing('2026-03', 'EUR', 'USD');
@@ -119,15 +116,16 @@ describe('useExchangeRateStore', () => {
       expect(rate).toBe(1.19);
       expect(mockFetchCurrentRate).not.toHaveBeenCalled(); // Should not call API
       expect(mockFindFallbackRate).toHaveBeenCalled();
-      // Fallback rate is returned but not stored (to save space)
+      // Fallback rate is stored for the requested month
       const storedRateForMarch = useExchangeRateStore
         .getState()
         .rates.find(
           (r) => r.month === '2026-03' && r.fromCurrency === 'EUR' && r.toCurrency === 'USD'
         );
-      expect(storedRateForMarch).toBeUndefined();
-      // Original rate still exists
-      expect(useExchangeRateStore.getState().rates).toHaveLength(1);
+      expect(storedRateForMarch).toBeDefined();
+      expect(storedRateForMarch?.rate).toBe(1.19);
+      // Now we have both February and March rates
+      expect(useExchangeRateStore.getState().rates).toHaveLength(2);
     });
 
     it('should fetch from API when no fallback available', async () => {
@@ -203,6 +201,34 @@ describe('useExchangeRateStore', () => {
       useExchangeRateStore.getState().addRate(newRate);
       expect(useExchangeRateStore.getState().rates).toHaveLength(1);
       expect(useExchangeRateStore.getState().rates[0]).toEqual(newRate);
+    });
+
+    it('should update existing rate instead of creating duplicate', () => {
+      const firstRate = {
+        id: 'rate-1',
+        month: '2026-01',
+        fromCurrency: 'EUR',
+        toCurrency: 'USD',
+        rate: 1.18,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      };
+
+      const updatedRate = {
+        id: 'rate-2',
+        month: '2026-01',
+        fromCurrency: 'EUR',
+        toCurrency: 'USD',
+        rate: 1.2,
+        createdAt: '2026-01-02T00:00:00.000Z',
+      };
+
+      useExchangeRateStore.getState().addRate(firstRate);
+      expect(useExchangeRateStore.getState().rates).toHaveLength(1);
+
+      useExchangeRateStore.getState().addRate(updatedRate);
+      expect(useExchangeRateStore.getState().rates).toHaveLength(1);
+      expect(useExchangeRateStore.getState().rates[0]).toEqual(updatedRate);
+      expect(useExchangeRateStore.getState().rates[0].rate).toBe(1.2);
     });
   });
 

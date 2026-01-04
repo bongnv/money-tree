@@ -34,7 +34,11 @@ export const useAccountStore = create<AccountState & AccountActions>((set, get) 
     set((state) => ({
       accounts: state.accounts.map((account) =>
         account.id === id
-          ? { ...account, ...updates, updatedAt: new Date().toISOString() }
+          ? {
+              ...account,
+              ...updates,
+              updatedAt: updates.updatedAt ?? new Date().toISOString(),
+            }
           : account
       ),
     }));

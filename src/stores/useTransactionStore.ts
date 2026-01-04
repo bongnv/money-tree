@@ -36,7 +36,11 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
     set((state) => ({
       transactions: state.transactions.map((transaction) =>
         transaction.id === id
-          ? { ...transaction, ...updates, updatedAt: new Date().toISOString() }
+          ? {
+              ...transaction,
+              ...updates,
+              updatedAt: updates.updatedAt ?? new Date().toISOString(),
+            }
           : transaction
       ),
     }));

@@ -27,7 +27,7 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setShowSuccessMessage(false);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setPreviousValue(null);
   }, [mode, open]);
 

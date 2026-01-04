@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import { Backdrop, CircularProgress } from '@mui/material';
 import theme from './theme';
 import { MainLayout } from './components/layout/MainLayout';
 import { FileLoadErrorDialog } from './components/common/FileLoadErrorDialog';
@@ -35,6 +36,7 @@ const App: React.FC = () => {
     baseCurrency,
     archivePromptPostponedAt,
     setArchivePromptPostponedAt,
+    isLoading,
   } = useAppStore();
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
   const [showArchivePrompt, setShowArchivePrompt] = useState(false);
@@ -248,6 +250,9 @@ const App: React.FC = () => {
           onRemindLater={handleArchiveRemindLater}
         />
       )}
+      <Backdrop open={isLoading} sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </ThemeProvider>
   );
 };

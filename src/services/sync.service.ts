@@ -201,7 +201,7 @@ class SyncService {
         transactionTypes: categoryStore.transactionTypes,
         archivedYears: this.cachedDataFile?.archivedYears || [],
         baseCurrency: state.baseCurrency,
-        lastModified: new Date().toISOString(),
+        lastModified: state.baseVersion?.lastModified || new Date().toISOString(),
       };
 
       // Conflict detection: check if file has been modified externally
@@ -264,6 +264,12 @@ class SyncService {
           // Continue with save attempt using appVersion
         }
       }
+
+      // Update lastModified timestamp right before saving
+      dataToSave = {
+        ...dataToSave,
+        lastModified: new Date().toISOString(),
+      };
 
       await storage.saveDataFile(dataToSave);
 

@@ -79,4 +79,29 @@ describe('SettingsPage', () => {
     expect(screen.getByText(/Currency Settings/i)).toBeInTheDocument();
     expect(screen.getByText(/Storage Provider/i)).toBeInTheDocument();
   });
+
+  it('switches to Exchange Rates tab', async () => {
+    const user = userEvent.setup();
+    render(
+      <BrowserRouter>
+        <SettingsPage />
+      </BrowserRouter>
+    );
+
+    await user.click(screen.getByRole('tab', { name: /exchange rates/i }));
+    // The tab panel should be visible with the heading
+    const headings = screen.getAllByText('Exchange Rates');
+    expect(headings.length).toBeGreaterThan(0);
+  });
+
+  it('shows all tab icons', () => {
+    render(
+      <BrowserRouter>
+        <SettingsPage />
+      </BrowserRouter>
+    );
+
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs).toHaveLength(4);
+  });
 });

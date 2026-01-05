@@ -25,8 +25,8 @@ The MVP focuses on core personal finance tracking functionality with local file 
 **FR-1.3** [x] Account requirements based on transaction group - *Phase 5*
 - Expense transactions: Require From Account (money leaving)
 - Income transactions: Require To Account (money entering)
-- Investment transactions: Buying requires From Account, Selling/Dividends require To Account
 - Transfer transactions: Require both From Account and To Account
+- Asset Transaction: Connect manual assets with transactional accounts (requires one account + one asset)
 
 **FR-1.4** [x] Quick transaction entry on dashboard - *Phase 8, 12*
 - Inline form always visible on starting page (no button click required)
@@ -48,7 +48,7 @@ The MVP focuses on core personal finance tracking functionality with local file 
 
 **FR-2.1** [x] Three-level hierarchy (Group → Category → Transaction Type) - *Phase 2*
 
-**FR-2.2** [x] Four static Groups: Expense, Income, Investment, Transfer - *Phase 2*
+**FR-2.2** [x] Four static Groups: Expense, Income, Transfer, Asset Transaction - *Phase 2*
 
 **FR-2.3** [x] User-customizable Categories and Transaction Types - *Phase 4*
 - Each Transaction Type belongs to exactly one Category
@@ -82,6 +82,14 @@ The MVP focuses on core personal finance tracking functionality with local file 
 - Add, edit, and delete manual assets
 
 **FR-3.6** [x] Manual asset value tracking over time
+
+**FR-3.7** [ ] Asset transaction support - *Post-MVP*
+- Record asset liquidation (asset → account) transactions
+- Record asset purchase (account → asset) transactions
+- Automatic asset value update when transaction is created
+- Link transactions to asset value history
+- View linked transactions from asset detail page
+- Transaction types under Asset Transaction group
 
 **Architecture Note:** Data models remain separate (Account and ManualAsset are distinct types with separate Zustand stores) for clear business logic separation. UI layer provides unified view through tabs and combined displays.
 

@@ -374,8 +374,8 @@ class ReportService {
         return 'Real Estate';
       case AssetType.SUPERANNUATION:
         return 'Superannuation';
-      case AssetType.INVESTMENT:
-        return 'Investments';
+      case AssetType.STOCKS_AND_SHARES:
+        return 'Stocks & Shares';
       case AssetType.LIABILITY:
         return 'Liabilities';
       default:

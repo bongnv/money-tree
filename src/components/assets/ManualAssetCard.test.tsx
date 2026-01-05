@@ -46,7 +46,7 @@ describe('ManualAssetCard', () => {
     const testCases: Array<{ type: AssetType; label: string }> = [
       { type: AssetType.REAL_ESTATE, label: 'Real Estate' },
       { type: AssetType.SUPERANNUATION, label: 'Superannuation' },
-      { type: AssetType.INVESTMENT, label: 'Investment' },
+      { type: AssetType.STOCKS_AND_SHARES, label: 'Stocks & Shares' },
       { type: AssetType.LIABILITY, label: 'Liability' },
       { type: AssetType.OTHER, label: 'Other' },
     ];

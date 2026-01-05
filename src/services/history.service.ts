@@ -14,7 +14,7 @@ export const updateAssetValue = (
   newValue: number,
   newDate: string,
   notes?: string,
-  linkedTransactionId?: string
+  _linkedTransactionId?: string
 ): ManualAsset => {
   // Move current value to history
   const currentValueEntry: AssetValueHistory = {
@@ -39,9 +39,6 @@ export const updateAssetValue = (
     notes: notes,
     valueHistory: updatedHistory,
     updatedAt: new Date().toISOString(),
-    // Store linkedTransactionId in a way that can be tracked
-    // Since current value doesn't have linkedTransactionId, we add it to notes if present
-    ...(linkedTransactionId && { notes: notes }),
   };
 };
 

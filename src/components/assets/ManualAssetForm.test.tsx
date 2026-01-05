@@ -144,7 +144,7 @@ describe('ManualAssetForm', () => {
 
       expect(screen.getByText('Real Estate')).toBeInTheDocument();
       expect(screen.getByText('Superannuation')).toBeInTheDocument();
-      expect(screen.getByText('Investment')).toBeInTheDocument();
+      expect(screen.getByText('Stocks & Shares')).toBeInTheDocument();
       expect(screen.getByText('Liability')).toBeInTheDocument();
       expect(screen.getAllByText('Other').length).toBeGreaterThan(0);
     });

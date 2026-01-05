@@ -92,7 +92,7 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
   const assetTypeLabels: Record<AssetType, string> = {
     [AssetType.REAL_ESTATE]: 'Real Estate',
     [AssetType.SUPERANNUATION]: 'Superannuation',
-    [AssetType.INVESTMENT]: 'Investment',
+    [AssetType.STOCKS_AND_SHARES]: 'Stocks & Shares',
     [AssetType.LIABILITY]: 'Liability',
     [AssetType.OTHER]: 'Other',
   };

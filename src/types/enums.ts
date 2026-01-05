@@ -39,7 +39,7 @@ export enum BudgetPeriod {
 export enum AssetType {
   REAL_ESTATE = 'real_estate',
   SUPERANNUATION = 'superannuation',
-  INVESTMENT = 'investment',
+  STOCKS_AND_SHARES = 'stocks_and_shares',
   LIABILITY = 'liability',
   OTHER = 'other',
 }

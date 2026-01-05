@@ -1795,104 +1795,165 @@ These features will be implemented after the MVP is validated by users.
   - [ ] Test with API failure → verify fallback works
 ---
 
-## Phase 20: Replace INVESTMENT with ASSET_TRANSACTION (Post-MVP)
+## Phase 21: Redesign Categorization System (Post-MVP)
 
-**Requirements**: FR-3.7 (Asset transaction support)
+**Requirements**: FR-2 (New categorization architecture), FR-3.7 (Asset transaction support)
 
-**Goal**: Replace the INVESTMENT group with ASSET_TRANSACTION to properly support transactions between manual assets and transactional accounts (liquidation and purchase)
+**Goal**: Restructure categorization to be more flexible - move Group from Category to TransactionType level, and split ASSET_TRANSACTION into ASSET_PURCHASE and ASSET_SALE for simplified UI and validation
 
-### 20.1 Replace INVESTMENT Group in Enum & Schema
-- [x] Replace `Group.INVESTMENT = 'investment'` with `Group.ASSET_TRANSACTION = 'asset_transaction'` in enums.ts
-- [x] Update Transaction schema to add optional fields:
-  - [x] `fromAssetId?: string` - Source manual asset (for liquidation)
-  - [x] `toAssetId?: string` - Destination manual asset (for purchase)
-- [x] Update transaction type interfaces and validation
-- [x] **Write tests**: Test schema validation with asset fields
-- [x] **Test UI**: N/A (schema changes only)
+**Architecture Changes:**
+- **Old**: Transaction → TransactionType → Category → Group (3-level hierarchy)
+- **New**: Transaction → TransactionType (with Group + Category) (2-level with flexible grouping)
+- Categories become organizational labels without behavioral constraints
+- Transaction Types define behavior via Group property
+- Enables same category to contain multiple groups (e.g., "Shares" category with purchase/sale/dividend types)
 
-### 20.2 Update Transaction Validation
-- [x] Modify validation.service.ts for ASSET_TRANSACTION group:
-  - [x] Require exactly one asset ID (fromAssetId XOR toAssetId)
-  - [x] Require exactly one account ID (fromAccountId XOR toAccountId)
-  - [x] Validate asset liquidation: fromAssetId + toAccountId
-  - [x] Validate asset purchase: fromAccountId + toAssetId
-  - [x] Prevent both asset IDs or both account IDs
-- [x] Find and replace all `Group.INVESTMENT` references in codebase with `Group.ASSET_TRANSACTION`
-- [x] **Write tests**: Test all validation rules for asset transactions
-- [x] **Test UI**: N/A (validation logic only)
+**Backward Compatibility:** IGNORED - Clean implementation without migration complexity
 
-### 20.3 Update Transaction Form UI
-- [x] Add asset selection fields to TransactionForm.tsx:
-  - [x] "From Asset" dropdown (when ASSET_TRANSACTION + liquidation)
-  - [x] "To Asset" dropdown (when ASSET_TRANSACTION + purchase)
-  - [x] Replace account field with asset field conditionally
-- [x] Update form validation and error messages
-- [x] Show helpful text: "This will update the asset value"
-- [x] **Write tests**: Test form shows/hides asset fields correctly
-- [x] **Test UI**: 
-  - [x] Select asset transaction type
-  - [x] Verify asset dropdown appears
-  - [x] Verify account dropdown adjusts correctly
+### 21.1 Update Enums and Schema
+- [ ] Replace Group enum in enums.ts:
+  ```typescript
+  enum Group {
+    INCOME = 'income',
+    EXPENSE = 'expense',
+    TRANSFER = 'transfer',
+    ASSET_PURCHASE = 'asset_purchase',  // Replaces half of ASSET_TRANSACTION
+    ASSET_SALE = 'asset_sale',          // Replaces other half of ASSET_TRANSACTION
+  }
+  ```
+- [ ] Update Category interface (REMOVE group property):
+  ```typescript
+  interface Category {
+    id: string;
+    name: string;
+    // REMOVED: group: Group;
+    description?: string;
+    createdAt: string;
+    updatedAt: string;
+  }
+  ```
+- [ ] Update TransactionType interface (ADD group property):
+  ```typescript
+  interface TransactionType {
+    id: string;
+    name: string;
+    categoryId: string;
+    group: Group;  // ADD THIS
+    description?: string;
+    createdAt: string;
+    updatedAt: string;
+  }
+  ```
+- [ ] Update CategorySchema and TransactionTypeSchema in models.schema.ts
+- [ ] **Write tests**: Test schema validation for new structure
+- [ ] **Test UI**: N/A (schema changes only)
 
-### 20.4 Automatic Asset Value Update
-- [x] Create service method: `processAssetTransaction(transaction, asset)`
-- [x] When saving asset transaction:
-  - [x] Calculate new asset value (current ± transaction amount)
-  - [x] Update manual asset value using updateAssetValue from history.service
-  - [x] Add transaction reference to asset value history
-  - [x] Update asset's updatedAt timestamp
-- [x] Handle transaction deletion: option to revert asset value
-- [x] Handle transaction edit: adjust asset value accordingly
-- [x] **Write tests**: Test asset value updates correctly for all scenarios
-- [x] **Test UI**: 
-  - [x] Create liquidation transaction
-  - [x] Verify asset value decreases
-  - [x] Create purchase transaction
-  - [x] Verify asset value increases
+### 21.2 Update Validation Service
+- [ ] Simplify validation.service.ts with new groups:
+  - [ ] INCOME: requires toAccountId only
+  - [ ] EXPENSE: requires fromAccountId only
+  - [ ] TRANSFER: requires fromAccountId + toAccountId
+  - [ ] ASSET_PURCHASE: requires fromAccountId + toAssetId (account → asset)
+  - [ ] ASSET_SALE: requires fromAssetId + toAccountId (asset → account)
+- [ ] Remove complex conditional logic from ASSET_TRANSACTION validation
+- [ ] Update validateTransaction to get group from transactionType.group instead of category.group
+- [ ] **Write tests**: Test all 5 group validation rules
+- [ ] **Test UI**: N/A (validation logic only)
 
-### 20.5 Link Transactions to Asset History
-- [x] Add `linkedTransactionId` to AssetValueHistory schema
-- [x] Update asset value history to store transaction reference
-- [x] Display linked transaction in asset detail view
-- [x] Add navigation from asset → transaction
-- [x] **Write tests**: Test history correctly links transactions
-- [x] **Test UI**: 
-  - [x] View asset detail page
-  - [x] Verify transactions shown in history
-  - [x] Click transaction link → navigates to transaction
+### 21.3 Update Stores
+- [ ] Update useCategoryStore.ts:
+  - [ ] Remove getCategoriesByGroup method (categories no longer have groups)
+  - [ ] Add helper to get categories with their transaction type groups
+- [ ] Update useTransactionStore.ts:
+  - [ ] Update validation to use transactionType.group
+  - [ ] Update asset value logic for ASSET_PURCHASE (increase value) and ASSET_SALE (decrease value)
+- [ ] **Write tests**: Test store methods work with new structure
+- [ ] **Test UI**: N/A (store logic only)
 
-### 20.6 Update Reports for Asset Transactions
-- [x] Update Cash Flow report to handle ASSET_TRANSACTION:
-  - [x] Option to include/exclude asset transactions
-  - [x] Treat liquidation as income source
-  - [x] Treat purchase as expense/investment
-- [x] Update Balance Sheet to show asset transaction impact
-- [x] Add Asset Transaction filter in transaction list
-- [x] **Write tests**: Test reports correctly categorize asset transactions
-- [x] **Test UI**: 
-  - [x] Create asset transactions
-  - [x] View cash flow → verify correct categorization
-  - [x] Toggle include/exclude setting
+### 21.4 Update Category Management UI
+- [ ] Update CategoryForm.tsx:
+  - [ ] Remove group dropdown/selection
+  - [ ] Update helper text: "Categories are organizational labels"
+- [ ] Update CategoryCard.tsx:
+  - [ ] Remove group chip/badge display
+  - [ ] Show transaction type count with group breakdown
+- [ ] Update CategoryList.tsx to not filter/group by category.group
+- [ ] **Write tests**: Test category CRUD without group field
+- [ ] **Test UI**:
+  - [ ] Create category without selecting group
+  - [ ] Verify no group displayed on category card
+  - [ ] Edit category successfully
 
-### 20.7 Update Quick Entry for Asset Transactions
-- [x] ~~Update QuickEntryRow to support asset selection~~
-- [x] ~~Add asset dropdown when ASSET_TRANSACTION type selected~~
-- [x] ~~Show asset value preview before submission~~
-- [x] **Decision**: Asset transactions require full form (too complex for quick entry)
-- [x] **Write tests**: Test quick entry with asset transactions
-- [x] **Test UI**: 
-  - [x] Use quick entry for asset transaction
-  - [x] Verify proper field visibility
-  - [x] Verify submission works correctly
+### 21.5 Update Transaction Type Management UI
+- [ ] Update TransactionTypeForm.tsx:
+  - [ ] Add group dropdown (5 options: INCOME, EXPENSE, TRANSFER, ASSET_PURCHASE, ASSET_SALE)
+  - [ ] Show helper text per group explaining behavior
+  - [ ] Category dropdown still available (all categories)
+- [ ] Update TransactionTypeCard.tsx:
+  - [ ] Display group badge (from transactionType.group)
+  - [ ] Display category name (lookup from categoryId)
+- [ ] Update TransactionTypeList.tsx to support new structure
+- [ ] **Write tests**: Test transaction type CRUD with group selection
+- [ ] **Test UI**:
+  - [ ] Create transaction type "Stock Purchase" with Category: Shares, Group: ASSET_PURCHASE
+  - [ ] Create transaction type "Dividend" with Category: Shares, Group: INCOME
+  - [ ] Verify both display correctly with different group badges
 
-### 20.8 Documentation and Help Text
-- [x] Add help text explaining asset transactions
-- [x] Update user guide sections:
-  - [x] How to record asset liquidation
-  - [x] How to record asset purchase
-  - [x] Understanding automatic value updates
-- [x] Add tooltips on asset transaction fields
-- [x] **Write tests**: N/A (documentation only)
-- [x] **Test UI**: Verify help text displays correctly
+### 21.6 Update Transaction Form UI
+- [ ] Update TransactionForm.tsx to get group from transactionType:
+  - [ ] Fetch transaction type, then get group from transactionType.group
+  - [ ] Show From Account field for EXPENSE, TRANSFER, ASSET_PURCHASE
+  - [ ] Show To Account field for INCOME, TRANSFER, ASSET_SALE
+  - [ ] Show From Asset field for ASSET_SALE
+  - [ ] Show To Asset field for ASSET_PURCHASE
+- [ ] Remove complex conditional logic (no more checking fromAssetId vs toAssetId)
+- [ ] Update help text for ASSET_PURCHASE and ASSET_SALE
+- [ ] **Write tests**: Test form field visibility for all 5 groups
+- [ ] **Test UI**:
+  - [ ] Select ASSET_PURCHASE type → verify From Account + To Asset fields
+  - [ ] Select ASSET_SALE type → verify From Asset + To Account fields
+  - [ ] Select INCOME type → verify To Account field only
+  - [ ] Select EXPENSE type → verify From Account field only
+  - [ ] Select TRANSFER type → verify both account fields
 
-**Manual Verification (User):** Complete workflow - create asset purchase transaction (buy stocks), verify asset value increased and transaction linked in history; create asset liquidation transaction (sell stocks), verify asset value decreased; edit and delete asset transactions, verify asset values adjust correctly; view reports with asset transactions included/excluded.
+### 21.7 Update Quick Entry
+- [ ] Update QuickEntryRow.tsx to filter transaction types:
+  - [ ] Exclude ASSET_PURCHASE and ASSET_SALE groups (too complex for quick entry)
+  - [ ] Show only INCOME, EXPENSE, TRANSFER
+- [ ] **Write tests**: Test quick entry filters correctly
+- [ ] **Test UI**:
+  - [ ] Verify asset purchase/sale types not shown in quick entry
+  - [ ] Verify income/expense/transfer types work normally
+
+### 21.8 Update Reports
+- [ ] Update report.service.ts:
+  - [ ] Get group from transactionType.group instead of category.group
+  - [ ] Cash flow: exclude ASSET_PURCHASE and ASSET_SALE (like TRANSFER)
+  - [ ] Balance sheet: include assets updated via ASSET_PURCHASE/ASSET_SALE
+- [ ] Update TransactionFilters.tsx to filter by transactionType.group
+- [ ] **Write tests**: Test reports with new group structure
+- [ ] **Test UI**:
+  - [ ] Create transactions with all 5 groups
+  - [ ] View cash flow → verify ASSET_PURCHASE/ASSET_SALE excluded
+  - [ ] View balance sheet → verify asset values correct
+  - [ ] Filter transactions by group → verify filters work
+
+### 21.9 Update All References
+- [ ] Find and replace `category.group` with `transactionType.group` across codebase
+- [ ] Update all components that display group information
+- [ ] Update calculation.service.ts if it uses groups
+- [ ] Update any other services using category.group
+- [ ] **Write tests**: Run full test suite
+- [ ] **Test UI**: Full regression testing
+
+**Manual Verification (User):** 
+1. Create category "Investments" without group
+2. Create transaction types under "Investments":
+   - "Buy Stocks" (Group: ASSET_PURCHASE)
+   - "Sell Stocks" (Group: ASSET_SALE)
+   - "Dividend Income" (Group: INCOME)
+3. Create transactions with each type
+4. Verify form shows correct fields based on group
+5. Verify asset values update correctly
+6. Verify reports categorize correctly
+7. Verify quick entry excludes asset transaction types

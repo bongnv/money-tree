@@ -22,11 +22,12 @@ The MVP focuses on core personal finance tracking functionality with local file 
 - From Account (source account)
 - To Account (destination account)
 
-**FR-1.3** [x] Account requirements based on transaction group - *Phase 5*
-- Expense transactions: Require From Account (money leaving)
-- Income transactions: Require To Account (money entering)
-- Transfer transactions: Require both From Account and To Account
-- Asset Transaction: Connect manual assets with transactional accounts (requires one account + one asset)
+**FR-1.3** [ ] Account requirements based on transaction group - *Phase 21*
+- INCOME: Requires To Account (money entering)
+- EXPENSE: Requires From Account (money leaving)
+- TRANSFER: Requires both From Account and To Account
+- ASSET_PURCHASE: Requires From Account + To Asset (buying/depositing into asset)
+- ASSET_SALE: Requires From Asset + To Account (selling/withdrawing from asset)
 
 **FR-1.4** [x] Quick transaction entry on dashboard - *Phase 8, 12*
 - Inline form always visible on starting page (no button click required)
@@ -46,16 +47,26 @@ The MVP focuses on core personal finance tracking functionality with local file 
 
 ### FR-2: Categorization System
 
-**FR-2.1** [x] Three-level hierarchy (Group → Category → Transaction Type) - *Phase 2*
+**FR-2.1** [ ] Two-level hierarchy with flexible grouping (Category → Transaction Type with Group) - *Phase 21*
+- Categories are organizational labels (e.g., "Shares", "Property", "Groceries")
+- Transaction Types define behavior via Group assignment
+- Same category can contain transaction types with different groups
+- Example: "Shares" category contains "Stock Purchase" (ASSET_PURCHASE), "Stock Sale" (ASSET_SALE), "Dividend" (INCOME)
 
-**FR-2.2** [x] Four static Groups: Expense, Income, Transfer, Asset Transaction - *Phase 2*
+**FR-2.2** [ ] Five static Groups determine transaction behavior - *Phase 21*
+- **INCOME**: Money entering an account (requires toAccountId only)
+- **EXPENSE**: Money leaving an account (requires fromAccountId only)
+- **TRANSFER**: Money moving between accounts (requires fromAccountId + toAccountId)
+- **ASSET_PURCHASE**: Buying/depositing into asset (requires fromAccountId + toAssetId)
+- **ASSET_SALE**: Selling/withdrawing from asset (requires fromAssetId + toAccountId)
 
-**FR-2.3** [x] User-customizable Categories and Transaction Types - *Phase 4*
+**FR-2.3** [ ] User-customizable Categories and Transaction Types - *Phase 21*
 - Each Transaction Type belongs to exactly one Category
-- Each Category belongs to exactly one Group
-- Transfer is special group without Category/Transaction Type hierarchy
+- Each Transaction Type has exactly one Group (determines validation rules)
+- Categories have no group constraint (purely organizational)
+- Users can create transaction types with any valid Category + Group combination
 
-**FR-2.4** [x] Automatic Group/Category determination from Transaction Type - *Phase 5*
+**FR-2.4** [ ] Automatic behavior determination from Transaction Type's Group - *Phase 21*
 
 ### FR-3: Asset Management
 
@@ -83,13 +94,13 @@ The MVP focuses on core personal finance tracking functionality with local file 
 
 **FR-3.6** [x] Manual asset value tracking over time
 
-**FR-3.7** [ ] Asset transaction support - *Post-MVP*
-- Record asset liquidation (asset → account) transactions
-- Record asset purchase (account → asset) transactions
+**FR-3.7** [ ] Asset transaction support - *Phase 21*
+- Record asset sales (asset → account) via ASSET_SALE group
+- Record asset purchases (account → asset) via ASSET_PURCHASE group
 - Automatic asset value update when transaction is created
 - Link transactions to asset value history
 - View linked transactions from asset detail page
-- Transaction types under Asset Transaction group
+- Simplified UI with dedicated groups instead of conditional logic
 
 **Architecture Note:** Data models remain separate (Account and ManualAsset are distinct types with separate Zustand stores) for clear business logic separation. UI layer provides unified view through tabs and combined displays.
 
@@ -99,13 +110,14 @@ The MVP focuses on core personal finance tracking functionality with local file 
 - Add, remove, and rename categories within a group
 - Add, remove, and rename transaction types within a category
 
-**FR-4.2** [x] Category hierarchy constraints - *Phase 4*
+**FR-4.2** [ ] Category and Transaction Type constraints - *Phase 21*
 - Each transaction type must belong to exactly one category
-- Each category must belong to exactly one group
+- Each transaction type must have exactly one group (determines behavior)
+- Categories are group-agnostic (organizational only)
 
 **FR-4.3** [ ] Move transaction types between categories
 
-**FR-4.4** [ ] Move categories between groups
+**FR-4.4** [N/A] ~~Move categories between groups~~ - Not applicable (categories have no group)
 
 ### FR-5: Dashboard and Quick Entry
 

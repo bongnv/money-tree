@@ -10,6 +10,7 @@ import { WelcomeDialog } from './components/common/WelcomeDialog';
 import { NotificationSnackbar } from './components/common/NotificationSnackbar';
 import { MergePreviewDialog, ConflictResolution } from './components/common/MergePreviewDialog';
 import { ArchivePrompt } from './components/common/ArchivePrompt';
+import { OneDriveFilePicker } from './components/onedrive/OneDriveFilePicker';
 import { AppRoutes } from './routes';
 import { useAppStore } from './stores/useAppStore';
 import { syncService } from './services/sync.service';
@@ -21,6 +22,9 @@ import {
   shouldPromptArchive,
   identifyArchivableYears,
   calculateYearEndSummary,
+  createArchiveFile,
+  saveArchiveFile,
+  updateMainFileAfterArchive,
 } from './services/archive.service';
 
 const WELCOME_DISMISSED_KEY = 'moneyTree.welcomeDismissed';
@@ -33,6 +37,7 @@ const App: React.FC = () => {
     currentYear,
     snackbar,
     hideSnackbar,
+    showSnackbar,
     baseCurrency,
     archivePromptPostponedAt,
     setArchivePromptPostponedAt,
@@ -41,6 +46,8 @@ const App: React.FC = () => {
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
   const [showArchivePrompt, setShowArchivePrompt] = useState(false);
   const [archiveYearSummary, setArchiveYearSummary] = useState<any>(null);
+  const [archiveYear, setArchiveYear] = useState<number | null>(null);
+  const [isArchiving, setIsArchiving] = useState(false);
   const [mergeDialogState, setMergeDialogState] = useState<{
     open: boolean;
     mergeResult: MergeResult | null;
@@ -49,6 +56,13 @@ const App: React.FC = () => {
     open: false,
     mergeResult: null,
     resolve: null,
+  });
+  const [onedrivePickerState, setOnedrivePickerState] = useState<{
+    open: boolean;
+    defaultFileName: string;
+  }>({
+    open: false,
+    defaultFileName: 'money-tree.json',
   });
 
   useEffect(() => {
@@ -82,9 +96,21 @@ const App: React.FC = () => {
     initializeApp();
     syncService.startAutoSave();
 
+    // Set up OneDrive picker handler
+    const handleOnedrivePickerOpen = (event: Event) => {
+      const customEvent = event as CustomEvent<{ defaultFileName: string }>;
+      setOnedrivePickerState({
+        open: true,
+        defaultFileName: customEvent.detail.defaultFileName,
+      });
+    };
+
+    window.addEventListener('onedrive-file-picker-open', handleOnedrivePickerOpen);
+
     return () => {
       syncService.stopAutoSave();
       syncService.setMergeHandler(null);
+      window.removeEventListener('onedrive-file-picker-open', handleOnedrivePickerOpen);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
@@ -95,6 +121,7 @@ const App: React.FC = () => {
       if (archivableYears.length > 0) {
         const oldestYear = archivableYears[0];
         const summary = calculateYearEndSummary(oldestYear, baseCurrency);
+        setArchiveYear(oldestYear);
         setArchiveYearSummary(summary);
         setShowArchivePrompt(true);
       }
@@ -201,10 +228,59 @@ const App: React.FC = () => {
     setMergeDialogState({ open: false, mergeResult: null, resolve: null });
   };
 
-  const handleArchiveNow = () => {
+  const handleOnedrivePickerSelect = (fileInfo: SelectedFileInfo) => {
+    const provider = StorageFactory.getCurrentProvider();
+    if (provider instanceof OneDriveProvider) {
+      provider.resolveFilePicker(fileInfo);
+    }
+    setOnedrivePickerState({ open: false, defaultFileName: 'money-tree.json' });
+  };
+
+  const handleOnedrivePickerCancel = () => {
+    const provider = StorageFactory.getCurrentProvider();
+    if (provider instanceof OneDriveProvider) {
+      provider.rejectFilePicker();
+    }
+    setOnedrivePickerState({ open: false, defaultFileName: 'money-tree.json' });
+  };
+
+  const handleArchiveNow = async () => {
+    if (!archiveYear) return;
+
     setShowArchivePrompt(false);
-    // TODO: Implement actual archiving in step 12.3
-    alert('Archive functionality will be implemented in step 12.3');
+    setIsArchiving(true);
+
+    try {
+      // Create archive file
+      const archiveFile = createArchiveFile(archiveYear, baseCurrency);
+
+      // Save archive file
+      const fileName = await saveArchiveFile(archiveFile);
+
+      // Create archive reference
+      const archiveReference = {
+        year: archiveYear,
+        fileName,
+        archivedDate: archiveFile.archivedDate,
+        summary: archiveFile.summary,
+      };
+
+      // Update main file - remove archived data
+      updateMainFileAfterArchive(archiveYear, archiveReference);
+
+      // Sync changes to storage
+      await syncService.syncNow();
+
+      showSnackbar(
+        `Year ${archiveYear} archived successfully. Data has been removed from the main file.`,
+        'success'
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to archive year';
+      showSnackbar(message, 'error');
+    } finally {
+      setIsArchiving(false);
+    }
   };
 
   const handleArchiveRemindLater = () => {
@@ -241,16 +317,27 @@ const App: React.FC = () => {
         onCancel={handleMergeCancel}
         onApply={handleMergeApply}
       />
-      {archiveYearSummary && (
+      {archiveYearSummary && archiveYear && (
         <ArchivePrompt
           open={showArchivePrompt}
+          year={archiveYear}
           yearSummary={archiveYearSummary}
           baseCurrency={baseCurrency}
           onArchiveNow={handleArchiveNow}
           onRemindLater={handleArchiveRemindLater}
         />
       )}
-      <Backdrop open={isLoading} sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+      <OneDriveFilePicker
+        open={onedrivePickerState.open}
+        defaultFileName={onedrivePickerState.defaultFileName}
+        onSelect={handleOnedrivePickerSelect}
+        onCancel={handleOnedrivePickerCancel}
+        onListFolders={handleListOneDriveFolders}
+      />
+      <Backdrop
+        open={isLoading || isArchiving}
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+      >
         <CircularProgress color="inherit" />
       </Backdrop>
     </ThemeProvider>

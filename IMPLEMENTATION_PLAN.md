@@ -1167,22 +1167,22 @@ These features will be implemented after the MVP is validated by users.
 
 ### 12.3 Archive File Creation & Export (FR-6.10, FR-9.2, FR-9.6)
 **Implementation**:
-- [ ] Implement `createArchiveFile(year)` in archive service:
-  - [ ] Extract year data from main file
-  - [ ] Create snapshot of accounts, categories, transaction types
-  - [ ] Build self-contained archive JSON structure
-  - [ ] Add `ArchiveFile` type for archive structure
-- [ ] Implement `updateMainFileAfterArchive(year, archiveReference)`:
-  - [ ] Remove archived year from years object
-  - [ ] Add reference to archivedYears array with summary
-  - [ ] Maintain data integrity
-- [ ] Integrate File System Access API for save location
-- [ ] Add success notification with file name
-- [ ] Create `src/components/settings/ArchiveManager.tsx`:
-  - [ ] "Export Year" button for manual archive creation
-  - [ ] List of archived years from archivedYears array
-- [ ] Add Archive Manager to Settings page
-- [ ] Write automated tests for archive creation and main file update
+- [x] Implement `createArchiveFile(year)` in archive service:
+  - [x] Extract year data from main file
+  - [x] Create snapshot of accounts, categories, transaction types
+  - [x] Build self-contained archive JSON structure
+  - [x] Add `ArchiveFile` type for archive structure
+- [x] Implement `updateMainFileAfterArchive(year, archiveReference)`:
+  - [x] Remove archived year from years object
+  - [x] Add reference to archivedYears array with summary
+  - [x] Maintain data integrity
+- [x] Integrate storage provider for save location (local + OneDrive support)
+- [x] Add success notification with file name
+- [x] Create `src/components/settings/ArchiveManager.tsx`:
+  - [x] "Export Year" button for manual archive creation
+  - [x] List of archived years from archivedYears array
+- [x] Add Archive Manager to Settings page
+- [x] Write automated tests for archive creation and main file update
 
 **Manual Verification**:
 - [ ] **UI Test**: With 3 years of data, click "Archive Now" in prompt

@@ -5,7 +5,7 @@ import {
 } from '@azure/msal-browser';
 import { Client } from '@microsoft/microsoft-graph-client';
 import type { IStorageProvider } from './IStorageProvider';
-import type { DataFile } from '../../types/models';
+import type { DataFile, ArchiveFile } from '../../types/models';
 import { DataFileSchema } from '../../schemas/models.schema';
 import {
   msalConfig,
@@ -26,6 +26,25 @@ export interface SelectedFileInfo {
   isNew: boolean;
 }
 
+export interface DriveItem {
+  id: string;
+  name: string;
+  folder?: { childCount: number };
+  file?: { mimeType: string };
+  parentReference?: {
+    id: string;
+    path: string;
+    driveId?: string;
+  };
+  remoteItem?: {
+    id: string;
+    name: string;
+    parentReference?: {
+      driveId: string;
+    };
+  };
+}
+
 const SELECTED_FILE_KEY = 'moneyTree.onedrive.selectedFile';
 
 export class OneDriveProvider implements IStorageProvider {
@@ -33,6 +52,8 @@ export class OneDriveProvider implements IStorageProvider {
   private graphClient: Client | null = null;
   private account: AccountInfo | null = null;
   private selectedFileInfo: SelectedFileInfo | null = null;
+  private filePickerResolver: ((fileInfo: SelectedFileInfo) => void) | null = null;
+  private filePickerRejecter: ((error: Error) => void) | null = null;
 
   /**
    * Lazy load MSAL instance to avoid initialization errors in test environments
@@ -410,5 +431,72 @@ export class OneDriveProvider implements IStorageProvider {
   async ensureInitialized(): Promise<void> {
     // OneDrive provider initialization happens in authenticate()
     // This method exists for interface compatibility
+  }
+
+  /**
+   * Save archive file to OneDrive
+   * Always shows file picker to let user choose location
+   */
+  async saveArchiveFile(archiveFile: ArchiveFile): Promise<string> {
+    if (!this.isAuthenticated()) {
+      throw new Error('Not authenticated with OneDrive');
+    }
+
+    const fileName = `money-tree-${archiveFile.year}.json`;
+    const content = JSON.stringify(archiveFile, null, 2);
+
+    // Show picker and wait for user selection
+    const fileInfo = await this.showFilePicker(fileName);
+
+    // Upload to OneDrive
+    const uploadPath = fileInfo.filePath.startsWith('/')
+      ? `/me/drive/root:${fileInfo.filePath}:/content`
+      : `/me/drive/root:/${fileInfo.filePath}:/content`;
+
+    await this.graphClient!.api(uploadPath).put(content);
+
+    return fileName;
+  }
+
+  /**
+   * Show file picker and return selected file info
+   * @param defaultFileName - Default file name to suggest
+   */
+  private async showFilePicker(defaultFileName: string): Promise<SelectedFileInfo> {
+    return new Promise<SelectedFileInfo>((resolve, reject) => {
+      this.filePickerResolver = resolve;
+      this.filePickerRejecter = reject;
+
+      // Dispatch event to show picker in UI
+      window.dispatchEvent(
+        new CustomEvent('onedrive-file-picker-open', {
+          detail: { defaultFileName },
+        })
+      );
+    });
+  }
+
+  /**
+   * Resolve file picker with selected file info
+   * Called by UI when user selects a file
+   */
+  public resolveFilePicker(fileInfo: SelectedFileInfo): void {
+    if (this.filePickerResolver) {
+      this.filePickerResolver(fileInfo);
+      this.filePickerResolver = null;
+      this.filePickerRejecter = null;
+    }
+  }
+
+  /**
+   * Reject file picker (user cancelled)
+   * Called by UI when user cancels picker
+   */
+  public rejectFilePicker(): void {
+    if (this.filePickerRejecter) {
+      this.filePickerRejecter(new Error('File picker cancelled by user'));
+      this.filePickerResolver = null;
+      this.filePickerRejecter = null;
+    }
   }
 }

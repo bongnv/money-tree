@@ -33,6 +33,7 @@ describe('SettingsPage', () => {
     expect(screen.getByRole('tab', { name: /^assets$/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /^categories$/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /exchange rates/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /archives/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /preferences/i })).toBeInTheDocument();
   });
 
@@ -102,6 +103,6 @@ describe('SettingsPage', () => {
     );
 
     const tabs = screen.getAllByRole('tab');
-    expect(tabs).toHaveLength(4);
+    expect(tabs).toHaveLength(5);
   });
 });

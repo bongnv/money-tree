@@ -4,6 +4,7 @@ import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import CategoryIcon from '@mui/icons-material/Category';
 import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
 import SettingsIcon from '@mui/icons-material/Settings';
+import ArchiveIcon from '@mui/icons-material/Archive';
 import { AccountsPage } from '../accounts/AccountsPage';
 import { ManualAssetsPage } from '../assets/ManualAssetsPage';
 import { CategoryList } from '../categories/CategoryList';
@@ -12,6 +13,7 @@ import { TransactionTypeList } from '../categories/TransactionTypeList';
 import { TransactionTypeDialog } from '../categories/TransactionTypeDialog';
 import { ExchangeRatesSettings } from './ExchangeRatesSettings';
 import { PreferencesPage } from './PreferencesPage';
+import { ArchiveManager } from './ArchiveManager';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import type { Category, TransactionType } from '../../types/models';
 import { Add as AddIcon } from '@mui/icons-material';
@@ -196,6 +198,7 @@ export const SettingsPage: React.FC = () => {
           <Tab icon={<AccountBalanceWalletIcon />} label="Assets" iconPosition="start" />
           <Tab icon={<CategoryIcon />} label="Categories" iconPosition="start" />
           <Tab icon={<CurrencyExchangeIcon />} label="Exchange Rates" iconPosition="start" />
+          <Tab icon={<ArchiveIcon />} label="Archives" iconPosition="start" />
           <Tab icon={<SettingsIcon />} label="Preferences" iconPosition="start" />
         </Tabs>
       </Box>
@@ -263,6 +266,10 @@ export const SettingsPage: React.FC = () => {
       </TabPanel>
 
       <TabPanel value={activeTab} index={3}>
+        <ArchiveManager />
+      </TabPanel>
+
+      <TabPanel value={activeTab} index={4}>
         <PreferencesPage />
       </TabPanel>
 

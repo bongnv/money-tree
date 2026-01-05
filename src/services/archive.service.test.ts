@@ -7,14 +7,21 @@ import {
   calculateYearEndSummary,
   identifyArchivableYears,
   shouldPromptArchive,
+  createArchiveFile,
 } from './archive.service';
 import { useTransactionStore } from '../stores/useTransactionStore';
 import { useAccountStore } from '../stores/useAccountStore';
+import { useBudgetStore } from '../stores/useBudgetStore';
+import { useAssetStore } from '../stores/useAssetStore';
+import { useCategoryStore } from '../stores/useCategoryStore';
 import { calculationService } from './calculation.service';
 
 // Mock the stores
 jest.mock('../stores/useTransactionStore');
 jest.mock('../stores/useAccountStore');
+jest.mock('../stores/useBudgetStore');
+jest.mock('../stores/useAssetStore');
+jest.mock('../stores/useCategoryStore');
 
 describe('Archive Service', () => {
   beforeEach(() => {
@@ -273,16 +280,203 @@ describe('Archive Service', () => {
         accounts: [],
       });
 
+      (useAssetStore.getState as jest.Mock).mockReturnValue({
+        manualAssets: [],
+      });
+
       // Mock calculationService.calculateNetWorth
       const mockCalculateNetWorth = jest.fn().mockReturnValue(75000);
+      const mockCalculateAccountBalance = jest.fn().mockReturnValue(25000);
       (calculationService as any).calculateNetWorth = mockCalculateNetWorth;
+      (calculationService as any).calculateAccountBalance = mockCalculateAccountBalance;
 
       const summary = calculateYearEndSummary(2024, 'usd');
 
-      expect(summary.year).toBe(2024);
       expect(summary.transactionCount).toBe(2);
-      expect(summary.netWorth).toBe(75000);
-      expect(summary.estimatedSizeKB).toBeGreaterThan(0);
+      expect(summary.closingNetWorth).toBe(75000);
+      expect(summary.closingBalances).toBeDefined();
+    });
+  });
+
+  describe('createArchiveFile', () => {
+    it('should create archive file with year data', () => {
+      const mockTransactions = [
+        {
+          id: '1',
+          date: '2024-01-15',
+          description: 'Test 2024',
+          amount: 100,
+          fromAccountId: 'acc1',
+          transactionTypeId: 'type1',
+          createdAt: '2024-01-15T00:00:00Z',
+          updatedAt: '2024-01-15T00:00:00Z',
+        },
+        {
+          id: '2',
+          date: '2025-03-20',
+          description: 'Test 2025',
+          amount: 200,
+          fromAccountId: 'acc1',
+          transactionTypeId: 'type1',
+          createdAt: '2025-03-20T00:00:00Z',
+          updatedAt: '2025-03-20T00:00:00Z',
+        },
+      ];
+
+      const mockBudgets = [
+        {
+          id: 'b1',
+          transactionTypeId: 'type1',
+          amount: 500,
+          currencyId: 'usd',
+          period: 'monthly' as const,
+          startDate: '2024-01-01',
+          endDate: '2024-12-31',
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+        },
+        {
+          id: 'b2',
+          transactionTypeId: 'type1',
+          amount: 600,
+          currencyId: 'usd',
+          period: 'monthly' as const,
+          startDate: '2025-01-01',
+          endDate: '2025-12-31',
+          createdAt: '2025-01-01T00:00:00Z',
+          updatedAt: '2025-01-01T00:00:00Z',
+        },
+      ];
+
+      const mockAccounts = [
+        {
+          id: 'acc1',
+          name: 'Test Account',
+          currencyId: 'usd',
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+        },
+      ];
+
+      const mockCategories = [
+        {
+          id: 'cat1',
+          name: 'Test Category',
+          color: '#000000',
+          icon: 'icon',
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+        },
+      ];
+
+      const mockTransactionTypes = [
+        {
+          id: 'type1',
+          name: 'Test Type',
+          categoryId: 'cat1',
+          group: 'income' as const,
+          icon: 'icon',
+          color: '#000000',
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+        },
+      ];
+
+      (useTransactionStore.getState as jest.Mock).mockReturnValue({
+        transactions: mockTransactions,
+      });
+
+      (useBudgetStore.getState as jest.Mock).mockReturnValue({
+        budgets: mockBudgets,
+      });
+
+      (useAssetStore.getState as jest.Mock).mockReturnValue({
+        manualAssets: [],
+      });
+
+      (useAccountStore.getState as jest.Mock).mockReturnValue({
+        accounts: mockAccounts,
+      });
+
+      (useCategoryStore.getState as jest.Mock).mockReturnValue({
+        categories: mockCategories,
+        transactionTypes: mockTransactionTypes,
+      });
+
+      // Mock calculationService
+      const mockCalculateNetWorth = jest.fn().mockReturnValue(10000);
+      const mockCalculateAccountBalance = jest.fn().mockReturnValue(5000);
+      (calculationService as any).calculateNetWorth = mockCalculateNetWorth;
+      (calculationService as any).calculateAccountBalance = mockCalculateAccountBalance;
+
+      const archiveFile = createArchiveFile(2024, 'usd');
+
+      expect(archiveFile.version).toBe('1.0');
+      expect(archiveFile.year).toBe(2024);
+      expect(archiveFile.transactions).toHaveLength(1);
+      expect(archiveFile.transactions[0].id).toBe('1');
+      expect(archiveFile.budgets).toHaveLength(1);
+      expect(archiveFile.budgets[0].id).toBe('b1');
+      expect(archiveFile.accounts).toEqual(mockAccounts);
+      expect(archiveFile.categories).toEqual(mockCategories);
+      expect(archiveFile.transactionTypes).toEqual(mockTransactionTypes);
+      expect(archiveFile.archivedDate).toBeDefined();
+      expect(archiveFile.summary.transactionCount).toBe(1);
+      expect(archiveFile.summary.closingNetWorth).toBe(10000);
+    });
+
+    it('should filter manual asset history to year', () => {
+      const mockManualAssets = [
+        {
+          id: 'asset1',
+          name: 'Test Asset',
+          type: 'real_estate' as const,
+          value: 1300,
+          currencyId: 'usd',
+          date: '2025-01-01',
+          createdAt: '2023-01-01T00:00:00Z',
+          updatedAt: '2024-12-31T00:00:00Z',
+          valueHistory: [
+            { date: '2023-12-01', value: 1000 },
+            { date: '2024-06-01', value: 1100 },
+            { date: '2024-12-01', value: 1200 },
+            { date: '2025-01-01', value: 1300 },
+          ],
+        },
+      ];
+
+      (useTransactionStore.getState as jest.Mock).mockReturnValue({
+        transactions: [],
+      });
+
+      (useBudgetStore.getState as jest.Mock).mockReturnValue({
+        budgets: [],
+      });
+
+      (useAssetStore.getState as jest.Mock).mockReturnValue({
+        manualAssets: mockManualAssets,
+      });
+
+      (useAccountStore.getState as jest.Mock).mockReturnValue({
+        accounts: [],
+      });
+
+      (useCategoryStore.getState as jest.Mock).mockReturnValue({
+        categories: [],
+        transactionTypes: [],
+      });
+
+      const mockCalculateNetWorth = jest.fn().mockReturnValue(1200);
+      const mockCalculateAccountBalance = jest.fn().mockReturnValue(0);
+      (calculationService as any).calculateNetWorth = mockCalculateNetWorth;
+      (calculationService as any).calculateAccountBalance = mockCalculateAccountBalance;
+
+      const archiveFile = createArchiveFile(2024, 'usd');
+
+      expect(archiveFile.manualAssets).toHaveLength(1);
+      expect(archiveFile.manualAssets[0].valueHistory).toHaveLength(2);
+      expect(archiveFile.manualAssets[0].valueHistory![0].date).toBe('2024-06-01');
+      expect(archiveFile.manualAssets[0].valueHistory![1].date).toBe('2024-12-01');
     });
   });
 });

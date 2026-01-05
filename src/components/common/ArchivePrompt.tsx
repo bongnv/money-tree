@@ -11,10 +11,11 @@ import {
   Divider,
 } from '@mui/material';
 import { formatCurrency } from '../../utils/currency.utils';
-import type { YearEndSummary } from '../../services/archive.service';
+import type { YearEndSummary } from '../../types/models';
 
 export interface ArchivePromptProps {
   open: boolean;
+  year: number;
   yearSummary: YearEndSummary;
   baseCurrency: string;
   onArchiveNow: () => void;
@@ -23,6 +24,7 @@ export interface ArchivePromptProps {
 
 export const ArchivePrompt: React.FC<ArchivePromptProps> = ({
   open,
+  year,
   yearSummary,
   baseCurrency,
   onArchiveNow,
@@ -39,7 +41,7 @@ export const ArchivePrompt: React.FC<ArchivePromptProps> = ({
 
         <Box sx={{ mt: 3, mb: 2 }}>
           <Typography variant="subtitle1" gutterBottom fontWeight="medium">
-            Year to Archive: {yearSummary.year}
+            Year to Archive: {year}
           </Typography>
           <Divider sx={{ my: 1 }} />
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 2 }}>
@@ -54,14 +56,8 @@ export const ArchivePrompt: React.FC<ArchivePromptProps> = ({
                 Year-end Net Worth:
               </Typography>
               <Typography variant="body2">
-                {formatCurrency(yearSummary.netWorth, baseCurrency)}
+                {formatCurrency(yearSummary.closingNetWorth, baseCurrency)}
               </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="body2" color="text.secondary">
-                Estimated Size Savings:
-              </Typography>
-              <Typography variant="body2">~{yearSummary.estimatedSizeKB} KB</Typography>
             </Box>
           </Box>
         </Box>

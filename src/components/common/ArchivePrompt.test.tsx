@@ -4,14 +4,13 @@
 
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ArchivePrompt } from './ArchivePrompt';
-import type { YearEndSummary } from '../../services/archive.service';
+import type { YearEndSummary } from '../../types/models';
 
 describe('ArchivePrompt', () => {
   const mockYearSummary: YearEndSummary = {
-    year: 2023,
     transactionCount: 150,
-    netWorth: 50000,
-    estimatedSizeKB: 75,
+    closingNetWorth: 50000,
+    closingBalances: {},
   };
 
   const mockOnArchiveNow = jest.fn();
@@ -25,6 +24,7 @@ describe('ArchivePrompt', () => {
     render(
       <ArchivePrompt
         open={true}
+        year={2023}
         yearSummary={mockYearSummary}
         baseCurrency="usd"
         onArchiveNow={mockOnArchiveNow}
@@ -35,13 +35,13 @@ describe('ArchivePrompt', () => {
     expect(screen.getByText('Archive Old Data')).toBeInTheDocument();
     expect(screen.getByText(/Year to Archive: 2023/)).toBeInTheDocument();
     expect(screen.getByText('150')).toBeInTheDocument();
-    expect(screen.getByText(/~75 KB/)).toBeInTheDocument();
   });
 
   it('should call onArchiveNow when Archive Now button is clicked', () => {
     render(
       <ArchivePrompt
         open={true}
+        year={2023}
         yearSummary={mockYearSummary}
         baseCurrency="usd"
         onArchiveNow={mockOnArchiveNow}
@@ -59,6 +59,7 @@ describe('ArchivePrompt', () => {
     render(
       <ArchivePrompt
         open={true}
+        year={2023}
         yearSummary={mockYearSummary}
         baseCurrency="usd"
         onArchiveNow={mockOnArchiveNow}
@@ -76,6 +77,7 @@ describe('ArchivePrompt', () => {
     render(
       <ArchivePrompt
         open={false}
+        year={2023}
         yearSummary={mockYearSummary}
         baseCurrency="usd"
         onArchiveNow={mockOnArchiveNow}
@@ -90,6 +92,7 @@ describe('ArchivePrompt', () => {
     render(
       <ArchivePrompt
         open={true}
+        year={2023}
         yearSummary={mockYearSummary}
         baseCurrency="usd"
         onArchiveNow={mockOnArchiveNow}
@@ -105,6 +108,7 @@ describe('ArchivePrompt', () => {
     render(
       <ArchivePrompt
         open={true}
+        year={2023}
         yearSummary={mockYearSummary}
         baseCurrency="usd"
         onArchiveNow={mockOnArchiveNow}

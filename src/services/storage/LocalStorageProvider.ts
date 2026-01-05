@@ -1,4 +1,4 @@
-import type { DataFile } from '../../types/models';
+import type { DataFile, ArchiveFile } from '../../types/models';
 import { DataFileSchema } from '../../schemas/models.schema';
 import type { IStorageProvider } from './IStorageProvider';
 
@@ -310,5 +310,46 @@ export class LocalStorageProvider implements IStorageProvider {
    */
   getFileName(): string | null {
     return this.fileHandle?.name || null;
+  }
+
+  /**
+   * Save archive file for a specific year
+   * Always shows file picker to let user choose location (never uses cached handle)
+   * @param archiveFile The archive file to save
+   * @returns Promise that resolves to the file name
+   */
+  async saveArchiveFile(archiveFile: ArchiveFile): Promise<string> {
+    this.checkSupport();
+
+    const fileName = `money-tree-${archiveFile.year}.json`;
+    const content = JSON.stringify(archiveFile, null, 2);
+
+    try {
+      // Always show file picker for archives (don't use cached handle)
+      const fileHandle = await window.showSaveFilePicker({
+        suggestedName: fileName,
+        types: [
+          {
+            description: 'Money Tree Archive',
+            accept: {
+              'application/json': ['.json'],
+            },
+          },
+        ],
+      });
+
+      // Write to file
+      const writable = await fileHandle.createWritable();
+      await writable.write(content);
+      await writable.close();
+
+      return fileName;
+    } catch (error) {
+      // User cancelled the picker
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        throw new Error('Archive save cancelled by user');
+      }
+      throw error;
+    }
   }
 }

@@ -1,4 +1,4 @@
-import type { DataFile } from '../../types/models';
+import type { DataFile, ArchiveFile } from '../../types/models';
 
 /**
  * Storage provider interface
@@ -7,6 +7,7 @@ import type { DataFile } from '../../types/models';
 export interface IStorageProvider {
   /**
    * Load multi-year data file
+   * Shows file picker if no cached file handle exists
    * @returns Promise with the data file, or null if file doesn't exist
    * @throws Error if loading fails
    */
@@ -14,10 +15,20 @@ export interface IStorageProvider {
 
   /**
    * Save multi-year data file
+   * Uses cached file handle when available, shows picker if not cached
    * @param data The data file to save
    * @throws Error if saving fails
    */
   saveDataFile(data: DataFile): Promise<void>;
+
+  /**
+   * Save archive file for a specific year
+   * Always shows file picker to let user choose location
+   * @param archiveFile The archive file to save
+   * @returns Promise that resolves to the file name
+   * @throws Error if saving fails
+   */
+  saveArchiveFile(archiveFile: ArchiveFile): Promise<string>;
 
   /**
    * Clear cached file handle or sign out

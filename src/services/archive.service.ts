@@ -75,15 +75,20 @@ export function calculateYearEndSummary(year: number, baseCurrency: string): Yea
 /**
  * Identify years that can be archived (oldest years in the file)
  * Returns array of years sorted from oldest to newest
+ * Excludes current year (cannot archive an incomplete year)
  */
 export function identifyArchivableYears(): number[] {
   const transactions = useTransactionStore.getState().transactions;
+  const currentYear = new Date().getFullYear();
 
   // Get unique years from transactions
   const years = new Set<number>();
   transactions.forEach((transaction) => {
     const year = new Date(transaction.date).getFullYear();
-    years.add(year);
+    // Only include completed years (not current year)
+    if (year < currentYear) {
+      years.add(year);
+    }
   });
 
   // Convert to sorted array (oldest first)

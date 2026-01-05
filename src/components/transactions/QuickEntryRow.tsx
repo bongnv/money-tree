@@ -260,6 +260,12 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
 
   const activeAccounts = accounts.filter((a) => a.isActive);
 
+  // Filter out asset transaction types from quick entry (too complex for quick entry)
+  const availableTransactionTypes = transactionTypes.filter((tt) => {
+    const category = categories.find((c) => c.id === tt.categoryId);
+    return category?.group !== Group.ASSET_TRANSACTION;
+  });
+
   const showFromAccount = selectedGroup === Group.EXPENSE || selectedGroup === Group.TRANSFER;
   const showToAccount =
     selectedGroup === Group.INCOME ||
@@ -316,8 +322,8 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
 
       <Autocomplete
         ref={typeRef}
-        options={transactionTypes}
-        value={transactionTypes.find((tt) => tt.id === formData.transactionTypeId) || null}
+        options={availableTransactionTypes}
+        value={availableTransactionTypes.find((tt) => tt.id === formData.transactionTypeId) || null}
         onChange={(_, newValue) => {
           setFormData({
             ...formData,

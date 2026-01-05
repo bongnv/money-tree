@@ -78,7 +78,12 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({ category, onSubmit, 
         value={formData.group}
         onChange={handleChange('group')}
         error={!!errors.group}
-        helperText={errors.group}
+        helperText={
+          errors.group ||
+          (formData.group === Group.ASSET_TRANSACTION
+            ? 'For transactions between manual assets and accounts (buying/selling assets)'
+            : undefined)
+        }
         margin="normal"
         required
       >

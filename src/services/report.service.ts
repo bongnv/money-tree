@@ -603,8 +603,8 @@ class ReportService {
       const category = categoryData.get(categoryId);
       if (!category) return;
 
-      // Skip transfers
-      if (category.group === Group.TRANSFER) return;
+      // Skip transfers and asset transactions (they're not regular income/expenses)
+      if (category.group === Group.TRANSFER || category.group === Group.ASSET_TRANSACTION) return;
 
       // Determine the account for currency lookup
       const accountId =

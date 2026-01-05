@@ -109,6 +109,7 @@ export interface AssetValueHistory {
   date: string; // Date string in YYYY-MM-DD format
   value: number; // Value at this date (can be negative for liabilities)
   notes?: string; // Optional notes about this value update
+  linkedTransactionId?: string; // Transaction ID if this value change was from a transaction
 }
 
 /**

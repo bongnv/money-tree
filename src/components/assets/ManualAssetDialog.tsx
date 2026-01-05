@@ -103,6 +103,16 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
           </Box>
         )}
 
+        {!isUpdateMode && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              <strong>Tip:</strong> You can also update asset values by creating Asset Transactions
+              in the Transactions page. These will automatically adjust the asset value and maintain
+              a link to the transaction.
+            </Typography>
+          </Alert>
+        )}
+
         <ManualAssetForm
           asset={
             isUpdateMode

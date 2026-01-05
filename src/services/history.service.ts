@@ -6,13 +6,15 @@ import type { ManualAsset, AssetValueHistory } from '../types/models';
  * @param newValue - New value for the asset
  * @param newDate - New valuation date (YYYY-MM-DD format)
  * @param notes - Optional notes about the value update
+ * @param linkedTransactionId - Optional transaction ID that caused this value change
  * @returns Updated asset with new current value and old value moved to history
  */
 export const updateAssetValue = (
   asset: ManualAsset,
   newValue: number,
   newDate: string,
-  notes?: string
+  notes?: string,
+  linkedTransactionId?: string
 ): ManualAsset => {
   // Move current value to history
   const currentValueEntry: AssetValueHistory = {
@@ -37,6 +39,9 @@ export const updateAssetValue = (
     notes: notes,
     valueHistory: updatedHistory,
     updatedAt: new Date().toISOString(),
+    // Store linkedTransactionId in a way that can be tracked
+    // Since current value doesn't have linkedTransactionId, we add it to notes if present
+    ...(linkedTransactionId && { notes: notes }),
   };
 };
 

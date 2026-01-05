@@ -11,7 +11,13 @@ interface AssetActions {
   setManualAssets: (manualAssets: ManualAsset[]) => void;
   addManualAsset: (asset: ManualAsset) => void;
   updateManualAsset: (id: string, updates: Partial<ManualAsset>) => void;
-  updateAssetValue: (id: string, newValue: number, newDate: string, notes?: string) => void;
+  updateAssetValue: (
+    id: string,
+    newValue: number,
+    newDate: string,
+    notes?: string,
+    linkedTransactionId?: string
+  ) => void;
   deleteManualAsset: (id: string) => void;
   getManualAssetById: (id: string) => ManualAsset | undefined;
   getManualAssetsByType: (type: ManualAsset['type']) => ManualAsset[];
@@ -47,11 +53,11 @@ export const useAssetStore = create<AssetState & AssetActions>((set, get) => ({
     useAppStore.getState().setUnsavedChanges(true);
   },
 
-  updateAssetValue: (id, newValue, newDate, notes) => {
+  updateAssetValue: (id, newValue, newDate, notes, linkedTransactionId) => {
     set((state) => ({
       manualAssets: state.manualAssets.map((asset) => {
         if (asset.id === id) {
-          return updateAssetValueService(asset, newValue, newDate, notes);
+          return updateAssetValueService(asset, newValue, newDate, notes, linkedTransactionId);
         }
         return asset;
       }),

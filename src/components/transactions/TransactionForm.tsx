@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Box, Button, MenuItem } from '@mui/material';
+import { Box, Button, MenuItem, Alert } from '@mui/material';
 import { FormTextField } from '../common/FormTextField';
 import type { Transaction, Account, TransactionType, Category } from '../../types/models';
 import { Group } from '../../types/enums';
@@ -153,6 +153,14 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
 
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate>
+      {selectedGroup === Group.ASSET_TRANSACTION && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          <strong>Asset Transaction:</strong> The asset value will be automatically updated when you
+          save this transaction. Use "From Asset" for liquidation (selling/withdrawing) or "To
+          Asset" for purchase (buying/depositing).
+        </Alert>
+      )}
+
       <FormTextField
         label="Date"
         type="date"
@@ -254,7 +262,10 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
             }
           }}
           error={!!errors.fromAssetId}
-          helperText={errors.fromAssetId || 'Asset liquidation: asset → account'}
+          helperText={
+            errors.fromAssetId ||
+            'Liquidation: Sell or withdraw from asset. Asset value will decrease by transaction amount.'
+          }
         >
           <MenuItem value="">
             <em>None</em>
@@ -307,7 +318,10 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
             }
           }}
           error={!!errors.toAssetId}
-          helperText={errors.toAssetId || 'Asset purchase: account → asset'}
+          helperText={
+            errors.toAssetId ||
+            'Purchase: Buy or deposit into asset. Asset value will increase by transaction amount.'
+          }
         >
           <MenuItem value="">
             <em>None</em>

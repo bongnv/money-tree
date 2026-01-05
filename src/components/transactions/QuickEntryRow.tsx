@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { Box, TextField, IconButton, Tooltip, Autocomplete } from '@mui/material';
 import { Add as AddIcon, Clear as ClearIcon, MoreHoriz as MoreIcon } from '@mui/icons-material';
 import type {
@@ -9,7 +9,7 @@ import type {
   ManualAsset,
 } from '../../types/models';
 import { Group } from '../../types/enums';
-import { toDateString, getTodayDate } from '../../utils/date.utils';
+import { getTodayDate } from '../../utils/date.utils';
 import { validationService, ValidationError } from '../../services/validation.service';
 
 interface QuickEntryRowProps {
@@ -88,6 +88,46 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
     }
     return null;
   }, [formData.transactionTypeId, transactionTypes]);
+
+  // Clear inappropriate fields when transaction type/group changes
+  useEffect(() => {
+    const updates: Partial<typeof formData> = {};
+    
+    // Clear fromAccount if not needed for this group
+    if (
+      selectedGroup !== Group.EXPENSE &&
+      selectedGroup !== Group.TRANSFER &&
+      selectedGroup !== Group.ASSET_PURCHASE &&
+      formData.fromAccountId
+    ) {
+      updates.fromAccountId = '';
+    }
+    
+    // Clear toAccount if not needed for this group
+    if (
+      selectedGroup !== Group.INCOME &&
+      selectedGroup !== Group.TRANSFER &&
+      selectedGroup !== Group.ASSET_SALE &&
+      formData.toAccountId
+    ) {
+      updates.toAccountId = '';
+    }
+    
+    // Clear fromAsset if not needed
+    if (selectedGroup !== Group.ASSET_SALE && formData.fromAssetId) {
+      updates.fromAssetId = '';
+    }
+    
+    // Clear toAsset if not needed
+    if (selectedGroup !== Group.ASSET_PURCHASE && formData.toAssetId) {
+      updates.toAssetId = '';
+    }
+    
+    // Only update if there are changes
+    if (Object.keys(updates).length > 0) {
+      setFormData((prev) => ({ ...prev, ...updates }));
+    }
+  }, [selectedGroup, formData.fromAccountId, formData.toAccountId, formData.fromAssetId, formData.toAssetId]);
 
   const validate = (): boolean => {
     const transactionType = transactionTypes.find((tt) => tt.id === formData.transactionTypeId);
@@ -308,8 +348,12 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
         type="date"
         value={formData.date}
         onChange={(e) => {
-          const dateStr = toDateString(e.target.value);
-          setFormData({ ...formData, date: dateStr });
+          const value = e.target.value;
+          // Only update if value is not empty or is valid date format
+          // This prevents clearing the date when user types incomplete input
+          if (value === '' || /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            setFormData({ ...formData, date: value });
+          }
           if (errors.date) {
             setErrors({ ...errors, date: '' });
           }

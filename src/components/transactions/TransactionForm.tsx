@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Box, Button, MenuItem, Alert } from '@mui/material';
+import { Box, Button, MenuItem, Alert, Autocomplete, TextField } from '@mui/material';
 import { FormTextField } from '../common/FormTextField';
 import type { Transaction, Account, TransactionType, Category } from '../../types/models';
 import { Group } from '../../types/enums';
@@ -122,6 +122,25 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     types: transactionTypes.filter((tt) => tt.categoryId === category.id),
   }));
 
+  // Flatten transaction types with category labels for autocomplete
+  const transactionTypeOptions = useMemo(() => {
+    const options: Array<{ id: string; name: string; categoryName: string }> = [];
+    groupedTransactionTypes.forEach(({ category, types }) => {
+      types.forEach((type) => {
+        options.push({
+          id: type.id,
+          name: type.name,
+          categoryName: category.name,
+        });
+      });
+    });
+    return options;
+  }, [groupedTransactionTypes]);
+
+  const selectedTransactionType = transactionTypeOptions.find(
+    (opt) => opt.id === formData.transactionTypeId
+  );
+
   const activeAccounts = accounts.filter((a) => a.isActive);
 
   // Determine which fields to show based on selected group
@@ -187,30 +206,31 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         inputProps={{ min: 0, step: 0.01 }}
       />
 
-      <FormTextField
-        select
-        label="Transaction Type"
-        value={formData.transactionTypeId}
-        onChange={handleChange('transactionTypeId')}
-        error={!!errors.transactionTypeId}
-        helperText={errors.transactionTypeId}
-        required
-      >
-        {groupedTransactionTypes.flatMap(({ category, types }) =>
-          types.length > 0
-            ? [
-                <MenuItem key={`header-${category.id}`} disabled>
-                  <strong>{category.name}</strong>
-                </MenuItem>,
-                ...types.map((type) => (
-                  <MenuItem key={type.id} value={type.id} sx={{ pl: 4 }}>
-                    {type.name}
-                  </MenuItem>
-                )),
-              ]
-            : []
+      <Autocomplete
+        options={transactionTypeOptions}
+        getOptionLabel={(option) => option.name}
+        groupBy={(option) => option.categoryName}
+        value={selectedTransactionType || null}
+        onChange={(_event, newValue) => {
+          const newId = newValue?.id || '';
+          setFormData({ ...formData, transactionTypeId: newId });
+          if (errors.transactionTypeId) {
+            setErrors({ ...errors, transactionTypeId: '' });
+          }
+        }}
+        isOptionEqualToValue={(option, value) => option.id === value.id}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label="Transaction Type"
+            required
+            error={!!errors.transactionTypeId}
+            helperText={errors.transactionTypeId}
+            margin="normal"
+            fullWidth
+          />
         )}
-      </FormTextField>
+      />
 
       {showFromAccount && (
         <FormTextField

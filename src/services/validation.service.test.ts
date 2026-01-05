@@ -47,7 +47,7 @@ const transferCategory: Category = {
 const investmentCategory: Category = {
   id: 'cat-4',
   name: 'Stock Purchase',
-  group: Group.INVESTMENT,
+  group: Group.ASSET_TRANSACTION,
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',
 };
@@ -254,43 +254,22 @@ describe('ValidationService', () => {
       });
     });
 
-    describe('Investment validation', () => {
-      it('should require toAccount for investment', () => {
-        const transaction: Partial<Transaction> = {
-          date: '2024-03-15T00:00:00.000Z',
-          description: 'Buy stocks',
-          amount: 1000,
-          transactionTypeId: 'type-4',
-        };
+    describe('Asset Transaction validation', () => {
+      const mockAsset = {
+        id: 'asset-1',
+        name: 'Stock Portfolio',
+      };
 
-        const investmentType: TransactionType = {
-          id: 'type-4',
-          name: 'Stock Purchase',
-          categoryId: 'cat-4',
-          createdAt: '2024-01-01T00:00:00.000Z',
-          updatedAt: '2024-01-01T00:00:00.000Z',
-        };
-
-        const errors = validationService.validateTransaction(
-          transaction,
-          investmentType,
-          investmentCategory
-        );
-
-        expect(errors.find((e) => e.field === 'toAccountId')).toBeDefined();
-      });
-
-      it('should not allow fromAccount for investment', () => {
+      it('should require either fromAsset or toAsset for asset transactions', () => {
         const transaction: Partial<Transaction> = {
           date: '2024-03-15T00:00:00.000Z',
           description: 'Buy stocks',
           amount: 1000,
           transactionTypeId: 'type-4',
           fromAccountId: 'acc-1',
-          toAccountId: 'acc-2',
         };
 
-        const investmentType: TransactionType = {
+        const assetTransactionType: TransactionType = {
           id: 'type-4',
           name: 'Stock Purchase',
           categoryId: 'cat-4',
@@ -300,7 +279,149 @@ describe('ValidationService', () => {
 
         const errors = validationService.validateTransaction(
           transaction,
-          investmentType,
+          assetTransactionType,
+          investmentCategory
+        );
+
+        expect(errors.find((e) => e.field === 'fromAssetId')).toBeDefined();
+      });
+
+      it('should not allow both fromAsset and toAsset', () => {
+        const transaction: Partial<Transaction> = {
+          date: '2024-03-15T00:00:00.000Z',
+          description: 'Invalid transaction',
+          amount: 1000,
+          transactionTypeId: 'type-4',
+          fromAssetId: 'asset-1',
+          toAssetId: 'asset-2',
+          toAccountId: 'acc-1',
+        };
+
+        const assetTransactionType: TransactionType = {
+          id: 'type-4',
+          name: 'Stock Transaction',
+          categoryId: 'cat-4',
+          createdAt: '2024-01-01T00:00:00.000Z',
+          updatedAt: '2024-01-01T00:00:00.000Z',
+        };
+
+        const errors = validationService.validateTransaction(
+          transaction,
+          assetTransactionType,
+          investmentCategory
+        );
+
+        expect(errors.find((e) => e.field === 'toAssetId')).toBeDefined();
+      });
+
+      it('should require account for asset transactions', () => {
+        const transaction: Partial<Transaction> = {
+          date: '2024-03-15T00:00:00.000Z',
+          description: 'Sell stocks',
+          amount: 1000,
+          transactionTypeId: 'type-4',
+          fromAssetId: 'asset-1',
+        };
+
+        const assetTransactionType: TransactionType = {
+          id: 'type-4',
+          name: 'Stock Sale',
+          categoryId: 'cat-4',
+          createdAt: '2024-01-01T00:00:00.000Z',
+          updatedAt: '2024-01-01T00:00:00.000Z',
+        };
+
+        const errors = validationService.validateTransaction(
+          transaction,
+          assetTransactionType,
+          investmentCategory
+        );
+
+        expect(errors.find((e) => e.field === 'fromAccountId')).toBeDefined();
+      });
+
+      it('should validate asset liquidation: fromAsset + toAccount', () => {
+        const transaction: Partial<Transaction> = {
+          date: '2024-03-15T00:00:00.000Z',
+          description: 'Sell stocks',
+          amount: 1000,
+          transactionTypeId: 'type-4',
+          fromAssetId: 'asset-1',
+          toAccountId: 'acc-1',
+        };
+
+        const assetTransactionType: TransactionType = {
+          id: 'type-4',
+          name: 'Stock Sale',
+          categoryId: 'cat-4',
+          createdAt: '2024-01-01T00:00:00.000Z',
+          updatedAt: '2024-01-01T00:00:00.000Z',
+        };
+
+        const errors = validationService.validateTransaction(
+          transaction,
+          assetTransactionType,
+          investmentCategory,
+          undefined,
+          mockAccount1,
+          mockAsset
+        );
+
+        expect(errors.length).toBe(0);
+      });
+
+      it('should validate asset purchase: fromAccount + toAsset', () => {
+        const transaction: Partial<Transaction> = {
+          date: '2024-03-15T00:00:00.000Z',
+          description: 'Buy stocks',
+          amount: 1000,
+          transactionTypeId: 'type-4',
+          fromAccountId: 'acc-1',
+          toAssetId: 'asset-1',
+        };
+
+        const assetTransactionType: TransactionType = {
+          id: 'type-4',
+          name: 'Stock Purchase',
+          categoryId: 'cat-4',
+          createdAt: '2024-01-01T00:00:00.000Z',
+          updatedAt: '2024-01-01T00:00:00.000Z',
+        };
+
+        const errors = validationService.validateTransaction(
+          transaction,
+          assetTransactionType,
+          investmentCategory,
+          mockAccount1,
+          undefined,
+          undefined,
+          mockAsset
+        );
+
+        expect(errors.length).toBe(0);
+      });
+
+      it('should reject wrong pairing: fromAsset + fromAccount', () => {
+        const transaction: Partial<Transaction> = {
+          date: '2024-03-15T00:00:00.000Z',
+          description: 'Invalid',
+          amount: 1000,
+          transactionTypeId: 'type-4',
+          fromAssetId: 'asset-1',
+          fromAccountId: 'acc-1',
+        };
+
+        const assetTransactionType: TransactionType = {
+          id: 'type-4',
+          name: 'Invalid',
+          categoryId: 'cat-4',
+          createdAt: '2024-01-01T00:00:00.000Z',
+          updatedAt: '2024-01-01T00:00:00.000Z',
+        };
+
+        const errors = validationService.validateTransaction(
+          transaction,
+          assetTransactionType,
           investmentCategory
         );
 

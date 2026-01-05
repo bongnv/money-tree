@@ -62,7 +62,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
           [Group.EXPENSE]: 'error',
           [Group.INCOME]: 'success',
           [Group.TRANSFER]: 'info',
-          [Group.INVESTMENT]: 'warning',
+          [Group.ASSET_TRANSACTION]: 'warning',
         };
 
         return <Chip label={category.name} size="small" color={colorMap[category.group]} />;

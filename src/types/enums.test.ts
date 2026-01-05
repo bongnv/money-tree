@@ -6,7 +6,7 @@ describe('Enums', () => {
       expect(Group.INCOME).toBe('income');
       expect(Group.EXPENSE).toBe('expense');
       expect(Group.TRANSFER).toBe('transfer');
-      expect(Group.INVESTMENT).toBe('investment');
+      expect(Group.ASSET_TRANSACTION).toBe('asset_transaction');
     });
 
     it('should have all expected members', () => {
@@ -15,7 +15,7 @@ describe('Enums', () => {
       expect(values).toContain('income');
       expect(values).toContain('expense');
       expect(values).toContain('transfer');
-      expect(values).toContain('investment');
+      expect(values).toContain('asset_transaction');
     });
   });
 

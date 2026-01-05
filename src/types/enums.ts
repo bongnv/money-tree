@@ -6,7 +6,7 @@ export enum Group {
   INCOME = 'income',
   EXPENSE = 'expense',
   TRANSFER = 'transfer',
-  INVESTMENT = 'investment',
+  ASSET_TRANSACTION = 'asset_transaction',
 }
 
 /**

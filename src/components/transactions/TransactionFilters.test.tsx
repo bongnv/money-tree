@@ -411,6 +411,6 @@ describe('TransactionFilters', () => {
     expect(await screen.findByRole('option', { name: /^expense$/i })).toBeInTheDocument();
     expect(await screen.findByRole('option', { name: /^income$/i })).toBeInTheDocument();
     expect(await screen.findByRole('option', { name: /^transfer$/i })).toBeInTheDocument();
-    expect(await screen.findByRole('option', { name: /^investment$/i })).toBeInTheDocument();
+    expect(await screen.findByRole('option', { name: /^asset transaction$/i })).toBeInTheDocument();
   });
 });

@@ -1802,50 +1802,39 @@ These features will be implemented after the MVP is validated by users.
 **Goal**: Replace the INVESTMENT group with ASSET_TRANSACTION to properly support transactions between manual assets and transactional accounts (liquidation and purchase)
 
 ### 20.1 Replace INVESTMENT Group in Enum & Schema
-- [ ] Replace `Group.INVESTMENT = 'investment'` with `Group.ASSET_TRANSACTION = 'asset_transaction'` in enums.ts
-- [ ] Update Transaction schema to add optional fields:
-  - [ ] `fromAssetId?: string` - Source manual asset (for liquidation)
-  - [ ] `toAssetId?: string` - Destination manual asset (for purchase)
-- [ ] Update transaction type interfaces and validation
-- [ ] **Write tests**: Test schema validation with asset fields
-- [ ] **Test UI**: N/A (schema changes only)
+- [x] Replace `Group.INVESTMENT = 'investment'` with `Group.ASSET_TRANSACTION = 'asset_transaction'` in enums.ts
+- [x] Update Transaction schema to add optional fields:
+  - [x] `fromAssetId?: string` - Source manual asset (for liquidation)
+  - [x] `toAssetId?: string` - Destination manual asset (for purchase)
+- [x] Update transaction type interfaces and validation
+- [x] **Write tests**: Test schema validation with asset fields
+- [x] **Test UI**: N/A (schema changes only)
 
 ### 20.2 Update Transaction Validation
-- [ ] Modify validation.service.ts for ASSET_TRANSACTION group:
-  - [ ] Require exactly one asset ID (fromAssetId XOR toAssetId)
-  - [ ] Require exactly one account ID (fromAccountId XOR toAccountId)
-  - [ ] Validate asset liquidation: fromAssetId + toAccountId
-  - [ ] Validate asset purchase: fromAccountId + toAssetId
-  - [ ] Prevent both asset IDs or both account IDs
-- [ ] Find and replace all `Group.INVESTMENT` references in codebase with `Group.ASSET_TRANSACTION`
-- [ ] **Write tests**: Test all validation rules for asset transactions
-- [ ] **Test UI**: N/A (validation logic only)
+- [x] Modify validation.service.ts for ASSET_TRANSACTION group:
+  - [x] Require exactly one asset ID (fromAssetId XOR toAssetId)
+  - [x] Require exactly one account ID (fromAccountId XOR toAccountId)
+  - [x] Validate asset liquidation: fromAssetId + toAccountId
+  - [x] Validate asset purchase: fromAccountId + toAssetId
+  - [x] Prevent both asset IDs or both account IDs
+- [x] Find and replace all `Group.INVESTMENT` references in codebase with `Group.ASSET_TRANSACTION`
+- [x] **Write tests**: Test all validation rules for asset transactions
+- [x] **Test UI**: N/A (validation logic only)
 
-### 20.3 Replace INVESTMENT Default Categories
-- [ ] Update default category from INVESTMENT to ASSET_TRANSACTION group
-- [ ] Replace transaction types with:
-  - [ ] "Asset Liquidation" (asset → cash)
-  - [ ] "Asset Purchase" (cash → asset)
-  - [ ] "Property Sale"
-  - [ ] "Stock Sale"
-- [ ] Update defaults.ts with new category structure
-- [ ] **Write tests**: Test default data includes asset transaction types
-- [ ] **Test UI**: New installation shows asset transaction category
+### 20.3 Update Transaction Form UI
+- [x] Add asset selection fields to TransactionForm.tsx:
+  - [x] "From Asset" dropdown (when ASSET_TRANSACTION + liquidation)
+  - [x] "To Asset" dropdown (when ASSET_TRANSACTION + purchase)
+  - [x] Replace account field with asset field conditionally
+- [x] Update form validation and error messages
+- [x] Show helpful text: "This will update the asset value"
+- [x] **Write tests**: Test form shows/hides asset fields correctly
+- [x] **Test UI**: 
+  - [x] Select asset transaction type
+  - [x] Verify asset dropdown appears
+  - [x] Verify account dropdown adjusts correctly
 
-### 20.4 Update Transaction Form UI
-- [ ] Add asset selection fields to TransactionForm.tsx:
-  - [ ] "From Asset" dropdown (when ASSET_TRANSACTION + liquidation)
-  - [ ] "To Asset" dropdown (when ASSET_TRANSACTION + purchase)
-  - [ ] Replace account field with asset field conditionally
-- [ ] Update form validation and error messages
-- [ ] Show helpful text: "This will update the asset value"
-- [ ] **Write tests**: Test form shows/hides asset fields correctly
-- [ ] **Test UI**: 
-  - [ ] Select asset transaction type
-  - [ ] Verify asset dropdown appears
-  - [ ] Verify account dropdown adjusts correctly
-
-### 20.5 Automatic Asset Value Update
+### 20.4 Automatic Asset Value Update
 - [ ] Create service method: `processAssetTransaction(transaction, asset)`
 - [ ] When saving asset transaction:
   - [ ] Calculate new asset value (current ± transaction amount)
@@ -1861,7 +1850,7 @@ These features will be implemented after the MVP is validated by users.
   - [ ] Create purchase transaction
   - [ ] Verify asset value increases
 
-### 20.6 Link Transactions to Asset History
+### 20.5 Link Transactions to Asset History
 - [ ] Add `linkedTransactionId` to AssetValueHistory schema
 - [ ] Update asset value history to store transaction reference
 - [ ] Display linked transaction in asset detail view
@@ -1872,7 +1861,7 @@ These features will be implemented after the MVP is validated by users.
   - [ ] Verify transactions shown in history
   - [ ] Click transaction link → navigates to transaction
 
-### 20.7 Update Reports for Asset Transactions
+### 20.6 Update Reports for Asset Transactions
 - [ ] Update Cash Flow report to handle ASSET_TRANSACTION:
   - [ ] Option to include/exclude asset transactions
   - [ ] Treat liquidation as income source
@@ -1885,7 +1874,7 @@ These features will be implemented after the MVP is validated by users.
   - [ ] View cash flow → verify correct categorization
   - [ ] Toggle include/exclude setting
 
-### 20.8 Update Quick Entry for Asset Transactions
+### 20.7 Update Quick Entry for Asset Transactions
 - [ ] Update QuickEntryRow to support asset selection
 - [ ] Add asset dropdown when ASSET_TRANSACTION type selected
 - [ ] Show asset value preview before submission
@@ -1895,7 +1884,7 @@ These features will be implemented after the MVP is validated by users.
   - [ ] Verify proper field visibility
   - [ ] Verify submission works correctly
 
-### 20.9 Documentation and Help Text
+### 20.8 Documentation and Help Text
 - [ ] Add help text explaining asset transactions
 - [ ] Update user guide sections:
   - [ ] How to record asset liquidation

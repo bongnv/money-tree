@@ -85,7 +85,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({ category, onSubmit, 
         <MenuItem value={Group.INCOME}>Income</MenuItem>
         <MenuItem value={Group.EXPENSE}>Expense</MenuItem>
         <MenuItem value={Group.TRANSFER}>Transfer</MenuItem>
-        <MenuItem value={Group.INVESTMENT}>Investment</MenuItem>
+        <MenuItem value={Group.ASSET_TRANSACTION}>Asset Transaction</MenuItem>
       </TextField>
 
       <TextField

@@ -5,6 +5,7 @@ import type { Transaction, Account, TransactionType, Category } from '../../type
 import { Group } from '../../types/enums';
 import { toDateString, getTodayDate } from '../../utils/date.utils';
 import { validationService, ValidationError } from '../../services/validation.service';
+import { useAssetStore } from '../../stores/useAssetStore';
 
 interface TransactionFormProps {
   transaction?: Transaction;
@@ -30,9 +31,13 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     transactionTypeId: transaction?.transactionTypeId || '',
     fromAccountId: transaction?.fromAccountId || '',
     toAccountId: transaction?.toAccountId || '',
+    fromAssetId: transaction?.fromAssetId || '',
+    toAssetId: transaction?.toAssetId || '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const { manualAssets } = useAssetStore();
 
   // Derive selected group from transaction type
   const selectedGroup = useMemo(() => {
@@ -59,6 +64,12 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     const toAccount = formData.toAccountId
       ? accounts.find((a) => a.id === formData.toAccountId)
       : undefined;
+    const fromAsset = formData.fromAssetId
+      ? manualAssets.find((a) => a.id === formData.fromAssetId)
+      : undefined;
+    const toAsset = formData.toAssetId
+      ? manualAssets.find((a) => a.id === formData.toAssetId)
+      : undefined;
 
     const partialTransaction: Partial<Transaction> = {
       date: formData.date,
@@ -67,6 +78,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
       transactionTypeId: formData.transactionTypeId || undefined,
       fromAccountId: formData.fromAccountId || undefined,
       toAccountId: formData.toAccountId || undefined,
+      fromAssetId: formData.fromAssetId || undefined,
+      toAssetId: formData.toAssetId || undefined,
     };
 
     const validationErrors = validationService.validateTransaction(
@@ -74,7 +87,9 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
       transactionType,
       category,
       fromAccount,
-      toAccount
+      toAccount,
+      fromAsset,
+      toAsset
     );
 
     const errorMap: Record<string, string> = {};
@@ -100,6 +115,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
       transactionTypeId: formData.transactionTypeId,
       fromAccountId: formData.fromAccountId || undefined,
       toAccountId: formData.toAccountId || undefined,
+      fromAssetId: formData.fromAssetId || undefined,
+      toAssetId: formData.toAssetId || undefined,
     });
   };
 
@@ -122,11 +139,17 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
 
   const activeAccounts = accounts.filter((a) => a.isActive);
 
-  const showFromAccount = selectedGroup === Group.EXPENSE || selectedGroup === Group.TRANSFER;
+  // Determine which fields to show based on selected group
+  const showFromAccount =
+    selectedGroup === Group.EXPENSE ||
+    selectedGroup === Group.TRANSFER ||
+    (selectedGroup === Group.ASSET_TRANSACTION && !formData.fromAssetId);
   const showToAccount =
     selectedGroup === Group.INCOME ||
     selectedGroup === Group.TRANSFER ||
-    selectedGroup === Group.INVESTMENT;
+    (selectedGroup === Group.ASSET_TRANSACTION && !formData.toAssetId);
+  const showFromAsset = selectedGroup === Group.ASSET_TRANSACTION;
+  const showToAsset = selectedGroup === Group.ASSET_TRANSACTION;
 
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate>
@@ -199,7 +222,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           onChange={handleChange('fromAccountId')}
           error={!!errors.fromAccountId}
           helperText={errors.fromAccountId}
-          required={showFromAccount}
+          required={showFromAccount && !formData.fromAssetId}
+          disabled={!!formData.fromAssetId}
         >
           <MenuItem value="">
             <em>None</em>
@@ -207,6 +231,37 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           {activeAccounts.map((account) => (
             <MenuItem key={account.id} value={account.id}>
               {account.name}
+            </MenuItem>
+          ))}
+        </FormTextField>
+      )}
+
+      {showFromAsset && (
+        <FormTextField
+          select
+          label="From Asset"
+          value={formData.fromAssetId}
+          onChange={(e) => {
+            const value = e.target.value;
+            setFormData({
+              ...formData,
+              fromAssetId: value,
+              toAssetId: '', // Clear opposite direction
+              fromAccountId: '', // Clear opposite account
+            });
+            if (errors.fromAssetId) {
+              setErrors({ ...errors, fromAssetId: '' });
+            }
+          }}
+          error={!!errors.fromAssetId}
+          helperText={errors.fromAssetId || 'Asset liquidation: asset → account'}
+        >
+          <MenuItem value="">
+            <em>None</em>
+          </MenuItem>
+          {manualAssets.map((asset) => (
+            <MenuItem key={asset.id} value={asset.id}>
+              {asset.name}
             </MenuItem>
           ))}
         </FormTextField>
@@ -220,7 +275,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           onChange={handleChange('toAccountId')}
           error={!!errors.toAccountId}
           helperText={errors.toAccountId}
-          required={showToAccount}
+          required={showToAccount && !formData.toAssetId}
+          disabled={!!formData.toAssetId}
         >
           <MenuItem value="">
             <em>None</em>
@@ -228,6 +284,37 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           {activeAccounts.map((account) => (
             <MenuItem key={account.id} value={account.id}>
               {account.name}
+            </MenuItem>
+          ))}
+        </FormTextField>
+      )}
+
+      {showToAsset && (
+        <FormTextField
+          select
+          label="To Asset"
+          value={formData.toAssetId}
+          onChange={(e) => {
+            const value = e.target.value;
+            setFormData({
+              ...formData,
+              toAssetId: value,
+              fromAssetId: '', // Clear opposite direction
+              toAccountId: '', // Clear opposite account
+            });
+            if (errors.toAssetId) {
+              setErrors({ ...errors, toAssetId: '' });
+            }
+          }}
+          error={!!errors.toAssetId}
+          helperText={errors.toAssetId || 'Asset purchase: account → asset'}
+        >
+          <MenuItem value="">
+            <em>None</em>
+          </MenuItem>
+          {manualAssets.map((asset) => (
+            <MenuItem key={asset.id} value={asset.id}>
+              {asset.name}
             </MenuItem>
           ))}
         </FormTextField>

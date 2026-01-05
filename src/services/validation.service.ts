@@ -24,7 +24,9 @@ class ValidationService {
     transactionType?: TransactionType,
     category?: Category,
     fromAccount?: Account,
-    toAccount?: Account
+    toAccount?: Account,
+    _fromAsset?: { id: string; name: string },
+    _toAsset?: { id: string; name: string }
   ): ValidationError[] {
     const errors: ValidationError[] = [];
 
@@ -50,7 +52,9 @@ class ValidationService {
       const accountErrors = this.validateAccountsByGroup(
         category.group,
         transaction.fromAccountId,
-        transaction.toAccountId
+        transaction.toAccountId,
+        transaction.fromAssetId,
+        transaction.toAssetId
       );
       errors.push(...accountErrors);
     }
@@ -88,12 +92,16 @@ class ValidationService {
    * @param group Transaction group
    * @param fromAccountId From account ID
    * @param toAccountId To account ID
+   * @param fromAssetId From asset ID
+   * @param toAssetId To asset ID
    * @returns Array of validation errors
    */
   private validateAccountsByGroup(
     group: Group,
     fromAccountId?: string,
-    toAccountId?: string
+    toAccountId?: string,
+    fromAssetId?: string,
+    toAssetId?: string
   ): ValidationError[] {
     const errors: ValidationError[] = [];
 
@@ -134,14 +142,46 @@ class ValidationService {
         }
         break;
 
-      case Group.INVESTMENT:
-        if (!toAccountId) {
-          errors.push({ field: 'toAccountId', message: 'To account is required for investments' });
+      case Group.ASSET_TRANSACTION:
+        // Validate exactly one asset ID
+        if (!fromAssetId && !toAssetId) {
+          errors.push({
+            field: 'fromAssetId',
+            message: 'Either From Asset or To Asset is required for asset transactions',
+          });
         }
-        if (fromAccountId) {
+        if (fromAssetId && toAssetId) {
+          errors.push({
+            field: 'toAssetId',
+            message: 'Cannot specify both From Asset and To Asset',
+          });
+        }
+
+        // Validate exactly one account ID
+        if (!fromAccountId && !toAccountId) {
           errors.push({
             field: 'fromAccountId',
-            message: 'From account should not be set for investments',
+            message: 'Either From Account or To Account is required for asset transactions',
+          });
+        }
+        if (fromAccountId && toAccountId) {
+          errors.push({
+            field: 'toAccountId',
+            message: 'Cannot specify both From Account and To Account',
+          });
+        }
+
+        // Validate correct pairing: asset liquidation (asset → account) or asset purchase (account → asset)
+        if (fromAssetId && fromAccountId) {
+          errors.push({
+            field: 'fromAccountId',
+            message: 'Asset liquidation requires From Asset and To Account',
+          });
+        }
+        if (toAssetId && toAccountId) {
+          errors.push({
+            field: 'toAccountId',
+            message: 'Asset purchase requires From Account and To Asset',
           });
         }
         break;

@@ -264,7 +264,7 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
   const showToAccount =
     selectedGroup === Group.INCOME ||
     selectedGroup === Group.TRANSFER ||
-    selectedGroup === Group.INVESTMENT;
+    selectedGroup === Group.ASSET_TRANSACTION;
 
   return (
     <Box

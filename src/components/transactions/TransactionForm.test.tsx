@@ -4,6 +4,12 @@ import { TransactionForm } from './TransactionForm';
 import type { Transaction, Account, TransactionType, Category } from '../../types/models';
 import { Group, AccountType } from '../../types/enums';
 
+jest.mock('../../stores/useAssetStore', () => ({
+  useAssetStore: () => ({
+    manualAssets: [],
+  }),
+}));
+
 const mockAccounts: Account[] = [
   {
     id: 'acc-1',
@@ -62,7 +68,7 @@ const mockCategories: Category[] = [
   {
     id: 'cat-4',
     name: 'Investments',
-    group: Group.INVESTMENT,
+    group: Group.ASSET_TRANSACTION,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
   },
@@ -326,8 +332,8 @@ describe('TransactionForm', () => {
     });
   });
 
-  describe('Investment transaction (toAccount only)', () => {
-    it('should show toAccount field when investment type is selected', async () => {
+  describe('Asset transaction', () => {
+    it('should show asset and account fields when asset transaction type is selected', async () => {
       const user = userEvent.setup();
       render(<TransactionForm {...defaultProps} />);
 
@@ -336,9 +342,11 @@ describe('TransactionForm', () => {
       await user.click(screen.getByText('Stock Purchase'));
 
       await waitFor(() => {
+        expect(screen.getByLabelText(/to asset/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/from asset/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/from account/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/to account/i)).toBeInTheDocument();
       });
-      expect(screen.queryByLabelText(/from account/i)).not.toBeInTheDocument();
     });
   });
 

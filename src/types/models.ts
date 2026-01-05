@@ -66,6 +66,8 @@ export interface Transaction {
   transactionTypeId: string;
   fromAccountId?: string; // For expenses and transfers
   toAccountId?: string; // For income and transfers
+  fromAssetId?: string; // For asset liquidation (asset → account)
+  toAssetId?: string; // For asset purchase (account → asset)
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }

@@ -44,31 +44,19 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     if (formData.transactionTypeId) {
       const transactionType = transactionTypes.find((tt) => tt.id === formData.transactionTypeId);
       if (transactionType) {
-        const category = categories.find((c) => c.id === transactionType.categoryId);
-        if (category) {
-          return category.group;
-        }
+        return transactionType.group;
       }
     }
     return null;
-  }, [formData.transactionTypeId, transactionTypes, categories]);
+  }, [formData.transactionTypeId, transactionTypes]);
 
   const validate = (): boolean => {
     const transactionType = transactionTypes.find((tt) => tt.id === formData.transactionTypeId);
-    const category = transactionType
-      ? categories.find((c) => c.id === transactionType.categoryId)
-      : undefined;
     const fromAccount = formData.fromAccountId
       ? accounts.find((a) => a.id === formData.fromAccountId)
       : undefined;
     const toAccount = formData.toAccountId
       ? accounts.find((a) => a.id === formData.toAccountId)
-      : undefined;
-    const fromAsset = formData.fromAssetId
-      ? manualAssets.find((a) => a.id === formData.fromAssetId)
-      : undefined;
-    const toAsset = formData.toAssetId
-      ? manualAssets.find((a) => a.id === formData.toAssetId)
       : undefined;
 
     const partialTransaction: Partial<Transaction> = {
@@ -85,11 +73,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     const validationErrors = validationService.validateTransaction(
       partialTransaction,
       transactionType,
-      category,
       fromAccount,
-      toAccount,
-      fromAsset,
-      toAsset
+      toAccount
     );
 
     const errorMap: Record<string, string> = {};
@@ -143,21 +128,26 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   const showFromAccount =
     selectedGroup === Group.EXPENSE ||
     selectedGroup === Group.TRANSFER ||
-    (selectedGroup === Group.ASSET_TRANSACTION && !formData.fromAssetId);
+    selectedGroup === Group.ASSET_PURCHASE;
   const showToAccount =
     selectedGroup === Group.INCOME ||
     selectedGroup === Group.TRANSFER ||
-    (selectedGroup === Group.ASSET_TRANSACTION && !formData.toAssetId);
-  const showFromAsset = selectedGroup === Group.ASSET_TRANSACTION;
-  const showToAsset = selectedGroup === Group.ASSET_TRANSACTION;
+    selectedGroup === Group.ASSET_SALE;
+  const showFromAsset = selectedGroup === Group.ASSET_SALE;
+  const showToAsset = selectedGroup === Group.ASSET_PURCHASE;
 
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate>
-      {selectedGroup === Group.ASSET_TRANSACTION && (
+      {selectedGroup === Group.ASSET_PURCHASE && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          <strong>Asset Transaction:</strong> The asset value will be automatically updated when you
-          save this transaction. Use "From Asset" for liquidation (selling/withdrawing) or "To
-          Asset" for purchase (buying/depositing).
+          <strong>Asset Purchase:</strong> Buying or depositing into an asset. Money flows from an
+          account into the asset, increasing its value.
+        </Alert>
+      )}
+      {selectedGroup === Group.ASSET_SALE && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          <strong>Asset Sale:</strong> Selling or withdrawing from an asset. Money flows from the
+          asset into an account, decreasing its value.
         </Alert>
       )}
 
@@ -230,8 +220,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           onChange={handleChange('fromAccountId')}
           error={!!errors.fromAccountId}
           helperText={errors.fromAccountId}
-          required={showFromAccount && !formData.fromAssetId}
-          disabled={!!formData.fromAssetId}
+          required
         >
           <MenuItem value="">
             <em>None</em>
@@ -249,23 +238,13 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           select
           label="From Asset"
           value={formData.fromAssetId}
-          onChange={(e) => {
-            const value = e.target.value;
-            setFormData({
-              ...formData,
-              fromAssetId: value,
-              toAssetId: '', // Clear opposite direction
-              fromAccountId: '', // Clear opposite account
-            });
-            if (errors.fromAssetId) {
-              setErrors({ ...errors, fromAssetId: '' });
-            }
-          }}
+          onChange={handleChange('fromAssetId')}
           error={!!errors.fromAssetId}
           helperText={
             errors.fromAssetId ||
-            'Liquidation: Sell or withdraw from asset. Asset value will decrease by transaction amount.'
+            'Select the asset you are selling or withdrawing from. Asset value will decrease.'
           }
+          required
         >
           <MenuItem value="">
             <em>None</em>
@@ -286,8 +265,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           onChange={handleChange('toAccountId')}
           error={!!errors.toAccountId}
           helperText={errors.toAccountId}
-          required={showToAccount && !formData.toAssetId}
-          disabled={!!formData.toAssetId}
+          required
         >
           <MenuItem value="">
             <em>None</em>
@@ -305,23 +283,13 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           select
           label="To Asset"
           value={formData.toAssetId}
-          onChange={(e) => {
-            const value = e.target.value;
-            setFormData({
-              ...formData,
-              toAssetId: value,
-              fromAssetId: '', // Clear opposite direction
-              toAccountId: '', // Clear opposite account
-            });
-            if (errors.toAssetId) {
-              setErrors({ ...errors, toAssetId: '' });
-            }
-          }}
+          onChange={handleChange('toAssetId')}
           error={!!errors.toAssetId}
           helperText={
             errors.toAssetId ||
-            'Purchase: Buy or deposit into asset. Asset value will increase by transaction amount.'
+            'Select the asset you are purchasing or depositing into. Asset value will increase.'
           }
+          required
         >
           <MenuItem value="">
             <em>None</em>

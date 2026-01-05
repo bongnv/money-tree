@@ -48,21 +48,18 @@ describe('QuickEntryRow', () => {
     {
       id: 'cat-1',
       name: 'Food',
-      group: Group.EXPENSE,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
     },
     {
       id: 'cat-2',
       name: 'Salary',
-      group: Group.INCOME,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
     },
     {
       id: 'cat-3',
       name: 'Transfers',
-      group: Group.TRANSFER,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
     },
@@ -73,6 +70,7 @@ describe('QuickEntryRow', () => {
       id: 'type-1',
       name: 'Groceries',
       categoryId: 'cat-1',
+      group: Group.EXPENSE,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
     },
@@ -80,6 +78,7 @@ describe('QuickEntryRow', () => {
       id: 'type-2',
       name: 'Paycheck',
       categoryId: 'cat-2',
+      group: Group.INCOME,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
     },
@@ -87,6 +86,7 @@ describe('QuickEntryRow', () => {
       id: 'type-3',
       name: 'Account Transfer',
       categoryId: 'cat-3',
+      group: Group.TRANSFER,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
     },
@@ -111,6 +111,7 @@ describe('QuickEntryRow', () => {
         transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
+        manualAssets={[]}
       />
     );
 
@@ -129,6 +130,7 @@ describe('QuickEntryRow', () => {
         transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
+        manualAssets={[]}
       />
     );
 
@@ -154,6 +156,7 @@ describe('QuickEntryRow', () => {
         transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
+        manualAssets={[]}
       />
     );
 
@@ -179,6 +182,7 @@ describe('QuickEntryRow', () => {
         transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
+        manualAssets={[]}
       />
     );
 
@@ -202,6 +206,7 @@ describe('QuickEntryRow', () => {
         categories={mockCategories}
         transactionTypes={mockTransactionTypes}
         transactions={mockTransactions}
+        manualAssets={[]}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
       />
@@ -248,6 +253,7 @@ describe('QuickEntryRow', () => {
         categories={mockCategories}
         transactionTypes={mockTransactionTypes}
         transactions={mockTransactions}
+        manualAssets={[]}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
       />
@@ -296,6 +302,7 @@ describe('QuickEntryRow', () => {
         categories={mockCategories}
         transactionTypes={mockTransactionTypes}
         transactions={mockTransactions}
+        manualAssets={[]}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
       />
@@ -326,6 +333,7 @@ describe('QuickEntryRow', () => {
         transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
+        manualAssets={[]}
       />
     );
 
@@ -345,6 +353,7 @@ describe('QuickEntryRow', () => {
         transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
+        manualAssets={[]}
       />
     );
 
@@ -370,6 +379,7 @@ describe('QuickEntryRow', () => {
         transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
+        manualAssets={[]}
       />
     );
 
@@ -420,6 +430,7 @@ describe('QuickEntryRow', () => {
         transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
+        manualAssets={[]}
       />
     );
 
@@ -440,6 +451,7 @@ describe('QuickEntryRow', () => {
         transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
+        manualAssets={[]}
       />
     );
 
@@ -457,6 +469,7 @@ describe('QuickEntryRow', () => {
         transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
+        manualAssets={[]}
       />
     );
 
@@ -482,6 +495,7 @@ describe('QuickEntryRow', () => {
         categories={mockCategories}
         transactionTypes={mockTransactionTypes}
         transactions={mockTransactions}
+        manualAssets={[]}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
       />
@@ -523,6 +537,7 @@ describe('QuickEntryRow', () => {
         transactions={mockTransactions}
         onSubmit={mockOnSubmit}
         onOpenFullDialog={mockOnOpenFullDialog}
+        manualAssets={[]}
       />
     );
 
@@ -553,6 +568,7 @@ describe('QuickEntryRow', () => {
           transactions={mockTransactions}
           onSubmit={mockOnSubmit}
           onOpenFullDialog={mockOnOpenFullDialog}
+          manualAssets={[]}
         />
       );
 
@@ -582,6 +598,7 @@ describe('QuickEntryRow', () => {
           transactions={mockTransactions}
           onSubmit={mockOnSubmit}
           onOpenFullDialog={mockOnOpenFullDialog}
+          manualAssets={[]}
         />
       );
 
@@ -611,6 +628,7 @@ describe('QuickEntryRow', () => {
           transactions={mockTransactions}
           onSubmit={mockOnSubmit}
           onOpenFullDialog={mockOnOpenFullDialog}
+          manualAssets={[]}
         />
       );
 
@@ -637,6 +655,7 @@ describe('QuickEntryRow', () => {
           transactions={mockTransactions}
           onSubmit={mockOnSubmit}
           onOpenFullDialog={mockOnOpenFullDialog}
+          manualAssets={[]}
         />
       );
 

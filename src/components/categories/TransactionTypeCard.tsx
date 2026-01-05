@@ -32,6 +32,10 @@ export const TransactionTypeCard: React.FC<TransactionTypeCardProps> = ({
         return 'error';
       case 'transfer':
         return 'info';
+      case 'asset_purchase':
+        return 'primary';
+      case 'asset_sale':
+        return 'warning';
       default:
         return 'default';
     }
@@ -46,10 +50,17 @@ export const TransactionTypeCard: React.FC<TransactionTypeCardProps> = ({
           <Typography variant="h6" component="h3">
             {transactionType.name}
           </Typography>
-          {category && (
-            <Chip label={category.name} size="small" color={getGroupColor(category.group)} />
-          )}
+          <Chip
+            label={transactionType.group.toUpperCase().replace('_', ' ')}
+            size="small"
+            color={getGroupColor(transactionType.group)}
+          />
         </Box>
+        {category && (
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+            Category: {category.name}
+          </Typography>
+        )}
         {transactionType.description && (
           <Typography variant="body2" color="text.secondary">
             {transactionType.description}

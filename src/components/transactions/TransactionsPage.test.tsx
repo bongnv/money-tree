@@ -35,7 +35,6 @@ describe('TransactionsPage', () => {
     {
       id: 'cat-1',
       name: 'Food & Dining',
-      group: Group.EXPENSE,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
@@ -46,6 +45,7 @@ describe('TransactionsPage', () => {
       id: 'tt-1',
       name: 'Groceries',
       categoryId: 'cat-1',
+      group: Group.EXPENSE,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },

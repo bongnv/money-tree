@@ -8,14 +8,12 @@ describe('TransactionTypeList', () => {
     {
       id: 'cat-1',
       name: 'Groceries',
-      group: Group.EXPENSE,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
     {
       id: 'cat-2',
       name: 'Salary',
-      group: Group.INCOME,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
@@ -26,6 +24,7 @@ describe('TransactionTypeList', () => {
       id: 'tt-1',
       name: 'Supermarket',
       categoryId: 'cat-1',
+      group: Group.EXPENSE,
       description: 'Grocery shopping',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
@@ -34,6 +33,7 @@ describe('TransactionTypeList', () => {
       id: 'tt-2',
       name: 'Monthly Salary',
       categoryId: 'cat-2',
+      group: Group.INCOME,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
@@ -70,8 +70,8 @@ describe('TransactionTypeList', () => {
       />
     );
 
-    expect(screen.getByText('Groceries')).toBeInTheDocument();
-    expect(screen.getByText('Salary')).toBeInTheDocument();
+    expect(screen.getByText(/Category: Groceries/i)).toBeInTheDocument();
+    expect(screen.getByText(/Category: Salary/i)).toBeInTheDocument();
   });
 
   it('should show empty state when no transaction types', () => {

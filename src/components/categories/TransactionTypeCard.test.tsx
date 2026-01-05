@@ -8,7 +8,6 @@ describe('TransactionTypeCard', () => {
   const mockCategory: Category = {
     id: 'cat-1',
     name: 'Groceries',
-    group: Group.EXPENSE,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
   };
@@ -17,6 +16,7 @@ describe('TransactionTypeCard', () => {
     id: 'tt-1',
     name: 'Supermarket',
     categoryId: 'cat-1',
+    group: Group.EXPENSE,
     description: 'Grocery shopping',
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
@@ -41,7 +41,8 @@ describe('TransactionTypeCard', () => {
 
     expect(screen.getByText('Supermarket')).toBeInTheDocument();
     expect(screen.getByText('Grocery shopping')).toBeInTheDocument();
-    expect(screen.getByText('Groceries')).toBeInTheDocument();
+    expect(screen.getByText('EXPENSE')).toBeInTheDocument();
+    expect(screen.getByText(/Category: Groceries/i)).toBeInTheDocument();
   });
 
   it('should render without description', () => {
@@ -70,21 +71,22 @@ describe('TransactionTypeCard', () => {
     );
 
     expect(screen.getByText('Supermarket')).toBeInTheDocument();
-    expect(screen.queryByText('Groceries')).not.toBeInTheDocument();
+    expect(screen.getByText('EXPENSE')).toBeInTheDocument();
+    expect(screen.queryByText(/Category:/i)).not.toBeInTheDocument();
   });
 
-  it('should show correct color for income category', () => {
-    const incomeCategory = { ...mockCategory, group: Group.INCOME };
+  it('should show correct group badge', () => {
+    const incomeTransactionType = { ...mockTransactionType, group: Group.INCOME };
     render(
       <TransactionTypeCard
-        transactionType={mockTransactionType}
-        category={incomeCategory}
+        transactionType={incomeTransactionType}
+        category={mockCategory}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
       />
     );
 
-    expect(screen.getByText('Groceries')).toBeInTheDocument();
+    expect(screen.getByText('INCOME')).toBeInTheDocument();
   });
 
   it('should call onEdit when edit button is clicked', async () => {

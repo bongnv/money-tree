@@ -58,14 +58,15 @@ export const TransactionList: React.FC<TransactionListProps> = ({
         const category = getCategory(transactionType.categoryId);
         if (!category) return '—';
 
-        const colorMap: Record<Group, 'error' | 'success' | 'info' | 'warning'> = {
+        const colorMap: Record<Group, 'error' | 'success' | 'info' | 'warning' | 'primary'> = {
           [Group.EXPENSE]: 'error',
           [Group.INCOME]: 'success',
           [Group.TRANSFER]: 'info',
-          [Group.ASSET_TRANSACTION]: 'warning',
+          [Group.ASSET_PURCHASE]: 'primary',
+          [Group.ASSET_SALE]: 'warning',
         };
 
-        return <Chip label={category.name} size="small" color={colorMap[category.group]} />;
+        return <Chip label={category.name} size="small" color={colorMap[transactionType.group]} />;
       },
     },
     {

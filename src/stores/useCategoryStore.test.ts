@@ -8,7 +8,6 @@ describe('useCategoryStore', () => {
   const mockCategory: Category = {
     id: 'cat-1',
     name: 'Test Category',
-    group: Group.EXPENSE,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
   };
@@ -17,6 +16,7 @@ describe('useCategoryStore', () => {
     id: 'tt-1',
     name: 'Test Transaction Type',
     categoryId: 'cat-1',
+    group: Group.EXPENSE,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
   };
@@ -274,47 +274,6 @@ describe('useCategoryStore', () => {
       const category = result.current.getCategoryById('non-existent');
 
       expect(category).toBeUndefined();
-    });
-  });
-
-  describe('getCategoriesByGroup', () => {
-    beforeEach(() => {
-      const { result } = renderHook(() => useCategoryStore());
-      const incomeCategory: Category = {
-        ...mockCategory,
-        id: 'cat-income',
-        group: Group.INCOME,
-      };
-      const expenseCategory: Category = {
-        ...mockCategory,
-        id: 'cat-expense',
-        group: Group.EXPENSE,
-      };
-
-      act(() => {
-        result.current.addCategory(incomeCategory);
-        result.current.addCategory(expenseCategory);
-      });
-    });
-
-    it('should return categories by group', () => {
-      const { result } = renderHook(() => useCategoryStore());
-
-      const incomeCategories = result.current.getCategoriesByGroup(Group.INCOME);
-      const expenseCategories = result.current.getCategoriesByGroup(Group.EXPENSE);
-
-      expect(incomeCategories).toHaveLength(1);
-      expect(incomeCategories[0].group).toBe(Group.INCOME);
-      expect(expenseCategories).toHaveLength(1);
-      expect(expenseCategories[0].group).toBe(Group.EXPENSE);
-    });
-
-    it('should return empty array for group with no categories', () => {
-      const { result } = renderHook(() => useCategoryStore());
-
-      const transferCategories = result.current.getCategoriesByGroup(Group.TRANSFER);
-
-      expect(transferCategories).toHaveLength(0);
     });
   });
 

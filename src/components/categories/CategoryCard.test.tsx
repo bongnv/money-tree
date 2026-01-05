@@ -1,14 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CategoryCard } from './CategoryCard';
-import { Group } from '../../types/enums';
 import type { Category } from '../../types/models';
 
 describe('CategoryCard', () => {
   const mockCategory: Category = {
     id: 'cat-1',
     name: 'Groceries',
-    group: Group.EXPENSE,
     description: 'Food and household items',
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
@@ -33,7 +31,6 @@ describe('CategoryCard', () => {
 
     expect(screen.getByText('Groceries')).toBeInTheDocument();
     expect(screen.getByText('Food and household items')).toBeInTheDocument();
-    expect(screen.getByText('EXPENSE')).toBeInTheDocument();
     expect(screen.getByText('3 transaction types')).toBeInTheDocument();
   });
 
@@ -76,34 +73,6 @@ describe('CategoryCard', () => {
     );
 
     expect(screen.getByText('5 transaction types')).toBeInTheDocument();
-  });
-
-  it('should show correct color for income group', () => {
-    const incomeCategory = { ...mockCategory, group: Group.INCOME };
-    render(
-      <CategoryCard
-        category={incomeCategory}
-        transactionTypeCount={2}
-        onEdit={mockOnEdit}
-        onDelete={mockOnDelete}
-      />
-    );
-
-    expect(screen.getByText('INCOME')).toBeInTheDocument();
-  });
-
-  it('should show correct color for transfer group', () => {
-    const transferCategory = { ...mockCategory, group: Group.TRANSFER };
-    render(
-      <CategoryCard
-        category={transferCategory}
-        transactionTypeCount={2}
-        onEdit={mockOnEdit}
-        onDelete={mockOnDelete}
-      />
-    );
-
-    expect(screen.getByText('TRANSFER')).toBeInTheDocument();
   });
 
   it('should call onEdit when edit button is clicked', async () => {

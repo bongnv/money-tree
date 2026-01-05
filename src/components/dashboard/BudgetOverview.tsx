@@ -26,7 +26,6 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ period }) => {
   const budgets = useBudgetStore((state) => state.budgets);
   const transactions = useTransactionStore((state) => state.transactions);
   const transactionTypes = useCategoryStore((state) => state.transactionTypes);
-  const categories = useCategoryStore((state) => state.categories);
 
   // Calculate budget usage for the selected period
   const budgetsWithUsage: BudgetWithUsage[] = budgets
@@ -59,11 +58,8 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ period }) => {
 
       // Get transaction type info
       const transactionType = transactionTypes.find((t) => t.id === budget.transactionTypeId);
-      const category = transactionType
-        ? categories.find((c) => c.id === transactionType.categoryId)
-        : undefined;
 
-      const isIncome = category?.group === Group.INCOME;
+      const isIncome = transactionType?.group === Group.INCOME;
       const percentage = proratedAmount === 0 ? 0 : (actualAmount / proratedAmount) * 100;
 
       return {

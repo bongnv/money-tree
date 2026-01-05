@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import { CategoryList } from './CategoryList';
-import { Group } from '../../types/enums';
 import type { Category, TransactionType } from '../../types/models';
 
 describe('CategoryList', () => {
@@ -8,7 +7,6 @@ describe('CategoryList', () => {
     {
       id: 'cat-1',
       name: 'Groceries',
-      group: Group.EXPENSE,
       description: 'Food and household items',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
@@ -16,7 +14,6 @@ describe('CategoryList', () => {
     {
       id: 'cat-2',
       name: 'Salary',
-      group: Group.INCOME,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
@@ -27,6 +24,7 @@ describe('CategoryList', () => {
       id: 'tt-1',
       name: 'Supermarket',
       categoryId: 'cat-1',
+      group: 'expense' as any,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
@@ -34,6 +32,7 @@ describe('CategoryList', () => {
       id: 'tt-2',
       name: 'Restaurant',
       categoryId: 'cat-1',
+      group: 'expense' as any,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },

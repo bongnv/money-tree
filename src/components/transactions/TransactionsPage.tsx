@@ -14,6 +14,7 @@ import type { Transaction } from '../../types/models';
 import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
+import { useAssetStore } from '../../stores/useAssetStore';
 import { TransactionDialog } from './TransactionDialog';
 import { TransactionList } from './TransactionList';
 import { TransactionFilters, TransactionFiltersState } from './TransactionFilters';
@@ -24,6 +25,7 @@ export const TransactionsPage: React.FC = () => {
     useTransactionStore();
   const { accounts } = useAccountStore();
   const { categories, transactionTypes } = useCategoryStore();
+  const { manualAssets } = useAssetStore();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | undefined>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -77,16 +79,12 @@ export const TransactionsPage: React.FC = () => {
         }
       }
 
-      // Group filter (via transaction type and category)
+      // Group filter (via transaction type)
       if (filters.group) {
         const transactionType = transactionTypes.find(
           (t) => t.id === transaction.transactionTypeId
         );
-        if (!transactionType) {
-          return false;
-        }
-        const category = categories.find((c) => c.id === transactionType.categoryId);
-        if (!category || category.group !== filters.group) {
+        if (!transactionType || transactionType.group !== filters.group) {
           return false;
         }
       }
@@ -181,6 +179,7 @@ export const TransactionsPage: React.FC = () => {
           categories={categories}
           transactionTypes={transactionTypes}
           transactions={transactions}
+          manualAssets={manualAssets}
           onSubmit={handleSubmit}
           onOpenFullDialog={handleOpenDialog}
         />

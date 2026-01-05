@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { QuickEntryRow } from '../transactions/QuickEntryRow';
 import { TransactionDialog } from '../transactions/TransactionDialog';
 import { useAccountStore } from '../../stores/useAccountStore';
+import { useAssetStore } from '../../stores/useAssetStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import { useTransactionStore } from '../../stores/useTransactionStore';
 import type { Transaction } from '../../types/models';
@@ -9,6 +10,7 @@ import type { Transaction } from '../../types/models';
 export const QuickEntryContainer: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const accounts = useAccountStore((state) => state.accounts);
+  const manualAssets = useAssetStore((state) => state.manualAssets);
   const categories = useCategoryStore((state) => state.categories);
   const transactionTypes = useCategoryStore((state) => state.transactionTypes);
   const transactions = useTransactionStore((state) => state.transactions);
@@ -43,6 +45,7 @@ export const QuickEntryContainer: React.FC = () => {
         accounts={accounts}
         categories={categories}
         transactionTypes={transactionTypes}
+        manualAssets={manualAssets}
         transactions={transactions}
         onSubmit={handleSubmit}
         onOpenFullDialog={handleOpenFullDialog}

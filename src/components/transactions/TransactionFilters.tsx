@@ -140,7 +140,8 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
           <MenuItem value={Group.EXPENSE}>Expense</MenuItem>
           <MenuItem value={Group.INCOME}>Income</MenuItem>
           <MenuItem value={Group.TRANSFER}>Transfer</MenuItem>
-          <MenuItem value={Group.ASSET_TRANSACTION}>Asset Transaction</MenuItem>
+          <MenuItem value={Group.ASSET_PURCHASE}>Asset Purchase</MenuItem>
+          <MenuItem value={Group.ASSET_SALE}>Asset Sale</MenuItem>
         </TextField>
 
         {/* Category Filter */}

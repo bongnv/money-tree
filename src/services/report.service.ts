@@ -588,7 +588,7 @@ class ReportService {
     );
 
     // Create lookup maps
-    const typeToCategory = new Map(transactionTypes.map((t) => [t.id, t.categoryId]));
+    const typeData = new Map(transactionTypes.map((t) => [t.id, t]));
     const categoryData = new Map(categories.map((c) => [c.id, c]));
     const accountData = accounts ? new Map(accounts.map((a) => [a.id, a])) : new Map();
 
@@ -597,18 +597,25 @@ class ReportService {
     const expensesByCategory = new Map<string, { total: number; count: number }>();
 
     filteredTransactions.forEach((transaction) => {
-      const categoryId = typeToCategory.get(transaction.transactionTypeId);
-      if (!categoryId) return;
+      const transactionType = typeData.get(transaction.transactionTypeId);
+      if (!transactionType) return;
 
-      const category = categoryData.get(categoryId);
+      const category = categoryData.get(transactionType.categoryId);
       if (!category) return;
 
       // Skip transfers and asset transactions (they're not regular income/expenses)
-      if (category.group === Group.TRANSFER || category.group === Group.ASSET_TRANSACTION) return;
+      if (
+        transactionType.group === Group.TRANSFER ||
+        transactionType.group === Group.ASSET_PURCHASE ||
+        transactionType.group === Group.ASSET_SALE
+      )
+        return;
 
       // Determine the account for currency lookup
       const accountId =
-        category.group === Group.INCOME ? transaction.toAccountId : transaction.fromAccountId;
+        transactionType.group === Group.INCOME
+          ? transaction.toAccountId
+          : transaction.fromAccountId;
       const account = accountId ? accountData.get(accountId) : null;
 
       // Convert amount if needed
@@ -621,7 +628,8 @@ class ReportService {
         }
       }
 
-      const targetMap = category.group === Group.INCOME ? incomeByCategory : expensesByCategory;
+      const targetMap =
+        transactionType.group === Group.INCOME ? incomeByCategory : expensesByCategory;
       const existing = targetMap.get(category.id) || { total: 0, count: 0 };
       targetMap.set(category.id, {
         total: existing.total + convertedAmount,

@@ -236,14 +236,17 @@ export const BudgetsPage: React.FC = () => {
       ) : (
         <Box>
           {Object.values(groupedBudgets).map(({ category, items, totalBudget, totalActual }) => {
-            const isIncome = category.group === Group.INCOME;
+            // Get group from first transaction type in this category (all should have same group)
+            const firstTransactionType = items[0]?.transactionType;
+            const isIncome = firstTransactionType?.group === Group.INCOME;
             const totalPercentage = totalBudget > 0 ? (totalActual / totalBudget) * 100 : 0;
 
             return (
               <Paper key={category.id} sx={{ mb: 2 }}>
                 <Box sx={{ p: 2, backgroundColor: 'grey.100' }}>
                   <Typography variant="h6">
-                    {category.name} {getSectionTitle(category.group)}
+                    {category.name}{' '}
+                    {firstTransactionType && getSectionTitle(firstTransactionType.group)}
                   </Typography>
                 </Box>
                 <List disablePadding>

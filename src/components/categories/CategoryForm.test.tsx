@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CategoryForm } from './CategoryForm';
-import { Group } from '../../types/enums';
 import type { Category } from '../../types/models';
 
 describe('CategoryForm', () => {
@@ -24,7 +23,6 @@ describe('CategoryForm', () => {
     const category: Category = {
       id: 'cat-1',
       name: 'Groceries',
-      group: Group.EXPENSE,
       description: 'Food and household items',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
@@ -56,8 +54,6 @@ describe('CategoryForm', () => {
     render(<CategoryForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     await user.type(screen.getByLabelText(/category name/i), 'Transportation');
-    await user.click(screen.getByLabelText(/group/i));
-    await user.click(screen.getByRole('option', { name: /income/i }));
     await user.type(screen.getByLabelText(/description/i), 'Transport related expenses');
 
     const submitButton = screen.getByRole('button', { name: /create/i });
@@ -66,7 +62,6 @@ describe('CategoryForm', () => {
     await waitFor(() => {
       expect(mockOnSubmit).toHaveBeenCalledWith({
         name: 'Transportation',
-        group: Group.INCOME,
         description: 'Transport related expenses',
       });
     });
@@ -84,7 +79,6 @@ describe('CategoryForm', () => {
     await waitFor(() => {
       expect(mockOnSubmit).toHaveBeenCalledWith({
         name: 'Utilities',
-        group: Group.EXPENSE,
         description: undefined,
       });
     });

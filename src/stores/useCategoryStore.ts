@@ -14,7 +14,6 @@ interface CategoryActions {
   updateCategory: (id: string, updates: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
   getCategoryById: (id: string) => Category | undefined;
-  getCategoriesByGroup: (group: Category['group']) => Category[];
   addTransactionType: (transactionType: TransactionType) => void;
   updateTransactionType: (id: string, updates: Partial<TransactionType>) => void;
   deleteTransactionType: (id: string) => void;
@@ -66,10 +65,6 @@ export const useCategoryStore = create<CategoryState & CategoryActions>((set, ge
 
   getCategoryById: (id) => {
     return get().categories.find((category) => category.id === id);
-  },
-
-  getCategoriesByGroup: (group) => {
-    return get().categories.filter((category) => category.group === group);
   },
 
   addTransactionType: (transactionType) => {

@@ -32,14 +32,12 @@ describe('TransactionFilters', () => {
     {
       id: 'cat-1',
       name: 'Food & Dining',
-      group: Group.EXPENSE,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
     {
       id: 'cat-2',
       name: 'Salary',
-      group: Group.INCOME,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
@@ -50,6 +48,7 @@ describe('TransactionFilters', () => {
       id: 'tt-1',
       name: 'Groceries',
       categoryId: 'cat-1',
+      group: Group.EXPENSE,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
@@ -57,6 +56,7 @@ describe('TransactionFilters', () => {
       id: 'tt-2',
       name: 'Monthly Salary',
       categoryId: 'cat-2',
+      group: Group.INCOME,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
@@ -411,6 +411,7 @@ describe('TransactionFilters', () => {
     expect(await screen.findByRole('option', { name: /^expense$/i })).toBeInTheDocument();
     expect(await screen.findByRole('option', { name: /^income$/i })).toBeInTheDocument();
     expect(await screen.findByRole('option', { name: /^transfer$/i })).toBeInTheDocument();
-    expect(await screen.findByRole('option', { name: /^asset transaction$/i })).toBeInTheDocument();
+    expect(await screen.findByRole('option', { name: /^asset purchase$/i })).toBeInTheDocument();
+    expect(await screen.findByRole('option', { name: /^asset sale$/i })).toBeInTheDocument();
   });
 });

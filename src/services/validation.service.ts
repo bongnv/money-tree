@@ -1,4 +1,4 @@
-import type { Transaction, Account, TransactionType, Category } from '../types/models';
+import type { Transaction, Account, TransactionType } from '../types/models';
 import { Group } from '../types/enums';
 
 export interface ValidationError {
@@ -14,7 +14,6 @@ class ValidationService {
    * Validate transaction data
    * @param transaction Transaction to validate
    * @param transactionType Transaction type details
-   * @param category Category details
    * @param fromAccount From account (if applicable)
    * @param toAccount To account (if applicable)
    * @returns Array of validation errors
@@ -22,11 +21,8 @@ class ValidationService {
   validateTransaction(
     transaction: Partial<Transaction>,
     transactionType?: TransactionType,
-    category?: Category,
     fromAccount?: Account,
-    toAccount?: Account,
-    _fromAsset?: { id: string; name: string },
-    _toAsset?: { id: string; name: string }
+    toAccount?: Account
   ): ValidationError[] {
     const errors: ValidationError[] = [];
 
@@ -47,10 +43,10 @@ class ValidationService {
       errors.push({ field: 'transactionTypeId', message: 'Transaction type is required' });
     }
 
-    // Validate accounts based on group
-    if (category && transactionType) {
+    // Validate accounts based on group from transactionType
+    if (transactionType) {
       const accountErrors = this.validateAccountsByGroup(
-        category.group,
+        transactionType.group,
         transaction.fromAccountId,
         transaction.toAccountId,
         transaction.fromAssetId,
@@ -142,82 +138,64 @@ class ValidationService {
         }
         break;
 
-      case Group.ASSET_TRANSACTION:
-        // Validate exactly one asset ID
-        if (!fromAssetId && !toAssetId) {
+      case Group.ASSET_PURCHASE:
+        // Account → Asset
+        if (!fromAccountId) {
           errors.push({
-            field: 'fromAssetId',
-            message: 'Either From Asset or To Asset is required for asset transactions',
+            field: 'fromAccountId',
+            message: 'From account is required for asset purchases',
           });
         }
-        if (fromAssetId && toAssetId) {
+        if (!toAssetId) {
           errors.push({
             field: 'toAssetId',
-            message: 'Cannot specify both From Asset and To Asset',
+            message: 'To asset is required for asset purchases',
           });
         }
-
-        // Validate exactly one account ID
-        if (!fromAccountId && !toAccountId) {
-          errors.push({
-            field: 'fromAccountId',
-            message: 'Either From Account or To Account is required for asset transactions',
-          });
-        }
-        if (fromAccountId && toAccountId) {
+        if (toAccountId) {
           errors.push({
             field: 'toAccountId',
-            message: 'Cannot specify both From Account and To Account',
+            message: 'To account should not be set for asset purchases',
           });
         }
-
-        // Validate correct pairing: asset liquidation (asset → account) or asset purchase (account → asset)
-        if (fromAssetId && fromAccountId) {
+        if (fromAssetId) {
           errors.push({
-            field: 'fromAccountId',
-            message: 'Asset liquidation requires From Asset and To Account',
+            field: 'fromAssetId',
+            message: 'From asset should not be set for asset purchases',
           });
         }
-        if (toAssetId && toAccountId) {
+        break;
+
+      case Group.ASSET_SALE:
+        // Asset → Account
+        if (!fromAssetId) {
+          errors.push({
+            field: 'fromAssetId',
+            message: 'From asset is required for asset sales',
+          });
+        }
+        if (!toAccountId) {
           errors.push({
             field: 'toAccountId',
-            message: 'Asset purchase requires From Account and To Asset',
+            message: 'To account is required for asset sales',
+          });
+        }
+        if (fromAccountId) {
+          errors.push({
+            field: 'fromAccountId',
+            message: 'From account should not be set for asset sales',
+          });
+        }
+        if (toAssetId) {
+          errors.push({
+            field: 'toAssetId',
+            message: 'To asset should not be set for asset sales',
           });
         }
         break;
     }
 
     return errors;
-  }
-
-  /**
-   * Check if account can be deleted
-   * @param accountId Account ID to check
-   * @param transactions All transactions
-   * @returns True if account has no transactions
-   */
-  canDeleteAccount(accountId: string, transactions: Transaction[]): boolean {
-    return !transactions.some((t) => t.fromAccountId === accountId || t.toAccountId === accountId);
-  }
-
-  /**
-   * Check if transaction type can be deleted
-   * @param transactionTypeId Transaction type ID to check
-   * @param transactions All transactions
-   * @returns True if transaction type has no transactions
-   */
-  canDeleteTransactionType(transactionTypeId: string, transactions: Transaction[]): boolean {
-    return !transactions.some((t) => t.transactionTypeId === transactionTypeId);
-  }
-
-  /**
-   * Check if category can be deleted
-   * @param categoryId Category ID to check
-   * @param transactionTypes All transaction types
-   * @returns True if category has no transaction types
-   */
-  canDeleteCategory(categoryId: string, transactionTypes: TransactionType[]): boolean {
-    return !transactionTypes.some((tt) => tt.categoryId === categoryId);
   }
 }
 

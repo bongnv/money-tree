@@ -35,7 +35,6 @@ export interface Account {
 export interface Category {
   id: string;
   name: string;
-  group: Group;
   description?: string;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
@@ -49,6 +48,7 @@ export interface TransactionType {
   id: string;
   name: string;
   categoryId: string;
+  group: Group;
   description?: string;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string

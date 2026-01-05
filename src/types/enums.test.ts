@@ -6,16 +6,18 @@ describe('Enums', () => {
       expect(Group.INCOME).toBe('income');
       expect(Group.EXPENSE).toBe('expense');
       expect(Group.TRANSFER).toBe('transfer');
-      expect(Group.ASSET_TRANSACTION).toBe('asset_transaction');
+      expect(Group.ASSET_PURCHASE).toBe('asset_purchase');
+      expect(Group.ASSET_SALE).toBe('asset_sale');
     });
 
     it('should have all expected members', () => {
       const values = Object.values(Group);
-      expect(values).toHaveLength(4);
+      expect(values).toHaveLength(5);
       expect(values).toContain('income');
       expect(values).toContain('expense');
       expect(values).toContain('transfer');
-      expect(values).toContain('asset_transaction');
+      expect(values).toContain('asset_purchase');
+      expect(values).toContain('asset_sale');
     });
   });
 

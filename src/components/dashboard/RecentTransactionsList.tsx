@@ -20,7 +20,6 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
 }) => {
   const transactions = useTransactionStore((state) => state.transactions);
   const transactionTypes = useCategoryStore((state) => state.transactionTypes);
-  const categories = useCategoryStore((state) => state.categories);
 
   // Get recent transactions sorted by date (newest first)
   const recentTransactions = [...transactions]
@@ -48,8 +47,7 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
   const isIncome = (transactionTypeId: string): boolean => {
     const type = transactionTypes.find((t) => t.id === transactionTypeId);
     if (!type) return false;
-    const category = categories.find((c) => c.id === type.categoryId);
-    return category?.group === Group.INCOME;
+    return type.group === Group.INCOME;
   };
 
   const formatAmount = (amount: number, transactionTypeId: string): string => {

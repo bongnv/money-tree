@@ -99,7 +99,6 @@ describe('Model Schemas', () => {
       const validCategory = {
         id: 'cat1',
         name: 'Food',
-        group: Group.EXPENSE,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -110,23 +109,11 @@ describe('Model Schemas', () => {
       const validCategory = {
         id: 'cat2',
         name: 'Groceries',
-        group: Group.EXPENSE,
         parentId: 'cat1',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
       expect(() => CategorySchema.parse(validCategory)).not.toThrow();
-    });
-
-    it('should reject category with invalid group', () => {
-      const invalidCategory = {
-        id: 'cat1',
-        name: 'Food',
-        group: 'invalid_group',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      expect(() => CategorySchema.parse(invalidCategory)).toThrow();
     });
   });
 
@@ -136,6 +123,7 @@ describe('Model Schemas', () => {
         id: 'tt1',
         name: 'Grocery Shopping',
         categoryId: 'cat1',
+        group: Group.EXPENSE,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -147,11 +135,24 @@ describe('Model Schemas', () => {
         id: 'tt1',
         name: 'Grocery Shopping',
         categoryId: 'cat1',
+        group: Group.EXPENSE,
         description: 'Weekly grocery expenses',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
       expect(() => TransactionTypeSchema.parse(validTransactionType)).not.toThrow();
+    });
+
+    it('should reject transaction type with invalid group', () => {
+      const invalidTransactionType = {
+        id: 'tt1',
+        name: 'Grocery Shopping',
+        categoryId: 'cat1',
+        group: 'invalid_group',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      expect(() => TransactionTypeSchema.parse(invalidTransactionType)).toThrow();
     });
   });
 

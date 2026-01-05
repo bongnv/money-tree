@@ -33,7 +33,6 @@ export const AccountSchema = z.object({
 export const CategorySchema = z.object({
   id: z.string().min(1, 'ID is required'),
   name: z.string().min(1, 'Category name is required'),
-  group: z.nativeEnum(Group),
   parentId: z.string().optional(),
   description: z.string().optional(),
   createdAt: z.string().datetime(),
@@ -47,6 +46,7 @@ export const TransactionTypeSchema = z.object({
   id: z.string().min(1, 'ID is required'),
   name: z.string().min(1, 'Transaction type name is required'),
   categoryId: z.string().min(1, 'Category ID is required'),
+  group: z.nativeEnum(Group),
   description: z.string().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),

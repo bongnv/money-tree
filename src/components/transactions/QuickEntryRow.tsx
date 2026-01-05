@@ -1,7 +1,13 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { Box, TextField, IconButton, Tooltip, Autocomplete } from '@mui/material';
 import { Add as AddIcon, Clear as ClearIcon, MoreHoriz as MoreIcon } from '@mui/icons-material';
-import type { Transaction, Account, TransactionType, Category } from '../../types/models';
+import type {
+  Transaction,
+  Account,
+  TransactionType,
+  Category,
+  ManualAsset,
+} from '../../types/models';
 import { Group } from '../../types/enums';
 import { toDateString, getTodayDate } from '../../utils/date.utils';
 import { validationService, ValidationError } from '../../services/validation.service';
@@ -10,6 +16,7 @@ interface QuickEntryRowProps {
   accounts: Account[];
   categories: Category[];
   transactionTypes: TransactionType[];
+  manualAssets: ManualAsset[];
   transactions: Transaction[];
   onSubmit: (transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => void;
   onOpenFullDialog: () => void;
@@ -19,6 +26,7 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
   accounts,
   categories,
   transactionTypes,
+  manualAssets,
   transactions,
   onSubmit,
   onOpenFullDialog,
@@ -55,6 +63,8 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
     transactionTypeId: storedDefaults.transactionTypeId || '',
     fromAccountId: storedDefaults.fromAccountId || '',
     toAccountId: storedDefaults.toAccountId || '',
+    fromAssetId: '',
+    toAssetId: '',
     description: '',
   });
 
@@ -64,6 +74,8 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
   const typeRef = useRef<HTMLInputElement>(null);
   const fromAccountRef = useRef<HTMLInputElement>(null);
   const toAccountRef = useRef<HTMLInputElement>(null);
+  const fromAssetRef = useRef<HTMLInputElement>(null);
+  const toAssetRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLInputElement>(null);
 
   // Derive selected group from transaction type
@@ -71,20 +83,14 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
     if (formData.transactionTypeId) {
       const transactionType = transactionTypes.find((tt) => tt.id === formData.transactionTypeId);
       if (transactionType) {
-        const category = categories.find((c) => c.id === transactionType.categoryId);
-        if (category) {
-          return category.group;
-        }
+        return transactionType.group;
       }
     }
     return null;
-  }, [formData.transactionTypeId, transactionTypes, categories]);
+  }, [formData.transactionTypeId, transactionTypes]);
 
   const validate = (): boolean => {
     const transactionType = transactionTypes.find((tt) => tt.id === formData.transactionTypeId);
-    const category = transactionType
-      ? categories.find((c) => c.id === transactionType.categoryId)
-      : undefined;
     const fromAccount = formData.fromAccountId
       ? accounts.find((a) => a.id === formData.fromAccountId)
       : undefined;
@@ -99,12 +105,13 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
       transactionTypeId: formData.transactionTypeId || undefined,
       fromAccountId: formData.fromAccountId || undefined,
       toAccountId: formData.toAccountId || undefined,
+      fromAssetId: formData.fromAssetId || undefined,
+      toAssetId: formData.toAssetId || undefined,
     };
 
     const validationErrors = validationService.validateTransaction(
       partialTransaction,
       transactionType,
-      category,
       fromAccount,
       toAccount
     );
@@ -144,6 +151,8 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
       transactionTypeId: formData.transactionTypeId,
       fromAccountId: formData.fromAccountId || undefined,
       toAccountId: formData.toAccountId || undefined,
+      fromAssetId: formData.fromAssetId || undefined,
+      toAssetId: formData.toAssetId || undefined,
     });
 
     // Clear form and focus on amount field
@@ -153,6 +162,8 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
       transactionTypeId: formData.transactionTypeId, // Keep last used type
       fromAccountId: formData.fromAccountId, // Keep last used account
       toAccountId: formData.toAccountId, // Keep last used account
+      fromAssetId: '',
+      toAssetId: '',
       description: '',
     });
     setErrors({});
@@ -170,6 +181,8 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
       transactionTypeId: '',
       fromAccountId: '',
       toAccountId: '',
+      fromAssetId: '',
+      toAssetId: '',
       description: '',
     });
     setErrors({});
@@ -203,6 +216,8 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
 
     if (showFromAccount) fieldRefs.push(fromAccountRef);
     if (showToAccount) fieldRefs.push(toAccountRef);
+    if (showFromAsset) fieldRefs.push(fromAssetRef);
+    if (showToAsset) fieldRefs.push(toAssetRef);
     fieldRefs.push(descriptionRef);
 
     // Find which field is currently focused by checking which ref contains the active element
@@ -260,17 +275,16 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
 
   const activeAccounts = accounts.filter((a) => a.isActive);
 
-  // Filter out asset transaction types from quick entry (too complex for quick entry)
-  const availableTransactionTypes = transactionTypes.filter((tt) => {
-    const category = categories.find((c) => c.id === tt.categoryId);
-    return category?.group !== Group.ASSET_TRANSACTION;
-  });
-
-  const showFromAccount = selectedGroup === Group.EXPENSE || selectedGroup === Group.TRANSFER;
+  const showFromAccount =
+    selectedGroup === Group.EXPENSE ||
+    selectedGroup === Group.TRANSFER ||
+    selectedGroup === Group.ASSET_PURCHASE;
   const showToAccount =
     selectedGroup === Group.INCOME ||
     selectedGroup === Group.TRANSFER ||
-    selectedGroup === Group.ASSET_TRANSACTION;
+    selectedGroup === Group.ASSET_SALE;
+  const showFromAsset = selectedGroup === Group.ASSET_SALE;
+  const showToAsset = selectedGroup === Group.ASSET_PURCHASE;
 
   return (
     <Box
@@ -322,12 +336,15 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
 
       <Autocomplete
         ref={typeRef}
-        options={availableTransactionTypes}
-        value={availableTransactionTypes.find((tt) => tt.id === formData.transactionTypeId) || null}
+        options={transactionTypes}
+        value={transactionTypes.find((tt) => tt.id === formData.transactionTypeId) || null}
         onChange={(_, newValue) => {
           setFormData({
             ...formData,
             transactionTypeId: newValue?.id || '',
+            // Clear asset fields when changing type
+            fromAssetId: '',
+            toAssetId: '',
           });
           if (errors.transactionTypeId) {
             setErrors({ ...errors, transactionTypeId: '' });
@@ -406,6 +423,66 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
               placeholder="To"
               error={!!errors.toAccountId}
               helperText={errors.toAccountId}
+            />
+          )}
+          sx={{ minWidth: 150 }}
+        />
+      )}
+
+      {showFromAsset && (
+        <Autocomplete
+          ref={fromAssetRef}
+          options={manualAssets}
+          value={manualAssets.find((a) => a.id === formData.fromAssetId) || null}
+          onChange={(_, newValue) => {
+            setFormData({
+              ...formData,
+              fromAssetId: newValue?.id || '',
+            });
+            if (errors.fromAssetId) {
+              setErrors({ ...errors, fromAssetId: '' });
+            }
+          }}
+          getOptionLabel={(option) => option.name}
+          disableClearable={false}
+          openOnFocus
+          size="small"
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              placeholder="From Asset"
+              error={!!errors.fromAssetId}
+              helperText={errors.fromAssetId}
+            />
+          )}
+          sx={{ minWidth: 150 }}
+        />
+      )}
+
+      {showToAsset && (
+        <Autocomplete
+          ref={toAssetRef}
+          options={manualAssets}
+          value={manualAssets.find((a) => a.id === formData.toAssetId) || null}
+          onChange={(_, newValue) => {
+            setFormData({
+              ...formData,
+              toAssetId: newValue?.id || '',
+            });
+            if (errors.toAssetId) {
+              setErrors({ ...errors, toAssetId: '' });
+            }
+          }}
+          getOptionLabel={(option) => option.name}
+          disableClearable={false}
+          openOnFocus
+          size="small"
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              placeholder="To Asset"
+              error={!!errors.toAssetId}
+              helperText={errors.toAssetId}
             />
           )}
           sx={{ minWidth: 150 }}

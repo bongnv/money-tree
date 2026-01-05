@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CategoryDialog } from './CategoryDialog';
-import { Group } from '../../types/enums';
 import type { Category } from '../../types/models';
 
 describe('CategoryDialog', () => {
@@ -23,7 +22,6 @@ describe('CategoryDialog', () => {
     const category: Category = {
       id: 'cat-1',
       name: 'Groceries',
-      group: Group.EXPENSE,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     };

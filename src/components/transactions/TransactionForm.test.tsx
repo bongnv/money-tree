@@ -47,28 +47,30 @@ const mockCategories: Category[] = [
   {
     id: 'cat-1',
     name: 'Food',
-    group: Group.EXPENSE,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
   },
   {
     id: 'cat-2',
     name: 'Salary',
-    group: Group.INCOME,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
   },
   {
     id: 'cat-3',
     name: 'Account Transfer',
-    group: Group.TRANSFER,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
   },
   {
     id: 'cat-4',
     name: 'Investments',
-    group: Group.ASSET_TRANSACTION,
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'cat-5',
+    name: 'Asset Sales',
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
   },
@@ -79,6 +81,7 @@ const mockTransactionTypes: TransactionType[] = [
     id: 'type-1',
     name: 'Groceries',
     categoryId: 'cat-1',
+    group: Group.EXPENSE,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
   },
@@ -86,6 +89,7 @@ const mockTransactionTypes: TransactionType[] = [
     id: 'type-2',
     name: 'Monthly Salary',
     categoryId: 'cat-2',
+    group: Group.INCOME,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
   },
@@ -93,6 +97,7 @@ const mockTransactionTypes: TransactionType[] = [
     id: 'type-3',
     name: 'Between Accounts',
     categoryId: 'cat-3',
+    group: Group.TRANSFER,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
   },
@@ -100,6 +105,15 @@ const mockTransactionTypes: TransactionType[] = [
     id: 'type-4',
     name: 'Stock Purchase',
     categoryId: 'cat-4',
+    group: Group.ASSET_PURCHASE,
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'type-5',
+    name: 'Stock Sale',
+    categoryId: 'cat-5',
+    group: Group.ASSET_SALE,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
   },
@@ -333,7 +347,7 @@ describe('TransactionForm', () => {
   });
 
   describe('Asset transaction', () => {
-    it('should show asset and account fields when asset transaction type is selected', async () => {
+    it('should show asset and account fields when asset purchase type is selected', async () => {
       const user = userEvent.setup();
       render(<TransactionForm {...defaultProps} />);
 
@@ -343,9 +357,25 @@ describe('TransactionForm', () => {
 
       await waitFor(() => {
         expect(screen.getByLabelText(/to asset/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/from asset/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/from account/i)).toBeInTheDocument();
+        expect(screen.queryByLabelText(/from asset/i)).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(/to account/i)).not.toBeInTheDocument();
+      });
+    });
+
+    it('should show asset and account fields when asset sale type is selected', async () => {
+      const user = userEvent.setup();
+      render(<TransactionForm {...defaultProps} />);
+
+      const typeSelect = screen.getByLabelText(/transaction type/i);
+      await user.click(typeSelect);
+      await user.click(screen.getByText('Stock Sale'));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/from asset/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/to account/i)).toBeInTheDocument();
+        expect(screen.queryByLabelText(/to asset/i)).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(/from account/i)).not.toBeInTheDocument();
       });
     });
   });

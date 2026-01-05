@@ -9,14 +9,12 @@ describe('TransactionTypeForm', () => {
     {
       id: 'cat-1',
       name: 'Groceries',
-      group: Group.EXPENSE,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
     {
       id: 'cat-2',
       name: 'Salary',
-      group: Group.INCOME,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
@@ -48,6 +46,7 @@ describe('TransactionTypeForm', () => {
       id: 'tt-1',
       name: 'Supermarket',
       categoryId: 'cat-1',
+      group: Group.EXPENSE,
       description: 'Grocery shopping',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
@@ -120,6 +119,8 @@ describe('TransactionTypeForm', () => {
     );
 
     await user.type(screen.getByLabelText(/transaction type name/i), 'Restaurant');
+    await user.click(screen.getByLabelText(/group/i));
+    await user.click(screen.getByRole('option', { name: /^income$/i }));
     await user.click(screen.getByLabelText(/category/i));
     await user.click(screen.getByRole('option', { name: /groceries/i }));
     await user.type(screen.getByLabelText(/description/i), 'Dining out');
@@ -131,6 +132,7 @@ describe('TransactionTypeForm', () => {
       expect(mockOnSubmit).toHaveBeenCalledWith({
         name: 'Restaurant',
         categoryId: 'cat-1',
+        group: Group.INCOME,
         description: 'Dining out',
       });
     });
@@ -147,6 +149,8 @@ describe('TransactionTypeForm', () => {
     );
 
     await user.type(screen.getByLabelText(/transaction type name/i), 'Gas');
+    await user.click(screen.getByLabelText(/group/i));
+    await user.click(screen.getByRole('option', { name: /^income$/i }));
     await user.click(screen.getByLabelText(/category/i));
     await user.click(screen.getByRole('option', { name: /groceries/i }));
 
@@ -157,6 +161,7 @@ describe('TransactionTypeForm', () => {
       expect(mockOnSubmit).toHaveBeenCalledWith({
         name: 'Gas',
         categoryId: 'cat-1',
+        group: Group.INCOME,
         description: undefined,
       });
     });
@@ -179,7 +184,7 @@ describe('TransactionTypeForm', () => {
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 
-  it('should group categories by group in dropdown', () => {
+  it('should have group dropdown with 5 options', () => {
     render(
       <TransactionTypeForm
         categories={mockCategories}
@@ -188,8 +193,8 @@ describe('TransactionTypeForm', () => {
       />
     );
 
-    const categoryField = screen.getByLabelText(/category/i);
-    expect(categoryField).toBeInTheDocument();
+    const groupField = screen.getByLabelText(/group/i);
+    expect(groupField).toBeInTheDocument();
   });
 
   it('should clear error when user starts typing', async () => {

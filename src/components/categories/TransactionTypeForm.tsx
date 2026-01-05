@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TextField, MenuItem, Box, Button } from '@mui/material';
 import type { TransactionType, Category } from '../../types/models';
+import { Group } from '../../types/enums';
 
 interface TransactionTypeFormProps {
   transactionType?: TransactionType;
@@ -18,6 +19,7 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
   const [formData, setFormData] = useState({
     name: transactionType?.name || '',
     categoryId: transactionType?.categoryId || '',
+    group: transactionType?.group || Group.EXPENSE,
     description: transactionType?.description || '',
   });
 
@@ -34,6 +36,10 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
       newErrors.categoryId = 'Category is required';
     }
 
+    if (!formData.group) {
+      newErrors.group = 'Group is required';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -48,6 +54,7 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
     onSubmit({
       name: formData.name.trim(),
       categoryId: formData.categoryId,
+      group: formData.group,
       description: formData.description.trim() || undefined,
     });
   };
@@ -63,17 +70,22 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
       }
     };
 
-  // Group categories by group
-  const groupedCategories = categories.reduce(
-    (acc, category) => {
-      if (!acc[category.group]) {
-        acc[category.group] = [];
-      }
-      acc[category.group].push(category);
-      return acc;
-    },
-    {} as Record<string, Category[]>
-  );
+  const getGroupHelperText = (group: Group): string => {
+    switch (group) {
+      case Group.INCOME:
+        return 'Money received into an account';
+      case Group.EXPENSE:
+        return 'Money spent from an account';
+      case Group.TRANSFER:
+        return 'Money moved between accounts';
+      case Group.ASSET_PURCHASE:
+        return 'Buying or depositing into an asset (e.g., buying stocks, depositing to property)';
+      case Group.ASSET_SALE:
+        return 'Selling or withdrawing from an asset (e.g., selling stocks, withdrawing from property)';
+      default:
+        return '';
+    }
+  };
 
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate>
@@ -91,6 +103,24 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
       <TextField
         fullWidth
         select
+        label="Group"
+        value={formData.group}
+        onChange={handleChange('group')}
+        error={!!errors.group}
+        helperText={errors.group || getGroupHelperText(formData.group)}
+        margin="normal"
+        required
+      >
+        <MenuItem value={Group.INCOME}>Income</MenuItem>
+        <MenuItem value={Group.EXPENSE}>Expense</MenuItem>
+        <MenuItem value={Group.TRANSFER}>Transfer</MenuItem>
+        <MenuItem value={Group.ASSET_PURCHASE}>Asset Purchase</MenuItem>
+        <MenuItem value={Group.ASSET_SALE}>Asset Sale</MenuItem>
+      </TextField>
+
+      <TextField
+        fullWidth
+        select
         label="Category"
         value={formData.categoryId}
         onChange={handleChange('categoryId')}
@@ -99,16 +129,11 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
         margin="normal"
         required
       >
-        {Object.entries(groupedCategories).map(([group, cats]) => [
-          <MenuItem key={`header-${group}`} disabled sx={{ fontWeight: 'bold', opacity: 1 }}>
-            {group.toUpperCase()}
-          </MenuItem>,
-          ...cats.map((category) => (
-            <MenuItem key={category.id} value={category.id} sx={{ pl: 4 }}>
-              {category.name}
-            </MenuItem>
-          )),
-        ])}
+        {categories.map((category) => (
+          <MenuItem key={category.id} value={category.id}>
+            {category.name}
+          </MenuItem>
+        ))}
       </TextField>
 
       <TextField

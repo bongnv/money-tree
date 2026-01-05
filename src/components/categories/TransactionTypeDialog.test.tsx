@@ -9,7 +9,6 @@ describe('TransactionTypeDialog', () => {
     {
       id: 'cat-1',
       name: 'Groceries',
-      group: Group.EXPENSE,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
@@ -41,6 +40,7 @@ describe('TransactionTypeDialog', () => {
       id: 'tt-1',
       name: 'Supermarket',
       categoryId: 'cat-1',
+      group: Group.EXPENSE,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     };

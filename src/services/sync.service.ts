@@ -158,8 +158,9 @@ class SyncService {
   /**
    * Sync data immediately
    * Saves current state to storage provider
+   * @param background - If true, won't show blocking loading screen (used for auto-save)
    */
-  async syncNow(): Promise<void> {
+  async syncNow(background: boolean = false): Promise<void> {
     if (this.isSaving) {
       return;
     }
@@ -171,7 +172,10 @@ class SyncService {
     }
 
     this.isSaving = true;
-    state.setLoading(true);
+    // Only show blocking loading screen for user-initiated syncs
+    if (!background) {
+      state.setLoading(true);
+    }
 
     try {
       const storage = StorageFactory.getCurrentProvider();
@@ -233,7 +237,10 @@ class SyncService {
                 if (!resolutions) {
                   // User cancelled the merge
                   this.isSaving = false;
-                  state.setLoading(false);
+                  // Only clear loading if we set it (not in background)
+                  if (!background) {
+                    state.setLoading(false);
+                  }
                   return;
                 }
 
@@ -295,15 +302,11 @@ class SyncService {
       throw error;
     } finally {
       this.isSaving = false;
-      state.setLoading(false);
+      // Only clear loading state if we set it
+      if (!background) {
+        state.setLoading(false);
+      }
     }
-  }
-
-  /**
-   * @deprecated Use syncNow() instead
-   */
-  async saveNow(): Promise<void> {
-    return this.syncNow();
   }
 
   /**
@@ -318,7 +321,8 @@ class SyncService {
 
       if (state.hasUnsavedChanges && !this.isSaving) {
         try {
-          await this.syncNow();
+          // Pass true for background sync to avoid blocking UI
+          await this.syncNow(true);
         } catch (error) {
           console.error('Auto-sync failed:', error);
         }

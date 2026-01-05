@@ -209,6 +209,72 @@ describe('SyncService', () => {
       await expect(syncService.syncNow()).rejects.toThrow('Sync failed');
       expect(useAppStore.getState().error).toBe('Sync failed');
     });
+
+    it('should not show loading screen for background sync', async () => {
+      useAccountStore.getState().addAccount({
+        id: '1',
+        name: 'Test Account',
+        type: AccountType.CASH,
+        currencyId: 'USD',
+        initialBalance: 1000,
+        isActive: true,
+        description: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      useAppStore.getState().setCurrentYear(2024);
+      useAppStore.getState().setUnsavedChanges(true);
+
+      mockLoadDataFile.mockResolvedValue(null);
+      mockSaveDataFile.mockResolvedValue(undefined);
+
+      // Track loading state changes
+      const loadingStates: boolean[] = [];
+      const unsubscribe = useAppStore.subscribe((state) => {
+        loadingStates.push(state.isLoading);
+      });
+
+      await syncService.syncNow(true); // background = true
+
+      unsubscribe();
+
+      // Should never set loading to true during background sync
+      expect(loadingStates.every((state) => state === false)).toBe(true);
+      expect(useAppStore.getState().hasUnsavedChanges).toBe(false);
+    });
+
+    it('should show loading screen for foreground sync', async () => {
+      useAccountStore.getState().addAccount({
+        id: '1',
+        name: 'Test Account',
+        type: AccountType.CASH,
+        currencyId: 'USD',
+        initialBalance: 1000,
+        isActive: true,
+        description: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      useAppStore.getState().setCurrentYear(2024);
+      useAppStore.getState().setUnsavedChanges(true);
+
+      mockLoadDataFile.mockResolvedValue(null);
+      mockSaveDataFile.mockResolvedValue(undefined);
+
+      // Track loading state changes
+      const loadingStates: boolean[] = [];
+      const unsubscribe = useAppStore.subscribe((state) => {
+        loadingStates.push(state.isLoading);
+      });
+
+      await syncService.syncNow(false); // background = false (or default)
+
+      unsubscribe();
+
+      // Should set loading to true during foreground sync
+      expect(loadingStates).toContain(true);
+      expect(useAppStore.getState().hasUnsavedChanges).toBe(false);
+    });
   });
 
   describe('loadDataFile', () => {

@@ -21,12 +21,14 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import { isOneDriveConfigured } from '../../config/onedrive.config';
-import { OneDriveFilePicker, SelectedFileInfo } from '../onedrive/OneDriveFilePicker';
+import { OneDriveFilePicker } from '../onedrive/OneDriveFilePicker';
+import type { SelectedFileInfo } from '../../services/storage/OneDriveProvider';
 
 interface WelcomeDialogProps {
   open: boolean;
   onOpenLocalFile: () => void;
-  onConnectOneDrive: (fileInfo?: SelectedFileInfo) => void;
+  onAuthenticateOneDrive: () => Promise<void>;
+  onConnectOneDrive: (fileInfo: SelectedFileInfo) => Promise<void>;
   onStartEmpty: (dontShowAgain: boolean) => void;
   onListOneDriveFolders?: (parentItem?: any) => Promise<any[]>;
 }
@@ -34,6 +36,7 @@ interface WelcomeDialogProps {
 export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
   open,
   onOpenLocalFile,
+  onAuthenticateOneDrive,
   onConnectOneDrive,
   onStartEmpty,
   onListOneDriveFolders,
@@ -46,14 +49,13 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
   const handleConnectOneDrive = async () => {
     setIsConnecting(true);
     setAuthError(null);
-    setShowFilePicker(false);
+    
     try {
-      // For now, proceed without file picker to maintain backwards compatibility
-      // File picker will be shown after authentication succeeds
+      await onAuthenticateOneDrive();
       setShowFilePicker(true);
     } catch (error) {
-      console.error('OneDrive connection failed:', error);
-      setAuthError(error instanceof Error ? error.message : 'Failed to connect to OneDrive');
+      console.error('OneDrive authentication failed:', error);
+      setAuthError(error instanceof Error ? error.message : 'Failed to authenticate with OneDrive');
       setIsConnecting(false);
     }
   };

@@ -144,35 +144,9 @@ describe('LocalStorageProvider', () => {
     };
   });
 
-  describe('checkSupport', () => {
-    it('should throw error when File System Access API is not supported', async () => {
-      // Save original functions
-      const originalShowOpenFilePicker = (window as any).showOpenFilePicker;
-      const originalShowSaveFilePicker = (window as any).showSaveFilePicker;
-
-      // Remove API support
-      delete (window as any).showOpenFilePicker;
-      delete (window as any).showSaveFilePicker;
-
-      await expect(provider.loadDataFile()).rejects.toThrow(
-        'File System Access API is not supported'
-      );
-
-      // Restore original functions
-      (window as any).showOpenFilePicker = originalShowOpenFilePicker;
-      (window as any).showSaveFilePicker = originalShowSaveFilePicker;
-    });
-  });
-
   describe('loadDataFile', () => {
-    it('should return null when user cancels file picker', async () => {
-      // Mock showOpenFilePicker to throw AbortError
-      (window as any).showOpenFilePicker = jest
-        .fn()
-        .mockRejectedValue(new DOMException('User cancelled', 'AbortError'));
-
-      const result = await provider.loadDataFile();
-      expect(result).toBeNull();
+    it('should throw error when no file handle is configured', async () => {
+      await expect(provider.loadDataFile()).rejects.toThrow('No file configured');
     });
 
     it('should throw error for invalid JSON', async () => {
@@ -181,8 +155,7 @@ describe('LocalStorageProvider', () => {
       };
 
       const mockFileHandle = createMockFileHandle(mockFile);
-
-      (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
+      provider = new LocalStorageProvider(mockFileHandle);
 
       await expect(provider.loadDataFile()).rejects.toThrow();
     });
@@ -193,8 +166,7 @@ describe('LocalStorageProvider', () => {
       };
 
       const mockFileHandle = createMockFileHandle(mockFile);
-
-      (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
+      provider = new LocalStorageProvider(mockFileHandle);
 
       const result = await provider.loadDataFile();
       expect(result).toEqual(mockData);
@@ -206,12 +178,9 @@ describe('LocalStorageProvider', () => {
       };
 
       const mockFileHandle = createMockFileHandle(mockFile);
-
-      (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
+      provider = new LocalStorageProvider(mockFileHandle);
 
       await provider.loadDataFile();
-
-      expect(provider.isReady()).toBe(true);
     });
 
     it('should handle data file with null arrays', async () => {
@@ -230,8 +199,7 @@ describe('LocalStorageProvider', () => {
       };
 
       const mockFileHandle = createMockFileHandle(mockFile);
-
-      (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
+      provider = new LocalStorageProvider(mockFileHandle);
 
       const result = await provider.loadDataFile();
       expect(result).toBeDefined();
@@ -253,8 +221,7 @@ describe('LocalStorageProvider', () => {
       };
 
       const mockFileHandle = createMockFileHandle(mockFile);
-
-      (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
+      provider = new LocalStorageProvider(mockFileHandle);
 
       const result = await provider.loadDataFile();
       expect(result).toBeDefined();
@@ -272,12 +239,8 @@ describe('LocalStorageProvider', () => {
       await expect(provider.saveDataFile(invalidData)).rejects.toThrow();
     });
 
-    it('should return without error when user cancels file picker', async () => {
-      (window as any).showSaveFilePicker = jest
-        .fn()
-        .mockRejectedValue(new DOMException('User cancelled', 'AbortError'));
-
-      await expect(provider.saveDataFile(mockData)).resolves.not.toThrow();
+    it('should throw error when no file handle is configured', async () => {
+      await expect(provider.saveDataFile(mockData)).rejects.toThrow('No file configured');
     });
 
     it('should successfully save data file', async () => {
@@ -292,7 +255,7 @@ describe('LocalStorageProvider', () => {
         requestPermission: jest.fn().mockResolvedValue('granted'),
       };
 
-      (window as any).showSaveFilePicker = jest.fn().mockResolvedValue(mockFileHandle);
+      provider = new LocalStorageProvider(mockFileHandle as any);
 
       await provider.saveDataFile(mockData);
 
@@ -306,33 +269,15 @@ describe('LocalStorageProvider', () => {
       };
 
       const mockFileHandle = createMockFileHandle(mockFile);
+      provider = new LocalStorageProvider(mockFileHandle);
 
-      // First load to cache the handle
-      (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
+      // Load to initialize
       await provider.loadDataFile();
 
       // Save without showing picker
       await provider.saveDataFile(mockData);
 
       expect(mockFileHandle.createWritable).toHaveBeenCalled();
-    });
-  });
-
-  describe('clearFileHandle', () => {
-    it('should remove cached file handle', async () => {
-      const mockFile = {
-        text: jest.fn().mockResolvedValue(JSON.stringify(mockData)),
-      };
-
-      const mockFileHandle = createMockFileHandle(mockFile);
-
-      (window as any).showOpenFilePicker = jest.fn().mockResolvedValue([mockFileHandle]);
-
-      await provider.loadDataFile();
-      expect(provider.isReady()).toBe(true);
-
-      await provider.clearFileHandle();
-      expect(provider.isReady()).toBe(false);
     });
   });
 });

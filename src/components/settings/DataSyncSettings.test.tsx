@@ -7,8 +7,7 @@ import { syncService } from '../../services/sync.service';
 // Mock the sync service
 jest.mock('../../services/sync.service', () => ({
   syncService: {
-    switchFile: jest.fn(),
-    clearCachedFile: jest.fn(),
+    resetToWelcome: jest.fn(),
   },
 }));
 
@@ -40,7 +39,7 @@ describe('DataSyncSettings', () => {
     );
   };
 
-  describe('Section 1: Current File', () => {
+  describe('Current File Information', () => {
     it('should display file information', () => {
       renderComponent();
 
@@ -78,77 +77,38 @@ describe('DataSyncSettings', () => {
     });
   });
 
-  describe('Section 2: File Management', () => {
-    it('should render file management section', () => {
+  describe('Disconnect', () => {
+    it('should render disconnect section', () => {
       renderComponent();
 
-      expect(screen.getByText('File Management')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /switch file/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /clear cached file/i })).toBeInTheDocument();
+      expect(screen.getByText('Connection')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /disconnect/i })).toBeInTheDocument();
     });
 
-    it('should call switchFile when Switch File button is clicked without unsaved changes', async () => {
+    it('should show confirmation dialog when disconnect button is clicked', () => {
       renderComponent();
 
-      const switchButton = screen.getByRole('button', { name: /switch file/i });
-      fireEvent.click(switchButton);
-
-      await waitFor(() => {
-        expect(syncService.switchFile).toHaveBeenCalledWith(2024);
-      });
-    });
-
-    it('should show confirmation dialog when switching file with unsaved changes', async () => {
-      useAppStore.setState({ hasUnsavedChanges: true });
-      renderComponent();
-
-      const switchButton = screen.getByRole('button', { name: /switch file/i });
-      fireEvent.click(switchButton);
+      const disconnectButton = screen.getByRole('button', { name: /disconnect/i });
+      fireEvent.click(disconnectButton);
 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
-      expect(screen.getAllByText(/unsaved changes/i).length).toBeGreaterThan(0);
+      expect(screen.getByText(/Disconnect from Current File/i)).toBeInTheDocument();
     });
 
-    it('should call switchFile after confirming dialog', async () => {
-      useAppStore.setState({ hasUnsavedChanges: true });
-      renderComponent();
-
-      const switchButton = screen.getByRole('button', { name: /switch file/i });
-      fireEvent.click(switchButton);
-
-      // Find the confirm button in the dialog
-      const confirmButton = screen.getByRole('button', { name: 'Switch File' });
-      fireEvent.click(confirmButton);
-
-      await waitFor(() => {
-        expect(syncService.switchFile).toHaveBeenCalledWith(2024);
-      });
-    });
-
-    it('should show confirmation dialog when clearing cached file', () => {
-      renderComponent();
-
-      const clearButton = screen.getByRole('button', { name: /clear cached file/i });
-      fireEvent.click(clearButton);
-
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
-      expect(screen.getByText(/remove the cached file reference/i)).toBeInTheDocument();
-    });
-
-    it('should call clearCachedFile, clear localStorage, and navigate after confirming', async () => {
+    it('should call resetToWelcome, clear localStorage, and navigate after confirming', async () => {
       // Mock localStorage
       const removeItemSpy = jest.spyOn(Storage.prototype, 'removeItem');
 
       renderComponent();
 
-      const clearButton = screen.getByRole('button', { name: /clear cached file/i });
-      fireEvent.click(clearButton);
+      const disconnectButton = screen.getByRole('button', { name: /disconnect/i });
+      fireEvent.click(disconnectButton);
 
-      const confirmButton = screen.getByRole('button', { name: /clear cache/i });
+      const confirmButton = screen.getByRole('button', { name: 'Disconnect' });
       fireEvent.click(confirmButton);
 
       await waitFor(() => {
-        expect(syncService.clearCachedFile).toHaveBeenCalled();
+        expect(syncService.resetToWelcome).toHaveBeenCalled();
         expect(removeItemSpy).toHaveBeenCalledWith('moneyTree.welcomeDismissed');
         expect(mockNavigate).toHaveBeenCalledWith('/');
       });
@@ -156,74 +116,12 @@ describe('DataSyncSettings', () => {
       removeItemSpy.mockRestore();
     });
 
-    it('should disable Clear Cached File button when no file is loaded', () => {
+    it('should disable disconnect button when no file is loaded', () => {
       useAppStore.setState({ fileName: null });
       renderComponent();
 
-      const clearButton = screen.getByRole('button', { name: /clear cached file/i });
-      expect(clearButton).toBeDisabled();
-    });
-  });
-
-  describe('Section 3: Storage Provider', () => {
-    it('should render storage provider section', () => {
-      renderComponent();
-
-      expect(screen.getByText('Storage Provider')).toBeInTheDocument();
-      expect(screen.getByText(/choose where your data is stored/i)).toBeInTheDocument();
-    });
-
-    it('should display Local File System as selected', () => {
-      renderComponent();
-
-      expect(screen.getByText('Local File System')).toBeInTheDocument();
-    });
-
-    it('should allow provider selection', () => {
-      renderComponent();
-
-      const select = screen.getByRole('combobox');
-      expect(select).not.toBeDisabled();
-    });
-  });
-
-  describe('Error handling', () => {
-    it('should handle switchFile errors gracefully', async () => {
-      (syncService.switchFile as jest.Mock).mockRejectedValue(new Error('Switch failed'));
-      const consoleError = jest.spyOn(console, 'error').mockImplementation();
-
-      renderComponent();
-
-      const switchButton = screen.getByRole('button', { name: /switch file/i });
-      fireEvent.click(switchButton);
-
-      await waitFor(() => {
-        expect(consoleError).toHaveBeenCalledWith('Failed to switch file:', expect.any(Error));
-      });
-
-      consoleError.mockRestore();
-    });
-
-    it('should handle clearCachedFile errors gracefully', async () => {
-      (syncService.clearCachedFile as jest.Mock).mockRejectedValue(new Error('Clear failed'));
-      const consoleError = jest.spyOn(console, 'error').mockImplementation();
-
-      renderComponent();
-
-      const clearButton = screen.getByRole('button', { name: /clear cached file/i });
-      fireEvent.click(clearButton);
-
-      const confirmButton = screen.getByRole('button', { name: /clear cache/i });
-      fireEvent.click(confirmButton);
-
-      await waitFor(() => {
-        expect(consoleError).toHaveBeenCalledWith(
-          'Failed to clear cached file:',
-          expect.any(Error)
-        );
-      });
-
-      consoleError.mockRestore();
+      const disconnectButton = screen.getByRole('button', { name: /disconnect/i });
+      expect(disconnectButton).toBeDisabled();
     });
   });
 });

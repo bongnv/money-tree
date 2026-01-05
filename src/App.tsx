@@ -10,13 +10,12 @@ import { WelcomeDialog } from './components/common/WelcomeDialog';
 import { NotificationSnackbar } from './components/common/NotificationSnackbar';
 import { MergePreviewDialog, ConflictResolution } from './components/common/MergePreviewDialog';
 import { ArchivePrompt } from './components/common/ArchivePrompt';
-import { OneDriveFilePicker } from './components/onedrive/OneDriveFilePicker';
 import { AppRoutes } from './routes';
 import { useAppStore } from './stores/useAppStore';
 import { syncService } from './services/sync.service';
+import { FilePickerService } from './services/storage/FilePickerService';
 import { StorageFactory, StorageProviderType } from './services/storage/StorageFactory';
-import { OneDriveProvider } from './services/storage/OneDriveProvider';
-import { SelectedFileInfo } from './components/onedrive/OneDriveFilePicker';
+import { SelectedFileInfo } from './services/storage/OneDriveProvider';
 import { MergeResult } from './services/merge.service';
 import {
   shouldPromptArchive,
@@ -57,13 +56,6 @@ const App: React.FC = () => {
     mergeResult: null,
     resolve: null,
   });
-  const [onedrivePickerState, setOnedrivePickerState] = useState<{
-    open: boolean;
-    defaultFileName: string;
-  }>({
-    open: false,
-    defaultFileName: 'money-tree.json',
-  });
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -96,21 +88,9 @@ const App: React.FC = () => {
     initializeApp();
     syncService.startAutoSave();
 
-    // Set up OneDrive picker handler
-    const handleOnedrivePickerOpen = (event: Event) => {
-      const customEvent = event as CustomEvent<{ defaultFileName: string }>;
-      setOnedrivePickerState({
-        open: true,
-        defaultFileName: customEvent.detail.defaultFileName,
-      });
-    };
-
-    window.addEventListener('onedrive-file-picker-open', handleOnedrivePickerOpen);
-
     return () => {
       syncService.stopAutoSave();
       syncService.setMergeHandler(null);
-      window.removeEventListener('onedrive-file-picker-open', handleOnedrivePickerOpen);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
@@ -145,33 +125,34 @@ const App: React.FC = () => {
 
   const handleOpenLocalFile = async () => {
     try {
-      // Make sure we're using local storage provider
-      StorageFactory.setProviderType(StorageProviderType.LOCAL);
+      // Show file picker to select a local file
+      const fileHandle = await FilePickerService.showOpenFilePicker();
+      if (!fileHandle) {
+        // User cancelled
+        return;
+      }
+
+      // Switch to local storage provider with selected file
+      await StorageFactory.replaceProvider(StorageProviderType.LOCAL, { fileHandle });
+
+      // Load data from the selected file
       await syncService.loadDataFile(currentYear);
       setShowWelcomeDialog(false);
     } catch (error) {
       console.error('Failed to open file:', error);
+      throw error; // Re-throw so WelcomeDialog can show error
     }
   };
 
-  const handleConnectOneDrive = async (fileInfo?: SelectedFileInfo) => {
+  const handleAuthenticateOneDrive = async () => {
+    const service = StorageFactory.getOneDriveService();
+    await service.authenticate();
+  };
+
+  const handleConnectOneDrive = async (fileInfo: SelectedFileInfo) => {
     try {
-      // Switch to OneDrive provider
-      StorageFactory.setProviderType(StorageProviderType.ONEDRIVE);
-
-      // Get OneDrive provider and authenticate if needed
-      const provider = StorageFactory.getCurrentProvider() as OneDriveProvider;
-      await provider.initialize();
-
-      // Only authenticate if not already authenticated (prevents double auth popup)
-      if (!provider.isAuthenticated()) {
-        await provider.authenticate();
-      }
-
-      // Set selected file location if provided
-      if (fileInfo) {
-        provider.setSelectedFile(fileInfo);
-      }
+      // Finalize connection: switch provider and load file
+      await StorageFactory.replaceProvider(StorageProviderType.ONEDRIVE, { fileInfo });
 
       // Try to load existing file from OneDrive
       try {
@@ -189,17 +170,8 @@ const App: React.FC = () => {
   };
 
   const handleListOneDriveFolders = async (parentItem?: any) => {
-    // Switch to OneDrive provider temporarily to use its API
-    StorageFactory.setProviderType(StorageProviderType.ONEDRIVE);
-    const provider = StorageFactory.getCurrentProvider() as OneDriveProvider;
-    await provider.initialize();
-
-    // If not authenticated yet, authenticate first
-    if (!provider.isAuthenticated()) {
-      await provider.authenticate();
-    }
-
-    return provider.listFolders(parentItem);
+    const service = StorageFactory.getOneDriveService();
+    return service.listFolders(parentItem);
   };
 
   const handleStartEmpty = (dontShowAgain: boolean) => {
@@ -228,22 +200,6 @@ const App: React.FC = () => {
     setMergeDialogState({ open: false, mergeResult: null, resolve: null });
   };
 
-  const handleOnedrivePickerSelect = (fileInfo: SelectedFileInfo) => {
-    const provider = StorageFactory.getCurrentProvider();
-    if (provider instanceof OneDriveProvider) {
-      provider.resolveFilePicker(fileInfo);
-    }
-    setOnedrivePickerState({ open: false, defaultFileName: 'money-tree.json' });
-  };
-
-  const handleOnedrivePickerCancel = () => {
-    const provider = StorageFactory.getCurrentProvider();
-    if (provider instanceof OneDriveProvider) {
-      provider.rejectFilePicker();
-    }
-    setOnedrivePickerState({ open: false, defaultFileName: 'money-tree.json' });
-  };
-
   const handleArchiveNow = async () => {
     if (!archiveYear) return;
 
@@ -255,12 +211,11 @@ const App: React.FC = () => {
       const archiveFile = createArchiveFile(archiveYear, baseCurrency);
 
       // Save archive file
-      const fileName = await saveArchiveFile(archiveFile);
+      await saveArchiveFile(archiveFile);
 
       // Create archive reference
       const archiveReference = {
         year: archiveYear,
-        fileName,
         archivedDate: archiveFile.archivedDate,
         summary: archiveFile.summary,
       };
@@ -299,6 +254,7 @@ const App: React.FC = () => {
       <WelcomeDialog
         open={showWelcomeDialog}
         onOpenLocalFile={handleOpenLocalFile}
+        onAuthenticateOneDrive={handleAuthenticateOneDrive}
         onConnectOneDrive={handleConnectOneDrive}
         onStartEmpty={handleStartEmpty}
         onListOneDriveFolders={handleListOneDriveFolders}
@@ -327,13 +283,6 @@ const App: React.FC = () => {
           onRemindLater={handleArchiveRemindLater}
         />
       )}
-      <OneDriveFilePicker
-        open={onedrivePickerState.open}
-        defaultFileName={onedrivePickerState.defaultFileName}
-        onSelect={handleOnedrivePickerSelect}
-        onCancel={handleOnedrivePickerCancel}
-        onListFolders={handleListOneDriveFolders}
-      />
       <Backdrop
         open={isLoading || isArchiving}
         sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}

@@ -49,7 +49,6 @@ describe('Multi-Year Schemas', () => {
     it('should validate a valid archived year reference', () => {
       const validReference = {
         year: 2025,
-        fileName: 'money-tree-2025.json',
         archivedDate: '2026-01-01T00:00:00.000Z',
         summary: {
           transactionCount: 100,
@@ -65,23 +64,6 @@ describe('Multi-Year Schemas', () => {
     it('should reject invalid year', () => {
       const invalidReference = {
         year: 1800,
-        fileName: 'money-tree-1800.json',
-        archivedDate: '2026-01-01T00:00:00.000Z',
-        summary: {
-          transactionCount: 0,
-          closingNetWorth: 0,
-          closingBalances: {},
-        },
-      };
-
-      const result = ArchivedYearReferenceSchema.safeParse(invalidReference);
-      expect(result.success).toBe(false);
-    });
-
-    it('should reject missing fileName', () => {
-      const invalidReference = {
-        year: 2025,
-        fileName: '',
         archivedDate: '2026-01-01T00:00:00.000Z',
         summary: {
           transactionCount: 0,

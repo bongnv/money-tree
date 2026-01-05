@@ -145,7 +145,6 @@ export interface YearEndSummary {
  */
 export interface ArchivedYearReference {
   year: number;
-  fileName: string;
   archivedDate: string; // ISO date string
   summary: YearEndSummary;
 }

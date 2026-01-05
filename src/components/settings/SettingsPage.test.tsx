@@ -78,7 +78,7 @@ describe('SettingsPage', () => {
 
     await user.click(screen.getByRole('tab', { name: /preferences/i }));
     expect(screen.getByText(/Currency Settings/i)).toBeInTheDocument();
-    expect(screen.getByText(/Storage Provider/i)).toBeInTheDocument();
+    expect(screen.getByText(/Connection/i)).toBeInTheDocument();
   });
 
   it('switches to Exchange Rates tab', async () => {

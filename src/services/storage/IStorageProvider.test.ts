@@ -20,16 +20,8 @@ describe('IStorageProvider', () => {
       this.dataFile = data;
     }
 
-    async initialize(): Promise<void> {
-      // Mock initialization
-    }
-
-    isReady(): boolean {
-      return true;
-    }
-
-    clearFileHandle(): void {
-      // Mock clear
+    async saveArchiveFile(): Promise<void> {
+      // Mock archive save
     }
 
     getFileName(): string | null {

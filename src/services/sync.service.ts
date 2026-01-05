@@ -5,7 +5,7 @@ import { useTransactionStore } from '../stores/useTransactionStore';
 import { useAssetStore } from '../stores/useAssetStore';
 import { useBudgetStore } from '../stores/useBudgetStore';
 import { useExchangeRateStore } from '../stores/useExchangeRateStore';
-import { StorageFactory } from './storage/StorageFactory';
+import { StorageFactory, StorageProviderType } from './storage/StorageFactory';
 import type { DataFile } from '../types/models';
 import { calculateDataFileHash } from '../utils/hash.utils';
 import { performThreeWayMerge, Conflict, MergeResult } from './merge.service';
@@ -411,20 +411,7 @@ class SyncService {
     const state = useAppStore.getState();
 
     try {
-      const storage = StorageFactory.getCurrentProvider();
-
-      // Initialize provider (handles auth for cloud, file handle cache for local)
-      if (storage.initialize) {
-        await storage.initialize();
-      }
-
-      // Check if provider is ready to load data
-      if (!storage.isReady()) {
-        console.info('Provider not ready for auto-load');
-        return false;
-      }
-
-      // Try to load file from provider
+      // Try to load file from provider (initialization happens in constructor)
       const currentYear = state.currentYear || new Date().getFullYear();
       await this.loadDataFile(currentYear);
       return true;
@@ -459,30 +446,26 @@ class SyncService {
   }
 
   /**
-   * Switch to a different data file
-   * Prompts user to select a new file and loads it
+   * Reset all data and redirect to welcome dialog
+   * Clears all stores and cached data, user will need to reconnect on next visit
    */
-  async switchFile(year: number): Promise<void> {
-    const storage = StorageFactory.getCurrentProvider();
+  async resetToWelcome(): Promise<void> {
+    // Disconnect OneDrive service if active
+    const providerType = StorageFactory.getProviderType();
+    if (providerType === StorageProviderType.ONEDRIVE) {
+      const service = StorageFactory.getOneDriveService();
+      service.disconnect();
+    }
 
-    // Clear the cached file handle to force file picker
-    await storage.clearFileHandle();
+    // Clear file handle cache from IndexedDB (managed by StorageFactory)
+    await StorageFactory.clearFileHandleCache();
 
-    // Clear the cached data file
-    this.cachedDataFile = null;
+    // Clear StorageFactory cache and reset to default provider
+    StorageFactory.clearCache();
+    StorageFactory.setProviderType(StorageProviderType.LOCAL);
 
-    // Load the new file
-    await this.loadDataFile(year);
-  }
-
-  /**
-   * Clear cached file reference and reset all data
-   * User will need to select file again on next visit
-   */
-  async clearCachedFile(): Promise<void> {
-    const storage = StorageFactory.getCurrentProvider();
-
-    await storage.clearFileHandle();
+    // Clear provider config from localStorage
+    localStorage.removeItem('moneyTree.storageProviderConfig');
 
     // Clear the cached data file
     this.cachedDataFile = null;

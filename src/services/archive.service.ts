@@ -175,11 +175,10 @@ export function createArchiveFile(year: number, baseCurrency: string): ArchiveFi
 
 /**
  * Save archive file using the current storage provider
- * @returns Promise that resolves to the file name on success
  */
-export async function saveArchiveFile(archiveFile: ArchiveFile): Promise<string> {
+export async function saveArchiveFile(archiveFile: ArchiveFile): Promise<void> {
   const provider = StorageFactory.getCurrentProvider();
-  return await provider.saveArchiveFile(archiveFile);
+  await provider.saveArchiveFile(archiveFile);
 }
 
 /**

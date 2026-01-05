@@ -170,7 +170,6 @@ export const YearEndSummarySchema = z.object({
  */
 export const ArchivedYearReferenceSchema = z.object({
   year: z.number().int().min(1900).max(2100),
-  fileName: z.string().min(1),
   archivedDate: z.string().datetime(),
   summary: YearEndSummarySchema,
 });

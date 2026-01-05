@@ -58,12 +58,11 @@ export const ArchiveManager: React.FC = () => {
       const archiveFile = createArchiveFile(year, baseCurrency);
 
       // Save archive file using storage provider
-      const fileName = await saveArchiveFile(archiveFile);
+      await saveArchiveFile(archiveFile);
 
       // Create archive reference
       const archiveReference = {
         year,
-        fileName,
         archivedDate: archiveFile.archivedDate,
         summary: archiveFile.summary,
       };
@@ -186,7 +185,6 @@ export const ArchiveManager: React.FC = () => {
                 <TableRow>
                   <TableCell>Year</TableCell>
                   <TableCell>Archived Date</TableCell>
-                  <TableCell>File Name</TableCell>
                   <TableCell align="right">Transactions</TableCell>
                   <TableCell align="right">Net Worth</TableCell>
                 </TableRow>
@@ -198,9 +196,6 @@ export const ArchiveManager: React.FC = () => {
                       <Chip label={archived.year} size="small" color="default" />
                     </TableCell>
                     <TableCell>{new Date(archived.archivedDate).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <code>{archived.fileName}</code>
-                    </TableCell>
                     <TableCell align="right">{archived.summary.transactionCount}</TableCell>
                     <TableCell align="right">
                       {formatCurrency(archived.summary.closingNetWorth, baseCurrency)}

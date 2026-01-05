@@ -3,54 +3,38 @@ import type { DataFile, ArchiveFile } from '../../types/models';
 /**
  * Storage provider interface
  * Defines the contract for storage implementations (local, OneDrive, Google Drive, etc.)
+ *
+ * File pickers should be shown BEFORE initializing the provider.
+ * Providers should never show file pickers - they only work with provided file handles/info.
  */
 export interface IStorageProvider {
   /**
-   * Load multi-year data file
-   * Shows file picker if no cached file handle exists
+   * Load multi-year data file from the configured file location
+   * File handle/info must be set before calling this method
    * @returns Promise with the data file, or null if file doesn't exist
-   * @throws Error if loading fails
+   * @throws Error if loading fails or no file is configured
    */
   loadDataFile(): Promise<DataFile | null>;
 
   /**
-   * Save multi-year data file
-   * Uses cached file handle when available, shows picker if not cached
+   * Save multi-year data file to the configured file location
+   * File handle/info must be set before calling this method
    * @param data The data file to save
-   * @throws Error if saving fails
+   * @throws Error if saving fails or no file is configured
    */
   saveDataFile(data: DataFile): Promise<void>;
 
   /**
    * Save archive file for a specific year
-   * Always shows file picker to let user choose location
    * @param archiveFile The archive file to save
-   * @returns Promise that resolves to the file name
+   * @param fileHandle Optional file handle for local storage (from external file picker)
    * @throws Error if saving fails
    */
-  saveArchiveFile(archiveFile: ArchiveFile): Promise<string>;
-
-  /**
-   * Clear cached file handle or sign out
-   */
-  clearFileHandle(): void | Promise<void>;
+  saveArchiveFile(archiveFile: ArchiveFile, fileHandle?: any): Promise<void>;
 
   /**
    * Get the name of the current file
-   * @returns File name or null if no file is open
+   * @returns File name or null if no file is configured
    */
   getFileName(): string | null;
-
-  /**
-   * Initialize the provider
-   * Sets up necessary state, authentication, or resources
-   * Should be called before any other operations
-   */
-  initialize(): Promise<void>;
-
-  /**
-   * Check if provider is ready to load/save data
-   * @returns True if ready (has file handle, authenticated, etc.), false otherwise
-   */
-  isReady(): boolean;
 }

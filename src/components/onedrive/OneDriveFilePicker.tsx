@@ -29,32 +29,8 @@ import {
   CloudQueue as CloudIcon,
   People as PeopleIcon,
 } from '@mui/icons-material';
-
-export interface DriveItem {
-  id: string;
-  name: string;
-  folder?: { childCount: number };
-  file?: { mimeType: string };
-  parentReference?: {
-    id: string;
-    path: string;
-    driveId?: string;
-  };
-  remoteItem?: {
-    id: string;
-    name: string;
-    parentReference?: {
-      driveId: string;
-    };
-  };
-}
-
-export interface SelectedFileInfo {
-  fileId: string;
-  filePath: string;
-  fileName: string;
-  isNew: boolean;
-}
+import type { SelectedFileInfo } from '../../services/storage/OneDriveProvider';
+import type { DriveItem } from '../../services/storage/OneDriveService';
 
 interface OneDriveFilePickerProps {
   open: boolean;

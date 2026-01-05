@@ -3,7 +3,11 @@ import {
   StorageProviderType,
   LocalStorageProvider,
   OneDriveProvider,
+  OneDriveService,
 } from './index';
+
+// Mock OneDriveService
+jest.mock('./OneDriveService');
 
 /**
  * Tests for StorageFactory
@@ -15,6 +19,8 @@ describe('StorageFactory', () => {
     StorageFactory.setProviderType(StorageProviderType.LOCAL);
     // Clear localStorage
     localStorage.clear();
+    // Clear mock
+    jest.clearAllMocks();
   });
 
   describe('getCurrentProvider', () => {
@@ -81,6 +87,40 @@ describe('StorageFactory', () => {
     it('should persist provider type to localStorage', () => {
       StorageFactory.setProviderType(StorageProviderType.ONEDRIVE);
       expect(localStorage.getItem('moneyTree.storageProvider')).toBe(StorageProviderType.ONEDRIVE);
+    });
+  });
+
+  describe('replaceProvider', () => {
+    it('should replace provider with new configuration', () => {
+      const provider1 = StorageFactory.getCurrentProvider();
+      StorageFactory.replaceProvider(StorageProviderType.LOCAL, {});
+      const provider2 = StorageFactory.getCurrentProvider();
+
+      expect(provider1).not.toBe(provider2);
+    });
+
+    it('should save fileInfo config to localStorage', () => {
+      const fileInfo = {
+        fileId: 'test-id',
+        filePath: '/test/path',
+        fileName: 'test.json',
+        isNew: false,
+      };
+
+      StorageFactory.replaceProvider(StorageProviderType.ONEDRIVE, { fileInfo });
+
+      const saved = localStorage.getItem('moneyTree.storageProviderConfig');
+      expect(saved).toBeTruthy();
+      expect(JSON.parse(saved!)).toEqual({ fileInfo });
+    });
+  });
+
+  describe('getOneDriveService', () => {
+    it('should return OneDriveService singleton', () => {
+      const service1 = StorageFactory.getOneDriveService();
+      const service2 = StorageFactory.getOneDriveService();
+      expect(service1).toBe(service2);
+      expect(service1).toBeInstanceOf(OneDriveService);
     });
   });
 

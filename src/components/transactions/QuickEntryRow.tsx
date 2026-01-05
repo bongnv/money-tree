@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { Box, TextField, IconButton, Tooltip, Autocomplete } from '@mui/material';
 import { Add as AddIcon, Clear as ClearIcon, MoreHoriz as MoreIcon } from '@mui/icons-material';
 import type {
@@ -88,46 +88,6 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
     }
     return null;
   }, [formData.transactionTypeId, transactionTypes]);
-
-  // Clear inappropriate fields when transaction type/group changes
-  useEffect(() => {
-    const updates: Partial<typeof formData> = {};
-    
-    // Clear fromAccount if not needed for this group
-    if (
-      selectedGroup !== Group.EXPENSE &&
-      selectedGroup !== Group.TRANSFER &&
-      selectedGroup !== Group.ASSET_PURCHASE &&
-      formData.fromAccountId
-    ) {
-      updates.fromAccountId = '';
-    }
-    
-    // Clear toAccount if not needed for this group
-    if (
-      selectedGroup !== Group.INCOME &&
-      selectedGroup !== Group.TRANSFER &&
-      selectedGroup !== Group.ASSET_SALE &&
-      formData.toAccountId
-    ) {
-      updates.toAccountId = '';
-    }
-    
-    // Clear fromAsset if not needed
-    if (selectedGroup !== Group.ASSET_SALE && formData.fromAssetId) {
-      updates.fromAssetId = '';
-    }
-    
-    // Clear toAsset if not needed
-    if (selectedGroup !== Group.ASSET_PURCHASE && formData.toAssetId) {
-      updates.toAssetId = '';
-    }
-    
-    // Only update if there are changes
-    if (Object.keys(updates).length > 0) {
-      setFormData((prev) => ({ ...prev, ...updates }));
-    }
-  }, [selectedGroup, formData.fromAccountId, formData.toAccountId, formData.fromAssetId, formData.toAssetId]);
 
   const validate = (): boolean => {
     const transactionType = transactionTypes.find((tt) => tt.id === formData.transactionTypeId);
@@ -383,12 +343,38 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
         options={transactionTypes}
         value={transactionTypes.find((tt) => tt.id === formData.transactionTypeId) || null}
         onChange={(_, newValue) => {
-          setFormData({
-            ...formData,
-            transactionTypeId: newValue?.id || '',
-            // Clear asset fields when changing type
+          const newTypeId = newValue?.id || '';
+          const newTransactionType = transactionTypes.find((tt) => tt.id === newTypeId);
+          const newGroup = newTransactionType?.group;
+
+          // Clear fields that aren't needed for the new group
+          const updates: Partial<typeof formData> = {
+            transactionTypeId: newTypeId,
             fromAssetId: '',
             toAssetId: '',
+          };
+
+          // Clear fromAccount if not needed for new group
+          if (
+            newGroup !== Group.EXPENSE &&
+            newGroup !== Group.TRANSFER &&
+            newGroup !== Group.ASSET_PURCHASE
+          ) {
+            updates.fromAccountId = '';
+          }
+
+          // Clear toAccount if not needed for new group
+          if (
+            newGroup !== Group.INCOME &&
+            newGroup !== Group.TRANSFER &&
+            newGroup !== Group.ASSET_SALE
+          ) {
+            updates.toAccountId = '';
+          }
+
+          setFormData({
+            ...formData,
+            ...updates,
           });
           if (errors.transactionTypeId) {
             setErrors({ ...errors, transactionTypeId: '' });

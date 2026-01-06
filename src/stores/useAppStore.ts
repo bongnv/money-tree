@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { storageService } from '../services/storage.service';
 import { AlertColor } from '@mui/material';
 import { DataFile } from '../types/models';
+import { Currency } from '../types/enums';
 
 interface SnackbarState {
   open: boolean;
@@ -17,7 +18,7 @@ interface AppState {
   isLoading: boolean;
   error: string | null;
   snackbar: SnackbarState;
-  baseCurrency: string; // Currency ID for reporting (default: 'usd')
+  baseCurrency: Currency; // Currency for reporting
   // Conflict detection metadata
   fileContentHash: string | null;
   fileLoadedAt: string | null;
@@ -37,7 +38,7 @@ interface AppActions {
   resetState: () => void;
   showSnackbar: (message: string, severity?: AlertColor) => void;
   hideSnackbar: () => void;
-  setBaseCurrency: (currencyId: string) => void;
+  setBaseCurrency: (currencyId: Currency) => void;
   // Conflict detection actions
   setFileMetadata: (hash: string, loadedAt: string, baseVersion: DataFile) => void;
   clearFileMetadata: () => void;
@@ -52,9 +53,9 @@ const getCurrentYear = (): number => {
 
 export const useAppStore = create<AppState & AppActions>((set) => ({
   currentYear: getCurrentYear(),
-  fileName: storageService.getFileName(),
-  lastSaved: storageService.getLastSaved(),
-  hasUnsavedChanges: storageService.getUnsavedChanges(),
+  fileName: null,
+  lastSaved: null,
+  hasUnsavedChanges: false,
   isLoading: false,
   error: null,
   snackbar: {
@@ -62,7 +63,7 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
     message: '',
     severity: 'info',
   },
-  baseCurrency: storageService.getBaseCurrency(),
+  baseCurrency: Currency.USD,
   fileContentHash: null,
   fileLoadedAt: null,
   baseVersion: null,
@@ -74,21 +75,14 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
   },
 
   setFileName: (fileName) => {
-    if (fileName) {
-      storageService.setFileName(fileName);
-    } else {
-      storageService.clearFileName();
-    }
     set({ fileName });
   },
 
   setLastSaved: (timestamp) => {
-    storageService.setLastSaved(timestamp);
     set({ lastSaved: timestamp });
   },
 
   setUnsavedChanges: (hasChanges) => {
-    storageService.setUnsavedChanges(hasChanges);
     set({ hasUnsavedChanges: hasChanges });
   },
 
@@ -102,8 +96,6 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
 
   markAsSaved: () => {
     const now = new Date().toISOString();
-    storageService.setLastSaved(now);
-    storageService.setUnsavedChanges(false);
     set({ lastSaved: now, hasUnsavedChanges: false });
   },
 
@@ -121,7 +113,7 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
         message: '',
         severity: 'info',
       },
-      baseCurrency: 'usd',
+      baseCurrency: Currency.USD,
       fileContentHash: null,
       fileLoadedAt: null,
       baseVersion: null,
@@ -137,9 +129,7 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
   },
 
   setBaseCurrency: (currencyId) => {
-    storageService.setBaseCurrency(currencyId);
     set({ baseCurrency: currencyId, hasUnsavedChanges: true });
-    storageService.setUnsavedChanges(true);
   },
 
   setFileMetadata: (hash, loadedAt, baseVersion) => {

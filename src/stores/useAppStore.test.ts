@@ -41,7 +41,6 @@ describe('useAppStore', () => {
     });
 
     expect(result.current.hasUnsavedChanges).toBe(true);
-    expect(storageService.getUnsavedChanges()).toBe(true);
   });
 
   it('should set file name and persist to storage', () => {
@@ -52,7 +51,6 @@ describe('useAppStore', () => {
     });
 
     expect(result.current.fileName).toBe('money-tree-2024.json');
-    expect(storageService.getFileName()).toBe('money-tree-2024.json');
   });
 
   it('should clear file name when set to null', () => {
@@ -64,19 +62,6 @@ describe('useAppStore', () => {
     });
 
     expect(result.current.fileName).toBeNull();
-    expect(storageService.getFileName()).toBeNull();
-  });
-
-  it('should set last saved timestamp and persist to storage', () => {
-    const { result } = renderHook(() => useAppStore());
-    const timestamp = new Date().toISOString();
-
-    act(() => {
-      result.current.setLastSaved(timestamp);
-    });
-
-    expect(result.current.lastSaved).toBe(timestamp);
-    expect(storageService.getLastSaved()).toBe(timestamp);
   });
 
   it('should set unsaved changes flag and persist to storage', () => {
@@ -87,14 +72,12 @@ describe('useAppStore', () => {
     });
 
     expect(result.current.hasUnsavedChanges).toBe(true);
-    expect(storageService.getUnsavedChanges()).toBe(true);
 
     act(() => {
       result.current.setUnsavedChanges(false);
     });
 
     expect(result.current.hasUnsavedChanges).toBe(false);
-    expect(storageService.getUnsavedChanges()).toBe(false);
   });
 
   it('should set loading state', () => {
@@ -140,8 +123,6 @@ describe('useAppStore', () => {
 
     expect(result.current.hasUnsavedChanges).toBe(false);
     expect(result.current.lastSaved).toBeTruthy();
-    expect(storageService.getUnsavedChanges()).toBe(false);
-    expect(storageService.getLastSaved()).toBeTruthy();
   });
 
   it('should reset state and clear storage', () => {

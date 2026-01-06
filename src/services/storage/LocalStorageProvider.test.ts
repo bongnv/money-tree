@@ -1,5 +1,6 @@
 import { LocalStorageProvider } from './index';
 import type { DataFile } from '../../types/models';
+import { Currency } from '../../types/enums';
 
 // Mock IndexedDB
 const mockIndexedDB = {
@@ -139,7 +140,7 @@ describe('LocalStorageProvider', () => {
       categories: [],
       transactionTypes: [],
       archivedYears: [],
-      baseCurrency: 'usd',
+      baseCurrency: Currency.USD,
       lastModified: new Date().toISOString(),
     };
   });

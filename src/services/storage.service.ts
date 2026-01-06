@@ -1,10 +1,6 @@
 const STORAGE_KEYS = {
   CURRENT_YEAR: 'moneytree_current_year',
-  LAST_SAVED: 'moneytree_last_saved',
-  UNSAVED_CHANGES: 'moneytree_unsaved_changes',
   STORAGE_PROVIDER: 'moneytree_storage_provider',
-  FILE_NAME: 'moneytree_file_name',
-  BASE_CURRENCY: 'moneytree_base_currency',
   ARCHIVE_PROMPT_POSTPONED_AT: 'moneytree_archive_prompt_postponed_at',
 } as const;
 
@@ -18,48 +14,12 @@ export const storageService = {
     localStorage.setItem(STORAGE_KEYS.CURRENT_YEAR, year.toString());
   },
 
-  getLastSaved(): string | null {
-    return localStorage.getItem(STORAGE_KEYS.LAST_SAVED);
-  },
-
-  setLastSaved(timestamp: string): void {
-    localStorage.setItem(STORAGE_KEYS.LAST_SAVED, timestamp);
-  },
-
-  getUnsavedChanges(): boolean {
-    return localStorage.getItem(STORAGE_KEYS.UNSAVED_CHANGES) === 'true';
-  },
-
-  setUnsavedChanges(hasChanges: boolean): void {
-    localStorage.setItem(STORAGE_KEYS.UNSAVED_CHANGES, hasChanges.toString());
-  },
-
   getStorageProvider(): string {
     return localStorage.getItem(STORAGE_KEYS.STORAGE_PROVIDER) || 'local';
   },
 
   setStorageProvider(provider: string): void {
     localStorage.setItem(STORAGE_KEYS.STORAGE_PROVIDER, provider);
-  },
-
-  getFileName(): string | null {
-    return localStorage.getItem(STORAGE_KEYS.FILE_NAME);
-  },
-
-  setFileName(fileName: string): void {
-    localStorage.setItem(STORAGE_KEYS.FILE_NAME, fileName);
-  },
-
-  clearFileName(): void {
-    localStorage.removeItem(STORAGE_KEYS.FILE_NAME);
-  },
-
-  getBaseCurrency(): string {
-    return localStorage.getItem(STORAGE_KEYS.BASE_CURRENCY) || 'usd';
-  },
-
-  setBaseCurrency(currencyId: string): void {
-    localStorage.setItem(STORAGE_KEYS.BASE_CURRENCY, currencyId);
   },
 
   getArchivePromptPostponedAt(): string | null {

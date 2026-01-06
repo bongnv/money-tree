@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   Paper,
@@ -7,26 +7,19 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Alert,
   Divider,
 } from '@mui/material';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
 import { useAppStore } from '../../stores/useAppStore';
 import { DataSyncSettings } from './DataSyncSettings';
+import { Currency } from '../../types/enums';
 
 export const PreferencesPage: React.FC = () => {
   const baseCurrency = useAppStore((state) => state.baseCurrency);
   const setBaseCurrency = useAppStore((state) => state.setBaseCurrency);
-  const [showSaveNotice, setShowSaveNotice] = useState(false);
 
-  const handleCurrencyChange = (newCurrency: string) => {
+  const handleCurrencyChange = (newCurrency: Currency) => {
     setBaseCurrency(newCurrency);
-    setShowSaveNotice(true);
-
-    // Hide notice after 3 seconds
-    setTimeout(() => {
-      setShowSaveNotice(false);
-    }, 3000);
   };
 
   return (
@@ -34,12 +27,6 @@ export const PreferencesPage: React.FC = () => {
       <Typography variant="h4" gutterBottom>
         Preferences
       </Typography>
-
-      {showSaveNotice && (
-        <Alert severity="info" sx={{ mb: 3 }}>
-          Base currency changed. Don&apos;t forget to save your data file to persist this change.
-        </Alert>
-      )}
 
       <Paper sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>
@@ -53,7 +40,7 @@ export const PreferencesPage: React.FC = () => {
             id="base-currency-select"
             value={baseCurrency}
             label="Base Currency"
-            onChange={(e) => handleCurrencyChange(e.target.value)}
+            onChange={(e) => handleCurrencyChange(e.target.value as Currency)}
           >
             {DEFAULT_CURRENCIES.map((currency) => (
               <MenuItem key={currency.id} value={currency.id}>

@@ -298,6 +298,7 @@ export function performThreeWayMerge(
     categories: categoriesResult.merged as Category[],
     transactionTypes: transactionTypesResult.merged as TransactionType[],
     archivedYears: appVersion.archivedYears || [],
+    baseCurrency: appVersion.baseCurrency,
     lastModified: new Date().toISOString(),
   };
 

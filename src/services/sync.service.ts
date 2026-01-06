@@ -366,10 +366,8 @@ class SyncService {
         useCategoryStore.getState().setCategories(dataFile.categories || []);
         useCategoryStore.getState().setTransactionTypes(dataFile.transactionTypes || []);
 
-        // Load base currency from data file
-        if (dataFile.baseCurrency) {
-          state.setBaseCurrency(dataFile.baseCurrency);
-        }
+        // Load base currency from data file (schema provides default if not present)
+        state.setBaseCurrency(dataFile.baseCurrency);
 
         // Get year-specific data
         const yearStr = String(year);

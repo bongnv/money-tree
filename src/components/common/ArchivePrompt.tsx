@@ -12,12 +12,13 @@ import {
 } from '@mui/material';
 import { formatCurrency } from '../../utils/currency.utils';
 import type { YearEndSummary } from '../../types/models';
+import { Currency } from '../../types/enums';
 
 export interface ArchivePromptProps {
   open: boolean;
   year: number;
   yearSummary: YearEndSummary;
-  baseCurrency: string;
+  baseCurrency: Currency;
   onArchiveNow: () => void;
   onRemindLater: () => void;
 }

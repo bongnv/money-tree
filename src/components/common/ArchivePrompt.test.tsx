@@ -5,6 +5,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ArchivePrompt } from './ArchivePrompt';
 import type { YearEndSummary } from '../../types/models';
+import { Currency } from '../../types/enums';
 
 describe('ArchivePrompt', () => {
   const mockYearSummary: YearEndSummary = {
@@ -26,7 +27,7 @@ describe('ArchivePrompt', () => {
         open={true}
         year={2023}
         yearSummary={mockYearSummary}
-        baseCurrency="usd"
+        baseCurrency={Currency.USD}
         onArchiveNow={mockOnArchiveNow}
         onRemindLater={mockOnRemindLater}
       />
@@ -43,7 +44,7 @@ describe('ArchivePrompt', () => {
         open={true}
         year={2023}
         yearSummary={mockYearSummary}
-        baseCurrency="usd"
+        baseCurrency={Currency.USD}
         onArchiveNow={mockOnArchiveNow}
         onRemindLater={mockOnRemindLater}
       />
@@ -61,7 +62,7 @@ describe('ArchivePrompt', () => {
         open={true}
         year={2023}
         yearSummary={mockYearSummary}
-        baseCurrency="usd"
+        baseCurrency={Currency.USD}
         onArchiveNow={mockOnArchiveNow}
         onRemindLater={mockOnRemindLater}
       />
@@ -79,7 +80,7 @@ describe('ArchivePrompt', () => {
         open={false}
         year={2023}
         yearSummary={mockYearSummary}
-        baseCurrency="usd"
+        baseCurrency={Currency.USD}
         onArchiveNow={mockOnArchiveNow}
         onRemindLater={mockOnRemindLater}
       />
@@ -94,7 +95,7 @@ describe('ArchivePrompt', () => {
         open={true}
         year={2023}
         yearSummary={mockYearSummary}
-        baseCurrency="usd"
+        baseCurrency={Currency.USD}
         onArchiveNow={mockOnArchiveNow}
         onRemindLater={mockOnRemindLater}
       />
@@ -110,7 +111,7 @@ describe('ArchivePrompt', () => {
         open={true}
         year={2023}
         yearSummary={mockYearSummary}
-        baseCurrency="usd"
+        baseCurrency={Currency.USD}
         onArchiveNow={mockOnArchiveNow}
         onRemindLater={mockOnRemindLater}
       />

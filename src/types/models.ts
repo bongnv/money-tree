@@ -1,4 +1,4 @@
-import { AccountType, Group, AssetType } from './enums';
+import { AccountType, Group, AssetType, Currency as CurrencyEnum } from './enums';
 
 /**
  * Currency model
@@ -173,7 +173,7 @@ export interface DataFile {
   categories: Category[]; // Shared across all years
   transactionTypes: TransactionType[]; // Shared across all years
   archivedYears: ArchivedYearReference[]; // References to archived years
-  baseCurrency?: string; // Base currency for reporting (default: 'usd')
+  baseCurrency: CurrencyEnum; // Base currency for reporting
   lastModified: string; // ISO date string
 }
 

@@ -44,3 +44,14 @@ export enum AssetType {
   LIABILITY = 'liability',
   OTHER = 'other',
 }
+
+/**
+ * Currency enum
+ * Defines the currency identifiers used in the application
+ */
+export enum Currency {
+  USD = 'usd',
+  VND = 'vnd',
+  SGD = 'sgd',
+  AUD = 'aud',
+}

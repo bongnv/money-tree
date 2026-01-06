@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { PreferencesPage } from './PreferencesPage';
 import { useAppStore } from '../../stores/useAppStore';
+import { Currency } from '../../types/enums';
 
 // Mock the store
 jest.mock('../../stores/useAppStore');
@@ -10,7 +11,7 @@ jest.mock('../../stores/useAppStore');
 describe('PreferencesPage', () => {
   const mockSetBaseCurrency = jest.fn();
   const mockStoreState = {
-    baseCurrency: 'usd',
+    baseCurrency: Currency.USD,
     setBaseCurrency: mockSetBaseCurrency,
     fileName: 'test.json',
     lastSaved: new Date().toISOString(),
@@ -56,49 +57,7 @@ describe('PreferencesPage', () => {
     const vndOption = screen.getByRole('option', { name: /VND - Vietnamese Dong/ });
     await user.click(vndOption);
 
-    expect(mockSetBaseCurrency).toHaveBeenCalledWith('vnd');
-  });
-
-  it('should show save notice after changing currency', async () => {
-    const user = userEvent.setup();
-    renderWithRouter(<PreferencesPage />);
-
-    const select = screen.getByLabelText('Base Currency');
-    await user.click(select);
-
-    const sgdOption = screen.getByRole('option', { name: /SGD - Singapore Dollar/ });
-    await user.click(sgdOption);
-
-    expect(
-      screen.getByText(/Base currency changed. Don't forget to save your data file/)
-    ).toBeInTheDocument();
-  });
-
-  it('should hide save notice after timeout', async () => {
-    jest.useFakeTimers();
-    const user = userEvent.setup({ delay: null });
-    renderWithRouter(<PreferencesPage />);
-
-    const select = screen.getByLabelText('Base Currency');
-    await user.click(select);
-
-    const audOption = screen.getByRole('option', { name: /AUD - Australian Dollar/ });
-    await user.click(audOption);
-
-    expect(
-      screen.getByText(/Base currency changed. Don't forget to save your data file/)
-    ).toBeInTheDocument();
-
-    // Fast-forward time
-    jest.advanceTimersByTime(3000);
-
-    await waitFor(() => {
-      expect(
-        screen.queryByText(/Base currency changed. Don't forget to save your data file/)
-      ).not.toBeInTheDocument();
-    });
-
-    jest.useRealTimers();
+    expect(mockSetBaseCurrency).toHaveBeenCalledWith(Currency.VND);
   });
 
   it('should display all available currencies', async () => {

@@ -228,10 +228,7 @@ export const DataFileSchema = z.object({
     .nullable()
     .optional()
     .transform((val) => val ?? []),
-  baseCurrency: z
-    .string()
-    .optional()
-    .transform((val) => val ?? 'usd'),
+  baseCurrency: z.string().default('usd'),
   lastModified: z.string().datetime(),
 });
 

@@ -6,8 +6,6 @@ import {
   Grid,
   Card,
   CardContent,
-  ToggleButtonGroup,
-  ToggleButton,
   TextField,
   Table,
   TableBody,
@@ -19,6 +17,9 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Checkbox,
+  ListItemText,
+  SelectChangeEvent,
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
@@ -27,12 +28,13 @@ import { useCategoryStore } from '../../stores/useCategoryStore';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useAppStore } from '../../stores/useAppStore';
 import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
-import { reportService, PeriodType } from '../../services/report.service';
+import { reportService } from '../../services/report.service';
 import { LineChart } from '../charts/LineChart';
 import { PieChart } from '../charts/PieChart';
 import { formatCurrency } from '../../utils/currency.utils';
 import { getTodayDate } from '../../utils/date.utils';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
+import { Group } from '../../types/enums';
 
 export const CashFlowReport: React.FC = () => {
   const transactions = useTransactionStore((state) => state.transactions);
@@ -48,8 +50,9 @@ export const CashFlowReport: React.FC = () => {
   const firstDayOfMonth = `${today.slice(0, 7)}-01`;
   const [startDate, setStartDate] = useState<string>(firstDayOfMonth);
   const [endDate, setEndDate] = useState<string>(today);
-  const [periodType, setPeriodType] = useState<PeriodType>('monthly');
+  const [periodType, setPeriodType] = useState<string>('current-month');
   const [conversionCurrency, setConversionCurrency] = useState<string>(baseCurrency);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   // Use the selected currency for display
   const currencyId = conversionCurrency;
@@ -89,49 +92,75 @@ export const CashFlowReport: React.FC = () => {
     });
   }, [conversionCurrency, startDate, endDate, transactions, accounts, fetchRateIfMissing]);
 
-  // Update date range based on period type
-  const updatePeriodDates = (period: PeriodType) => {
+  // Update date range based on period preset
+  const updatePeriodDates = (preset: string) => {
     const [year, month, day] = today.split('-').map(Number);
     const todayDate = new Date(year, month - 1, day);
-    let newStartDate = new Date(todayDate);
+    let newStartDate: Date;
+    let newEndDate: Date = todayDate;
 
-    switch (period) {
-      case 'monthly':
+    switch (preset) {
+      case 'current-month':
         newStartDate = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
         break;
-      case 'quarterly': {
+      case 'last-month': {
+        const lastMonth = new Date(todayDate.getFullYear(), todayDate.getMonth() - 1, 1);
+        newStartDate = lastMonth;
+        newEndDate = new Date(todayDate.getFullYear(), todayDate.getMonth(), 0); // Last day of previous month
+        break;
+      }
+      case 'current-quarter': {
         const quarterStartMonth = Math.floor(todayDate.getMonth() / 3) * 3;
         newStartDate = new Date(todayDate.getFullYear(), quarterStartMonth, 1);
         break;
       }
-      case 'yearly':
+      case 'last-quarter': {
+        const quarterStartMonth = Math.floor(todayDate.getMonth() / 3) * 3;
+        newStartDate = new Date(todayDate.getFullYear(), quarterStartMonth - 3, 1);
+        newEndDate = new Date(todayDate.getFullYear(), quarterStartMonth, 0);
+        break;
+      }
+      case 'current-year':
         newStartDate = new Date(todayDate.getFullYear(), 0, 1);
+        break;
+      case 'last-year':
+        newStartDate = new Date(todayDate.getFullYear() - 1, 0, 1);
+        newEndDate = new Date(todayDate.getFullYear() - 1, 11, 31);
         break;
       case 'custom':
         // Keep current dates
         return;
+      default:
+        return;
     }
 
     const startStr = `${newStartDate.getFullYear()}-${String(newStartDate.getMonth() + 1).padStart(2, '0')}-${String(newStartDate.getDate()).padStart(2, '0')}`;
+    const endStr = `${newEndDate.getFullYear()}-${String(newEndDate.getMonth() + 1).padStart(2, '0')}-${String(newEndDate.getDate()).padStart(2, '0')}`;
     setStartDate(startStr);
-    setEndDate(today);
+    setEndDate(endStr);
   };
 
-  const handlePeriodChange = (
-    _event: React.MouseEvent<HTMLElement>,
-    newPeriod: PeriodType | null
-  ) => {
-    if (newPeriod) {
-      setPeriodType(newPeriod);
-      updatePeriodDates(newPeriod);
-    }
+  const handlePeriodChange = (event: SelectChangeEvent<string>) => {
+    const newPeriod = event.target.value;
+    setPeriodType(newPeriod);
+    updatePeriodDates(newPeriod);
   };
 
   // Calculate cash flow for selected period
+  const filteredTransactions = useMemo(() => {
+    if (selectedCategories.length === 0) {
+      return transactions;
+    }
+    return transactions.filter((tx) => {
+      const txType = transactionTypes.find((tt) => tt.id === tx.transactionTypeId);
+      return txType && selectedCategories.includes(txType.categoryId);
+    });
+  }, [transactions, transactionTypes, selectedCategories]);
+
   const cashFlow = useMemo(
     () =>
       reportService.calculateCashFlow(
-        transactions,
+        filteredTransactions,
         transactionTypes,
         categories,
         startDate,
@@ -141,7 +170,7 @@ export const CashFlowReport: React.FC = () => {
         effectiveGetRateForMonth
       ),
     [
-      transactions,
+      filteredTransactions,
       transactionTypes,
       categories,
       startDate,
@@ -154,9 +183,14 @@ export const CashFlowReport: React.FC = () => {
 
   // Calculate trend data
   const trendData = useMemo(() => {
-    const intervalDays = periodType === 'yearly' ? 30 : periodType === 'quarterly' ? 7 : 1;
+    const intervalDays =
+      periodType === 'current-year' || periodType === 'last-year'
+        ? 30
+        : periodType === 'current-quarter' || periodType === 'last-quarter'
+          ? 7
+          : 1;
     const trend = reportService.calculateCashFlowTrend(
-      transactions,
+      filteredTransactions,
       transactionTypes,
       categories,
       startDate,
@@ -177,7 +211,7 @@ export const CashFlowReport: React.FC = () => {
       'Net Cash Flow': point.netCashFlow,
     }));
   }, [
-    transactions,
+    filteredTransactions,
     transactionTypes,
     categories,
     startDate,
@@ -192,16 +226,111 @@ export const CashFlowReport: React.FC = () => {
     setConversionCurrency(newCurrency);
   };
 
-  // Prepare pie chart data
-  const incomePieData = cashFlow.income.map((cat) => ({
-    name: cat.categoryName,
-    value: cat.total,
-  }));
+  const handleCategoryChange = (event: SelectChangeEvent<string[]>) => {
+    const value = event.target.value;
+    setSelectedCategories(typeof value === 'string' ? value.split(',') : value);
+  };
 
-  const expensesPieData = cashFlow.expenses.map((cat) => ({
-    name: cat.categoryName,
-    value: cat.total,
-  }));
+  // Prepare pie chart and table data - group by transaction type if categories are filtered
+  const { incomePieData, expensesPieData, incomeDetailData, expenseDetailData, groupingLabel } =
+    useMemo(() => {
+      const hasFilter = selectedCategories.length > 0;
+
+      if (!hasFilter) {
+        // No filter - show by category
+        return {
+          incomePieData: cashFlow.income.map((cat) => ({
+            name: cat.categoryName,
+            value: cat.total,
+          })),
+          expensesPieData: cashFlow.expenses.map((cat) => ({
+            name: cat.categoryName,
+            value: cat.total,
+          })),
+          incomeDetailData: cashFlow.income,
+          expenseDetailData: cashFlow.expenses,
+          groupingLabel: 'Category',
+        };
+      }
+
+      // Filter applied - group by transaction type
+      const incomeByType = new Map<string, { name: string; total: number; count: number }>();
+      const expenseByType = new Map<string, { name: string; total: number; count: number }>();
+
+      filteredTransactions.forEach((tx) => {
+        const txType = transactionTypes.find((tt) => tt.id === tx.transactionTypeId);
+        if (!txType) return;
+
+        // Get the appropriate account ID based on transaction type
+        const accountId = txType.group === Group.INCOME ? tx.toAccountId : tx.fromAccountId;
+        if (!accountId) return;
+
+        const account = accounts.find((a) => a.id === accountId);
+        if (!account) return;
+
+        // Convert amount to base currency
+        let convertedAmount = tx.amount;
+        if (account.currencyId !== effectiveBaseCurrency) {
+          const txMonth = tx.date.substring(0, 7);
+          const rate = effectiveGetRateForMonth(txMonth, account.currencyId, effectiveBaseCurrency);
+          if (rate) {
+            convertedAmount = tx.amount * rate;
+          }
+        }
+
+        if (txType.group === Group.INCOME) {
+          const existing = incomeByType.get(txType.id) || {
+            name: txType.name,
+            total: 0,
+            count: 0,
+          };
+          existing.total += convertedAmount;
+          existing.count += 1;
+          incomeByType.set(txType.id, existing);
+        } else if (txType.group === Group.EXPENSE) {
+          const existing = expenseByType.get(txType.id) || {
+            name: txType.name,
+            total: 0,
+            count: 0,
+          };
+          existing.total += convertedAmount;
+          existing.count += 1;
+          expenseByType.set(txType.id, existing);
+        }
+      });
+
+      return {
+        incomePieData: Array.from(incomeByType.values()).map((item) => ({
+          name: item.name,
+          value: item.total,
+        })),
+        expensesPieData: Array.from(expenseByType.values()).map((item) => ({
+          name: item.name,
+          value: item.total,
+        })),
+        incomeDetailData: Array.from(incomeByType.entries()).map(([id, item]) => ({
+          categoryId: id,
+          categoryName: item.name,
+          total: item.total,
+          transactionCount: item.count,
+        })),
+        expenseDetailData: Array.from(expenseByType.entries()).map(([id, item]) => ({
+          categoryId: id,
+          categoryName: item.name,
+          total: item.total,
+          transactionCount: item.count,
+        })),
+        groupingLabel: 'Transaction Type',
+      };
+    }, [
+      cashFlow,
+      selectedCategories,
+      filteredTransactions,
+      transactionTypes,
+      accounts,
+      effectiveBaseCurrency,
+      effectiveGetRateForMonth,
+    ]);
 
   return (
     <Box sx={{ p: 3 }}>
@@ -215,27 +344,19 @@ export const CashFlowReport: React.FC = () => {
       {/* Period Selection */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={5}>
-            <ToggleButtonGroup
-              value={periodType}
-              exclusive
-              onChange={handlePeriodChange}
-              aria-label="period type"
-              fullWidth
-            >
-              <ToggleButton value="monthly" aria-label="monthly">
-                Monthly
-              </ToggleButton>
-              <ToggleButton value="quarterly" aria-label="quarterly">
-                Quarterly
-              </ToggleButton>
-              <ToggleButton value="yearly" aria-label="yearly">
-                Yearly
-              </ToggleButton>
-              <ToggleButton value="custom" aria-label="custom">
-                Custom
-              </ToggleButton>
-            </ToggleButtonGroup>
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Period</InputLabel>
+              <Select value={periodType} label="Period" onChange={handlePeriodChange}>
+                <MenuItem value="current-month">Current Month</MenuItem>
+                <MenuItem value="last-month">Last Month</MenuItem>
+                <MenuItem value="current-quarter">Current Quarter</MenuItem>
+                <MenuItem value="last-quarter">Last Quarter</MenuItem>
+                <MenuItem value="current-year">Current Year</MenuItem>
+                <MenuItem value="last-year">Last Year</MenuItem>
+                <MenuItem value="custom">Custom Range</MenuItem>
+              </Select>
+            </FormControl>
           </Grid>
           <Grid item xs={12} sm={6} md={2.5}>
             <TextField
@@ -261,7 +382,7 @@ export const CashFlowReport: React.FC = () => {
               size="small"
             />
           </Grid>
-          <Grid item xs={12} md={2}>
+          <Grid item xs={12} sm={6} md={2}>
             <FormControl fullWidth size="small">
               <InputLabel>Currency</InputLabel>
               <Select
@@ -272,6 +393,31 @@ export const CashFlowReport: React.FC = () => {
                 {DEFAULT_CURRENCIES.map((curr) => (
                   <MenuItem key={curr.id} value={curr.id}>
                     {curr.code}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} md={2}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Categories</InputLabel>
+              <Select
+                multiple
+                value={selectedCategories}
+                label="Categories"
+                onChange={handleCategoryChange}
+                renderValue={(selected) =>
+                  selected.length === 0
+                    ? 'All'
+                    : selected.length === 1
+                      ? categories.find((c) => c.id === selected[0])?.name || ''
+                      : `${selected.length} selected`
+                }
+              >
+                {categories.map((category) => (
+                  <MenuItem key={category.id} value={category.id}>
+                    <Checkbox checked={selectedCategories.includes(category.id)} />
+                    <ListItemText primary={category.name} />
                   </MenuItem>
                 ))}
               </Select>
@@ -349,12 +495,19 @@ export const CashFlowReport: React.FC = () => {
       )}
 
       {/* Category Breakdown Charts */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Grid
+        container
+        spacing={3}
+        sx={{ mb: 3 }}
+        justifyContent={
+          incomePieData.length > 0 && expensesPieData.length > 0 ? 'flex-start' : 'center'
+        }
+      >
         {incomePieData.length > 0 && (
           <Grid item xs={12} md={6}>
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>
-                Income by Category
+                Income by {groupingLabel}
               </Typography>
               <PieChart
                 data={incomePieData}
@@ -368,7 +521,7 @@ export const CashFlowReport: React.FC = () => {
           <Grid item xs={12} md={6}>
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>
-                Expenses by Category
+                Expenses by {groupingLabel}
               </Typography>
               <PieChart
                 data={expensesPieData}
@@ -391,20 +544,20 @@ export const CashFlowReport: React.FC = () => {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Category</TableCell>
+                    <TableCell>{groupingLabel}</TableCell>
                     <TableCell align="right">Transactions</TableCell>
                     <TableCell align="right">Total</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {cashFlow.income.map((item) => (
+                  {incomeDetailData.map((item) => (
                     <TableRow key={item.categoryId}>
                       <TableCell>{item.categoryName}</TableCell>
                       <TableCell align="right">{item.transactionCount}</TableCell>
                       <TableCell align="right">{formatCurrency(item.total, currencyId)}</TableCell>
                     </TableRow>
                   ))}
-                  {cashFlow.income.length === 0 && (
+                  {incomeDetailData.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={3} align="center">
                         No income transactions
@@ -425,20 +578,20 @@ export const CashFlowReport: React.FC = () => {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Category</TableCell>
+                    <TableCell>{groupingLabel}</TableCell>
                     <TableCell align="right">Transactions</TableCell>
                     <TableCell align="right">Total</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {cashFlow.expenses.map((item) => (
+                  {expenseDetailData.map((item) => (
                     <TableRow key={item.categoryId}>
                       <TableCell>{item.categoryName}</TableCell>
                       <TableCell align="right">{item.transactionCount}</TableCell>
                       <TableCell align="right">{formatCurrency(item.total, currencyId)}</TableCell>
                     </TableRow>
                   ))}
-                  {cashFlow.expenses.length === 0 && (
+                  {expenseDetailData.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={3} align="center">
                         No expense transactions

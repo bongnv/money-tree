@@ -35,7 +35,7 @@ export const msalConfig = {
   },
   cache: {
     cacheLocation: 'localStorage', // Store tokens in localStorage (more persistent than sessionStorage)
-    storeAuthStateInCookie: false, // Set to true if you have issues with IE11 or Edge
+    storeAuthStateInCookie: true, // Required for Safari and browsers with strict privacy settings
   },
 };
 

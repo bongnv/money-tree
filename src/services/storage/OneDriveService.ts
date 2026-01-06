@@ -63,8 +63,16 @@ export class OneDriveService {
       const response = await msalInstance.loginPopup(loginRequest);
       this.account = response.account;
       await this.initializeGraphClient();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Authentication failed:', error);
+
+      // Provide helpful error message for Safari users
+      if (error?.errorCode === 'popup_window_error' || error?.message?.includes('popup')) {
+        throw new Error(
+          'Popup blocked. Please allow popups for this site in Safari Settings > Websites > Pop-up Windows.'
+        );
+      }
+
       throw new Error(errorMessages.authFailed);
     }
   }
@@ -132,6 +140,21 @@ export class OneDriveService {
       return items;
     } catch (error: any) {
       console.error('Failed to list folders:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        code: error?.code,
+        statusCode: error?.statusCode,
+      });
+
+      // Provide more specific error messages
+      if (error?.statusCode === 401 || error?.code === 'InvalidAuthenticationToken') {
+        throw new Error('Authentication expired. Please reconnect to OneDrive.');
+      }
+
+      if (error?.message?.includes('popup')) {
+        throw new Error('Unable to access OneDrive. Please allow popups in Safari settings.');
+      }
+
       throw new Error('Failed to load folder contents');
     }
   }

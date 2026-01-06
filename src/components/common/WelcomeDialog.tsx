@@ -74,6 +74,26 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
     setIsConnecting(false);
   };
 
+  const handleOpenLocalFile = async () => {
+    setAuthError(null);
+    try {
+      await onOpenLocalFile();
+    } catch (error) {
+      console.error('Failed to open local file:', error);
+      setAuthError(error instanceof Error ? error.message : 'Failed to open file');
+    }
+  };
+
+  const handleCreateNewLocalFile = async () => {
+    setAuthError(null);
+    try {
+      await onCreateNewLocalFile();
+    } catch (error) {
+      console.error('Failed to create new file:', error);
+      setAuthError(error instanceof Error ? error.message : 'Failed to create new file');
+    }
+  };
+
   return (
     <>
       <Dialog open={open && !showFilePicker} maxWidth="md" fullWidth>
@@ -113,7 +133,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
                 <Button
                   variant="outlined"
                   startIcon={<FolderOpenIcon />}
-                  onClick={onOpenLocalFile}
+                  onClick={handleOpenLocalFile}
                   fullWidth
                 >
                   Open Existing
@@ -121,7 +141,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
-                  onClick={onCreateNewLocalFile}
+                  onClick={handleCreateNewLocalFile}
                   fullWidth
                 >
                   Create New

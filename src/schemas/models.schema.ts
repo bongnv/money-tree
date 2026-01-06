@@ -48,6 +48,7 @@ export const TransactionTypeSchema = z.object({
   categoryId: z.string().min(1, 'Category ID is required'),
   group: z.nativeEnum(Group),
   description: z.string().optional(),
+  isActive: z.boolean().optional().default(true),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });

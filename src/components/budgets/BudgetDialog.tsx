@@ -37,7 +37,9 @@ export const BudgetDialog: React.FC<BudgetDialogProps> = ({ open, budget, onClos
   const groupedTransactionTypes = categories
     .map((category) => ({
       category,
-      transactionTypes: transactionTypes.filter((tt) => tt.categoryId === category.id),
+      transactionTypes: transactionTypes.filter(
+        (tt) => tt.categoryId === category.id && tt.isActive !== false
+      ),
     }))
     .filter((group) => group.transactionTypes.length > 0);
 

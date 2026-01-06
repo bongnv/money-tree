@@ -8,6 +8,7 @@ interface TransactionTypeListProps {
   categories: Category[];
   onEdit: (transactionType: TransactionType) => void;
   onDelete: (transactionType: TransactionType) => void;
+  onArchive: (transactionType: TransactionType) => void;
 }
 
 export const TransactionTypeList: React.FC<TransactionTypeListProps> = ({
@@ -15,6 +16,7 @@ export const TransactionTypeList: React.FC<TransactionTypeListProps> = ({
   categories,
   onEdit,
   onDelete,
+  onArchive,
 }) => {
   const getCategoryById = (categoryId: string) => {
     return categories.find((c) => c.id === categoryId);
@@ -39,6 +41,7 @@ export const TransactionTypeList: React.FC<TransactionTypeListProps> = ({
             category={getCategoryById(transactionType.categoryId)}
             onEdit={onEdit}
             onDelete={onDelete}
+            onArchive={onArchive}
           />
         </Grid>
       ))}

@@ -17,6 +17,8 @@ interface CategoryActions {
   addTransactionType: (transactionType: TransactionType) => void;
   updateTransactionType: (id: string, updates: Partial<TransactionType>) => void;
   deleteTransactionType: (id: string) => void;
+  archiveTransactionType: (id: string) => void;
+  unarchiveTransactionType: (id: string) => void;
   getTransactionTypeById: (id: string) => TransactionType | undefined;
   getTransactionTypesByCategory: (categoryId: string) => TransactionType[];
   resetCategories: () => void;
@@ -93,6 +95,28 @@ export const useCategoryStore = create<CategoryState & CategoryActions>((set, ge
     set((state) => ({
       transactionTypes: state.transactionTypes.filter(
         (transactionType) => transactionType.id !== id
+      ),
+    }));
+    useAppStore.getState().setUnsavedChanges(true);
+  },
+
+  archiveTransactionType: (id) => {
+    set((state) => ({
+      transactionTypes: state.transactionTypes.map((transactionType) =>
+        transactionType.id === id
+          ? { ...transactionType, isActive: false, updatedAt: new Date().toISOString() }
+          : transactionType
+      ),
+    }));
+    useAppStore.getState().setUnsavedChanges(true);
+  },
+
+  unarchiveTransactionType: (id) => {
+    set((state) => ({
+      transactionTypes: state.transactionTypes.map((transactionType) =>
+        transactionType.id === id
+          ? { ...transactionType, isActive: true, updatedAt: new Date().toISOString() }
+          : transactionType
       ),
     }));
     useAppStore.getState().setUnsavedChanges(true);

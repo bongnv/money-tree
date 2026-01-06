@@ -117,10 +117,14 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     };
 
   // Group transaction types by category
-  const groupedTransactionTypes = categories.map((category) => ({
-    category,
-    types: transactionTypes.filter((tt) => tt.categoryId === category.id),
-  }));
+  const groupedTransactionTypes = categories
+    .map((category) => ({
+      category,
+      types: transactionTypes.filter(
+        (tt) => tt.categoryId === category.id && tt.isActive !== false
+      ),
+    }))
+    .filter((group) => group.types.length > 0);
 
   // Flatten transaction types with category labels for autocomplete
   const transactionTypeOptions = useMemo(() => {

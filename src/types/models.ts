@@ -50,6 +50,7 @@ export interface TransactionType {
   categoryId: string;
   group: Group;
   description?: string;
+  isActive?: boolean;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }

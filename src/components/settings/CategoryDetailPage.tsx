@@ -15,6 +15,8 @@ export const CategoryDetailPage: React.FC = () => {
     addTransactionType,
     updateTransactionType,
     deleteTransactionType,
+    archiveTransactionType,
+    unarchiveTransactionType,
     getTransactionTypesByCategory,
   } = useCategoryStore();
 
@@ -67,6 +69,7 @@ export const CategoryDetailPage: React.FC = () => {
       addTransactionType({
         ...transactionType,
         id: crypto.randomUUID(),
+        isActive: true,
         createdAt: now,
         updatedAt: now,
       });
@@ -81,6 +84,14 @@ export const CategoryDetailPage: React.FC = () => {
       )
     ) {
       deleteTransactionType(transactionType.id);
+    }
+  };
+
+  const handleArchiveTransactionType = (transactionType: TransactionType) => {
+    if (transactionType.isActive) {
+      archiveTransactionType(transactionType.id);
+    } else {
+      unarchiveTransactionType(transactionType.id);
     }
   };
 
@@ -141,6 +152,7 @@ export const CategoryDetailPage: React.FC = () => {
         categories={categories}
         onEdit={handleEditTransactionType}
         onDelete={handleDeleteTransactionType}
+        onArchive={handleArchiveTransactionType}
       />
 
       <TransactionTypeDialog

@@ -169,11 +169,13 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
           sx={{ minWidth: 200 }}
         >
           <MenuItem value="">All Types</MenuItem>
-          {transactionTypes.map((type) => (
-            <MenuItem key={type.id} value={type.id}>
-              {type.name}
-            </MenuItem>
-          ))}
+          {transactionTypes
+            .filter((type) => type.isActive !== false)
+            .map((type) => (
+              <MenuItem key={type.id} value={type.id}>
+                {type.name}
+              </MenuItem>
+            ))}
         </TextField>
 
         {/* Search */}

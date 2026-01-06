@@ -7,5 +7,8 @@
   Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()
   
   # Content Security Policy
-  # Allows inline styles (required by MUI/Emotion), scripts from self and Cloudflare, and connections to Microsoft Graph API, OneDrive storage, and exchange rate API
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://login.microsoftonline.com https://login.live.com https://graph.microsoft.com https://*.microsoftpersonalcontent.com https://api.exchangerate-api.com https://cloudflareinsights.com; frame-src https://login.microsoftonline.com https://login.live.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+  # Balanced security with cloud storage integrations - uses wildcards for Microsoft/Google/Dropbox to avoid future subdomain issues
+  # Microsoft: *.microsoft.com, *.microsoftonline.com, *.live.com (covers all auth flows)
+  # Google: *.google.com, *.googleapis.com, *.gstatic.com (covers OAuth, Drive, fonts)
+  # Dropbox: *.dropbox.com, *.dropboxapi.com (covers OAuth and API)
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com https://*.google.com https://*.gstatic.com; style-src 'self' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com; font-src 'self' https://*.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://*.microsoft.com https://*.microsoftonline.com https://*.live.com https://*.google.com https://*.googleapis.com https://*.dropbox.com https://*.dropboxapi.com https://api.exchangerate-api.com https://cloudflareinsights.com; frame-src 'self' https://*.microsoft.com https://*.microsoftonline.com https://*.live.com https://*.google.com https://*.dropbox.com; object-src 'none'; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests

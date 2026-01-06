@@ -8,6 +8,7 @@ interface CategoryCardProps {
   transactionTypeCount: number;
   onEdit: (category: Category) => void;
   onDelete: (category: Category) => void;
+  onClick?: (category: Category) => void;
 }
 
 export const CategoryCard: React.FC<CategoryCardProps> = ({
@@ -15,17 +16,36 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
   transactionTypeCount,
   onEdit,
   onDelete,
+  onClick,
 }) => {
-  const handleEdit = () => {
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
     onEdit(category);
   };
 
-  const handleDelete = () => {
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
     onDelete(category);
   };
 
+  const handleClick = () => {
+    if (onClick) {
+      onClick(category);
+    }
+  };
+
   return (
-    <Card>
+    <Card
+      onClick={handleClick}
+      sx={{
+        cursor: onClick ? 'pointer' : 'default',
+        '&:hover': onClick
+          ? {
+              boxShadow: 3,
+            }
+          : {},
+      }}
+    >
       <CardContent>
         <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
           {category.name}

@@ -7,6 +7,7 @@ interface TransactionTypeDialogProps {
   open: boolean;
   transactionType?: TransactionType;
   categories: Category[];
+  categoryId?: string;
   onClose: () => void;
   onSubmit: (transactionType: Omit<TransactionType, 'id' | 'createdAt' | 'updatedAt'>) => void;
 }
@@ -15,6 +16,7 @@ export const TransactionTypeDialog: React.FC<TransactionTypeDialogProps> = ({
   open,
   transactionType,
   categories,
+  categoryId,
   onClose,
   onSubmit,
 }) => {
@@ -34,6 +36,7 @@ export const TransactionTypeDialog: React.FC<TransactionTypeDialogProps> = ({
         <TransactionTypeForm
           transactionType={transactionType}
           categories={categories}
+          categoryId={categoryId}
           onSubmit={handleSubmit}
           onCancel={onClose}
         />

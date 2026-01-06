@@ -30,7 +30,7 @@ export const PreferencesPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
+    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }} data-testid="preferences-page">
       <Typography variant="h4" gutterBottom>
         Preferences
       </Typography>

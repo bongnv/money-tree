@@ -8,6 +8,7 @@ interface CategoryListProps {
   transactionTypes: TransactionType[];
   onEdit: (category: Category) => void;
   onDelete: (category: Category) => void;
+  onClick?: (category: Category) => void;
 }
 
 export const CategoryList: React.FC<CategoryListProps> = ({
@@ -15,6 +16,7 @@ export const CategoryList: React.FC<CategoryListProps> = ({
   transactionTypes,
   onEdit,
   onDelete,
+  onClick,
 }) => {
   const getTransactionTypeCount = (categoryId: string) => {
     return transactionTypes.filter((tt) => tt.categoryId === categoryId).length;
@@ -39,6 +41,7 @@ export const CategoryList: React.FC<CategoryListProps> = ({
             transactionTypeCount={getTransactionTypeCount(category.id)}
             onEdit={onEdit}
             onDelete={onDelete}
+            onClick={onClick}
           />
         </Grid>
       ))}

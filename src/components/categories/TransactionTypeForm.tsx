@@ -6,6 +6,7 @@ import { Group } from '../../types/enums';
 interface TransactionTypeFormProps {
   transactionType?: TransactionType;
   categories: Category[];
+  categoryId?: string;
   onSubmit: (transactionType: Omit<TransactionType, 'id' | 'createdAt' | 'updatedAt'>) => void;
   onCancel: () => void;
 }
@@ -13,12 +14,13 @@ interface TransactionTypeFormProps {
 export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
   transactionType,
   categories,
+  categoryId,
   onSubmit,
   onCancel,
 }) => {
   const [formData, setFormData] = useState({
     name: transactionType?.name || '',
-    categoryId: transactionType?.categoryId || '',
+    categoryId: transactionType?.categoryId || categoryId || '',
     group: transactionType?.group || Group.EXPENSE,
     description: transactionType?.description || '',
   });

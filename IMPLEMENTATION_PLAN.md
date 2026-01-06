@@ -1878,3 +1878,101 @@ These features will be implemented after the MVP is validated by users.
 5. Verify asset values update correctly
 6. Verify reports categorize correctly
 7. Verify quick entry excludes asset transaction types
+
+---
+
+## Phase 22: Refactor Settings with Dedicated Pages (Post-MVP)
+
+**Goal:** Replace tabbed settings with dedicated routes for each section, and show transaction types on dedicated category detail pages
+
+**Requirements Reference:** Improves NFR-4 (Usability)
+
+**Current State:** SettingsPage.tsx has tabs for Accounts/Assets, Categories, Exchange Rates, Archives, and Preferences. All content is on one page with tab switching.
+
+**New Structure:**
+- /settings → Redirects to /settings/preferences (default)
+- /settings/preferences → App preferences (default page)
+- /settings/accounts → Accounts and Assets management
+- /settings/categories → Categories list
+- /settings/categories/:id → Category detail with transaction types
+- /settings/exchange-rates → Exchange rates management
+- /settings/archives → Archive management
+
+### 22.1 Create Settings Routes Structure
+- [x] Update routes.tsx: Add routes for /settings/accounts, /settings/categories, etc.
+- [x] Add route for /settings/categories/:id for category detail page
+- [x] Add redirect from /settings to /settings/preferences as default
+- [x] Update SettingsLayout to show navigation sidebar with links to each section
+- [x] **Write tests**: Test routing to each settings section and default redirect
+- [x] **Test UI**: /settings redirects to preferences, can navigate between sections
+
+### 22.2 Create Accounts Settings Page
+- [x] Create AccountsSettingsPage.tsx at /settings/accounts
+- [x] Move AccountsPage and ManualAssetsPage components here
+- [x] Keep existing functionality (currently on Accounts/Assets tab)
+- [x] **Write tests**: Test accounts page loads correctly
+- [x] **Test UI**: Accounts settings works as before
+
+### 22.3 Create Categories List Page
+- [x] Create CategoriesListPage.tsx at /settings/categories
+- [x] Show CategoryList with "New Category" button
+- [x] Category cards are clickable to navigate to /settings/categories/:id
+- [x] Remove transaction type list (will be on detail page)
+- [x] **Write tests**: Test categories list and navigation
+- [x] **Test UI**: Categories list shows and navigates to detail
+
+### 22.4 Create Category Detail Page
+- [x] Create CategoryDetailPage.tsx at /settings/categories/:id
+- [x] Show breadcrumb: Settings > Categories > [Category Name]
+- [x] Display category info at top (name, description, edit/delete buttons)
+- [x] Show full list of transaction types for this category
+- [x] Add "New Transaction Type" button (pre-fills category)
+- [x] Show back button or use breadcrumb to return to categories list
+- [x] **Write tests**: Test category detail page loads with transaction types
+- [x] **Test UI**: Category detail shows transaction types correctly
+
+### 22.5 Update Transaction Type Components for Detail Page
+- [x] Update TransactionTypeList: Filter by categoryId when on detail page
+- [x] Update TransactionTypeDialog: Accept optional categoryId prop
+- [x] Pre-fill and disable category field when categoryId provided
+- [x] Update TransactionTypeCard: Keep existing edit/delete functionality
+- [x] **Write tests**: Test transaction types filtered by category
+- [x] **Test UI**: Transaction types display and edit correctly
+
+### 22.6 Create Other Settings Pages
+- [x] Create ExchangeRatesSettingsPage.tsx at /settings/exchange-rates
+- [x] Create ArchivesSettingsPage.tsx at /settings/archives
+- [x] Create PreferencesSettingsPage.tsx at /settings/preferences
+- [x] Move existing tab content to these pages
+- [x] **Write tests**: Test each settings page loads
+- [x] **Test UI**: All settings pages work as before
+
+### 22.7 Update Settings Layout Navigation
+- [x] Update SettingsLayout.tsx: Replace tab navigation with sidebar/menu
+- [x] Show links to: Accounts, Categories, Exchange Rates, Archives, Preferences
+- [x] Highlight active route
+- [x] Make responsive for mobile (drawer/hamburger menu)
+- [x] **Write tests**: Test navigation menu highlighting
+- [x] **Test UI**: Navigation menu shows and highlights correctly
+
+### 22.8 Clean Up Old Code
+- [x] Remove old SettingsPage.tsx with tabs
+- [x] Remove tab-related state and handlers
+- [x] Update imports throughout codebase
+- [x] Remove unused components
+- [x] **Write tests**: Verify no broken imports or references
+- [x] **Test UI**: All functionality works with new structure
+
+**Manual Verification (User):**
+1. Navigate to /settings and verify it shows preferences page (default)
+2. Click "Categories" in sidebar to go to categories list
+3. Click a category to navigate to /settings/categories/:id
+4. Verify breadcrumb shows: Settings > Categories > [Category Name]
+5. Verify transaction types for that category are displayed
+6. Click "New Transaction Type" button
+7. Verify dialog opens with category pre-filled and disabled
+8. Create a new transaction type
+9. Verify it appears in the list
+10. Click back/breadcrumb to return to categories list
+11. Test navigation to other settings sections (Accounts, Exchange Rates, Archives, Preferences)
+12. Verify all settings functionality works as before

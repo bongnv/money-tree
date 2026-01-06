@@ -31,8 +31,8 @@ jest.mock('./components/settings/SettingsLayout', () => {
   };
 });
 
-jest.mock('./components/settings/SettingsPage', () => ({
-  SettingsPage: () => <div data-testid="settings-page">Settings Page</div>,
+jest.mock('./components/settings/PreferencesPage', () => ({
+  PreferencesPage: () => <div data-testid="preferences-page">Preferences Page</div>,
 }));
 
 jest.mock('./components/common/NotFoundPage', () => ({
@@ -75,9 +75,9 @@ describe('AppRoutes', () => {
   });
 
   describe('Settings Routes', () => {
-    it('renders SettingsPage at /settings route', () => {
+    it('redirects /settings to /settings/preferences', () => {
       renderWithRouter('/settings');
-      expect(screen.getByTestId('settings-page')).toBeInTheDocument();
+      expect(screen.getByTestId('preferences-page')).toBeInTheDocument();
     });
   });
 

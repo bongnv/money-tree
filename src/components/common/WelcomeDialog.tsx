@@ -49,7 +49,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
   const handleConnectOneDrive = async () => {
     setIsConnecting(true);
     setAuthError(null);
-    
+
     try {
       await onAuthenticateOneDrive();
       setShowFilePicker(true);

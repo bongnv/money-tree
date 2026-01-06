@@ -112,5 +112,4 @@ export class FilePickerService {
       throw error;
     }
   }
-
 }

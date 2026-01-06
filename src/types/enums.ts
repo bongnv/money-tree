@@ -46,12 +46,12 @@ export enum AssetType {
 }
 
 /**
- * Currency enum
- * Defines the currency identifiers used in the application
+ * Currency Code enum
+ * Represents available currency codes in the application (ISO 4217)
  */
-export enum Currency {
-  USD = 'usd',
-  VND = 'vnd',
-  SGD = 'sgd',
-  AUD = 'aud',
+export enum CurrencyCode {
+  USD = 'USD',
+  VND = 'VND',
+  SGD = 'SGD',
+  AUD = 'AUD',
 }

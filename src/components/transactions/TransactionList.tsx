@@ -4,7 +4,7 @@ import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import type { Transaction, Account, TransactionType, Category } from '../../types/models';
 import { formatDate } from '../../utils/date.utils';
 import { formatCurrency } from '../../utils/currency.utils';
-import { Group } from '../../types/enums';
+import { Group, CurrencyCode } from '../../types/enums';
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -89,7 +89,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
         const fromAccount = getAccount(params.row.fromAccountId);
         const toAccount = getAccount(params.row.toAccountId);
         const account = fromAccount || toAccount;
-        return formatCurrency(params.value, account?.currencyId || 'usd');
+        return formatCurrency(params.value, account?.currencyCode || CurrencyCode.USD);
       },
     },
     {

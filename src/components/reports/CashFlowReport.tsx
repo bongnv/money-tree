@@ -33,6 +33,7 @@ import { LineChart } from '../charts/LineChart';
 import { PieChart } from '../charts/PieChart';
 import { formatCurrency } from '../../utils/currency.utils';
 import { getTodayDate } from '../../utils/date.utils';
+import type { CurrencyCode } from '../../types/enums';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
 import { Group } from '../../types/enums';
 
@@ -55,7 +56,7 @@ export const CashFlowReport: React.FC = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   // Use the selected currency for display
-  const currencyId = conversionCurrency;
+  const currencyCode = conversionCurrency as CurrencyCode;
 
   // Always apply currency conversion
   const effectiveBaseCurrency = conversionCurrency;
@@ -75,9 +76,9 @@ export const CashFlowReport: React.FC = () => {
 
       accountIds.forEach((accountId) => {
         const account = accounts.find((a) => a.id === accountId);
-        if (account?.currencyId && account.currencyId !== conversionCurrency) {
+        if (account?.currencyCode && account.currencyCode !== conversionCurrency) {
           const month = transaction.date.slice(0, 7); // YYYY-MM
-          const key = `${month}-${account.currencyId}`;
+          const key = `${month}-${account.currencyCode}`;
           rateRequests.add(key);
         }
       });
@@ -270,9 +271,13 @@ export const CashFlowReport: React.FC = () => {
 
         // Convert amount to base currency
         let convertedAmount = tx.amount;
-        if (account.currencyId !== effectiveBaseCurrency) {
+        if (account.currencyCode !== effectiveBaseCurrency) {
           const txMonth = tx.date.substring(0, 7);
-          const rate = effectiveGetRateForMonth(txMonth, account.currencyId, effectiveBaseCurrency);
+          const rate = effectiveGetRateForMonth(
+            txMonth,
+            account.currencyCode,
+            effectiveBaseCurrency
+          );
           if (rate) {
             convertedAmount = tx.amount * rate;
           }
@@ -391,7 +396,7 @@ export const CashFlowReport: React.FC = () => {
                 onChange={(e) => handleCurrencyChange(e.target.value)}
               >
                 {DEFAULT_CURRENCIES.map((curr) => (
-                  <MenuItem key={curr.id} value={curr.id}>
+                  <MenuItem key={curr.code} value={curr.code}>
                     {curr.code}
                   </MenuItem>
                 ))}
@@ -437,7 +442,7 @@ export const CashFlowReport: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <TrendingUpIcon color="success" />
                 <Typography variant="h5">
-                  {formatCurrency(cashFlow.totalIncome, currencyId)}
+                  {formatCurrency(cashFlow.totalIncome, currencyCode)}
                 </Typography>
               </Box>
             </CardContent>
@@ -452,7 +457,7 @@ export const CashFlowReport: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <TrendingDownIcon color="error" />
                 <Typography variant="h5">
-                  {formatCurrency(cashFlow.totalExpenses, currencyId)}
+                  {formatCurrency(cashFlow.totalExpenses, currencyCode)}
                 </Typography>
               </Box>
             </CardContent>
@@ -468,7 +473,7 @@ export const CashFlowReport: React.FC = () => {
                 variant="h5"
                 color={cashFlow.netCashFlow >= 0 ? 'success.main' : 'error.main'}
               >
-                {formatCurrency(cashFlow.netCashFlow, currencyId)}
+                {formatCurrency(cashFlow.netCashFlow, currencyCode)}
               </Typography>
             </CardContent>
           </Card>
@@ -489,7 +494,7 @@ export const CashFlowReport: React.FC = () => {
               { dataKey: 'Net Cash Flow', color: '#2196f3', name: 'Net Cash Flow' },
             ]}
             height={300}
-            formatValue={(value: number) => formatCurrency(value, currencyId)}
+            formatValue={(value: number) => formatCurrency(value, currencyCode)}
           />
         </Paper>
       )}
@@ -512,7 +517,7 @@ export const CashFlowReport: React.FC = () => {
               <PieChart
                 data={incomePieData}
                 height={300}
-                formatter={(value) => formatCurrency(value, currencyId)}
+                formatter={(value) => formatCurrency(value, currencyCode)}
               />
             </Paper>
           </Grid>
@@ -526,7 +531,7 @@ export const CashFlowReport: React.FC = () => {
               <PieChart
                 data={expensesPieData}
                 height={300}
-                formatter={(value) => formatCurrency(value, currencyId)}
+                formatter={(value) => formatCurrency(value, currencyCode)}
               />
             </Paper>
           </Grid>
@@ -554,7 +559,9 @@ export const CashFlowReport: React.FC = () => {
                     <TableRow key={item.categoryId}>
                       <TableCell>{item.categoryName}</TableCell>
                       <TableCell align="right">{item.transactionCount}</TableCell>
-                      <TableCell align="right">{formatCurrency(item.total, currencyId)}</TableCell>
+                      <TableCell align="right">
+                        {formatCurrency(item.total, currencyCode)}
+                      </TableCell>
                     </TableRow>
                   ))}
                   {incomeDetailData.length === 0 && (
@@ -588,7 +595,9 @@ export const CashFlowReport: React.FC = () => {
                     <TableRow key={item.categoryId}>
                       <TableCell>{item.categoryName}</TableCell>
                       <TableCell align="right">{item.transactionCount}</TableCell>
-                      <TableCell align="right">{formatCurrency(item.total, currencyId)}</TableCell>
+                      <TableCell align="right">
+                        {formatCurrency(item.total, currencyCode)}
+                      </TableCell>
                     </TableRow>
                   ))}
                   {expenseDetailData.length === 0 && (

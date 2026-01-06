@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { PreferencesPage } from './PreferencesPage';
 import { useAppStore } from '../../stores/useAppStore';
-import { Currency } from '../../types/enums';
+import { CurrencyCode } from '../../types/enums';
 
 // Mock the store
 jest.mock('../../stores/useAppStore');
@@ -11,7 +11,7 @@ jest.mock('../../stores/useAppStore');
 describe('PreferencesPage', () => {
   const mockSetBaseCurrency = jest.fn();
   const mockStoreState = {
-    baseCurrency: Currency.USD,
+    baseCurrency: CurrencyCode.USD,
     setBaseCurrency: mockSetBaseCurrency,
     fileName: 'test.json',
     lastSaved: new Date().toISOString(),
@@ -57,7 +57,7 @@ describe('PreferencesPage', () => {
     const vndOption = screen.getByRole('option', { name: /VND - Vietnamese Dong/ });
     await user.click(vndOption);
 
-    expect(mockSetBaseCurrency).toHaveBeenCalledWith(Currency.VND);
+    expect(mockSetBaseCurrency).toHaveBeenCalledWith(CurrencyCode.VND);
   });
 
   it('should display all available currencies', async () => {

@@ -28,7 +28,7 @@ describe('AccountForm', () => {
       id: 'acc-1',
       name: 'Test Account',
       type: AccountType.CASH,
-      currencyId: 'eur',
+      currencyCode: 'EUR',
       initialBalance: 1500,
       description: 'Test description',
       isActive: false,
@@ -101,7 +101,7 @@ describe('AccountForm', () => {
       expect(mockOnSubmit).toHaveBeenCalledWith({
         name: 'New Account',
         type: AccountType.BANK_ACCOUNT,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         initialBalance: 2500.5,
         description: 'My new account',
         isActive: true,

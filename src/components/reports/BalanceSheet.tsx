@@ -29,6 +29,7 @@ import { DEFAULT_CURRENCIES } from '../../constants/defaults';
 import { AssetValueHistoryDialog } from '../assets/AssetValueHistoryDialog';
 import { LineChart } from '../charts/LineChart';
 import { formatCurrency } from '../../utils/currency.utils';
+import type { CurrencyCode } from '../../types/enums';
 
 type ComparisonType = 'none' | 'month' | 'year';
 
@@ -49,7 +50,7 @@ export const BalanceSheet: React.FC = () => {
   const [loadingRates, setLoadingRates] = useState<boolean>(false);
 
   // Use the selected currency for display
-  const currencyId = conversionCurrency;
+  const currencyCode = conversionCurrency as CurrencyCode;
 
   // Always apply currency conversion
   const effectiveBaseCurrency = conversionCurrency;
@@ -63,13 +64,13 @@ export const BalanceSheet: React.FC = () => {
       // Get unique currencies from accounts and manual assets
       const currencies = new Set<string>();
       accounts.forEach((account) => {
-        if (account.currencyId && account.currencyId !== conversionCurrency) {
-          currencies.add(account.currencyId);
+        if (account.currencyCode && account.currencyCode !== conversionCurrency) {
+          currencies.add(account.currencyCode);
         }
       });
       manualAssets.forEach((asset) => {
-        if (asset.currencyId && asset.currencyId !== conversionCurrency) {
-          currencies.add(asset.currencyId);
+        if (asset.currencyCode && asset.currencyCode !== conversionCurrency) {
+          currencies.add(asset.currencyCode);
         }
       });
 
@@ -281,7 +282,7 @@ export const BalanceSheet: React.FC = () => {
                 onChange={(e) => handleCurrencyChange(e.target.value)}
               >
                 {DEFAULT_CURRENCIES.map((curr) => (
-                  <MenuItem key={curr.id} value={curr.id}>
+                  <MenuItem key={curr.code} value={curr.code}>
                     {curr.code} - {curr.name}
                   </MenuItem>
                 ))}
@@ -315,7 +316,7 @@ export const BalanceSheet: React.FC = () => {
                     Total Assets
                   </Typography>
                   <Typography variant="h4" component="div">
-                    {formatCurrency(balanceSheet.totalAssets, currencyId)}
+                    {formatCurrency(balanceSheet.totalAssets, currencyCode)}
                   </Typography>
                   {comparison && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
@@ -327,7 +328,7 @@ export const BalanceSheet: React.FC = () => {
                       <Typography variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
                         {formatCurrency(
                           comparison.current.totalAssets - comparison.previous.totalAssets,
-                          currencyId
+                          currencyCode
                         )}
                       </Typography>
                     </Box>
@@ -342,7 +343,7 @@ export const BalanceSheet: React.FC = () => {
                     Total Liabilities
                   </Typography>
                   <Typography variant="h4" component="div">
-                    {formatCurrency(balanceSheet.totalLiabilities, currencyId)}
+                    {formatCurrency(balanceSheet.totalLiabilities, currencyCode)}
                   </Typography>
                   {comparison && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
@@ -356,7 +357,7 @@ export const BalanceSheet: React.FC = () => {
                         {formatCurrency(
                           comparison.current.totalLiabilities -
                             comparison.previous.totalLiabilities,
-                          currencyId
+                          currencyCode
                         )}
                       </Typography>
                     </Box>
@@ -369,7 +370,7 @@ export const BalanceSheet: React.FC = () => {
                 <CardContent>
                   <Typography gutterBottom>Net Worth</Typography>
                   <Typography variant="h4" component="div">
-                    {formatCurrency(balanceSheet.netWorth, currencyId)}
+                    {formatCurrency(balanceSheet.netWorth, currencyCode)}
                   </Typography>
                   {comparison && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
@@ -379,7 +380,7 @@ export const BalanceSheet: React.FC = () => {
                         <TrendingDownIcon fontSize="small" />
                       )}
                       <Typography variant="body2" sx={{ ml: 0.5 }}>
-                        {formatCurrency(comparison.change, currencyId)} (
+                        {formatCurrency(comparison.change, currencyCode)} (
                         {comparison.changePercent.toFixed(1)}%)
                       </Typography>
                     </Box>
@@ -403,7 +404,7 @@ export const BalanceSheet: React.FC = () => {
                   { dataKey: 'Liabilities', name: 'Liabilities', color: '#d32f2f' },
                 ]}
                 height={400}
-                formatValue={(value) => formatCurrency(value, currencyId)}
+                formatValue={(value) => formatCurrency(value, currencyCode)}
               />
             </Paper>
           )}
@@ -412,7 +413,7 @@ export const BalanceSheet: React.FC = () => {
           <ManualAssetSection
             title="Assets"
             groups={balanceSheet.assets}
-            currencyId={currencyId}
+            currencyCode={currencyCode}
             onManageHistory={handleManageHistory}
           />
 
@@ -422,7 +423,7 @@ export const BalanceSheet: React.FC = () => {
           <ManualAssetSection
             title="Liabilities"
             groups={balanceSheet.liabilities}
-            currencyId={currencyId}
+            currencyCode={currencyCode}
             onManageHistory={handleManageHistory}
           />
 
@@ -437,7 +438,7 @@ export const BalanceSheet: React.FC = () => {
               </Grid>
               <Grid item>
                 <Typography variant="h3">
-                  {formatCurrency(balanceSheet.netWorth, currencyId)}
+                  {formatCurrency(balanceSheet.netWorth, currencyCode)}
                 </Typography>
               </Grid>
             </Grid>

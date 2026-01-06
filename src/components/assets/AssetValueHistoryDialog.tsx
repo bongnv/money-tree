@@ -104,7 +104,7 @@ export const AssetValueHistoryDialog: React.FC<AssetValueHistoryDialogProps> = (
           <Box>
             <Typography variant="h6">{asset.name}</Typography>
             <Typography variant="body2" color="text.secondary">
-              Current Value: {formatCurrency(asset.value, asset.currencyId)}
+              Current Value: {formatCurrency(asset.value, asset.currencyCode)}
             </Typography>
           </Box>
           {growth && (
@@ -141,7 +141,7 @@ export const AssetValueHistoryDialog: React.FC<AssetValueHistoryDialogProps> = (
             data={getFilteredChartData()}
             lines={[{ dataKey: 'Value', name: 'Value', color: '#1976d2' }]}
             height={300}
-            formatValue={(value) => formatCurrency(value, asset.currencyId)}
+            formatValue={(value) => formatCurrency(value, asset.currencyCode)}
           />
         </Paper>
 
@@ -157,7 +157,7 @@ export const AssetValueHistoryDialog: React.FC<AssetValueHistoryDialogProps> = (
                   Start Value
                 </Typography>
                 <Typography variant="body1">
-                  {formatCurrency(growth.startValue, asset.currencyId)}
+                  {formatCurrency(growth.startValue, asset.currencyCode)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {formatDate(growth.startDate)}
@@ -168,7 +168,7 @@ export const AssetValueHistoryDialog: React.FC<AssetValueHistoryDialogProps> = (
                   Current Value
                 </Typography>
                 <Typography variant="body1">
-                  {formatCurrency(growth.endValue, asset.currencyId)}
+                  {formatCurrency(growth.endValue, asset.currencyCode)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {formatDate(growth.endDate)}
@@ -183,7 +183,7 @@ export const AssetValueHistoryDialog: React.FC<AssetValueHistoryDialogProps> = (
                   color={growth.absoluteChange >= 0 ? 'success.main' : 'error.main'}
                 >
                   {growth.absoluteChange >= 0 ? '+' : ''}
-                  {formatCurrency(growth.absoluteChange, asset.currencyId)}
+                  {formatCurrency(growth.absoluteChange, asset.currencyCode)}
                 </Typography>
                 <Typography
                   variant="caption"
@@ -219,7 +219,7 @@ export const AssetValueHistoryDialog: React.FC<AssetValueHistoryDialogProps> = (
                   <strong>{formatDate(asset.date)}</strong>
                 </TableCell>
                 <TableCell align="right">
-                  <strong>{formatCurrency(asset.value, asset.currencyId)}</strong>
+                  <strong>{formatCurrency(asset.value, asset.currencyCode)}</strong>
                 </TableCell>
                 <TableCell align="right">
                   {historicalEntries.length > 0 && (
@@ -236,7 +236,7 @@ export const AssetValueHistoryDialog: React.FC<AssetValueHistoryDialogProps> = (
                         : ''}
                       {formatCurrency(
                         asset.value - historicalEntries[historicalEntries.length - 1].value,
-                        asset.currencyId
+                        asset.currencyCode
                       )}
                     </Typography>
                   )}
@@ -267,7 +267,7 @@ export const AssetValueHistoryDialog: React.FC<AssetValueHistoryDialogProps> = (
                     <TableRow key={index}>
                       <TableCell>{formatDate(entry.date)}</TableCell>
                       <TableCell align="right">
-                        {formatCurrency(entry.value, asset.currencyId)}
+                        {formatCurrency(entry.value, asset.currencyCode)}
                       </TableCell>
                       <TableCell align="right">
                         <Typography
@@ -275,7 +275,7 @@ export const AssetValueHistoryDialog: React.FC<AssetValueHistoryDialogProps> = (
                           color={change >= 0 ? 'success.main' : 'error.main'}
                         >
                           {change >= 0 ? '+' : ''}
-                          {formatCurrency(change, asset.currencyId)}
+                          {formatCurrency(change, asset.currencyCode)}
                         </Typography>
                       </TableCell>
                       <TableCell>{entry.notes || '-'}</TableCell>

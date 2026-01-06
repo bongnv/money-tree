@@ -1,12 +1,12 @@
 import { validationService } from './validation.service';
 import type { Transaction, Account, TransactionType } from '../types/models';
-import { Group, AccountType, Currency } from '../types/enums';
+import { Group, AccountType, CurrencyCode } from '../types/enums';
 
 const mockAccount1: Account = {
   id: 'acc-1',
   name: 'Checking',
   type: AccountType.BANK_ACCOUNT,
-  currencyId: Currency.USD,
+  currencyCode: CurrencyCode.USD,
   initialBalance: 1000,
   isActive: true,
   createdAt: '2024-01-01T00:00:00.000Z',

@@ -43,7 +43,7 @@ describe('FinancialSummary', () => {
             id: 'acc-1',
             name: 'Checking',
             type: AccountType.BANK_ACCOUNT,
-            currencyId: 'usd',
+            currencyCode: 'USD',
             initialBalance: 1000,
             isActive: true,
             createdAt: '2026-01-01T00:00:00.000Z',

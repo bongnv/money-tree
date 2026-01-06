@@ -20,7 +20,7 @@ import { PeriodSelector, type PeriodOption } from './PeriodSelector';
 import type { Budget } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
 import { calculationService } from '../../services/calculation.service';
-import { Group } from '../../types/enums';
+import { Group, CurrencyCode } from '../../types/enums';
 
 export const BudgetsPage: React.FC = () => {
   const { budgets, addBudget, updateBudget, deleteBudget } = useBudgetStore();
@@ -271,8 +271,9 @@ export const BudgetsPage: React.FC = () => {
                               secondary={
                                 <Box component="span">
                                   <Box component="span" sx={{ display: 'block' }}>
-                                    {formatCurrency(actualAmount, 'usd')} of{' '}
-                                    {formatCurrency(proratedBudget, 'usd')} ({percentage.toFixed(0)}
+                                    {formatCurrency(actualAmount, CurrencyCode.USD)} of{' '}
+                                    {formatCurrency(proratedBudget, CurrencyCode.USD)} (
+                                    {percentage.toFixed(0)}
                                     %)
                                   </Box>
                                   <Box
@@ -283,7 +284,8 @@ export const BudgetsPage: React.FC = () => {
                                       color: 'text.secondary',
                                     }}
                                   >
-                                    Original: {formatCurrency(budget.amount, 'usd')} {budget.period}
+                                    Original: {formatCurrency(budget.amount, CurrencyCode.USD)}{' '}
+                                    {budget.period}
                                     {' • '}
                                     {formatDateRange(budget)}
                                   </Box>
@@ -326,8 +328,9 @@ export const BudgetsPage: React.FC = () => {
                           Total
                         </Typography>
                         <Typography variant="subtitle1" fontWeight="bold">
-                          {formatCurrency(totalActual, 'usd')} of{' '}
-                          {formatCurrency(totalBudget, 'usd')} ({totalPercentage.toFixed(0)}%)
+                          {formatCurrency(totalActual, CurrencyCode.USD)} of{' '}
+                          {formatCurrency(totalBudget, CurrencyCode.USD)} (
+                          {totalPercentage.toFixed(0)}%)
                         </Typography>
                       </Box>
                       <LinearProgress

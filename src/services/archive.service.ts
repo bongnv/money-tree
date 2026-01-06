@@ -13,7 +13,7 @@ import { useCategoryStore } from '../stores/useCategoryStore';
 import { calculationService } from './calculation.service';
 import { StorageFactory } from './storage/StorageFactory';
 import type { ArchiveFile, ArchivedYearReference, YearEndSummary } from '../types/models';
-import { Currency } from '../types/enums';
+import { CurrencyCode } from '../types/enums';
 
 /**
  * Check if archive trigger conditions are met (3+ years exist in main file)
@@ -34,7 +34,7 @@ export function detectArchiveTrigger(): boolean {
 /**
  * Calculate year-end summary for a specific year
  */
-export function calculateYearEndSummary(year: number, baseCurrency: Currency): YearEndSummary {
+export function calculateYearEndSummary(year: number, baseCurrency: CurrencyCode): YearEndSummary {
   const transactions = useTransactionStore.getState().transactions;
   const accounts = useAccountStore.getState().accounts;
   const manualAssets = useAssetStore.getState().manualAssets;
@@ -125,7 +125,7 @@ export function shouldPromptArchive(lastPostponedDate: string | null): boolean {
  * Create archive file for a specific year
  * Extracts all data for the year and creates a self-contained archive
  */
-export function createArchiveFile(year: number, baseCurrency: Currency): ArchiveFile {
+export function createArchiveFile(year: number, baseCurrency: CurrencyCode): ArchiveFile {
   const transactions = useTransactionStore.getState().transactions;
   const budgets = useBudgetStore.getState().budgets;
   const manualAssets = useAssetStore.getState().manualAssets;

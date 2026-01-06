@@ -19,7 +19,6 @@ describe('Model Schemas', () => {
   describe('CurrencySchema', () => {
     it('should validate a valid currency', () => {
       const validCurrency = {
-        id: 'usd',
         code: 'USD',
         symbol: '$',
         name: 'US Dollar',
@@ -30,7 +29,6 @@ describe('Model Schemas', () => {
 
     it('should reject currency with missing fields', () => {
       const invalidCurrency = {
-        id: 'usd',
         code: 'USD',
         // missing symbol, name, decimalPlaces
       };
@@ -39,7 +37,6 @@ describe('Model Schemas', () => {
 
     it('should reject currency with invalid decimalPlaces', () => {
       const invalidCurrency = {
-        id: 'usd',
         code: 'USD',
         symbol: '$',
         name: 'US Dollar',
@@ -55,7 +52,7 @@ describe('Model Schemas', () => {
         id: 'acc1',
         name: 'Checking Account',
         type: AccountType.BANK_ACCOUNT,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         initialBalance: 1000.0,
         isActive: true,
         createdAt: new Date().toISOString(),
@@ -69,7 +66,7 @@ describe('Model Schemas', () => {
         id: 'acc1',
         name: 'Checking Account',
         type: AccountType.BANK_ACCOUNT,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         initialBalance: 1000.0,
         description: 'My main checking account',
         isActive: true,
@@ -84,7 +81,7 @@ describe('Model Schemas', () => {
         id: 'acc1',
         name: 'Checking Account',
         type: 'invalid_type',
-        currencyId: 'usd',
+        currencyCode: 'USD',
         initialBalance: 1000.0,
         isActive: true,
         createdAt: new Date().toISOString(),
@@ -235,7 +232,7 @@ describe('Model Schemas', () => {
         id: 'bi1',
         transactionTypeId: 'tt1',
         amount: 200.0,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         period: 'monthly',
         startDate: '2026-01-01',
         endDate: '2026-12-31',
@@ -250,7 +247,7 @@ describe('Model Schemas', () => {
         id: 'bi1',
         transactionTypeId: 'tt1',
         amount: 600.0,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         period: 'quarterly',
         startDate: '2026-01-01',
         endDate: '2026-12-31',
@@ -265,7 +262,7 @@ describe('Model Schemas', () => {
         id: 'bi1',
         transactionTypeId: 'tt1',
         amount: 0,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         period: 'monthly',
         startDate: '2026-01-01',
         endDate: '2026-12-31',
@@ -333,7 +330,7 @@ describe('Model Schemas', () => {
         name: 'House',
         type: AssetType.REAL_ESTATE,
         value: 500000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: getDateString(),
         notes: 'Primary residence',
         createdAt: getDateTimeString(),
@@ -348,7 +345,7 @@ describe('Model Schemas', () => {
         name: 'Super Fund',
         type: AssetType.SUPERANNUATION,
         value: 25000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: getDateString(),
         createdAt: getDateTimeString(),
         updatedAt: getDateTimeString(),
@@ -361,7 +358,7 @@ describe('Model Schemas', () => {
         name: 'House',
         type: AssetType.REAL_ESTATE,
         value: 500000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: getDateString(),
         createdAt: getDateTimeString(),
         updatedAt: getDateTimeString(),
@@ -375,7 +372,7 @@ describe('Model Schemas', () => {
         name: '',
         type: AssetType.REAL_ESTATE,
         value: 500000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: getDateString(),
         createdAt: getDateTimeString(),
         updatedAt: getDateTimeString(),
@@ -389,7 +386,7 @@ describe('Model Schemas', () => {
         name: 'House',
         type: 'invalid_type',
         value: 500000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: getDateString(),
         createdAt: getDateTimeString(),
         updatedAt: getDateTimeString(),
@@ -404,7 +401,7 @@ describe('Model Schemas', () => {
           name: 'Test Asset',
           type,
           value: 10000,
-          currencyId: 'usd',
+          currencyCode: 'USD',
           date: getDateString(),
           createdAt: getDateTimeString(),
           updatedAt: getDateTimeString(),
@@ -419,7 +416,7 @@ describe('Model Schemas', () => {
         name: 'House',
         type: AssetType.REAL_ESTATE,
         value: 510000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: '2026-04-01',
         valueHistory: [{ date: '2026-01-01', value: 500000, notes: 'Initial purchase' }],
         createdAt: getDateTimeString(),
@@ -434,7 +431,7 @@ describe('Model Schemas', () => {
         name: 'House',
         type: AssetType.REAL_ESTATE,
         value: 530000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: '2026-10-01',
         valueHistory: [
           { date: '2026-01-01', value: 500000 },
@@ -453,7 +450,7 @@ describe('Model Schemas', () => {
         name: 'House',
         type: AssetType.REAL_ESTATE,
         value: 530000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: '2026-10-01',
         valueHistory: [
           { date: '2026-04-01', value: 510000 },
@@ -471,7 +468,7 @@ describe('Model Schemas', () => {
         name: 'House',
         type: AssetType.REAL_ESTATE,
         value: 520000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: '2026-07-01',
         valueHistory: [
           { date: '2026-08-01', value: 500000 }, // After current date
@@ -488,7 +485,7 @@ describe('Model Schemas', () => {
         name: 'House',
         type: AssetType.REAL_ESTATE,
         value: 520000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: '2026-07-01',
         valueHistory: [
           { date: '2026-07-01', value: 500000 }, // Same as current date
@@ -505,7 +502,7 @@ describe('Model Schemas', () => {
         name: 'House',
         type: AssetType.REAL_ESTATE,
         value: 510000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: '2026-04-01',
         valueHistory: [
           { date: '2026-01-01', value: 500000 }, // No notes
@@ -522,7 +519,7 @@ describe('Model Schemas', () => {
         name: 'House',
         type: AssetType.REAL_ESTATE,
         value: 510000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: '2026-04-01',
         valueHistory: [
           { date: '01/01/2026', value: 500000 }, // Invalid format
@@ -567,7 +564,7 @@ describe('Model Schemas', () => {
                 name: 'House',
                 type: AssetType.REAL_ESTATE,
                 value: 500000,
-                currencyId: 'usd',
+                currencyCode: 'USD',
                 date: getDateString(),
                 createdAt: getDateTimeString(),
                 updatedAt: getDateTimeString(),

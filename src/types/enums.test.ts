@@ -1,4 +1,4 @@
-import { Group, AccountType, BudgetPeriod, Currency } from './enums';
+import { Group, AccountType, BudgetPeriod, CurrencyCode } from './enums';
 
 describe('Enums', () => {
   describe('Group', () => {
@@ -61,19 +61,19 @@ describe('Enums', () => {
 
   describe('Currency', () => {
     it('should have correct values', () => {
-      expect(Currency.USD).toBe('usd');
-      expect(Currency.VND).toBe('vnd');
-      expect(Currency.SGD).toBe('sgd');
-      expect(Currency.AUD).toBe('aud');
+      expect(CurrencyCode.USD).toBe('USD');
+      expect(CurrencyCode.VND).toBe('VND');
+      expect(CurrencyCode.SGD).toBe('SGD');
+      expect(CurrencyCode.AUD).toBe('AUD');
     });
 
     it('should have all expected members', () => {
-      const values = Object.values(Currency);
+      const values = Object.values(CurrencyCode);
       expect(values).toHaveLength(4);
-      expect(values).toContain('usd');
-      expect(values).toContain('vnd');
-      expect(values).toContain('sgd');
-      expect(values).toContain('aud');
+      expect(values).toContain('USD');
+      expect(values).toContain('VND');
+      expect(values).toContain('SGD');
+      expect(values).toContain('AUD');
     });
   });
 });

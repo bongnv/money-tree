@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { TextField, MenuItem, FormControlLabel, Switch, Box, Button } from '@mui/material';
 import type { Account } from '../../types/models';
-import { AccountType } from '../../types/enums';
+import { AccountType, CurrencyCode } from '../../types/enums';
 import { getAllCurrencies } from '../../utils/currency.utils';
 
 interface AccountFormProps {
@@ -15,7 +15,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({ account, onSubmit, onC
   const [formData, setFormData] = useState({
     name: account?.name || '',
     type: account?.type || AccountType.BANK_ACCOUNT,
-    currencyId: account?.currencyId || 'usd',
+    currencyCode: account?.currencyCode || 'usd',
     initialBalance: account?.initialBalance?.toString() || '0',
     description: account?.description || '',
     isActive: account?.isActive ?? true,
@@ -34,8 +34,8 @@ export const AccountForm: React.FC<AccountFormProps> = ({ account, onSubmit, onC
       newErrors.type = 'Account type is required';
     }
 
-    if (!formData.currencyId) {
-      newErrors.currencyId = 'Currency is required';
+    if (!formData.currencyCode) {
+      newErrors.currencyCode = 'Currency is required';
     }
 
     const balance = parseFloat(formData.initialBalance);
@@ -57,7 +57,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({ account, onSubmit, onC
     onSubmit({
       name: formData.name.trim(),
       type: formData.type,
-      currencyId: formData.currencyId,
+      currencyCode: formData.currencyCode as CurrencyCode,
       initialBalance: parseFloat(formData.initialBalance),
       description: formData.description.trim() || undefined,
       isActive: formData.isActive,
@@ -117,15 +117,15 @@ export const AccountForm: React.FC<AccountFormProps> = ({ account, onSubmit, onC
         fullWidth
         select
         label="Currency"
-        value={formData.currencyId}
-        onChange={handleChange('currencyId')}
-        error={!!errors.currencyId}
-        helperText={errors.currencyId}
+        value={formData.currencyCode}
+        onChange={handleChange('currencyCode')}
+        error={!!errors.currencyCode}
+        helperText={errors.currencyCode}
         margin="normal"
         required
       >
         {currencies.map((currency) => (
-          <MenuItem key={currency.id} value={currency.id}>
+          <MenuItem key={currency.code} value={currency.code}>
             {currency.code} - {currency.name}
           </MenuItem>
         ))}

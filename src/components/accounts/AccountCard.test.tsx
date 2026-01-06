@@ -16,7 +16,7 @@ describe('AccountCard', () => {
     id: 'acc-1',
     name: 'Checking Account',
     type: AccountType.BANK_ACCOUNT,
-    currencyId: 'usd',
+    currencyCode: 'USD',
     initialBalance: 1000,
     description: 'My main checking account',
     isActive: true,

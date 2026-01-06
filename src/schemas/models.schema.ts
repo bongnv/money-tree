@@ -1,11 +1,10 @@
 import { z } from 'zod';
-import { AccountType, Group, AssetType } from '../types/enums';
+import { AccountType, Group, AssetType, CurrencyCode } from '../types/enums';
 
 /**
  * Zod schema for Currency
  */
 export const CurrencySchema = z.object({
-  id: z.string().min(1, 'ID is required'),
   code: z.string().min(1, 'Currency code is required').max(10),
   symbol: z.string().min(1, 'Currency symbol is required'),
   name: z.string().min(1, 'Currency name is required'),
@@ -19,7 +18,7 @@ export const AccountSchema = z.object({
   id: z.string().min(1, 'ID is required'),
   name: z.string().min(1, 'Account name is required'),
   type: z.nativeEnum(AccountType),
-  currencyId: z.string().min(1, 'Currency ID is required'),
+  currencyCode: z.nativeEnum(CurrencyCode),
   initialBalance: z.number(),
   description: z.string().optional(),
   isActive: z.boolean(),
@@ -77,7 +76,7 @@ export const BudgetSchema = z
     id: z.string().min(1, 'ID is required'),
     transactionTypeId: z.string().min(1, 'Transaction type ID is required'),
     amount: z.number().positive('Amount must be greater than 0'),
-    currencyId: z.string().min(1, 'Currency ID is required'),
+    currencyCode: z.nativeEnum(CurrencyCode),
     period: z.enum(['monthly', 'quarterly', 'yearly']),
     startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Start date must be in YYYY-MM-DD format'),
     endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'End date must be in YYYY-MM-DD format'),
@@ -119,7 +118,7 @@ export const ManualAssetSchema = z
     name: z.string().min(1, 'Asset name is required'),
     type: z.nativeEnum(AssetType),
     value: z.number(),
-    currencyId: z.string().min(1, 'Currency ID is required'),
+    currencyCode: z.nativeEnum(CurrencyCode),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
     notes: z.string().optional(),
     valueHistory: z.array(AssetValueHistorySchema).optional(),
@@ -228,7 +227,7 @@ export const DataFileSchema = z.object({
     .nullable()
     .optional()
     .transform((val) => val ?? []),
-  baseCurrency: z.string().default('usd'),
+  baseCurrency: z.string().default(CurrencyCode.USD),
   lastModified: z.string().datetime(),
 });
 

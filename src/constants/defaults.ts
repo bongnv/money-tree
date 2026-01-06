@@ -1,34 +1,30 @@
 import { Currency as CurrencyModel } from '../types/models';
-import { Currency } from '../types/enums';
+import { CurrencyCode } from '../types/enums';
 
 /**
  * Default currencies available in the application
  */
 export const DEFAULT_CURRENCIES: CurrencyModel[] = [
   {
-    id: Currency.USD,
-    code: 'USD',
+    code: CurrencyCode.USD,
     symbol: '$',
     name: 'US Dollar',
     decimalPlaces: 2,
   },
   {
-    id: Currency.VND,
-    code: 'VND',
+    code: CurrencyCode.VND,
     symbol: '₫',
     name: 'Vietnamese Dong',
     decimalPlaces: 0,
   },
   {
-    id: Currency.SGD,
-    code: 'SGD',
+    code: CurrencyCode.SGD,
     symbol: 'S$',
     name: 'Singapore Dollar',
     decimalPlaces: 2,
   },
   {
-    id: Currency.AUD,
-    code: 'AUD',
+    code: CurrencyCode.AUD,
     symbol: 'A$',
     name: 'Australian Dollar',
     decimalPlaces: 2,

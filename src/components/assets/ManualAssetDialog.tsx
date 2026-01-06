@@ -5,6 +5,7 @@ import { useAssetStore } from '../../stores/useAssetStore';
 import type { ManualAsset } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
 import { formatDate } from '../../utils/date.utils';
+import { CurrencyCode } from '../../types/enums';
 
 interface ManualAssetDialogProps {
   open: boolean;
@@ -81,7 +82,7 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
         {showSuccessMessage && previousValue && (
           <Alert severity="success" sx={{ mb: 2 }}>
             Value updated. Previous value (
-            {formatCurrency(previousValue.value, asset?.currencyId || 'usd')} on{' '}
+            {formatCurrency(previousValue.value, asset?.currencyCode || CurrencyCode.USD)} on{' '}
             {formatDate(previousValue.date)}) saved to history.
           </Alert>
         )}
@@ -91,7 +92,7 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
               Current Value
             </Typography>
-            <Typography variant="h6">{formatCurrency(asset.value, asset.currencyId)}</Typography>
+            <Typography variant="h6">{formatCurrency(asset.value, asset.currencyCode)}</Typography>
             <Typography variant="body2" color="text.secondary">
               As of {formatDate(asset.date)}
             </Typography>

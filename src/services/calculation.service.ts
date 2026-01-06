@@ -1,5 +1,4 @@
 import type { Transaction, Account, Budget, ManualAsset } from '../types/models';
-import { areCurrenciesEqual } from '../utils/currency.utils';
 
 /**
  * Calculation service for account balances and transaction totals
@@ -356,12 +355,12 @@ class CalculationService {
     for (const account of accounts) {
       const balance = accountBalances.get(account.id) || 0;
 
-      if (baseCurrency && getRateForMonth && currentMonth && account.currencyId) {
-        if (!areCurrenciesEqual(account.currencyId, baseCurrency)) {
-          const rate = getRateForMonth(currentMonth, account.currencyId, baseCurrency);
+      if (baseCurrency && getRateForMonth && currentMonth && account.currencyCode) {
+        if (account.currencyCode !== baseCurrency) {
+          const rate = getRateForMonth(currentMonth, account.currencyCode, baseCurrency);
           if (rate === null) {
             throw new Error(
-              `Missing exchange rate for ${account.currencyId.toUpperCase()} → ${baseCurrency.toUpperCase()} in ${currentMonth}. Please fetch exchange rates in Settings → Exchange Rates.`
+              `Missing exchange rate for ${account.currencyCode} → ${baseCurrency} in ${currentMonth}. Please fetch exchange rates in Settings → Exchange Rates.`
             );
           }
           totalAccountBalance += balance * rate;
@@ -375,12 +374,12 @@ class CalculationService {
 
     let totalAssets = 0;
     for (const asset of manualAssets) {
-      if (baseCurrency && getRateForMonth && currentMonth && asset.currencyId) {
-        if (!areCurrenciesEqual(asset.currencyId, baseCurrency)) {
-          const rate = getRateForMonth(currentMonth, asset.currencyId, baseCurrency);
+      if (baseCurrency && getRateForMonth && currentMonth && asset.currencyCode) {
+        if (asset.currencyCode !== baseCurrency) {
+          const rate = getRateForMonth(currentMonth, asset.currencyCode, baseCurrency);
           if (rate === null) {
             throw new Error(
-              `Missing exchange rate for ${asset.currencyId.toUpperCase()} → ${baseCurrency.toUpperCase()} in ${currentMonth}. Please fetch exchange rates in Settings → Exchange Rates.`
+              `Missing exchange rate for ${asset.currencyCode.toUpperCase()} → ${baseCurrency.toUpperCase()} in ${currentMonth}. Please fetch exchange rates in Settings → Exchange Rates.`
             );
           }
           totalAssets += asset.value * rate;

@@ -1,12 +1,12 @@
 import { calculationService } from './calculation.service';
 import type { Transaction, Account, ManualAsset } from '../types/models';
-import { AccountType, AssetType, Currency } from '../types/enums';
+import { AccountType, AssetType, CurrencyCode } from '../types/enums';
 
 const mockAccount1: Account = {
   id: 'acc-1',
   name: 'Checking',
   type: AccountType.BANK_ACCOUNT,
-  currencyId: Currency.USD,
+  currencyCode: CurrencyCode.USD,
   initialBalance: 1000,
   isActive: true,
   createdAt: '2024-01-01T00:00:00.000Z',
@@ -17,7 +17,7 @@ const mockAccount2: Account = {
   id: 'acc-2',
   name: 'Savings',
   type: AccountType.BANK_ACCOUNT,
-  currencyId: Currency.USD,
+  currencyCode: CurrencyCode.USD,
   initialBalance: 5000,
   isActive: true,
   createdAt: '2024-01-01T00:00:00.000Z',
@@ -474,7 +474,7 @@ describe('CalculationService', () => {
       {
         id: '1',
         transactionTypeId: 'type-1',
-        currencyId: Currency.USD,
+        currencyCode: CurrencyCode.USD,
         amount: 500,
         period: 'monthly' as const,
         startDate: '2026-01-01',
@@ -485,7 +485,7 @@ describe('CalculationService', () => {
       {
         id: '2',
         transactionTypeId: 'type-1',
-        currencyId: Currency.USD,
+        currencyCode: CurrencyCode.USD,
         amount: 600,
         period: 'monthly' as const,
         startDate: '2026-07-01',
@@ -496,7 +496,7 @@ describe('CalculationService', () => {
       {
         id: '3',
         transactionTypeId: 'type-2',
-        currencyId: Currency.USD,
+        currencyCode: CurrencyCode.USD,
         amount: 300,
         period: 'monthly' as const,
         startDate: '2026-01-01',
@@ -554,7 +554,7 @@ describe('CalculationService', () => {
         {
           id: '1',
           transactionTypeId: 'type-1',
-          currencyId: Currency.USD,
+          currencyCode: CurrencyCode.USD,
           amount: 500,
           period: 'monthly' as const,
           startDate: '2026-01-01',
@@ -577,7 +577,7 @@ describe('CalculationService', () => {
         {
           id: '1',
           transactionTypeId: 'type-1',
-          currencyId: Currency.USD,
+          currencyCode: CurrencyCode.USD,
           amount: 500,
           period: 'monthly' as const,
           startDate: '2026-01-01',
@@ -643,7 +643,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
-        currencyId: Currency.USD,
+        currencyCode: CurrencyCode.USD,
         amount: 1500,
         period: 'monthly' as const,
         startDate: '2026-01-01',
@@ -663,7 +663,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
-        currencyId: Currency.USD,
+        currencyCode: CurrencyCode.USD,
         amount: 1500,
         period: 'monthly' as const,
         startDate: '2026-01-01',
@@ -683,7 +683,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
-        currencyId: Currency.USD,
+        currencyCode: CurrencyCode.USD,
         amount: 1500,
         period: 'monthly' as const,
         startDate: '2026-01-01',
@@ -703,7 +703,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
-        currencyId: Currency.USD,
+        currencyCode: CurrencyCode.USD,
         amount: 4500,
         period: 'quarterly' as const,
         startDate: '2026-01-01',
@@ -723,7 +723,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
-        currencyId: Currency.USD,
+        currencyCode: CurrencyCode.USD,
         amount: 4500,
         period: 'quarterly' as const,
         startDate: '2026-01-01',
@@ -743,7 +743,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
-        currencyId: Currency.USD,
+        currencyCode: CurrencyCode.USD,
         amount: 4500,
         period: 'quarterly' as const,
         startDate: '2026-01-01',
@@ -763,7 +763,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
-        currencyId: Currency.USD,
+        currencyCode: CurrencyCode.USD,
         amount: 18000,
         period: 'yearly' as const,
         startDate: '2026-01-01',
@@ -783,7 +783,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
-        currencyId: Currency.USD,
+        currencyCode: CurrencyCode.USD,
         amount: 18000,
         period: 'yearly' as const,
         startDate: '2026-01-01',
@@ -803,7 +803,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
-        currencyId: Currency.USD,
+        currencyCode: CurrencyCode.USD,
         amount: 18000,
         period: 'yearly' as const,
         startDate: '2026-01-01',
@@ -823,7 +823,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
-        currencyId: Currency.USD,
+        currencyCode: CurrencyCode.USD,
         amount: 1500,
         period: 'monthly' as const,
         startDate: '2026-01-01',
@@ -845,7 +845,7 @@ describe('CalculationService', () => {
       const budget = {
         id: '1',
         transactionTypeId: 'type-1',
-        currencyId: Currency.USD,
+        currencyCode: CurrencyCode.USD,
         amount: 1500,
         period: 'monthly' as const,
         startDate: '2026-01-01',
@@ -870,7 +870,7 @@ describe('CalculationService', () => {
         name: 'House',
         type: AssetType.REAL_ESTATE,
         value: 500000,
-        currencyId: Currency.USD,
+        currencyCode: CurrencyCode.USD,
         date: '2026-01-01',
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
@@ -880,7 +880,7 @@ describe('CalculationService', () => {
         name: 'Car',
         type: AssetType.OTHER,
         value: 25000,
-        currencyId: Currency.USD,
+        currencyCode: CurrencyCode.USD,
         date: '2026-01-01',
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',

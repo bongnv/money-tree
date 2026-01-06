@@ -27,7 +27,7 @@ describe('useAssetStore', () => {
     name: 'House',
     type: AssetType.REAL_ESTATE,
     value: 500000,
-    currencyId: 'usd',
+    currencyCode: 'USD',
     date: new Date().toISOString(),
     notes: 'Primary residence',
     createdAt: new Date().toISOString(),

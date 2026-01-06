@@ -30,7 +30,7 @@ describe('AccountDialog', () => {
       id: 'acc-1',
       name: 'Test Account',
       type: AccountType.BANK_ACCOUNT,
-      currencyId: 'usd',
+      currencyCode: 'USD',
       initialBalance: 1000,
       isActive: true,
       createdAt: '2024-01-01T00:00:00.000Z',

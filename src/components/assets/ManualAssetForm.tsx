@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { TextField, MenuItem, Box, Button } from '@mui/material';
 import type { ManualAsset } from '../../types/models';
-import { AssetType } from '../../types/enums';
+import { AssetType, CurrencyCode } from '../../types/enums';
 import { getAllCurrencies } from '../../utils/currency.utils';
 import { getTodayDate, toDateString } from '../../utils/date.utils';
 
@@ -23,7 +23,7 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
     name: asset?.name || '',
     type: asset?.type || AssetType.OTHER,
     value: asset?.value?.toString() || '0',
-    currencyId: asset?.currencyId || 'usd',
+    currencyCode: asset?.currencyCode || CurrencyCode.USD,
     date: asset?.date || getTodayDate(),
     notes: asset?.notes || '',
   });
@@ -49,8 +49,8 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
       newErrors.value = 'Value must be a valid number';
     }
 
-    if (!formData.currencyId) {
-      newErrors.currencyId = 'Currency is required';
+    if (!formData.currencyCode) {
+      newErrors.currencyCode = 'Currency is required';
     }
 
     if (!formData.date) {
@@ -72,7 +72,7 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
       name: formData.name.trim(),
       type: formData.type,
       value: parseFloat(formData.value),
-      currencyId: formData.currencyId,
+      currencyCode: formData.currencyCode as CurrencyCode,
       date: toDateString(formData.date),
       notes: formData.notes.trim() || undefined,
     });
@@ -147,16 +147,16 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
         fullWidth
         select
         label="Currency"
-        value={formData.currencyId}
-        onChange={handleChange('currencyId')}
-        error={!!errors.currencyId}
-        helperText={errors.currencyId}
+        value={formData.currencyCode}
+        onChange={handleChange('currencyCode')}
+        error={!!errors.currencyCode}
+        helperText={errors.currencyCode}
         margin="normal"
         required
         disabled={updateValueOnly}
       >
         {currencies.map((currency) => (
-          <MenuItem key={currency.id} value={currency.id}>
+          <MenuItem key={currency.code} value={currency.code}>
             {currency.code} - {currency.name}
           </MenuItem>
         ))}

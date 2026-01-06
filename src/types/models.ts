@@ -1,12 +1,11 @@
-import { AccountType, Group, AssetType, Currency as CurrencyEnum } from './enums';
+import { AccountType, Group, AssetType, CurrencyCode } from './enums';
 
 /**
  * Currency model
  * Represents a currency used in the application
  */
 export interface Currency {
-  id: string;
-  code: string; // e.g., 'USD', 'EUR'
+  code: string; // e.g., 'USD', 'VND' (ISO 4217)
   symbol: string; // e.g., '$', '€'
   name: string; // e.g., 'US Dollar', 'Euro'
   decimalPlaces: number; // e.g., 2 for most currencies
@@ -20,7 +19,7 @@ export interface Account {
   id: string;
   name: string;
   type: AccountType;
-  currencyId: string;
+  currencyCode: CurrencyCode;
   initialBalance: number;
   description?: string;
   isActive: boolean;
@@ -81,7 +80,7 @@ export interface Budget {
   id: string;
   transactionTypeId: string;
   amount: number; // Budget amount
-  currencyId: string; // Budget amount currency
+  currencyCode: CurrencyCode; // Budget amount currency
   period: 'monthly' | 'quarterly' | 'yearly'; // Period type for this budget
   startDate: string; // Start date (YYYY-MM-DD)
   endDate: string; // End date (YYYY-MM-DD)
@@ -122,7 +121,7 @@ export interface ManualAsset {
   name: string;
   type: AssetType;
   value: number; // Current value (can be negative for liabilities)
-  currencyId: string;
+  currencyCode: CurrencyCode;
   date: string; // Date string in YYYY-MM-DD format - date of valuation
   notes?: string;
   valueHistory?: AssetValueHistory[]; // Historical values (excluding current)
@@ -173,7 +172,7 @@ export interface DataFile {
   categories: Category[]; // Shared across all years
   transactionTypes: TransactionType[]; // Shared across all years
   archivedYears: ArchivedYearReference[]; // References to archived years
-  baseCurrency: CurrencyEnum; // Base currency for reporting
+  baseCurrency: CurrencyCode; // Base currency for reporting
   lastModified: string; // ISO date string
 }
 

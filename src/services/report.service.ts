@@ -21,7 +21,7 @@ export interface AssetItem {
   name: string;
   value: number;
   type: string;
-  currencyId?: string;
+  currencyCode?: string;
   convertedValue?: number;
   conversionRate?: number;
 }
@@ -153,8 +153,13 @@ class ReportService {
           let conversionRate: number | undefined;
 
           // Apply currency conversion if base currency is specified
-          if (baseCurrency && getRateForMonth && rateMonth && account.currencyId !== baseCurrency) {
-            const rate = getRateForMonth(rateMonth, account.currencyId, baseCurrency);
+          if (
+            baseCurrency &&
+            getRateForMonth &&
+            rateMonth &&
+            account.currencyCode !== baseCurrency
+          ) {
+            const rate = getRateForMonth(rateMonth, account.currencyCode, baseCurrency);
             if (rate !== null) {
               convertedValue = balance * rate;
               conversionRate = rate;
@@ -166,9 +171,9 @@ class ReportService {
             name: account.name,
             value: convertedValue,
             type: account.type,
-            currencyId: account.currencyId,
+            currencyCode: account.currencyCode,
             convertedValue:
-              baseCurrency && account.currencyId !== baseCurrency ? convertedValue : undefined,
+              baseCurrency && account.currencyCode !== baseCurrency ? convertedValue : undefined,
             conversionRate,
           });
         }
@@ -187,8 +192,8 @@ class ReportService {
         let conversionRate: number | undefined;
 
         // Apply currency conversion if base currency is specified
-        if (baseCurrency && getRateForMonth && rateMonth && asset.currencyId !== baseCurrency) {
-          const rate = getRateForMonth(rateMonth, asset.currencyId, baseCurrency);
+        if (baseCurrency && getRateForMonth && rateMonth && asset.currencyCode !== baseCurrency) {
+          const rate = getRateForMonth(rateMonth, asset.currencyCode, baseCurrency);
           if (rate !== null) {
             convertedValue = asset.value * rate;
             conversionRate = rate;
@@ -200,9 +205,9 @@ class ReportService {
           name: asset.name,
           value: convertedValue,
           type: asset.type,
-          currencyId: asset.currencyId,
+          currencyCode: asset.currencyCode,
           convertedValue:
-            baseCurrency && asset.currencyId !== baseCurrency ? convertedValue : undefined,
+            baseCurrency && asset.currencyCode !== baseCurrency ? convertedValue : undefined,
           conversionRate,
         });
       });
@@ -245,8 +250,13 @@ class ReportService {
           let conversionRate: number | undefined;
 
           // Apply currency conversion if base currency is specified
-          if (baseCurrency && getRateForMonth && rateMonth && account.currencyId !== baseCurrency) {
-            const rate = getRateForMonth(rateMonth, account.currencyId, baseCurrency);
+          if (
+            baseCurrency &&
+            getRateForMonth &&
+            rateMonth &&
+            account.currencyCode !== baseCurrency
+          ) {
+            const rate = getRateForMonth(rateMonth, account.currencyCode, baseCurrency);
             if (rate !== null) {
               convertedValue = liability * rate;
               conversionRate = rate;
@@ -258,9 +268,9 @@ class ReportService {
             name: account.name,
             value: convertedValue,
             type: account.type,
-            currencyId: account.currencyId,
+            currencyCode: account.currencyCode,
             convertedValue:
-              baseCurrency && account.currencyId !== baseCurrency ? convertedValue : undefined,
+              baseCurrency && account.currencyCode !== baseCurrency ? convertedValue : undefined,
             conversionRate,
           });
         }
@@ -282,8 +292,13 @@ class ReportService {
           let conversionRate: number | undefined;
 
           // Apply currency conversion if base currency is specified
-          if (baseCurrency && getRateForMonth && rateMonth && account.currencyId !== baseCurrency) {
-            const rate = getRateForMonth(rateMonth, account.currencyId, baseCurrency);
+          if (
+            baseCurrency &&
+            getRateForMonth &&
+            rateMonth &&
+            account.currencyCode !== baseCurrency
+          ) {
+            const rate = getRateForMonth(rateMonth, account.currencyCode, baseCurrency);
             if (rate !== null) {
               convertedValue = liability * rate;
               conversionRate = rate;
@@ -295,9 +310,9 @@ class ReportService {
             name: account.name,
             value: convertedValue,
             type: account.type,
-            currencyId: account.currencyId,
+            currencyCode: account.currencyCode,
             convertedValue:
-              baseCurrency && account.currencyId !== baseCurrency ? convertedValue : undefined,
+              baseCurrency && account.currencyCode !== baseCurrency ? convertedValue : undefined,
             conversionRate,
           });
         }
@@ -317,8 +332,8 @@ class ReportService {
         let conversionRate: number | undefined;
 
         // Apply currency conversion if base currency is specified
-        if (baseCurrency && getRateForMonth && rateMonth && asset.currencyId !== baseCurrency) {
-          const rate = getRateForMonth(rateMonth, asset.currencyId, baseCurrency);
+        if (baseCurrency && getRateForMonth && rateMonth && asset.currencyCode !== baseCurrency) {
+          const rate = getRateForMonth(rateMonth, asset.currencyCode, baseCurrency);
           if (rate !== null) {
             convertedValue = liability * rate;
             conversionRate = rate;
@@ -330,9 +345,9 @@ class ReportService {
           name: asset.name,
           value: convertedValue,
           type: asset.type,
-          currencyId: asset.currencyId,
+          currencyCode: asset.currencyCode,
           convertedValue:
-            baseCurrency && asset.currencyId !== baseCurrency ? convertedValue : undefined,
+            baseCurrency && asset.currencyCode !== baseCurrency ? convertedValue : undefined,
           conversionRate,
         });
       });
@@ -620,9 +635,9 @@ class ReportService {
 
       // Convert amount if needed
       let convertedAmount = transaction.amount;
-      if (baseCurrency && getRateForMonth && account && account.currencyId !== baseCurrency) {
+      if (baseCurrency && getRateForMonth && account && account.currencyCode !== baseCurrency) {
         const month = transaction.date.substring(0, 7); // YYYY-MM
-        const rate = getRateForMonth(month, account.currencyId, baseCurrency);
+        const rate = getRateForMonth(month, account.currencyCode, baseCurrency);
         if (rate !== null) {
           convertedAmount = transaction.amount * rate;
         }

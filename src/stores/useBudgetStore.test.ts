@@ -41,7 +41,7 @@ describe('useBudgetStore', () => {
         {
           id: '1',
           transactionTypeId: 'tt1',
-          currencyId: 'usd',
+          currencyCode: 'USD',
           amount: 500,
           period: 'monthly',
           startDate: '2026-01-01',
@@ -65,7 +65,7 @@ describe('useBudgetStore', () => {
       const budget: Budget = {
         id: '1',
         transactionTypeId: 'tt1',
-        currencyId: 'usd',
+        currencyCode: 'USD',
         amount: 500,
         period: 'monthly',
         startDate: '2026-01-01',
@@ -89,7 +89,7 @@ describe('useBudgetStore', () => {
       const budget: Budget = {
         id: '1',
         transactionTypeId: 'tt1',
-        currencyId: 'usd',
+        currencyCode: 'USD',
         amount: 500,
         period: 'monthly',
         startDate: '2026-01-01',
@@ -117,7 +117,7 @@ describe('useBudgetStore', () => {
       const budget: Budget = {
         id: '1',
         transactionTypeId: 'tt1',
-        currencyId: 'usd',
+        currencyCode: 'USD',
         amount: 500,
         period: 'monthly',
         startDate: '2026-01-01',
@@ -145,7 +145,7 @@ describe('useBudgetStore', () => {
       const budget: Budget = {
         id: '1',
         transactionTypeId: 'tt1',
-        currencyId: 'usd',
+        currencyCode: 'USD',
         amount: 500,
         period: 'monthly',
         startDate: '2026-01-01',
@@ -173,7 +173,7 @@ describe('useBudgetStore', () => {
       const budget: Budget = {
         id: '1',
         transactionTypeId: 'tt1',
-        currencyId: 'usd',
+        currencyCode: 'USD',
         amount: 500,
         period: 'monthly',
         startDate: '2026-01-01',
@@ -203,7 +203,7 @@ describe('useBudgetStore', () => {
       const budget: Budget = {
         id: '1',
         transactionTypeId: 'tt1',
-        currencyId: 'usd',
+        currencyCode: 'USD',
         amount: 500,
         period: 'monthly',
         startDate: '2026-01-01',
@@ -233,7 +233,7 @@ describe('useBudgetStore', () => {
       const budget: Budget = {
         id: '1',
         transactionTypeId: 'tt1',
-        currencyId: 'usd',
+        currencyCode: 'USD',
         amount: 500,
         period: 'monthly',
         startDate: '2026-01-01',
@@ -260,7 +260,7 @@ describe('useBudgetStore', () => {
       const budget1: Budget = {
         id: '1',
         transactionTypeId: 'tt1',
-        currencyId: 'usd',
+        currencyCode: 'USD',
         amount: 500,
         period: 'monthly',
         startDate: '2026-01-01',
@@ -271,7 +271,7 @@ describe('useBudgetStore', () => {
       const budget2: Budget = {
         id: '2',
         transactionTypeId: 'tt1',
-        currencyId: 'usd',
+        currencyCode: 'USD',
         amount: 600,
         period: 'monthly',
         startDate: '2026-07-01',
@@ -296,7 +296,7 @@ describe('useBudgetStore', () => {
       const budget1: Budget = {
         id: '1',
         transactionTypeId: 'tt1',
-        currencyId: 'usd',
+        currencyCode: 'USD',
         amount: 500,
         period: 'monthly',
         startDate: '2026-01-01',
@@ -307,7 +307,7 @@ describe('useBudgetStore', () => {
       const budget2: Budget = {
         id: '2',
         transactionTypeId: 'tt1',
-        currencyId: 'usd',
+        currencyCode: 'USD',
         amount: 600,
         period: 'monthly',
         startDate: '2026-06-01',
@@ -332,7 +332,7 @@ describe('useBudgetStore', () => {
       const budget1: Budget = {
         id: '1',
         transactionTypeId: 'tt1',
-        currencyId: 'usd',
+        currencyCode: 'USD',
         amount: 500,
         period: 'monthly',
         startDate: '2026-01-01',
@@ -343,7 +343,7 @@ describe('useBudgetStore', () => {
       const budget2: Budget = {
         id: '2',
         transactionTypeId: 'tt2',
-        currencyId: 'usd',
+        currencyCode: 'USD',
         amount: 600,
         period: 'monthly',
         startDate: '2026-01-01',
@@ -368,7 +368,7 @@ describe('useBudgetStore', () => {
       const budget1: Budget = {
         id: '1',
         transactionTypeId: 'tt1',
-        currencyId: 'usd',
+        currencyCode: 'USD',
         amount: 500,
         period: 'monthly',
         startDate: '2026-01-01',
@@ -379,7 +379,7 @@ describe('useBudgetStore', () => {
       const budget2: Budget = {
         id: '2',
         transactionTypeId: 'tt1',
-        currencyId: 'usd',
+        currencyCode: 'USD',
         amount: 600,
         period: 'monthly',
         startDate: '2026-07-01',
@@ -406,7 +406,7 @@ describe('useBudgetStore', () => {
       const budget: Budget = {
         id: '1',
         transactionTypeId: 'tt1',
-        currencyId: 'usd',
+        currencyCode: 'USD',
         amount: 500,
         period: 'monthly',
         startDate: '2026-01-01',

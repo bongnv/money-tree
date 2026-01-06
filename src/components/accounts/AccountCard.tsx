@@ -40,7 +40,7 @@ export const AccountCard: React.FC<AccountCardProps> = ({ account, onEdit, onDel
           />
         </Box>
         <Typography variant="h5" color="primary" gutterBottom>
-          {formatCurrency(currentBalance, account.currencyId)}
+          {formatCurrency(currentBalance, account.currencyCode)}
         </Typography>
         {account.description && (
           <Typography variant="body2" color="text.secondary">

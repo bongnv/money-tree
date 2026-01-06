@@ -7,10 +7,10 @@ describe('Default Data', () => {
       expect(DEFAULT_CURRENCIES.length).toBeGreaterThan(0);
     });
 
-    it('should have unique currency IDs', () => {
-      const ids = DEFAULT_CURRENCIES.map((c) => c.id);
-      const uniqueIds = new Set(ids);
-      expect(uniqueIds.size).toBe(ids.length);
+    it('should have unique currency codes', () => {
+      const codes = DEFAULT_CURRENCIES.map((c) => c.code);
+      const uniqueCodes = new Set(codes);
+      expect(uniqueCodes.size).toBe(codes.length);
     });
 
     it('should have unique currency codes', () => {

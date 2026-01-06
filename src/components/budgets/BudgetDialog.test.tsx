@@ -64,7 +64,7 @@ describe('BudgetDialog', () => {
     const budget: Budget = {
       id: '1',
       transactionTypeId: 'tt1',
-      currencyId: 'usd',
+      currencyCode: 'USD',
       amount: 500,
       period: 'monthly',
       startDate: '2026-01-01',
@@ -84,7 +84,7 @@ describe('BudgetDialog', () => {
     const budget: Budget = {
       id: '1',
       transactionTypeId: 'tt1',
-      currencyId: 'usd',
+      currencyCode: 'USD',
       amount: 500,
       period: 'monthly',
       startDate: '2026-01-01',
@@ -141,7 +141,7 @@ describe('BudgetDialog', () => {
     const budget: Budget = {
       id: '1',
       transactionTypeId: 'tt1',
-      currencyId: 'usd',
+      currencyCode: 'USD',
       amount: 500,
       period: 'monthly',
       startDate: '2026-01-01',

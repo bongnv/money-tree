@@ -12,13 +12,13 @@ import {
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
 import { useAppStore } from '../../stores/useAppStore';
 import { DataSyncSettings } from './DataSyncSettings';
-import { Currency } from '../../types/enums';
+import { CurrencyCode } from '../../types/enums';
 
 export const PreferencesPage: React.FC = () => {
   const baseCurrency = useAppStore((state) => state.baseCurrency);
   const setBaseCurrency = useAppStore((state) => state.setBaseCurrency);
 
-  const handleCurrencyChange = (newCurrency: Currency) => {
+  const handleCurrencyChange = (newCurrency: CurrencyCode) => {
     setBaseCurrency(newCurrency);
   };
 
@@ -40,10 +40,10 @@ export const PreferencesPage: React.FC = () => {
             id="base-currency-select"
             value={baseCurrency}
             label="Base Currency"
-            onChange={(e) => handleCurrencyChange(e.target.value as Currency)}
+            onChange={(e) => handleCurrencyChange(e.target.value as CurrencyCode)}
           >
             {DEFAULT_CURRENCIES.map((currency) => (
-              <MenuItem key={currency.id} value={currency.id}>
+              <MenuItem key={currency.code} value={currency.code}>
                 {currency.code} - {currency.name} ({currency.symbol})
               </MenuItem>
             ))}

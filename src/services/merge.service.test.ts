@@ -7,7 +7,7 @@ describe('merge.service', () => {
     id,
     name,
     type: AccountType.BANK_ACCOUNT,
-    currencyId: 'usd',
+    currencyCode: 'USD',
     initialBalance: 0,
     isActive: true,
     createdAt: '2025-01-01T00:00:00Z',

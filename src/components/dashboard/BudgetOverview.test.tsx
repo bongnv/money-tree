@@ -52,7 +52,7 @@ describe('BudgetOverview', () => {
           {
             id: 'budget-1',
             transactionTypeId: 'type-1',
-            currencyId: 'usd',
+            currencyCode: 'USD',
             amount: 500,
             period: 'monthly' as const,
             startDate: '2026-01-01',
@@ -121,7 +121,7 @@ describe('BudgetOverview', () => {
           {
             id: 'budget-1',
             transactionTypeId: 'type-1',
-            currencyId: 'usd',
+            currencyCode: 'USD',
             amount: 500,
             period: 'monthly' as const,
             startDate: '2026-01-01',

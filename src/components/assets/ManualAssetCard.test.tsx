@@ -9,7 +9,7 @@ describe('ManualAssetCard', () => {
     name: 'House',
     type: AssetType.REAL_ESTATE,
     value: 500000,
-    currencyId: 'usd',
+    currencyCode: 'USD',
     date: '2024-01-15T00:00:00.000Z',
     notes: 'Primary residence',
     createdAt: '2024-01-01T00:00:00.000Z',

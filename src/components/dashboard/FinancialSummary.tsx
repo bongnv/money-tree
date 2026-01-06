@@ -41,13 +41,16 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
       // Get unique currencies that need conversion
       const currencies = new Set<string>();
       accounts.forEach((account) => {
-        if (account.currencyId && account.currencyId.toUpperCase() !== baseCurrency.toUpperCase()) {
-          currencies.add(account.currencyId);
+        if (
+          account.currencyCode &&
+          account.currencyCode.toUpperCase() !== baseCurrency.toUpperCase()
+        ) {
+          currencies.add(account.currencyCode);
         }
       });
       manualAssets.forEach((asset) => {
-        if (asset.currencyId && asset.currencyId.toUpperCase() !== baseCurrency.toUpperCase()) {
-          currencies.add(asset.currencyId);
+        if (asset.currencyCode && asset.currencyCode.toUpperCase() !== baseCurrency.toUpperCase()) {
+          currencies.add(asset.currencyCode);
         }
       });
 

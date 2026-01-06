@@ -71,7 +71,7 @@ const mockTransactions: Transaction[] = [
 const mockBudget: Budget = {
   id: '1',
   transactionTypeId: 'tt1',
-  currencyId: 'usd',
+  currencyCode: 'USD',
   amount: 1500,
   period: 'monthly',
   startDate: '2026-01-01',

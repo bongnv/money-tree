@@ -9,7 +9,7 @@ describe('AssetValueHistoryDialog', () => {
     name: 'Test House',
     type: AssetType.REAL_ESTATE,
     value: 550000,
-    currencyId: 'usd',
+    currencyCode: 'USD',
     date: '2026-10-01',
     valueHistory: [
       { date: '2026-01-01', value: 500000, notes: 'Initial' },

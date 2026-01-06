@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { storageService } from '../services/storage.service';
 import { AlertColor } from '@mui/material';
 import { DataFile } from '../types/models';
-import { Currency } from '../types/enums';
+import { CurrencyCode } from '../types/enums';
 
 interface SnackbarState {
   open: boolean;
@@ -18,7 +18,7 @@ interface AppState {
   isLoading: boolean;
   error: string | null;
   snackbar: SnackbarState;
-  baseCurrency: Currency; // Currency for reporting
+  baseCurrency: CurrencyCode; // Currency for reporting
   // Conflict detection metadata
   fileContentHash: string | null;
   fileLoadedAt: string | null;
@@ -38,7 +38,7 @@ interface AppActions {
   resetState: () => void;
   showSnackbar: (message: string, severity?: AlertColor) => void;
   hideSnackbar: () => void;
-  setBaseCurrency: (currencyId: Currency) => void;
+  setBaseCurrency: (currencyCode: CurrencyCode) => void;
   // Conflict detection actions
   setFileMetadata: (hash: string, loadedAt: string, baseVersion: DataFile) => void;
   clearFileMetadata: () => void;
@@ -63,7 +63,7 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
     message: '',
     severity: 'info',
   },
-  baseCurrency: Currency.USD,
+  baseCurrency: CurrencyCode.USD,
   fileContentHash: null,
   fileLoadedAt: null,
   baseVersion: null,
@@ -113,7 +113,7 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
         message: '',
         severity: 'info',
       },
-      baseCurrency: Currency.USD,
+      baseCurrency: CurrencyCode.USD,
       fileContentHash: null,
       fileLoadedAt: null,
       baseVersion: null,
@@ -128,8 +128,8 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
     set((state) => ({ snackbar: { ...state.snackbar, open: false } }));
   },
 
-  setBaseCurrency: (currencyId) => {
-    set({ baseCurrency: currencyId, hasUnsavedChanges: true });
+  setBaseCurrency: (currencyCode) => {
+    set({ baseCurrency: currencyCode, hasUnsavedChanges: true });
   },
 
   setFileMetadata: (hash, loadedAt, baseVersion) => {

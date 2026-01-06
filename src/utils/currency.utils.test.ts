@@ -1,6 +1,4 @@
 import {
-  areCurrenciesEqual,
-  getCurrencyById,
   getCurrencyByCode,
   formatCurrency,
   parseCurrency,
@@ -10,53 +8,14 @@ import {
   formatCurrencyWithConversion,
 } from './currency.utils';
 import { DEFAULT_CURRENCIES } from '../constants/defaults';
+import { CurrencyCode } from '../types/enums';
 
 describe('currency.utils', () => {
-  describe('areCurrenciesEqual', () => {
-    it('should return true for identical currencies (same case)', () => {
-      expect(areCurrenciesEqual('USD', 'USD')).toBe(true);
-      expect(areCurrenciesEqual('usd', 'usd')).toBe(true);
-    });
-
-    it('should return true for identical currencies (different case)', () => {
-      expect(areCurrenciesEqual('USD', 'usd')).toBe(true);
-      expect(areCurrenciesEqual('usd', 'USD')).toBe(true);
-      expect(areCurrenciesEqual('vNd', 'VND')).toBe(true);
-    });
-
-    it('should return false for different currencies', () => {
-      expect(areCurrenciesEqual('USD', 'VND')).toBe(false);
-      expect(areCurrenciesEqual('usd', 'vnd')).toBe(false);
-    });
-
-    it('should return false for null/undefined values', () => {
-      expect(areCurrenciesEqual(null, 'USD')).toBe(false);
-      expect(areCurrenciesEqual('USD', null)).toBe(false);
-      expect(areCurrenciesEqual(undefined, 'USD')).toBe(false);
-      expect(areCurrenciesEqual('USD', undefined)).toBe(false);
-      expect(areCurrenciesEqual(null, null)).toBe(false);
-      expect(areCurrenciesEqual(undefined, undefined)).toBe(false);
-    });
-  });
-
-  describe('getCurrencyById', () => {
-    it('should return currency for valid id', () => {
-      const currency = getCurrencyById('usd');
-      expect(currency).toBeDefined();
-      expect(currency?.code).toBe('USD');
-    });
-
-    it('should return undefined for invalid id', () => {
-      const currency = getCurrencyById('invalid');
-      expect(currency).toBeUndefined();
-    });
-  });
-
   describe('getCurrencyByCode', () => {
     it('should return currency for valid code', () => {
-      const currency = getCurrencyByCode('USD');
+      const currency = getCurrencyByCode(CurrencyCode.USD);
       expect(currency).toBeDefined();
-      expect(currency?.id).toBe('usd');
+      expect(currency?.code).toBe(CurrencyCode.USD);
     });
 
     it('should return undefined for invalid code', () => {
@@ -65,34 +24,34 @@ describe('currency.utils', () => {
     });
 
     it('should be case-sensitive', () => {
-      const currency = getCurrencyByCode('usd');
-      expect(currency).toBeUndefined();
+      const currency = getCurrencyByCode(CurrencyCode.USD);
+      expect(currency).toBeDefined();
     });
   });
 
   describe('formatCurrency', () => {
     it('should format USD with symbol by default', () => {
-      const formatted = formatCurrency(1234.56, 'usd');
+      const formatted = formatCurrency(1234.56, CurrencyCode.USD);
       expect(formatted).toBe('$1,234.56');
     });
 
     it('should format SGD with symbol', () => {
-      const formatted = formatCurrency(1234.56, 'sgd');
+      const formatted = formatCurrency(1234.56, CurrencyCode.SGD);
       expect(formatted).toBe('S$1,234.56');
     });
 
     it('should format VND with 0 decimal places', () => {
-      const formatted = formatCurrency(1234, 'vnd');
+      const formatted = formatCurrency(1234, CurrencyCode.VND);
       expect(formatted).toBe('₫1,234');
     });
 
     it('should format VND with 0 decimal places', () => {
-      const formatted = formatCurrency(10000, 'vnd');
+      const formatted = formatCurrency(10000, CurrencyCode.VND);
       expect(formatted).toBe('₫10,000');
     });
 
     it('should format with symbol and code when both options enabled', () => {
-      const formatted = formatCurrency(1234.56, 'usd', {
+      const formatted = formatCurrency(1234.56, CurrencyCode.USD, {
         showSymbol: true,
         showCode: true,
       });
@@ -100,7 +59,7 @@ describe('currency.utils', () => {
     });
 
     it('should format with code only when showSymbol is false', () => {
-      const formatted = formatCurrency(1234.56, 'usd', {
+      const formatted = formatCurrency(1234.56, CurrencyCode.USD, {
         showSymbol: false,
         showCode: true,
       });
@@ -108,7 +67,7 @@ describe('currency.utils', () => {
     });
 
     it('should format without symbol or code when both disabled', () => {
-      const formatted = formatCurrency(1234.56, 'usd', {
+      const formatted = formatCurrency(1234.56, CurrencyCode.USD, {
         showSymbol: false,
         showCode: false,
       });
@@ -121,59 +80,59 @@ describe('currency.utils', () => {
     });
 
     it('should round to correct decimal places', () => {
-      const formatted = formatCurrency(1234.567, 'usd');
+      const formatted = formatCurrency(1234.567, CurrencyCode.USD);
       expect(formatted).toBe('$1,234.57');
     });
 
     it('should handle negative amounts', () => {
-      const formatted = formatCurrency(-1234.56, 'usd');
+      const formatted = formatCurrency(-1234.56, CurrencyCode.USD);
       expect(formatted).toBe('$-1,234.56');
     });
 
     it('should handle zero', () => {
-      const formatted = formatCurrency(0, 'usd');
+      const formatted = formatCurrency(0, CurrencyCode.USD);
       expect(formatted).toBe('$0.00');
     });
   });
 
   describe('parseCurrency', () => {
     it('should parse currency string with symbol', () => {
-      const parsed = parseCurrency('$1234.56', 'usd');
+      const parsed = parseCurrency('$1234.56', CurrencyCode.USD);
       expect(parsed).toBe(1234.56);
     });
 
     it('should parse currency string without symbol', () => {
-      const parsed = parseCurrency('1234.56', 'usd');
+      const parsed = parseCurrency('1234.56', CurrencyCode.USD);
       expect(parsed).toBe(1234.56);
     });
 
     it('should parse with commas', () => {
-      const parsed = parseCurrency('1,234.56', 'usd');
+      const parsed = parseCurrency('1,234.56', CurrencyCode.USD);
       expect(parsed).toBe(1234.56);
     });
 
     it('should parse negative amounts', () => {
-      const parsed = parseCurrency('-$1234.56', 'usd');
+      const parsed = parseCurrency('-$1234.56', CurrencyCode.USD);
       expect(parsed).toBe(-1234.56);
     });
 
     it('should return 0 for invalid input', () => {
-      const parsed = parseCurrency('invalid', 'usd');
+      const parsed = parseCurrency('invalid', CurrencyCode.USD);
       expect(parsed).toBe(0);
     });
 
     it('should return 0 for empty string', () => {
-      const parsed = parseCurrency('', 'usd');
+      const parsed = parseCurrency('', CurrencyCode.USD);
       expect(parsed).toBe(0);
     });
 
     it('should round to currency decimal places', () => {
-      const parsed = parseCurrency('1234.567', 'usd');
+      const parsed = parseCurrency('1234.567', CurrencyCode.USD);
       expect(parsed).toBe(1234.57);
     });
 
     it('should handle VND with 0 decimal places', () => {
-      const parsed = parseCurrency('1234.56', 'vnd');
+      const parsed = parseCurrency('1234.56', CurrencyCode.VND);
       expect(parsed).toBe(1235);
     });
 
@@ -193,7 +152,7 @@ describe('currency.utils', () => {
     it('should return currencies with all required fields', () => {
       const currencies = getAllCurrencies();
       currencies.forEach((currency) => {
-        expect(currency).toHaveProperty('id');
+        expect(currency).toHaveProperty('code');
         expect(currency).toHaveProperty('code');
         expect(currency).toHaveProperty('symbol');
         expect(currency).toHaveProperty('name');
@@ -204,31 +163,31 @@ describe('currency.utils', () => {
 
   describe('isValidCurrencyAmount', () => {
     it('should return true for valid amount with correct decimal places', () => {
-      expect(isValidCurrencyAmount(1234.56, 'usd')).toBe(true);
+      expect(isValidCurrencyAmount(1234.56, CurrencyCode.USD)).toBe(true);
     });
 
     it('should return true for whole numbers', () => {
-      expect(isValidCurrencyAmount(1234, 'usd')).toBe(true);
+      expect(isValidCurrencyAmount(1234, CurrencyCode.USD)).toBe(true);
     });
 
     it('should return false for too many decimal places', () => {
-      expect(isValidCurrencyAmount(1234.567, 'usd')).toBe(false);
+      expect(isValidCurrencyAmount(1234.567, CurrencyCode.USD)).toBe(false);
     });
 
     it('should return true for VND with no decimal places', () => {
-      expect(isValidCurrencyAmount(1234, 'vnd')).toBe(true);
+      expect(isValidCurrencyAmount(1234, CurrencyCode.VND)).toBe(true);
     });
 
     it('should return false for VND with decimal places', () => {
-      expect(isValidCurrencyAmount(1234.5, 'vnd')).toBe(false);
+      expect(isValidCurrencyAmount(1234.5, CurrencyCode.VND)).toBe(false);
     });
 
     it('should return false for NaN', () => {
-      expect(isValidCurrencyAmount(NaN, 'usd')).toBe(false);
+      expect(isValidCurrencyAmount(NaN, CurrencyCode.USD)).toBe(false);
     });
 
     it('should return false for Infinity', () => {
-      expect(isValidCurrencyAmount(Infinity, 'usd')).toBe(false);
+      expect(isValidCurrencyAmount(Infinity, CurrencyCode.USD)).toBe(false);
     });
 
     it('should return false for unknown currency', () => {
@@ -236,73 +195,83 @@ describe('currency.utils', () => {
     });
 
     it('should return true for negative amounts', () => {
-      expect(isValidCurrencyAmount(-1234.56, 'usd')).toBe(true);
+      expect(isValidCurrencyAmount(-1234.56, CurrencyCode.USD)).toBe(true);
     });
 
     it('should return true for zero', () => {
-      expect(isValidCurrencyAmount(0, 'usd')).toBe(true);
+      expect(isValidCurrencyAmount(0, CurrencyCode.USD)).toBe(true);
     });
 
     it('should return true for single decimal place when two allowed', () => {
-      expect(isValidCurrencyAmount(1234.5, 'usd')).toBe(true);
+      expect(isValidCurrencyAmount(1234.5, CurrencyCode.USD)).toBe(true);
     });
   });
 
   describe('convertAmount', () => {
     it('should convert amount using exchange rate', () => {
-      const converted = convertAmount(1000, 'eur', 'usd', 1.18);
+      const converted = convertAmount(1000, 'EUR', 'USD', 1.18);
       expect(converted).toBe(1180);
     });
 
     it('should return same amount for same currency', () => {
-      const converted = convertAmount(1000, 'usd', 'usd', 1);
+      const converted = convertAmount(1000, CurrencyCode.USD, CurrencyCode.USD, 1);
       expect(converted).toBe(1000);
     });
 
     it('should return same amount when rate is 1', () => {
-      const converted = convertAmount(1000, 'eur', 'usd', 1);
+      const converted = convertAmount(1000, 'EUR', 'USD', 1);
       expect(converted).toBe(1000);
     });
 
     it('should handle fractional rates', () => {
-      const converted = convertAmount(1000, 'usd', 'eur', 0.85);
+      const converted = convertAmount(1000, 'USD', 'EUR', 0.85);
       expect(converted).toBe(850);
     });
 
     it('should handle negative amounts', () => {
-      const converted = convertAmount(-1000, 'eur', 'usd', 1.18);
+      const converted = convertAmount(-1000, 'EUR', 'USD', 1.18);
       expect(converted).toBe(-1180);
     });
   });
 
   describe('formatCurrencyWithConversion', () => {
     it('should format with conversion when different currencies', () => {
-      const formatted = formatCurrencyWithConversion(1000, 'eur', 1180, 'usd');
+      const formatted = formatCurrencyWithConversion(1000, 'EUR', 1180, 'USD');
       expect(formatted).toContain('1,000');
       expect(formatted).toContain('1,180');
       expect(formatted).toContain('≈');
     });
 
     it('should format without conversion when same currency', () => {
-      const formatted = formatCurrencyWithConversion(1000, 'usd', 1000, 'usd');
+      const formatted = formatCurrencyWithConversion(
+        1000,
+        CurrencyCode.USD,
+        1000,
+        CurrencyCode.USD
+      );
       expect(formatted).toBe('$1,000.00');
       expect(formatted).not.toContain('≈');
     });
 
     it('should format without conversion when no converted amount', () => {
-      const formatted = formatCurrencyWithConversion(1000, 'usd', null, 'usd');
+      const formatted = formatCurrencyWithConversion(
+        1000,
+        CurrencyCode.USD,
+        null,
+        CurrencyCode.USD
+      );
       expect(formatted).toBe('$1,000.00');
       expect(formatted).not.toContain('≈');
     });
 
     it('should format without conversion when no base currency', () => {
-      const formatted = formatCurrencyWithConversion(1000, 'usd', 1180);
+      const formatted = formatCurrencyWithConversion(1000, CurrencyCode.USD, 1180);
       expect(formatted).toBe('$1,000.00');
       expect(formatted).not.toContain('≈');
     });
 
     it('should show only original when showConverted is false', () => {
-      const formatted = formatCurrencyWithConversion(1000, 'eur', 1180, 'usd', {
+      const formatted = formatCurrencyWithConversion(1000, 'EUR', 1180, 'USD', {
         showConverted: false,
       });
       expect(formatted).not.toContain('1180');
@@ -310,7 +279,7 @@ describe('currency.utils', () => {
     });
 
     it('should show only converted when showOriginal is false', () => {
-      const formatted = formatCurrencyWithConversion(1000, 'eur', 1180, 'usd', {
+      const formatted = formatCurrencyWithConversion(1000, 'EUR', 1180, 'USD', {
         showOriginal: false,
       });
       expect(formatted).toBe('$1,180.00');

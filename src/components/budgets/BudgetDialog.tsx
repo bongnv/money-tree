@@ -11,6 +11,7 @@ import {
 import type { Budget } from '../../types/models';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
+import { CurrencyCode } from '../../types/enums';
 
 interface BudgetDialogProps {
   open: boolean;
@@ -25,7 +26,7 @@ export const BudgetDialog: React.FC<BudgetDialogProps> = ({ open, budget, onClos
   const [formData, setFormData] = useState({
     transactionTypeId: budget?.transactionTypeId || '',
     amount: budget?.amount?.toString() || '',
-    currencyId: budget?.currencyId || 'usd',
+    currencyCode: budget?.currencyCode || 'usd',
     period: budget?.period || ('monthly' as 'monthly' | 'quarterly' | 'yearly'),
     startDate: budget?.startDate || new Date().getFullYear() + '-01-01',
     endDate: budget?.endDate || new Date().getFullYear() + '-12-31',
@@ -85,7 +86,7 @@ export const BudgetDialog: React.FC<BudgetDialogProps> = ({ open, budget, onClos
     onSubmit({
       transactionTypeId: formData.transactionTypeId,
       amount: parseFloat(formData.amount),
-      currencyId: formData.currencyId,
+      currencyCode: formData.currencyCode as CurrencyCode,
       period: formData.period,
       startDate: formData.startDate,
       endDate: formData.endDate,
@@ -154,13 +155,13 @@ export const BudgetDialog: React.FC<BudgetDialogProps> = ({ open, budget, onClos
             fullWidth
             select
             label="Currency"
-            value={formData.currencyId}
-            onChange={handleChange('currencyId')}
+            value={formData.currencyCode}
+            onChange={handleChange('currencyCode')}
             margin="normal"
             required
           >
             {DEFAULT_CURRENCIES.map((currency) => (
-              <MenuItem key={currency.id} value={currency.id}>
+              <MenuItem key={currency.code} value={currency.code}>
                 {currency.code} - {currency.name}
               </MenuItem>
             ))}

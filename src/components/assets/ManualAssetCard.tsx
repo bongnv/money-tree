@@ -74,7 +74,7 @@ export const ManualAssetCard: React.FC<ManualAssetCardProps> = ({
       </Box>
 
       <Typography variant="h5" color="primary" gutterBottom>
-        {formatCurrency(asset.value, asset.currencyId)}
+        {formatCurrency(asset.value, asset.currencyCode)}
       </Typography>
 
       <Typography variant="body2" color="text.secondary" gutterBottom>

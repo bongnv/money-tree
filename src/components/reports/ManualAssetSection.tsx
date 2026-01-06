@@ -25,11 +25,12 @@ import { formatCurrency } from '../../utils/currency.utils';
 import { LineChart } from '../charts/LineChart';
 import { useAssetStore } from '../../stores/useAssetStore';
 import { getCompleteValueHistory, calculateAssetValueGrowth } from '../../services/history.service';
+import type { CurrencyCode } from '../../types/enums';
 
 export interface ManualAssetSectionProps {
   title: string;
   groups: AssetGroup[];
-  currencyId: string;
+  currencyCode: CurrencyCode;
   onManageHistory?: (assetId: string) => void;
 }
 
@@ -38,7 +39,7 @@ type DateRange = '3m' | '6m' | '1y' | 'all';
 export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
   title,
   groups,
-  currencyId,
+  currencyCode,
   onManageHistory,
 }) => {
   const [expandedAssetId, setExpandedAssetId] = useState<string | null>(null);
@@ -200,9 +201,9 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
                               alignItems: 'flex-end',
                             }}
                           >
-                            <Typography>{formatCurrency(item.value, currencyId)}</Typography>
-                            {item.currencyId &&
-                              item.currencyId !== currencyId &&
+                            <Typography>{formatCurrency(item.value, currencyCode)}</Typography>
+                            {item.currencyCode &&
+                              item.currencyCode !== currencyCode &&
                               item.convertedValue && (
                                 <Typography variant="caption" color="text.secondary">
                                   (converted)
@@ -257,7 +258,7 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
                                   data={getFilteredChartData(item.id)}
                                   lines={[{ dataKey: 'Value', name: 'Value', color: '#1976d2' }]}
                                   height={250}
-                                  formatValue={(value) => formatCurrency(value, currencyId)}
+                                  formatValue={(value) => formatCurrency(value, currencyCode)}
                                 />
                               </Box>
                             </Collapse>
@@ -277,7 +278,7 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
                   </TableCell>
                   <TableCell align="right">
                     <Typography variant="body2" fontWeight="medium">
-                      {formatCurrency(group.total, currencyId)}
+                      {formatCurrency(group.total, currencyCode)}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -292,7 +293,7 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
               </TableCell>
               <TableCell align="right">
                 <Typography variant="subtitle1" fontWeight="bold" color="primary.contrastText">
-                  {formatCurrency(total, currencyId)}
+                  {formatCurrency(total, currencyCode)}
                 </Typography>
               </TableCell>
             </TableRow>

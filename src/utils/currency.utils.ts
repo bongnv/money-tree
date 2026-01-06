@@ -1,24 +1,6 @@
 import { DEFAULT_CURRENCIES } from '../constants/defaults';
 import type { Currency } from '../types/models';
-
-/**
- * Compare two currency IDs case-insensitively
- * Handles null/undefined by returning false
- */
-export const areCurrenciesEqual = (
-  currency1: string | null | undefined,
-  currency2: string | null | undefined
-): boolean => {
-  if (!currency1 || !currency2) return false;
-  return currency1.toUpperCase() === currency2.toUpperCase();
-};
-
-/**
- * Get currency by ID
- */
-export const getCurrencyById = (currencyId: string): Currency | undefined => {
-  return DEFAULT_CURRENCIES.find((currency) => currency.id === currencyId);
-};
+import type { CurrencyCode } from '../types/enums';
 
 /**
  * Get currency by code
@@ -32,13 +14,13 @@ export const getCurrencyByCode = (code: string): Currency | undefined => {
  */
 export const formatCurrency = (
   amount: number,
-  currencyId: string,
+  currencyCode: CurrencyCode,
   options?: {
     showSymbol?: boolean;
     showCode?: boolean;
   }
 ): string => {
-  const currency = getCurrencyById(currencyId);
+  const currency = getCurrencyByCode(currencyCode);
   if (!currency) {
     return amount.toLocaleString('en-US', {
       minimumFractionDigits: 2,
@@ -67,8 +49,8 @@ export const formatCurrency = (
 /**
  * Parse currency string to number
  */
-export const parseCurrency = (value: string, currencyId: string): number => {
-  const currency = getCurrencyById(currencyId);
+export const parseCurrency = (value: string, currencyCode: CurrencyCode): number => {
+  const currency = getCurrencyByCode(currencyCode);
   const cleanValue = value.replace(/[^\d.-]/g, '');
   const parsed = parseFloat(cleanValue);
 
@@ -93,8 +75,8 @@ export const getAllCurrencies = (): Currency[] => {
 /**
  * Validate currency amount
  */
-export const isValidCurrencyAmount = (amount: number, currencyId: string): boolean => {
-  const currency = getCurrencyById(currencyId);
+export const isValidCurrencyAmount = (amount: number, currencyCode: CurrencyCode): boolean => {
+  const currency = getCurrencyByCode(currencyCode);
   if (!currency) {
     return false;
   }
@@ -116,12 +98,12 @@ export const isValidCurrencyAmount = (amount: number, currencyId: string): boole
  */
 export const convertAmount = (
   amount: number,
-  fromCurrencyId: string,
-  toCurrencyId: string,
+  fromCurrencyCode: CurrencyCode,
+  toCurrencyCode: CurrencyCode,
   rate: number
 ): number => {
   // If same currency or rate is 1, no conversion needed
-  if (fromCurrencyId === toCurrencyId || rate === 1) {
+  if (fromCurrencyCode === toCurrencyCode || rate === 1) {
     return amount;
   }
 
@@ -134,9 +116,9 @@ export const convertAmount = (
  */
 export const formatCurrencyWithConversion = (
   amount: number,
-  currencyId: string,
+  currencyCode: CurrencyCode,
   convertedAmount?: number | null,
-  baseCurrencyId?: string,
+  baseCurrencyCode?: CurrencyCode,
   options?: {
     showOriginal?: boolean;
     showConverted?: boolean;
@@ -146,12 +128,12 @@ export const formatCurrencyWithConversion = (
   const showConverted = options?.showConverted !== false;
 
   // If no conversion or same currency, just format normally
-  if (!convertedAmount || !baseCurrencyId || currencyId === baseCurrencyId) {
-    return formatCurrency(amount, currencyId);
+  if (!convertedAmount || !baseCurrencyCode || currencyCode === baseCurrencyCode) {
+    return formatCurrency(amount, currencyCode);
   }
 
-  const originalFormatted = formatCurrency(amount, currencyId);
-  const convertedFormatted = formatCurrency(convertedAmount, baseCurrencyId);
+  const originalFormatted = formatCurrency(amount, currencyCode);
+  const convertedFormatted = formatCurrency(convertedAmount, baseCurrencyCode);
 
   if (showOriginal && showConverted) {
     return `${originalFormatted} (≈ ${convertedFormatted})`;

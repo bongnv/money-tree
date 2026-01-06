@@ -290,7 +290,7 @@ describe('Archive Service', () => {
       (calculationService as any).calculateNetWorth = mockCalculateNetWorth;
       (calculationService as any).calculateAccountBalance = mockCalculateAccountBalance;
 
-      const summary = calculateYearEndSummary(2024, 'usd');
+      const summary = calculateYearEndSummary(2024, 'USD');
 
       expect(summary.transactionCount).toBe(2);
       expect(summary.closingNetWorth).toBe(75000);
@@ -328,7 +328,7 @@ describe('Archive Service', () => {
           id: 'b1',
           transactionTypeId: 'type1',
           amount: 500,
-          currencyId: 'usd',
+          currencyCode: 'USD',
           period: 'monthly' as const,
           startDate: '2024-01-01',
           endDate: '2024-12-31',
@@ -339,7 +339,7 @@ describe('Archive Service', () => {
           id: 'b2',
           transactionTypeId: 'type1',
           amount: 600,
-          currencyId: 'usd',
+          currencyCode: 'USD',
           period: 'monthly' as const,
           startDate: '2025-01-01',
           endDate: '2025-12-31',
@@ -352,7 +352,7 @@ describe('Archive Service', () => {
         {
           id: 'acc1',
           name: 'Test Account',
-          currencyId: 'usd',
+          currencyCode: 'USD',
           createdAt: '2024-01-01T00:00:00Z',
           updatedAt: '2024-01-01T00:00:00Z',
         },
@@ -409,7 +409,7 @@ describe('Archive Service', () => {
       (calculationService as any).calculateNetWorth = mockCalculateNetWorth;
       (calculationService as any).calculateAccountBalance = mockCalculateAccountBalance;
 
-      const archiveFile = createArchiveFile(2024, 'usd');
+      const archiveFile = createArchiveFile(2024, 'USD');
 
       expect(archiveFile.version).toBe('1.0');
       expect(archiveFile.year).toBe(2024);
@@ -432,7 +432,7 @@ describe('Archive Service', () => {
           name: 'Test Asset',
           type: 'real_estate' as const,
           value: 1300,
-          currencyId: 'usd',
+          currencyCode: 'USD',
           date: '2025-01-01',
           createdAt: '2023-01-01T00:00:00Z',
           updatedAt: '2024-12-31T00:00:00Z',
@@ -471,7 +471,7 @@ describe('Archive Service', () => {
       (calculationService as any).calculateNetWorth = mockCalculateNetWorth;
       (calculationService as any).calculateAccountBalance = mockCalculateAccountBalance;
 
-      const archiveFile = createArchiveFile(2024, 'usd');
+      const archiveFile = createArchiveFile(2024, 'USD');
 
       expect(archiveFile.manualAssets).toHaveLength(1);
       expect(archiveFile.manualAssets[0].valueHistory).toHaveLength(2);

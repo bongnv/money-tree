@@ -13,7 +13,7 @@ describe('history.service', () => {
       name: 'Test House',
       type: AssetType.REAL_ESTATE,
       value: 500000,
-      currencyId: 'usd',
+      currencyCode: 'USD',
       date: '2026-01-01',
       notes: 'Initial purchase',
       createdAt: '2026-01-01T00:00:00.000Z',
@@ -93,7 +93,7 @@ describe('history.service', () => {
       expect(result.id).toBe(baseAsset.id);
       expect(result.name).toBe(baseAsset.name);
       expect(result.type).toBe(baseAsset.type);
-      expect(result.currencyId).toBe(baseAsset.currencyId);
+      expect(result.currencyCode).toBe(baseAsset.currencyCode);
       expect(result.createdAt).toBe(baseAsset.createdAt);
     });
 
@@ -147,7 +147,7 @@ describe('history.service', () => {
         name: 'Test Asset',
         type: AssetType.OTHER,
         value: 15000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: '2026-07-01',
         valueHistory: [
           { date: '2026-01-01', value: 10000 },
@@ -171,7 +171,7 @@ describe('history.service', () => {
         name: 'Test Asset',
         type: AssetType.OTHER,
         value: 10000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: '2026-01-01',
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
@@ -189,7 +189,7 @@ describe('history.service', () => {
         name: 'Test Asset',
         type: AssetType.OTHER,
         value: 10000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: '2026-01-01',
         notes: 'Current notes',
         createdAt: '2026-01-01T00:00:00.000Z',
@@ -209,7 +209,7 @@ describe('history.service', () => {
         name: 'Test Asset',
         type: AssetType.OTHER,
         value: 15000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: '2026-07-01',
         valueHistory: [{ date: '2026-01-01', value: 10000 }],
         createdAt: '2026-01-01T00:00:00.000Z',
@@ -232,7 +232,7 @@ describe('history.service', () => {
         name: 'Test Asset',
         type: AssetType.OTHER,
         value: 8000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: '2026-07-01',
         valueHistory: [{ date: '2026-01-01', value: 10000 }],
         createdAt: '2026-01-01T00:00:00.000Z',
@@ -251,7 +251,7 @@ describe('history.service', () => {
         name: 'Test Asset',
         type: AssetType.OTHER,
         value: 15000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: '2026-07-01',
         valueHistory: [
           { date: '2026-01-01', value: 8000 },
@@ -275,7 +275,7 @@ describe('history.service', () => {
         name: 'Test Asset',
         type: AssetType.OTHER,
         value: 15000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: '2026-07-01',
         valueHistory: [
           { date: '2026-01-01', value: 10000 },
@@ -299,7 +299,7 @@ describe('history.service', () => {
         name: 'Test Asset',
         type: AssetType.OTHER,
         value: 15000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: '2026-07-01',
         valueHistory: [
           { date: '2026-01-01', value: 8000 },
@@ -324,7 +324,7 @@ describe('history.service', () => {
         name: 'Test Asset',
         type: AssetType.OTHER,
         value: 10000,
-        currencyId: 'usd',
+        currencyCode: 'USD',
         date: '2026-01-01',
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',

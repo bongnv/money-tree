@@ -125,17 +125,21 @@ export class OneDriveProvider implements IStorageProvider {
    * @param archiveFile The archive file to save
    * @param fileInfo The selected file information (from FilePickerService)
    */
-  async saveArchiveFile(archiveFile: ArchiveFile, fileInfo?: SelectedFileInfo): Promise<void> {
-    if (!fileInfo) {
-      throw new Error('No file info provided for archive save.');
-    }
+  async saveArchiveFile(archiveFile: ArchiveFile): Promise<void> {
+    // Auto-generate archive file name next to main file
+    const mainFileName = this.selectedFileInfo.fileName;
+    const archiveFileName = mainFileName.replace('.json', `-${archiveFile.year}.json`);
+
+    // Determine full path for archive file
+    const mainPath = this.selectedFileInfo.filePath;
+    const archivePath = mainPath.substring(0, mainPath.lastIndexOf('/') + 1) + archiveFileName;
 
     const content = JSON.stringify(archiveFile, null, 2);
 
     // Upload to OneDrive
-    const uploadPath = fileInfo.filePath.startsWith('/')
-      ? `/me/drive/root:${fileInfo.filePath}:/content`
-      : `/me/drive/root:/${fileInfo.filePath}:/content`;
+    const uploadPath = archivePath.startsWith('/')
+      ? `/me/drive/root:${archivePath}:/content`
+      : `/me/drive/root:/${archivePath}:/content`;
 
     await this.service.writeFile(uploadPath, content);
   }

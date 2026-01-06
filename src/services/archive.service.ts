@@ -175,6 +175,7 @@ export function createArchiveFile(year: number, baseCurrency: string): ArchiveFi
 
 /**
  * Save archive file using the current storage provider
+ * Provider handles showing file picker (Local) or determining location (OneDrive)
  */
 export async function saveArchiveFile(archiveFile: ArchiveFile): Promise<void> {
   const provider = StorageFactory.getCurrentProvider();

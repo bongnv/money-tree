@@ -26,11 +26,11 @@ export interface IStorageProvider {
 
   /**
    * Save archive file for a specific year
+   * Provider handles showing file picker (Local) or determining location (OneDrive)
    * @param archiveFile The archive file to save
-   * @param fileHandle Optional file handle for local storage (from external file picker)
-   * @throws Error if saving fails
+   * @throws Error if saving fails or user cancels
    */
-  saveArchiveFile(archiveFile: ArchiveFile, fileHandle?: any): Promise<void>;
+  saveArchiveFile(archiveFile: ArchiveFile): Promise<void>;
 
   /**
    * Get the name of the current file

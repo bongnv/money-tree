@@ -106,16 +106,17 @@ export class LocalStorageProvider implements IStorageProvider {
 
   /**
    * Save archive file for a specific year
-   * File handle must be provided (from external file picker)
+   * Shows file picker for user to select save location
    * @param archiveFile The archive file to save
-   * @param fileHandle The file handle to save to (from FilePickerService)
    */
-  async saveArchiveFile(
-    archiveFile: ArchiveFile,
-    fileHandle?: FileSystemFileHandle
-  ): Promise<void> {
+  async saveArchiveFile(archiveFile: ArchiveFile): Promise<void> {
+    // Show save file picker with suggested name
+    const { FilePickerService } = await import('./FilePickerService');
+    const suggestedName = `${this.fileHandle.name.replace('.json', '')}-${archiveFile.year}.json`;
+    const fileHandle = await FilePickerService.showSaveFilePicker(suggestedName);
+
     if (!fileHandle) {
-      throw new Error('No file handle provided for archive save.');
+      throw new Error('Archive save cancelled');
     }
 
     const content = JSON.stringify(archiveFile, null, 2);

@@ -20,11 +20,11 @@ describe('IStorageProvider', () => {
       this.dataFile = data;
     }
 
-    async saveArchiveFile(): Promise<void> {
+    async saveArchiveFile(_archiveFile: any): Promise<void> {
       // Mock archive save
     }
 
-    getFileName(): string | null {
+    getFileName(): string {
       return 'mock-file.json';
     }
   }

@@ -16,44 +16,38 @@ export interface SelectedFileInfo {
 }
 
 export class OneDriveProvider implements IStorageProvider {
-  private selectedFileInfo: SelectedFileInfo | null = null;
+  private selectedFileInfo: SelectedFileInfo;
 
   constructor(
     private service: OneDriveService,
-    fileInfo?: SelectedFileInfo
+    fileInfo: SelectedFileInfo
   ) {
-    if (fileInfo) {
-      this.selectedFileInfo = fileInfo;
-    }
+    this.selectedFileInfo = fileInfo;
   }
 
   /**
    * Get file content URL based on selected file or default path
    */
   private getFileUrl(): string {
-    if (this.selectedFileInfo && this.selectedFileInfo.fileId !== 'new') {
+    if (this.selectedFileInfo.fileId !== 'new') {
       // Use specific file ID
       return `/me/drive/items/${this.selectedFileInfo.fileId}/content`;
     }
-    // Use default path
+    // Use default path for new files
     return graphConfig.getFileContentUrl();
   }
 
   /**
-   * Get file upload URL based on selected file or default path
+   * Get file upload URL based on selected file
    */
   private getUploadUrl(): string {
-    if (this.selectedFileInfo) {
-      if (this.selectedFileInfo.isNew || this.selectedFileInfo.fileId === 'new') {
-        // Create new file at specified path
-        return `/me/drive/root:/${this.selectedFileInfo.filePath}:/content`;
-      } else {
-        // Update existing file by ID
-        return `/me/drive/items/${this.selectedFileInfo.fileId}/content`;
-      }
+    if (this.selectedFileInfo.isNew || this.selectedFileInfo.fileId === 'new') {
+      // Create new file at specified path
+      return `/me/drive/root:/${this.selectedFileInfo.filePath}:/content`;
+    } else {
+      // Update existing file by ID
+      return `/me/drive/items/${this.selectedFileInfo.fileId}/content`;
     }
-    // Use default path
-    return graphConfig.getFileContentUrl();
   }
 
   /**
@@ -100,8 +94,8 @@ export class OneDriveProvider implements IStorageProvider {
       // Upload file content
       const response = await this.service.writeFile(this.getUploadUrl(), content);
 
-      // If this was a new file, update the file ID (need to mutate for now, will be fixed with replaceProvider)
-      if (this.selectedFileInfo && this.selectedFileInfo.isNew) {
+      // If this was a new file, update the file ID
+      if (this.selectedFileInfo.isNew) {
         this.selectedFileInfo.fileId = response.id;
         this.selectedFileInfo.isNew = false;
       }
@@ -121,8 +115,8 @@ export class OneDriveProvider implements IStorageProvider {
   /**
    * Get file name
    */
-  getFileName(): string | null {
-    return this.selectedFileInfo?.fileName || 'money-tree.json';
+  getFileName(): string {
+    return this.selectedFileInfo.fileName;
   }
 
   /**

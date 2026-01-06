@@ -145,10 +145,6 @@ describe('LocalStorageProvider', () => {
   });
 
   describe('loadDataFile', () => {
-    it('should throw error when no file handle is configured', async () => {
-      await expect(provider.loadDataFile()).rejects.toThrow('No file configured');
-    });
-
     it('should throw error for invalid JSON', async () => {
       const mockFile = {
         text: jest.fn().mockResolvedValue('invalid json'),
@@ -237,10 +233,6 @@ describe('LocalStorageProvider', () => {
       const invalidData = { ...mockData, version: 123 } as any;
 
       await expect(provider.saveDataFile(invalidData)).rejects.toThrow();
-    });
-
-    it('should throw error when no file handle is configured', async () => {
-      await expect(provider.saveDataFile(mockData)).rejects.toThrow('No file configured');
     });
 
     it('should successfully save data file', async () => {

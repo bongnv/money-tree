@@ -10,8 +10,6 @@ import {
   Card,
   CardContent,
   CardActions,
-  Checkbox,
-  FormControlLabel,
   Alert,
   CircularProgress,
 } from '@mui/material';
@@ -27,21 +25,20 @@ import type { SelectedFileInfo } from '../../services/storage/OneDriveProvider';
 interface WelcomeDialogProps {
   open: boolean;
   onOpenLocalFile: () => void;
+  onCreateNewLocalFile: () => void;
   onAuthenticateOneDrive: () => Promise<void>;
   onConnectOneDrive: (fileInfo: SelectedFileInfo) => Promise<void>;
-  onStartEmpty: (dontShowAgain: boolean) => void;
   onListOneDriveFolders?: (parentItem?: any) => Promise<any[]>;
 }
 
 export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
   open,
   onOpenLocalFile,
+  onCreateNewLocalFile,
   onAuthenticateOneDrive,
   onConnectOneDrive,
-  onStartEmpty,
   onListOneDriveFolders,
 }) => {
-  const [dontShowAgain, setDontShowAgain] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [showFilePicker, setShowFilePicker] = useState(false);
@@ -77,10 +74,6 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
     setIsConnecting(false);
   };
 
-  const handleStartEmpty = () => {
-    onStartEmpty(dontShowAgain);
-  };
-
   return (
     <>
       <Dialog open={open && !showFilePicker} maxWidth="md" fullWidth>
@@ -101,29 +94,37 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
           )}
 
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {/* Open Local File */}
+            {/* Local File Storage */}
             <Card variant="outlined">
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
                   <FolderOpenIcon color="primary" fontSize="large" />
                   <Box>
                     <Typography variant="h6" component="div">
-                      Open Local File
+                      Local File Storage
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Open an existing Money Tree file from your computer
+                      Store your Money Tree data in a file on your computer
                     </Typography>
                   </Box>
                 </Box>
               </CardContent>
-              <CardActions>
+              <CardActions sx={{ gap: 1 }}>
                 <Button
-                  variant="contained"
+                  variant="outlined"
                   startIcon={<FolderOpenIcon />}
                   onClick={onOpenLocalFile}
                   fullWidth
                 >
-                  Open File
+                  Open Existing
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={onCreateNewLocalFile}
+                  fullWidth
+                >
+                  Create New
                 </Button>
               </CardActions>
             </Card>
@@ -154,7 +155,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
               </CardContent>
               <CardActions>
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   startIcon={isConnecting ? <CircularProgress size={20} /> : <CloudIcon />}
                   onClick={handleConnectOneDrive}
                   disabled={!isOneDriveConfigured() || isConnecting}
@@ -165,48 +166,6 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
                     : isOneDriveConfigured()
                       ? 'Connect OneDrive'
                       : 'Not Configured'}
-                </Button>
-              </CardActions>
-            </Card>
-
-            {/* Start with Empty Data */}
-            <Card variant="outlined">
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                  <AddIcon color="action" fontSize="large" />
-                  <Box>
-                    <Typography variant="h6" component="div">
-                      Start with Empty Data
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Create a new Money Tree file from scratch
-                    </Typography>
-                  </Box>
-                </Box>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={dontShowAgain}
-                      onChange={(e) => setDontShowAgain(e.target.checked)}
-                      size="small"
-                    />
-                  }
-                  label={
-                    <Typography variant="body2" color="text.secondary">
-                      Don&apos;t show this dialog again
-                    </Typography>
-                  }
-                  sx={{ mt: 1 }}
-                />
-              </CardContent>
-              <CardActions>
-                <Button
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={handleStartEmpty}
-                  fullWidth
-                >
-                  Start Empty
                 </Button>
               </CardActions>
             </Card>

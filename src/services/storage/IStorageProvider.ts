@@ -34,7 +34,6 @@ export interface IStorageProvider {
 
   /**
    * Get the name of the current file
-   * @returns File name or null if no file is configured
    */
-  getFileName(): string | null;
+  getFileName(): string;
 }

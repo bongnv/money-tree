@@ -3,8 +3,8 @@ import { WelcomeDialog } from './WelcomeDialog';
 
 describe('WelcomeDialog', () => {
   const mockOnOpenLocalFile = jest.fn();
+  const mockOnCreateNewLocalFile = jest.fn();
   const mockOnConnectOneDrive = jest.fn();
-  const mockOnStartEmpty = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -15,15 +15,15 @@ describe('WelcomeDialog', () => {
       <WelcomeDialog
         open={true}
         onOpenLocalFile={mockOnOpenLocalFile}
+        onCreateNewLocalFile={mockOnCreateNewLocalFile}
         onConnectOneDrive={mockOnConnectOneDrive}
-        onStartEmpty={mockOnStartEmpty}
+        onAuthenticateOneDrive={jest.fn()}
       />
     );
 
     expect(screen.getByText('Welcome to Money Tree')).toBeInTheDocument();
-    expect(screen.getByText('Open Local File')).toBeInTheDocument();
+    expect(screen.getByText('Local File Storage')).toBeInTheDocument();
     expect(screen.getByText('Connect to OneDrive')).toBeInTheDocument();
-    expect(screen.getByText('Start with Empty Data')).toBeInTheDocument();
   });
 
   it('should not render when closed', () => {
@@ -31,63 +31,47 @@ describe('WelcomeDialog', () => {
       <WelcomeDialog
         open={false}
         onOpenLocalFile={mockOnOpenLocalFile}
+        onCreateNewLocalFile={mockOnCreateNewLocalFile}
         onConnectOneDrive={mockOnConnectOneDrive}
-        onStartEmpty={mockOnStartEmpty}
+        onAuthenticateOneDrive={jest.fn()}
       />
     );
 
     expect(screen.queryByText('Welcome to Money Tree')).not.toBeInTheDocument();
   });
 
-  it('should call onOpenLocalFile when Open File button clicked', () => {
+  it('should call onOpenLocalFile when Open Existing File button clicked', () => {
     render(
       <WelcomeDialog
         open={true}
         onOpenLocalFile={mockOnOpenLocalFile}
+        onCreateNewLocalFile={mockOnCreateNewLocalFile}
         onConnectOneDrive={mockOnConnectOneDrive}
-        onStartEmpty={mockOnStartEmpty}
+        onAuthenticateOneDrive={jest.fn()}
       />
     );
 
-    const openFileButton = screen.getByRole('button', { name: /open file/i });
+    const openFileButton = screen.getByRole('button', { name: /open existing/i });
     fireEvent.click(openFileButton);
 
     expect(mockOnOpenLocalFile).toHaveBeenCalledTimes(1);
   });
 
-  it('should call onStartEmpty with false when Start Empty clicked without checkbox', () => {
+  it('should call onCreateNewLocalFile when Create New File clicked', () => {
     render(
       <WelcomeDialog
         open={true}
         onOpenLocalFile={mockOnOpenLocalFile}
+        onCreateNewLocalFile={mockOnCreateNewLocalFile}
         onConnectOneDrive={mockOnConnectOneDrive}
-        onStartEmpty={mockOnStartEmpty}
+        onAuthenticateOneDrive={jest.fn()}
       />
     );
 
-    const startEmptyButton = screen.getByRole('button', { name: /start empty/i });
-    fireEvent.click(startEmptyButton);
+    const createFileButton = screen.getByRole('button', { name: /create new/i });
+    fireEvent.click(createFileButton);
 
-    expect(mockOnStartEmpty).toHaveBeenCalledWith(false);
-  });
-
-  it('should call onStartEmpty with true when Start Empty clicked with checkbox checked', () => {
-    render(
-      <WelcomeDialog
-        open={true}
-        onOpenLocalFile={mockOnOpenLocalFile}
-        onConnectOneDrive={mockOnConnectOneDrive}
-        onStartEmpty={mockOnStartEmpty}
-      />
-    );
-
-    const checkbox = screen.getByRole('checkbox', { name: /don't show this dialog again/i });
-    fireEvent.click(checkbox);
-
-    const startEmptyButton = screen.getByRole('button', { name: /start empty/i });
-    fireEvent.click(startEmptyButton);
-
-    expect(mockOnStartEmpty).toHaveBeenCalledWith(true);
+    expect(mockOnCreateNewLocalFile).toHaveBeenCalledTimes(1);
   });
 
   it('should show helper text about changing location later', () => {
@@ -95,36 +79,14 @@ describe('WelcomeDialog', () => {
       <WelcomeDialog
         open={true}
         onOpenLocalFile={mockOnOpenLocalFile}
+        onCreateNewLocalFile={mockOnCreateNewLocalFile}
         onConnectOneDrive={mockOnConnectOneDrive}
-        onStartEmpty={mockOnStartEmpty}
+        onAuthenticateOneDrive={jest.fn()}
       />
     );
 
     expect(
       screen.getByText(/you can change your data storage location later in settings/i)
     ).toBeInTheDocument();
-  });
-
-  it('should toggle checkbox state', () => {
-    render(
-      <WelcomeDialog
-        open={true}
-        onOpenLocalFile={mockOnOpenLocalFile}
-        onConnectOneDrive={mockOnConnectOneDrive}
-        onStartEmpty={mockOnStartEmpty}
-      />
-    );
-
-    const checkbox = screen.getByRole('checkbox', {
-      name: /don't show this dialog again/i,
-    }) as HTMLInputElement;
-
-    expect(checkbox.checked).toBe(false);
-
-    fireEvent.click(checkbox);
-    expect(checkbox.checked).toBe(true);
-
-    fireEvent.click(checkbox);
-    expect(checkbox.checked).toBe(false);
   });
 });

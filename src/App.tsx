@@ -70,8 +70,11 @@ const App: React.FC = () => {
         });
       });
 
-      // Try to auto-load from cached file
-      const loaded = await syncService.autoLoad();
+      // Initialize provider from cached storage
+      const initialized = await StorageFactory.initializeProvider();
+
+      // Try to auto-load from cached file (only if provider was initialized)
+      const loaded = initialized && (await syncService.autoLoad());
 
       if (!loaded) {
         // Check if user has dismissed the welcome dialog
@@ -144,6 +147,26 @@ const App: React.FC = () => {
     }
   };
 
+  const handleCreateNewLocalFile = async () => {
+    try {
+      // Show save file picker to create a new file
+      const fileHandle = await FilePickerService.showSaveFilePicker('money-tree.json');
+      if (!fileHandle) {
+        // User cancelled
+        return;
+      }
+
+      // Switch to local storage provider with new file
+      await StorageFactory.replaceProvider(StorageProviderType.LOCAL, { fileHandle });
+
+      // File will be empty initially, no need to load
+      setShowWelcomeDialog(false);
+    } catch (error) {
+      console.error('Failed to create new file:', error);
+      throw error; // Re-throw so WelcomeDialog can show error
+    }
+  };
+
   const handleAuthenticateOneDrive = async () => {
     const service = StorageFactory.getOneDriveService();
     await service.authenticate();
@@ -172,14 +195,6 @@ const App: React.FC = () => {
   const handleListOneDriveFolders = async (parentItem?: any) => {
     const service = StorageFactory.getOneDriveService();
     return service.listFolders(parentItem);
-  };
-
-  const handleStartEmpty = (dontShowAgain: boolean) => {
-    if (dontShowAgain) {
-      localStorage.setItem(WELCOME_DISMISSED_KEY, 'true');
-    }
-    setShowWelcomeDialog(false);
-    // User will be prompted to save when they make their first change
   };
 
   const handleCloseError = () => {
@@ -254,9 +269,9 @@ const App: React.FC = () => {
       <WelcomeDialog
         open={showWelcomeDialog}
         onOpenLocalFile={handleOpenLocalFile}
+        onCreateNewLocalFile={handleCreateNewLocalFile}
         onAuthenticateOneDrive={handleAuthenticateOneDrive}
         onConnectOneDrive={handleConnectOneDrive}
-        onStartEmpty={handleStartEmpty}
         onListOneDriveFolders={handleListOneDriveFolders}
       />
       <FileLoadErrorDialog open={!!error} error={error} onClose={handleCloseError} />

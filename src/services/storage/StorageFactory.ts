@@ -134,28 +134,37 @@ export class StorageFactory {
   }
 
   /**
+   * Initialize provider from storage
+   * Called on app startup to auto-load cached provider configuration
+   * Returns true if provider was successfully initialized, false if no cached config found
+   */
+  static async initializeProvider(): Promise<boolean> {
+    try {
+      const config = await this.loadProviderConfig(this.currentProviderType);
+      if (!config) {
+        return false;
+      }
+      const provider = await this.createProvider(this.currentProviderType, config);
+      this.providers.set(this.currentProviderType, provider);
+      return true;
+    } catch (error) {
+      console.warn('Failed to initialize provider from storage:', error);
+      return false;
+    }
+  }
+
+  /**
    * Replace current provider with new configuration
-   * Creates a new provider instance and clears the cache
+   * Creates a new provider instance and caches it immediately
    */
   static async replaceProvider(type: StorageProviderType, config?: ProviderConfig): Promise<void> {
     // Save new provider type
     this.currentProviderType = type;
     this.saveProviderType(type);
 
-    // Save config based on provider type
-    if (type === StorageProviderType.LOCAL && config?.fileHandle) {
-      // For Local: save fileHandle to IndexedDB
-      await this.saveFileHandleToCache(config.fileHandle);
-    } else if (type === StorageProviderType.ONEDRIVE && config?.fileInfo) {
-      // For OneDrive: save fileInfo to localStorage
-      this.saveProviderConfig(config);
-    } else {
-      // Clear config if none provided
-      this.saveProviderConfig(undefined);
-    }
-
-    // Clear cached provider to force recreation with new config
-    this.providers.delete(type);
+    await this.saveProviderConfig(type, config);
+    const provider = await this.createProvider(this.currentProviderType, config);
+    this.providers.set(this.currentProviderType, provider);
   }
 
   /**
@@ -177,44 +186,76 @@ export class StorageFactory {
   }
 
   /**
-   * Load provider configuration from localStorage
+   * Load provider configuration from storage
+   * Handles provider-specific storage (IndexedDB for Local, localStorage for OneDrive)
    */
-  private static loadProviderConfig(): ProviderConfig | undefined {
-    const saved = localStorage.getItem(STORAGE_CONFIG_KEY);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (error) {
-        console.warn('Failed to parse stored provider config:', error);
+  private static async loadProviderConfig(
+    type: StorageProviderType
+  ): Promise<ProviderConfig | undefined> {
+    switch (type) {
+      case StorageProviderType.LOCAL: {
+        const fileHandle = await this.loadFileHandleFromCache();
+        return fileHandle ? { fileHandle } : undefined;
       }
+      case StorageProviderType.ONEDRIVE: {
+        const saved = localStorage.getItem(STORAGE_CONFIG_KEY);
+        if (saved) {
+          try {
+            return JSON.parse(saved);
+          } catch (error) {
+            console.warn('Failed to parse stored provider config:', error);
+          }
+        }
+        return undefined;
+      }
+      default:
+        return undefined;
     }
-    return undefined;
   }
 
   /**
-   * Save provider configuration to localStorage
+   * Save provider configuration to storage
+   * Handles provider-specific storage (IndexedDB for Local, localStorage for OneDrive)
    */
-  private static saveProviderConfig(config?: ProviderConfig): void {
-    if (config) {
-      // Only save fileInfo for OneDrive (fileHandle can't be serialized)
-      const serializableConfig: ProviderConfig = {};
-      if (config.fileInfo) {
-        serializableConfig.fileInfo = config.fileInfo;
+  private static async saveProviderConfig(
+    type: StorageProviderType,
+    config?: ProviderConfig
+  ): Promise<void> {
+    switch (type) {
+      case StorageProviderType.LOCAL: {
+        if (config?.fileHandle) {
+          await this.saveFileHandleToCache(config.fileHandle);
+        } else {
+          await this.clearFileHandleCache();
+        }
+        break;
       }
-      localStorage.setItem(STORAGE_CONFIG_KEY, JSON.stringify(serializableConfig));
-    } else {
-      localStorage.removeItem(STORAGE_CONFIG_KEY);
+      case StorageProviderType.ONEDRIVE: {
+        if (config?.fileInfo) {
+          const serializableConfig: ProviderConfig = { fileInfo: config.fileInfo };
+          localStorage.setItem(STORAGE_CONFIG_KEY, JSON.stringify(serializableConfig));
+        } else {
+          localStorage.removeItem(STORAGE_CONFIG_KEY);
+        }
+        break;
+      }
+      default:
+        // For other providers, clear config
+        localStorage.removeItem(STORAGE_CONFIG_KEY);
+        break;
     }
   }
 
   /**
    * Get the current storage provider
+   * Throws an error if no provider is configured
    */
   static getCurrentProvider(): IStorageProvider {
-    if (!this.providers.has(this.currentProviderType)) {
-      this.providers.set(this.currentProviderType, this.createProvider(this.currentProviderType));
+    const provider = this.providers.get(this.currentProviderType);
+    if (!provider) {
+      throw new Error('No storage provider configured. Please select a file first.');
     }
-    return this.providers.get(this.currentProviderType)!;
+    return provider;
   }
 
   /**
@@ -234,26 +275,29 @@ export class StorageFactory {
 
   /**
    * Create a new storage provider instance
-   * Loads configuration from localStorage (OneDrive) or IndexedDB (Local)
+   * If config is provided, uses it directly; otherwise loads from storage
    */
-  private static createProvider(type: StorageProviderType): IStorageProvider {
+  private static async createProvider(
+    type: StorageProviderType,
+    config?: ProviderConfig
+  ): Promise<IStorageProvider> {
+    // Load config from storage if not provided
+    const effectiveConfig = config || (await this.loadProviderConfig(type));
+
     switch (type) {
       case StorageProviderType.LOCAL: {
-        // Load fileHandle from IndexedDB asynchronously
-        // Return a provider that will load on first use
-        const provider = new LocalStorageProvider();
-        // Load cached handle in the background
-        this.loadFileHandleFromCache().then((handle) => {
-          if (handle) {
-            provider['fileHandle'] = handle;
-          }
-        });
-        return provider;
+        const handle = effectiveConfig?.fileHandle;
+        if (!handle) {
+          throw new Error('No cached file handle found. Please select a file first.');
+        }
+        return new LocalStorageProvider(handle);
       }
       case StorageProviderType.ONEDRIVE: {
-        // Load fileInfo from localStorage
-        const config = this.loadProviderConfig();
-        return new OneDriveProvider(this.getOneDriveService(), config?.fileInfo);
+        const fileInfo = effectiveConfig?.fileInfo;
+        if (!fileInfo) {
+          throw new Error('No cached file info found. Please select a file first.');
+        }
+        return new OneDriveProvider(this.getOneDriveService(), fileInfo);
       }
       case StorageProviderType.GOOGLE_DRIVE:
         throw new Error('Google Drive storage provider not yet implemented');

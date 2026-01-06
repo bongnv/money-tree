@@ -8,12 +8,10 @@ import type { IStorageProvider } from './IStorageProvider';
  * Note: File handle caching is managed by StorageFactory, not this provider
  */
 export class LocalStorageProvider implements IStorageProvider {
-  private fileHandle: FileSystemFileHandle | null = null;
+  private fileHandle: FileSystemFileHandle;
 
-  constructor(fileHandle?: FileSystemFileHandle) {
-    if (fileHandle) {
-      this.fileHandle = fileHandle;
-    }
+  constructor(fileHandle: FileSystemFileHandle) {
+    this.fileHandle = fileHandle;
   }
 
   /**
@@ -44,18 +42,12 @@ export class LocalStorageProvider implements IStorageProvider {
 
   /**
    * Load data file from the configured file handle
-   * File handle must be set before calling this method
    */
   async loadDataFile(): Promise<DataFile | null> {
-    if (!this.fileHandle) {
-      throw new Error('No file configured. Please select a file first.');
-    }
-
     // Verify permission for file handle
     const hasPermission = await this.verifyPermission(this.fileHandle);
     if (!hasPermission) {
-      // Permission denied, clear the handle
-      this.fileHandle = null;
+      // Permission denied - throw error
       throw new Error('File permission expired. Please select the file again to grant permission.');
     }
 
@@ -78,10 +70,6 @@ export class LocalStorageProvider implements IStorageProvider {
     // Validate data before saving
     DataFileSchema.parse(data);
 
-    if (!this.fileHandle) {
-      throw new Error('No file configured. Please select a file first.');
-    }
-
     // Check write permission for file handle
     const options: FileSystemHandlePermissionDescriptor = { mode: 'readwrite' };
     let permission = await this.fileHandle.queryPermission(options);
@@ -95,9 +83,8 @@ export class LocalStorageProvider implements IStorageProvider {
         console.warn('Failed to request write permission:', error);
       }
 
-      // If still not granted, clear the handle and throw error
+      // If still not granted, throw error
       if (permission !== 'granted') {
-        this.fileHandle = null;
         throw new Error(
           'File permission expired. Please select the file again to grant permission.'
         );
@@ -113,8 +100,8 @@ export class LocalStorageProvider implements IStorageProvider {
   /**
    * Get the name of the cached file
    */
-  getFileName(): string | null {
-    return this.fileHandle?.name || null;
+  getFileName(): string {
+    return this.fileHandle.name;
   }
 
   /**

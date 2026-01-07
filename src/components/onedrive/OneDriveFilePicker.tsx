@@ -18,9 +18,6 @@ import {
   Alert,
   TextField,
   Divider,
-  RadioGroup,
-  Radio,
-  FormControlLabel,
 } from '@mui/material';
 import {
   Folder as FolderIcon,
@@ -52,8 +49,8 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
   const [breadcrumbs, setBreadcrumbs] = useState<DriveItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectionMode, setSelectionMode] = useState<'existing' | 'new'>('new');
   const [selectedFile, setSelectedFile] = useState<DriveItem | null>(null);
+  const [showFileNameDialog, setShowFileNameDialog] = useState(false);
   const [newFileName, setNewFileName] = useState(defaultFileName);
 
   // Load root folder on open
@@ -123,13 +120,11 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
   };
 
   const handleFileClick = (file: DriveItem) => {
-    if (selectionMode === 'existing') {
-      setSelectedFile(file);
-    }
+    setSelectedFile(file);
   };
 
-  const handleSelect = () => {
-    if (selectionMode === 'existing' && selectedFile) {
+  const handleSelectFile = () => {
+    if (selectedFile) {
       // Existing file selected
       const filePath = selectedFile.parentReference?.path
         ? `${selectedFile.parentReference.path}/${selectedFile.name}`
@@ -142,7 +137,11 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
         driveId: selectedFile.remoteItem?.parentReference?.driveId,
         parentItemId: selectedFile.parentReference?.id,
       });
-    } else if (selectionMode === 'new' && currentFolder) {
+    }
+  };
+
+  const handleCreateHere = () => {
+    if (currentFolder) {
       // Create new file in current folder
       // Skip the root 'OneDrive' breadcrumb (index 0) when building the path
       const folderPath = breadcrumbs
@@ -166,15 +165,18 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
         driveId,
         parentItemId,
       });
+      setShowFileNameDialog(false);
     }
   };
 
-  const isSelectDisabled = () => {
-    if (selectionMode === 'existing') {
-      return !selectedFile;
-    } else {
-      return !newFileName.trim() || !newFileName.endsWith('.json');
-    }
+  const handleCreateClick = () => {
+    setNewFileName(defaultFileName);
+    setShowFileNameDialog(true);
+  };
+
+  const handleFileNameDialogClose = () => {
+    setShowFileNameDialog(false);
+    setNewFileName(defaultFileName);
   };
 
   const jsonFiles = items.filter((item) => item.file && item.name.endsWith('.json'));
@@ -195,18 +197,6 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
           </Alert>
         )}
 
-        {/* Selection Mode */}
-        <Box sx={{ mb: 2 }}>
-          <RadioGroup
-            value={selectionMode}
-            onChange={(e) => setSelectionMode(e.target.value as 'existing' | 'new')}
-            row
-          >
-            <FormControlLabel value="new" control={<Radio />} label="Create new file" />
-            <FormControlLabel value="existing" control={<Radio />} label="Select existing file" />
-          </RadioGroup>
-        </Box>
-
         {/* Breadcrumbs */}
         <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 2 }}>
           {breadcrumbs.map((crumb, index) => (
@@ -224,20 +214,6 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
             </Link>
           ))}
         </Breadcrumbs>
-
-        {/* New File Name Input */}
-        {selectionMode === 'new' && (
-          <Box sx={{ mb: 2 }}>
-            <TextField
-              fullWidth
-              label="File name"
-              value={newFileName}
-              onChange={(e) => setNewFileName(e.target.value)}
-              helperText="File must have .json extension"
-              error={!newFileName.endsWith('.json')}
-            />
-          </Box>
-        )}
 
         <Divider sx={{ mb: 2 }} />
 
@@ -270,38 +246,35 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
               </ListItem>
             ))}
 
-            {/* JSON Files (only in "existing" mode) */}
-            {selectionMode === 'existing' &&
-              jsonFiles.map((file) => (
-                <ListItem key={file.id} disablePadding>
-                  <ListItemButton
-                    onClick={() => handleFileClick(file)}
-                    selected={selectedFile?.id === file.id}
-                  >
-                    <ListItemIcon>
-                      <FileIcon color="action" />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <span>{file.name}</span>
-                          {file.remoteItem && (
-                            <PeopleIcon fontSize="small" color="action" titleAccess="Shared file" />
-                          )}
-                        </Box>
-                      }
-                    />
-                  </ListItemButton>
-                </ListItem>
-              ))}
+            {/* JSON Files */}
+            {jsonFiles.map((file) => (
+              <ListItem key={file.id} disablePadding>
+                <ListItemButton
+                  onClick={() => handleFileClick(file)}
+                  selected={selectedFile?.id === file.id}
+                >
+                  <ListItemIcon>
+                    <FileIcon color="action" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <span>{file.name}</span>
+                        {file.remoteItem && (
+                          <PeopleIcon fontSize="small" color="action" titleAccess="Shared file" />
+                        )}
+                      </Box>
+                    }
+                  />
+                </ListItemButton>
+              </ListItem>
+            ))}
 
             {/* Empty state */}
             {folders.length === 0 && jsonFiles.length === 0 && (
               <Box sx={{ py: 4, textAlign: 'center' }}>
                 <Typography variant="body2" color="text.secondary">
-                  {selectionMode === 'existing'
-                    ? 'No .json files found in this folder'
-                    : 'This folder is empty'}
+                  This folder is empty
                 </Typography>
               </Box>
             )}
@@ -310,10 +283,40 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={onCancel}>Cancel</Button>
-        <Button variant="contained" onClick={handleSelect} disabled={isSelectDisabled() || loading}>
-          {selectionMode === 'existing' ? 'Select File' : 'Create Here'}
+        <Button onClick={handleCreateClick} disabled={loading}>
+          Create File
+        </Button>
+        <Button variant="contained" onClick={handleSelectFile} disabled={!selectedFile || loading}>
+          Select File
         </Button>
       </DialogActions>
+
+      {/* File Name Dialog */}
+      <Dialog open={showFileNameDialog} onClose={handleFileNameDialogClose} maxWidth="sm" fullWidth>
+        <DialogTitle>Create New File</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            label="File name"
+            value={newFileName}
+            onChange={(e) => setNewFileName(e.target.value)}
+            helperText="File must have .json extension"
+            error={!newFileName.endsWith('.json')}
+            sx={{ mt: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleFileNameDialogClose}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleCreateHere}
+            disabled={!newFileName.trim() || !newFileName.endsWith('.json')}
+          >
+            Create
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 };

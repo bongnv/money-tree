@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { OneDriveFilePicker, DriveItem } from './OneDriveFilePicker';
 
 describe('OneDriveFilePicker', () => {
@@ -61,7 +62,7 @@ describe('OneDriveFilePicker', () => {
     });
   });
 
-  it('should show new file mode by default', async () => {
+  it('should show both action buttons', async () => {
     render(
       <OneDriveFilePicker
         open={true}
@@ -72,12 +73,14 @@ describe('OneDriveFilePicker', () => {
     );
 
     await waitFor(() => {
-      const newFileRadio = screen.getByLabelText('Create new file') as HTMLInputElement;
-      expect(newFileRadio.checked).toBe(true);
+      expect(screen.getByText('Create File')).toBeInTheDocument();
+      expect(screen.getByText('Select File')).toBeInTheDocument();
     });
   });
 
-  it('should show file name input in new file mode', async () => {
+  it('should show Create File dialog when Create File clicked', async () => {
+    const user = userEvent.setup();
+
     render(
       <OneDriveFilePicker
         open={true}
@@ -88,11 +91,19 @@ describe('OneDriveFilePicker', () => {
     );
 
     await waitFor(() => {
+      expect(screen.getByText('Create File')).toBeInTheDocument();
+    });
+
+    const createButton = screen.getByRole('button', { name: /create file/i });
+    await user.click(createButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Create New File')).toBeInTheDocument();
       expect(screen.getByLabelText('File name')).toBeInTheDocument();
     });
   });
 
-  it('should switch to existing file mode', async () => {
+  it('should show json files in the list', async () => {
     render(
       <OneDriveFilePicker
         open={true}
@@ -101,30 +112,6 @@ describe('OneDriveFilePicker', () => {
         onListFolders={mockOnListFolders}
       />
     );
-
-    await waitFor(() => {
-      const existingFileRadio = screen.getByLabelText('Select existing file');
-      fireEvent.click(existingFileRadio);
-    });
-
-    const existingFileRadio = screen.getByLabelText('Select existing file') as HTMLInputElement;
-    expect(existingFileRadio.checked).toBe(true);
-  });
-
-  it('should show json files in existing file mode', async () => {
-    render(
-      <OneDriveFilePicker
-        open={true}
-        onSelect={mockOnSelect}
-        onCancel={mockOnCancel}
-        onListFolders={mockOnListFolders}
-      />
-    );
-
-    await waitFor(() => {
-      const existingFileRadio = screen.getByLabelText('Select existing file');
-      fireEvent.click(existingFileRadio);
-    });
 
     await waitFor(() => {
       expect(screen.getByText('money-tree.json')).toBeInTheDocument();
@@ -174,13 +161,24 @@ describe('OneDriveFilePicker', () => {
       expect(screen.getByText('OneDrive')).toBeInTheDocument();
     });
 
-    const createButton = screen.getByText('Create Here');
+    // Click Create File button to open dialog
+    const createButton = screen.getByText('Create File');
     fireEvent.click(createButton);
 
-    expect(mockOnSelect).toHaveBeenCalledWith({
-      fileId: null,
-      filePath: 'test.json',
+    // Wait for dialog and submit
+    await waitFor(() => {
+      expect(screen.getByText('Create New File')).toBeInTheDocument();
     });
+
+    const submitButton = screen.getByRole('button', { name: 'Create' });
+    fireEvent.click(submitButton);
+
+    expect(mockOnSelect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fileId: null,
+        filePath: 'test.json',
+      })
+    );
   });
 
   it('should call onSelect with existing file info', async () => {
@@ -194,14 +192,11 @@ describe('OneDriveFilePicker', () => {
     );
 
     await waitFor(() => {
-      const existingFileRadio = screen.getByLabelText('Select existing file');
-      fireEvent.click(existingFileRadio);
+      expect(screen.getByText('money-tree.json')).toBeInTheDocument();
     });
 
-    await waitFor(() => {
-      const jsonFile = screen.getByText('money-tree.json');
-      fireEvent.click(jsonFile);
-    });
+    const jsonFile = screen.getByText('money-tree.json');
+    fireEvent.click(jsonFile);
 
     const selectButton = screen.getByText('Select File');
     fireEvent.click(selectButton);
@@ -234,7 +229,7 @@ describe('OneDriveFilePicker', () => {
     expect(mockOnCancel).toHaveBeenCalled();
   });
 
-  it('should disable select button when no file selected in existing mode', async () => {
+  it('should disable select button when no file selected', async () => {
     render(
       <OneDriveFilePicker
         open={true}
@@ -245,8 +240,7 @@ describe('OneDriveFilePicker', () => {
     );
 
     await waitFor(() => {
-      const existingFileRadio = screen.getByLabelText('Select existing file');
-      fireEvent.click(existingFileRadio);
+      expect(screen.getByText('Select File')).toBeInTheDocument();
     });
 
     const selectButton = screen.getByText('Select File') as HTMLButtonElement;
@@ -272,6 +266,8 @@ describe('OneDriveFilePicker', () => {
   });
 
   it('should validate json extension for new files', async () => {
+    const user = userEvent.setup();
+
     render(
       <OneDriveFilePicker
         open={true}
@@ -282,13 +278,25 @@ describe('OneDriveFilePicker', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByLabelText('File name')).toBeInTheDocument();
+      expect(screen.getByText('Create File')).toBeInTheDocument();
+    });
+
+    // Click Create File button to open dialog
+    const createFileButton = screen.getByRole('button', { name: /create file/i });
+    await user.click(createFileButton);
+
+    // Wait for Create New File dialog to appear
+    await waitFor(() => {
+      expect(screen.getByText('Create New File')).toBeInTheDocument();
     });
 
     const fileNameInput = screen.getByLabelText('File name') as HTMLInputElement;
-    fireEvent.change(fileNameInput, { target: { value: 'invalid.txt' } });
+    await user.clear(fileNameInput);
+    await user.type(fileNameInput, 'invalid.txt');
 
-    const createButton = screen.getByText('Create Here') as HTMLButtonElement;
-    expect(createButton.disabled).toBe(true);
+    await waitFor(() => {
+      const createButton = screen.getByRole('button', { name: 'Create' }) as HTMLButtonElement;
+      expect(createButton.disabled).toBe(true);
+    });
   });
 });

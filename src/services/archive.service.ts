@@ -195,7 +195,7 @@ export async function saveArchiveFile(archiveFile: ArchiveFile): Promise<void> {
  */
 export function updateMainFileAfterArchive(
   year: number,
-  _archiveReference: ArchivedYearReference
+  archiveReference: ArchivedYearReference
 ): void {
   const transactionStore = useTransactionStore.getState();
   const budgetStore = useBudgetStore.getState();
@@ -251,7 +251,7 @@ export function updateMainFileAfterArchive(
 
   // Add archive reference to app state (using the one passed in)
   const appState = useAppStore.getState();
-  appState.addArchivedYear(_archiveReference);
+  appState.addArchivedYear(archiveReference);
 }
 
 /**

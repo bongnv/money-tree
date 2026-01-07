@@ -38,7 +38,11 @@ export class OneDriveProvider implements IStorageProvider {
    */
   private getFileUrl(): string {
     if (this.selectedFileInfo.fileId) {
-      // Use specific file ID
+      // For shared folders, use drives endpoint
+      if (this.selectedFileInfo.driveId) {
+        return `/drives/${this.selectedFileInfo.driveId}/items/${this.selectedFileInfo.fileId}/content`;
+      }
+      // For personal drive, use me endpoint
       return `/me/drive/items/${this.selectedFileInfo.fileId}/content`;
     }
     // Use default path for new files

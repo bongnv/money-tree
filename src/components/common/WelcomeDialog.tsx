@@ -26,17 +26,17 @@ interface WelcomeDialogProps {
   open: boolean;
   onOpenLocalFile: () => void;
   onCreateNewLocalFile: () => void;
-  onAuthenticateOneDrive: () => Promise<void>;
-  onConnectOneDrive: (fileInfo: SelectedFileInfo) => Promise<void>;
-  onListOneDriveFolders?: (parentItem?: any) => Promise<any[]>;
+  onSelectOneDrive: () => Promise<void>;
+  onOneDriveFileSelected: (fileInfo: SelectedFileInfo) => Promise<void>;
+  onListOneDriveFolders: (parentItem?: any) => Promise<any[]>;
 }
 
 export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
   open,
   onOpenLocalFile,
   onCreateNewLocalFile,
-  onAuthenticateOneDrive,
-  onConnectOneDrive,
+  onSelectOneDrive,
+  onOneDriveFileSelected,
   onListOneDriveFolders,
 }) => {
   const [isConnecting, setIsConnecting] = useState(false);
@@ -48,11 +48,11 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
     setAuthError(null);
 
     try {
-      await onAuthenticateOneDrive();
+      await onSelectOneDrive();
       setShowFilePicker(true);
-    } catch (error) {
-      console.error('OneDrive authentication failed:', error);
-      setAuthError(error instanceof Error ? error.message : 'Failed to authenticate with OneDrive');
+    } catch (error: any) {
+      console.error('OneDrive connection failed:', error);
+      setAuthError(error.message || 'Failed to connect to OneDrive');
       setIsConnecting(false);
     }
   };
@@ -60,9 +60,9 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
   const handleFileSelect = async (fileInfo: SelectedFileInfo) => {
     setShowFilePicker(false);
     try {
-      await onConnectOneDrive(fileInfo);
+      await onOneDriveFileSelected(fileInfo);
     } catch (error) {
-      console.error('OneDrive connection failed:', error);
+      console.error('OneDrive file selection failed:', error);
       setAuthError(error instanceof Error ? error.message : 'Failed to connect to OneDrive');
     } finally {
       setIsConnecting(false);
@@ -172,6 +172,14 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
                     </Typography>
                   </Box>
                 </Box>
+                {isOneDriveConfigured() && (
+                  <Alert severity="info" sx={{ mt: 2 }}>
+                    <Typography variant="body2">
+                      A popup window will open for Microsoft sign-in. If blocked, look for a popup
+                      icon in your browser&apos;s address bar and allow it.
+                    </Typography>
+                  </Alert>
+                )}
               </CardContent>
               <CardActions>
                 <Button
@@ -199,14 +207,12 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
       </Dialog>
 
       {/* OneDrive File Picker */}
-      {onListOneDriveFolders && (
-        <OneDriveFilePicker
-          open={showFilePicker}
-          onSelect={handleFileSelect}
-          onCancel={handleFilePickerCancel}
-          onListFolders={onListOneDriveFolders}
-        />
-      )}
+      <OneDriveFilePicker
+        open={showFilePicker}
+        onSelect={handleFileSelect}
+        onCancel={handleFilePickerCancel}
+        onListFolders={onListOneDriveFolders}
+      />
     </>
   );
 };

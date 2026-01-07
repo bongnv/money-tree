@@ -167,29 +167,17 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAuthenticateOneDrive = async () => {
+  const handleSelectOneDrive = async () => {
     const service = StorageFactory.getOneDriveService();
     await service.authenticate();
   };
 
   const handleConnectOneDrive = async (fileInfo: SelectedFileInfo) => {
-    try {
-      // Finalize connection: switch provider and load file
-      await StorageFactory.replaceProvider(StorageProviderType.ONEDRIVE, { fileInfo });
+    // Finalize connection: switch provider and load file
+    await StorageFactory.replaceProvider(StorageProviderType.ONEDRIVE, { fileInfo });
 
-      // Try to load existing file from OneDrive
-      try {
-        await syncService.loadDataFile(currentYear);
-      } catch (error) {
-        // If no file exists, that's OK - user will start with empty data
-        console.log('No existing file in OneDrive, starting fresh');
-      }
-
-      setShowWelcomeDialog(false);
-    } catch (error) {
-      console.error('OneDrive connection failed:', error);
-      throw error; // Re-throw so WelcomeDialog can show error
-    }
+    await syncService.loadDataFile(currentYear);
+    setShowWelcomeDialog(false);
   };
 
   const handleListOneDriveFolders = async (parentItem?: any) => {
@@ -270,8 +258,8 @@ const App: React.FC = () => {
         open={showWelcomeDialog}
         onOpenLocalFile={handleOpenLocalFile}
         onCreateNewLocalFile={handleCreateNewLocalFile}
-        onAuthenticateOneDrive={handleAuthenticateOneDrive}
-        onConnectOneDrive={handleConnectOneDrive}
+        onSelectOneDrive={handleSelectOneDrive}
+        onOneDriveFileSelected={handleConnectOneDrive}
         onListOneDriveFolders={handleListOneDriveFolders}
       />
       <FileLoadErrorDialog open={!!error} error={error} onClose={handleCloseError} />

@@ -15,7 +15,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({ account, onSubmit, onC
   const [formData, setFormData] = useState({
     name: account?.name || '',
     type: account?.type || AccountType.BANK_ACCOUNT,
-    currencyCode: account?.currencyCode || 'usd',
+    currencyCode: account?.currencyCode || CurrencyCode.USD,
     initialBalance: account?.initialBalance?.toString() || '0',
     description: account?.description || '',
     isActive: account?.isActive ?? true,

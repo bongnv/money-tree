@@ -42,8 +42,65 @@ export class OneDriveService {
   private initPromise: Promise<void> | null = null;
 
   constructor() {
-    // Start initialization immediately
-    this.initPromise = this.initializeMSAL();
+    // Eagerly start initialization
+    this.initialize();
+  }
+
+  /**
+   * Initialize MSAL instance
+   * This must be called before any other MSAL operations
+   */
+  private async initialize(): Promise<void> {
+    // Return existing promise if already initializing
+    if (this.initPromise) {
+      return this.initPromise;
+    }
+
+    // Skip if not configured
+    if (!isOneDriveConfigured()) {
+      this.initPromise = Promise.resolve();
+      return this.initPromise;
+    }
+
+    this.initPromise = (async () => {
+      try {
+        // Create and initialize MSAL
+        this.msalInstance = new PublicClientApplication(msalConfig);
+        await this.msalInstance.initialize();
+
+        // Check for existing session
+        await this.checkExistingSession();
+      } catch (error) {
+        console.error('Failed to initialize OneDrive service:', error);
+        throw error;
+      }
+    })();
+
+    return this.initPromise;
+  }
+
+  /**
+   * Check for existing authenticated session
+   */
+  private async checkExistingSession(): Promise<void> {
+    if (!this.msalInstance || this.account) return;
+
+    // Try to get active account first (more reliable in Safari)
+    let account = this.msalInstance.getActiveAccount();
+
+    // Fallback to getAllAccounts if no active account
+    if (!account) {
+      const accounts = this.msalInstance.getAllAccounts();
+      if (accounts.length > 0) {
+        account = accounts[0];
+        this.msalInstance.setActiveAccount(account);
+      }
+    }
+
+    if (account) {
+      this.account = account;
+      await this.createGraphClient();
+    }
   }
 
   /**
@@ -54,22 +111,26 @@ export class OneDriveService {
     await this.ensureInitialized();
 
     // Skip if already authenticated
-    if (this.isAuthenticated()) {
+    if (this.account !== null) {
       return;
     }
 
-    const msalInstance = this.ensureMSALInstance();
+    if (!this.msalInstance) {
+      throw new Error(errorMessages.configError);
+    }
+
     try {
-      const response = await msalInstance.loginPopup(loginRequest);
+      const response = await this.msalInstance.loginPopup(loginRequest);
       this.account = response.account;
-      await this.initializeGraphClient();
+      this.msalInstance.setActiveAccount(response.account);
+      await this.createGraphClient();
     } catch (error: any) {
       console.error('Authentication failed:', error);
 
-      // Provide helpful error message for Safari users
-      if (error?.errorCode === 'popup_window_error' || error?.message?.includes('popup')) {
+      // Check for popup blocking
+      if (error.errorCode === 'popup_window_error') {
         throw new Error(
-          'Popup blocked. Please allow popups for this site in Safari Settings > Websites > Pop-up Windows.'
+          'Please allow popups for this site to connect to OneDrive. Check your browser settings and try again.'
         );
       }
 
@@ -78,17 +139,9 @@ export class OneDriveService {
   }
 
   /**
-   * Check if user is authenticated
-   */
-  private isAuthenticated(): boolean {
-    return this.account !== null && this.graphClient !== null;
-  }
-
-  /**
    * Disconnect from OneDrive (clear app access without global sign out)
    */
   disconnect(): void {
-    // Clear app authentication state without signing out of Microsoft globally
     this.account = null;
     this.graphClient = null;
   }
@@ -104,6 +157,7 @@ export class OneDriveService {
     } | null
   ): Promise<DriveItem[]> {
     await this.ensureInitialized();
+    this.ensureGraphClient();
 
     try {
       let items: any[] = [];
@@ -119,7 +173,7 @@ export class OneDriveService {
 
         items = [...(personalItems.value || []), ...(sharedItems.value || [])];
       } else if (parentItem.remoteItem) {
-        // Navigating into a shared folder - use the remote drive and item IDs
+        // Navigating into a shared folder
         const driveId = parentItem.remoteItem.parentReference?.driveId;
         const itemId = parentItem.remoteItem.id;
 
@@ -140,22 +194,7 @@ export class OneDriveService {
       return items;
     } catch (error: any) {
       console.error('Failed to list folders:', error);
-      console.error('Error details:', {
-        message: error?.message,
-        code: error?.code,
-        statusCode: error?.statusCode,
-      });
-
-      // Provide more specific error messages
-      if (error?.statusCode === 401 || error?.code === 'InvalidAuthenticationToken') {
-        throw new Error('Authentication expired. Please reconnect to OneDrive.');
-      }
-
-      if (error?.message?.includes('popup')) {
-        throw new Error('Unable to access OneDrive. Please allow popups in Safari settings.');
-      }
-
-      throw new Error('Failed to load folder contents');
+      throw this.createFriendlyError(error);
     }
   }
 
@@ -165,6 +204,7 @@ export class OneDriveService {
    */
   async readFile(endpoint: string): Promise<any> {
     await this.ensureInitialized();
+    this.ensureGraphClient();
 
     return this.graphClient!.api(endpoint).get();
   }
@@ -176,61 +216,37 @@ export class OneDriveService {
    */
   async writeFile(endpoint: string, content: string): Promise<any> {
     await this.ensureInitialized();
+    this.ensureGraphClient();
 
     return this.graphClient!.api(endpoint).put(content);
   }
 
   /**
-   * Lazy load MSAL instance to avoid initialization errors in test environments
-   */
-  private ensureMSALInstance(): PublicClientApplication {
-    if (!isOneDriveConfigured()) {
-      throw new Error(errorMessages.configError);
-    }
-    if (!this.msalInstance) {
-      this.msalInstance = new PublicClientApplication(msalConfig);
-    }
-    return this.msalInstance;
-  }
-
-  /**
-   * Initialize MSAL and check for existing authentication
-   * Called automatically in constructor
-   */
-  private async initializeMSAL(): Promise<void> {
-    if (!isOneDriveConfigured()) {
-      // Silently skip initialization if not configured
-      return;
-    }
-    const msalInstance = this.ensureMSALInstance();
-    await msalInstance.initialize();
-
-    // Check if user is already logged in
-    const accounts = msalInstance.getAllAccounts();
-    if (accounts.length > 0) {
-      this.account = accounts[0];
-      await this.initializeGraphClient();
-    }
-  }
-
-  /**
-   * Ensure initialization is complete before operations
+   * Ensure initialization is complete
+   * @throws Error if initialization failed
    */
   private async ensureInitialized(): Promise<void> {
-    if (this.initPromise) {
-      await this.initPromise;
+    await this.initPromise;
+  }
+
+  /**
+   * Ensure graph client exists
+   * @throws Error if not authenticated
+   */
+  private ensureGraphClient(): void {
+    if (!this.graphClient) {
+      throw new Error(errorMessages.authRequired);
     }
   }
 
   /**
-   * Initialize Microsoft Graph client with authentication
+   * Create Microsoft Graph client with authentication
    */
-  private async initializeGraphClient(): Promise<void> {
+  private async createGraphClient(): Promise<void> {
     if (!this.account) {
       throw new Error(errorMessages.authRequired);
     }
 
-    // Create Graph client with authentication
     this.graphClient = Client.init({
       authProvider: async (done) => {
         try {
@@ -245,11 +261,10 @@ export class OneDriveService {
 
   /**
    * Get access token (acquire silently or via interaction)
-   * Automatically handles token refresh and shows popup if needed
+   * Automatically handles token refresh
    */
   private async getAccessToken(): Promise<string> {
-    const msalInstance = this.ensureMSALInstance();
-    if (!this.account) {
+    if (!this.msalInstance || !this.account) {
       throw new Error(errorMessages.authRequired);
     }
 
@@ -260,21 +275,29 @@ export class OneDriveService {
 
     try {
       // Try to acquire token silently (uses cached token or refresh token)
-      const response = await msalInstance.acquireTokenSilent(request);
+      const response = await this.msalInstance.acquireTokenSilent(request);
       return response.accessToken;
     } catch (error) {
       if (error instanceof InteractionRequiredAuthError) {
-        // Token refresh failed - try popup for re-authentication
-        try {
-          const response = await msalInstance.acquireTokenPopup(request);
-          return response.accessToken;
-        } catch (popupError) {
-          // Popup blocked or failed - throw auth error
-          console.warn('Token refresh popup failed:', popupError);
-          throw new Error('Authentication expired. Please reconnect via Settings.');
-        }
+        // Token refresh failed - use popup flow
+        const response = await this.msalInstance.acquireTokenPopup(request);
+        return response.accessToken;
       }
       throw error;
     }
+  }
+
+  /**
+   * Create user-friendly error messages from Graph API errors
+   */
+  private createFriendlyError(error: any): Error {
+    const statusCode = error?.statusCode;
+    const code = error?.code;
+
+    if (statusCode === 401 || code === 'InvalidAuthenticationToken') {
+      return new Error('Authentication expired. Please reconnect to OneDrive.');
+    }
+
+    return new Error('Failed to load folder contents');
   }
 }

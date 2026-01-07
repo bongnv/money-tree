@@ -9,10 +9,11 @@ import type { OneDriveService } from './OneDriveService';
  * Uses Microsoft Graph API to store data in OneDrive
  */
 export interface SelectedFileInfo {
-  fileId: string;
-  filePath: string;
-  fileName: string;
-  isNew: boolean;
+  fileId: string | null; // null for new files, actual ID for existing files
+  filePath: string; // Full path including filename
+  // For shared folders: need driveId and parent folder ID
+  driveId?: string;
+  parentItemId?: string;
 }
 
 export class OneDriveProvider implements IStorageProvider {
@@ -26,10 +27,17 @@ export class OneDriveProvider implements IStorageProvider {
   }
 
   /**
+   * Extract file name from file path
+   */
+  getFileName(): string {
+    return this.selectedFileInfo.filePath.split('/').pop() || 'money-tree.json';
+  }
+
+  /**
    * Get file content URL based on selected file or default path
    */
   private getFileUrl(): string {
-    if (this.selectedFileInfo.fileId !== 'new') {
+    if (this.selectedFileInfo.fileId) {
       // Use specific file ID
       return `/me/drive/items/${this.selectedFileInfo.fileId}/content`;
     }
@@ -41,11 +49,17 @@ export class OneDriveProvider implements IStorageProvider {
    * Get file upload URL based on selected file
    */
   private getUploadUrl(): string {
-    if (this.selectedFileInfo.isNew || this.selectedFileInfo.fileId === 'new') {
-      // Create new file at specified path
-      return `/me/drive/root:/${this.selectedFileInfo.filePath}:/content`;
+    if (!this.selectedFileInfo.fileId) {
+      // Create new file
+      if (this.selectedFileInfo.driveId && this.selectedFileInfo.parentItemId) {
+        // Shared folder: use drives endpoint
+        return `/drives/${this.selectedFileInfo.driveId}/items/${this.selectedFileInfo.parentItemId}:/${this.getFileName()}:/content`;
+      } else {
+        // Personal drive: use root path
+        return `/me/drive/root:/${this.selectedFileInfo.filePath}:/content`;
+      }
     } else {
-      // Update existing file by ID
+      // Update existing file by ID (works for both personal and shared)
       return `/me/drive/items/${this.selectedFileInfo.fileId}/content`;
     }
   }
@@ -95,9 +109,8 @@ export class OneDriveProvider implements IStorageProvider {
       const response = await this.service.writeFile(this.getUploadUrl(), content);
 
       // If this was a new file, update the file ID
-      if (this.selectedFileInfo.isNew) {
+      if (!this.selectedFileInfo.fileId) {
         this.selectedFileInfo.fileId = response.id;
-        this.selectedFileInfo.isNew = false;
       }
     } catch (error: any) {
       console.error('Failed to save file to OneDrive:', error);
@@ -113,13 +126,6 @@ export class OneDriveProvider implements IStorageProvider {
   }
 
   /**
-   * Get file name
-   */
-  getFileName(): string {
-    return this.selectedFileInfo.fileName;
-  }
-
-  /**
    * Save archive file to OneDrive
    * File info must be provided (from external file picker)
    * @param archiveFile The archive file to save
@@ -127,19 +133,24 @@ export class OneDriveProvider implements IStorageProvider {
    */
   async saveArchiveFile(archiveFile: ArchiveFile): Promise<void> {
     // Auto-generate archive file name next to main file
-    const mainFileName = this.selectedFileInfo.fileName;
+    const mainFileName = this.getFileName();
     const archiveFileName = mainFileName.replace('.json', `-${archiveFile.year}.json`);
-
-    // Determine full path for archive file
-    const mainPath = this.selectedFileInfo.filePath;
-    const archivePath = mainPath.substring(0, mainPath.lastIndexOf('/') + 1) + archiveFileName;
 
     const content = JSON.stringify(archiveFile, null, 2);
 
-    // Upload to OneDrive
-    const uploadPath = archivePath.startsWith('/')
-      ? `/me/drive/root:${archivePath}:/content`
-      : `/me/drive/root:/${archivePath}:/content`;
+    let uploadPath: string;
+
+    if (this.selectedFileInfo.driveId && this.selectedFileInfo.parentItemId) {
+      // Shared folder: use drives endpoint
+      uploadPath = `/drives/${this.selectedFileInfo.driveId}/items/${this.selectedFileInfo.parentItemId}:/${archiveFileName}:/content`;
+    } else {
+      // Personal drive: use root path
+      const mainPath = this.selectedFileInfo.filePath;
+      const archivePath = mainPath.substring(0, mainPath.lastIndexOf('/') + 1) + archiveFileName;
+      uploadPath = archivePath.startsWith('/')
+        ? `/me/drive/root:${archivePath}:/content`
+        : `/me/drive/root:/${archivePath}:/content`;
+    }
 
     await this.service.writeFile(uploadPath, content);
   }

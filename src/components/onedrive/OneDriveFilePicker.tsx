@@ -138,8 +138,9 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
       onSelect({
         fileId: selectedFile.id,
         filePath,
-        fileName: selectedFile.name,
-        isNew: false,
+        // For shared files, preserve drive info
+        driveId: selectedFile.remoteItem?.parentReference?.driveId,
+        parentItemId: selectedFile.parentReference?.id,
       });
     } else if (selectionMode === 'new' && currentFolder) {
       // Create new file in current folder
@@ -150,11 +151,20 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
         .join('/');
       const filePath = folderPath ? `${folderPath}/${newFileName}` : newFileName;
 
+      // Determine if we're in a shared folder
+      const isSharedFolder = currentFolder.remoteItem !== undefined;
+      const driveId = isSharedFolder
+        ? currentFolder.remoteItem?.parentReference?.driveId
+        : undefined;
+      const parentItemId = isSharedFolder
+        ? currentFolder.remoteItem?.id || currentFolder.id
+        : undefined;
+
       onSelect({
-        fileId: 'new', // Will be created on first save
+        fileId: null,
         filePath,
-        fileName: newFileName,
-        isNew: true,
+        driveId,
+        parentItemId,
       });
     }
   };

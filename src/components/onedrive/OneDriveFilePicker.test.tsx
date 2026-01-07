@@ -178,10 +178,8 @@ describe('OneDriveFilePicker', () => {
     fireEvent.click(createButton);
 
     expect(mockOnSelect).toHaveBeenCalledWith({
-      fileId: 'new',
+      fileId: null,
       filePath: 'test.json',
-      fileName: 'test.json',
-      isNew: true,
     });
   });
 
@@ -211,8 +209,7 @@ describe('OneDriveFilePicker', () => {
     expect(mockOnSelect).toHaveBeenCalledWith(
       expect.objectContaining({
         fileId: 'file1',
-        fileName: 'money-tree.json',
-        isNew: false,
+        filePath: expect.stringContaining('money-tree.json'),
       })
     );
   });

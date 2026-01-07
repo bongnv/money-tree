@@ -1,4 +1,5 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import { TransactionsPage } from './TransactionsPage';
 import { useTransactionStore } from '../../stores/useTransactionStore';
@@ -16,6 +17,10 @@ const mockUseTransactionStore = useTransactionStore as jest.MockedFunction<
 >;
 const mockUseAccountStore = useAccountStore as jest.MockedFunction<typeof useAccountStore>;
 const mockUseCategoryStore = useCategoryStore as jest.MockedFunction<typeof useCategoryStore>;
+
+const renderWithRouter = (component: React.ReactElement) => {
+  return render(<MemoryRouter>{component}</MemoryRouter>);
+};
 
 describe('TransactionsPage', () => {
   const mockAccounts: Account[] = [
@@ -105,17 +110,17 @@ describe('TransactionsPage', () => {
   });
 
   it('renders page title', () => {
-    render(<TransactionsPage />);
+    renderWithRouter(<TransactionsPage />);
     expect(screen.getByRole('heading', { name: /transactions/i })).toBeInTheDocument();
   });
 
   it('renders New Transaction button', () => {
-    render(<TransactionsPage />);
+    renderWithRouter(<TransactionsPage />);
     expect(screen.getByTestId('new-transaction-button')).toBeInTheDocument();
   });
 
   it('shows empty state when no transactions', () => {
-    render(<TransactionsPage />);
+    renderWithRouter(<TransactionsPage />);
     expect(screen.getByText(/no transactions yet/i)).toBeInTheDocument();
   });
 
@@ -130,13 +135,13 @@ describe('TransactionsPage', () => {
       getTransactionsByDateRange: jest.fn(),
     });
 
-    render(<TransactionsPage />);
+    renderWithRouter(<TransactionsPage />);
     expect(screen.queryByText(/no transactions yet/i)).not.toBeInTheDocument();
   });
 
   it('opens dialog when New Transaction button is clicked', async () => {
     const user = userEvent.setup();
-    render(<TransactionsPage />);
+    renderWithRouter(<TransactionsPage />);
 
     const newButton = screen.getByTestId('new-transaction-button');
     await user.click(newButton);
@@ -146,7 +151,7 @@ describe('TransactionsPage', () => {
 
   it('closes dialog when cancel is clicked', async () => {
     const user = userEvent.setup();
-    render(<TransactionsPage />);
+    renderWithRouter(<TransactionsPage />);
 
     // Open dialog
     const newButton = screen.getByTestId('new-transaction-button');
@@ -164,7 +169,7 @@ describe('TransactionsPage', () => {
 
   it('calls addTransaction when submitting new transaction', async () => {
     const user = userEvent.setup();
-    render(<TransactionsPage />);
+    renderWithRouter(<TransactionsPage />);
 
     // Open dialog
     const newButton = screen.getByTestId('new-transaction-button');
@@ -213,7 +218,7 @@ describe('TransactionsPage', () => {
 
   it('generates unique transaction IDs', async () => {
     const user = userEvent.setup();
-    render(<TransactionsPage />);
+    renderWithRouter(<TransactionsPage />);
 
     // Open dialog first time
     const newButton = screen.getByTestId('new-transaction-button');
@@ -289,7 +294,7 @@ describe('TransactionsPage', () => {
   });
 
   it('passes all required props to TransactionDialog', () => {
-    render(<TransactionsPage />);
+    renderWithRouter(<TransactionsPage />);
 
     // Dialog should be rendered but not visible
     expect(screen.queryByText('Add Transaction')).not.toBeInTheDocument();
@@ -297,7 +302,7 @@ describe('TransactionsPage', () => {
 
   it('resets selectedTransaction when opening dialog for new transaction', async () => {
     const user = userEvent.setup();
-    render(<TransactionsPage />);
+    renderWithRouter(<TransactionsPage />);
 
     // Open dialog
     const newButton = screen.getByTestId('new-transaction-button');
@@ -319,7 +324,7 @@ describe('TransactionsPage', () => {
       getTransactionsByDateRange: jest.fn(),
     });
 
-    render(<TransactionsPage />);
+    renderWithRouter(<TransactionsPage />);
 
     // Should show DataGrid
     expect(screen.getByRole('grid')).toBeInTheDocument();
@@ -338,7 +343,7 @@ describe('TransactionsPage', () => {
     });
 
     const user = userEvent.setup();
-    render(<TransactionsPage />);
+    renderWithRouter(<TransactionsPage />);
 
     // Click edit button
     const editButton = screen.getByLabelText(/edit transaction/i);
@@ -360,7 +365,7 @@ describe('TransactionsPage', () => {
     });
 
     const user = userEvent.setup();
-    render(<TransactionsPage />);
+    renderWithRouter(<TransactionsPage />);
 
     // Click delete button
     const deleteButton = screen.getByLabelText(/delete transaction/i);
@@ -384,7 +389,7 @@ describe('TransactionsPage', () => {
     });
 
     const user = userEvent.setup();
-    render(<TransactionsPage />);
+    renderWithRouter(<TransactionsPage />);
 
     // Open delete confirmation
     const deleteButton = screen.getByLabelText(/delete transaction/i);
@@ -416,7 +421,7 @@ describe('TransactionsPage', () => {
     });
 
     const user = userEvent.setup();
-    render(<TransactionsPage />);
+    renderWithRouter(<TransactionsPage />);
 
     // Open delete confirmation
     const deleteButton = screen.getByLabelText(/delete transaction/i);
@@ -446,7 +451,7 @@ describe('TransactionsPage', () => {
     });
 
     const user = userEvent.setup();
-    render(<TransactionsPage />);
+    renderWithRouter(<TransactionsPage />);
 
     // Click edit button
     const editButton = screen.getByLabelText(/edit transaction/i);
@@ -480,7 +485,7 @@ describe('TransactionsPage', () => {
   });
 
   it('renders transaction filters', () => {
-    render(<TransactionsPage />);
+    renderWithRouter(<TransactionsPage />);
 
     expect(screen.getByLabelText(/from date/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/to date/i)).toBeInTheDocument();
@@ -512,7 +517,7 @@ describe('TransactionsPage', () => {
     });
 
     const user = userEvent.setup();
-    render(<TransactionsPage />);
+    renderWithRouter(<TransactionsPage />);
 
     // Both transactions should be visible initially
     expect(screen.getByText('Grocery shopping')).toBeInTheDocument();
@@ -554,7 +559,7 @@ describe('TransactionsPage', () => {
     });
 
     const user = userEvent.setup();
-    render(<TransactionsPage />);
+    renderWithRouter(<TransactionsPage />);
 
     // Both transactions should be visible initially
     expect(screen.getByText('Grocery shopping')).toBeInTheDocument();
@@ -571,7 +576,7 @@ describe('TransactionsPage', () => {
 
   it('clears all filters when clear button is clicked', async () => {
     const user = userEvent.setup();
-    render(<TransactionsPage />);
+    renderWithRouter(<TransactionsPage />);
 
     // Apply a filter
     const searchInput = screen.getByPlaceholderText(/search/i);

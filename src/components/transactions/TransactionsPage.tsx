@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -21,6 +22,7 @@ import { TransactionFilters, TransactionFiltersState } from './TransactionFilter
 import { QuickEntryRow } from './QuickEntryRow';
 
 export const TransactionsPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const { transactions, addTransaction, updateTransaction, deleteTransaction } =
     useTransactionStore();
   const { accounts } = useAccountStore();
@@ -39,6 +41,27 @@ export const TransactionsPage: React.FC = () => {
     searchText: '',
     group: '',
   });
+
+  // Read URL parameters and apply to filters on mount (only once)
+  useEffect(() => {
+    const categoryId = searchParams.get('categoryId');
+    const transactionTypeId = searchParams.get('transactionTypeId');
+    const dateFrom = searchParams.get('dateFrom');
+    const dateTo = searchParams.get('dateTo');
+
+    if (categoryId || transactionTypeId || dateFrom || dateTo) {
+      setFilters({
+        dateFrom: dateFrom || '',
+        dateTo: dateTo || '',
+        accountIds: [],
+        categoryId: categoryId || '',
+        transactionTypeId: transactionTypeId || '',
+        searchText: '',
+        group: '',
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   // Filter transactions based on filter state
   const filteredTransactions = useMemo(() => {

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Paper,
@@ -20,6 +21,11 @@ import {
   Checkbox,
   ListItemText,
   SelectChangeEvent,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
@@ -38,6 +44,7 @@ import { DEFAULT_CURRENCIES } from '../../constants/defaults';
 import { Group } from '../../types/enums';
 
 export const CashFlowReport: React.FC = () => {
+  const navigate = useNavigate();
   const transactions = useTransactionStore((state) => state.transactions);
   const transactionTypes = useCategoryStore((state) => state.transactionTypes);
   const categories = useCategoryStore((state) => state.categories);
@@ -54,6 +61,9 @@ export const CashFlowReport: React.FC = () => {
   const [periodType, setPeriodType] = useState<string>('current-month');
   const [conversionCurrency, setConversionCurrency] = useState<string>(baseCurrency);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [customDateDialogOpen, setCustomDateDialogOpen] = useState(false);
+  const [tempStartDate, setTempStartDate] = useState<string>(firstDayOfMonth);
+  const [tempEndDate, setTempEndDate] = useState<string>(today);
 
   // Use the selected currency for display
   const currencyCode = conversionCurrency as CurrencyCode;
@@ -143,8 +153,26 @@ export const CashFlowReport: React.FC = () => {
 
   const handlePeriodChange = (event: SelectChangeEvent<string>) => {
     const newPeriod = event.target.value;
+    if (newPeriod === 'custom') {
+      // Open dialog for custom range
+      setTempStartDate(startDate);
+      setTempEndDate(endDate);
+      setCustomDateDialogOpen(true);
+      return;
+    }
     setPeriodType(newPeriod);
     updatePeriodDates(newPeriod);
+  };
+
+  const handleApplyCustomDates = () => {
+    setStartDate(tempStartDate);
+    setEndDate(tempEndDate);
+    setPeriodType('custom');
+    setCustomDateDialogOpen(false);
+  };
+
+  const handleCancelCustomDates = () => {
+    setCustomDateDialogOpen(false);
   };
 
   // Calculate cash flow for selected period
@@ -232,6 +260,22 @@ export const CashFlowReport: React.FC = () => {
     setSelectedCategories(typeof value === 'string' ? value.split(',') : value);
   };
 
+  const handleCategoryClick = (categoryId: string, isTransactionType: boolean = false) => {
+    const params = new URLSearchParams();
+    if (isTransactionType) {
+      params.set('transactionTypeId', categoryId);
+    } else {
+      params.set('categoryId', categoryId);
+    }
+    params.set('dateFrom', startDate);
+    params.set('dateTo', endDate);
+    navigate(`/transactions?${params.toString()}`);
+  };
+
+  const handleClearFilters = () => {
+    setSelectedCategories([]);
+  };
+
   // Prepare pie chart and table data - group by transaction type if categories are filtered
   const { incomePieData, expensesPieData, incomeDetailData, expenseDetailData, groupingLabel } =
     useMemo(() => {
@@ -248,8 +292,8 @@ export const CashFlowReport: React.FC = () => {
             name: cat.categoryName,
             value: cat.total,
           })),
-          incomeDetailData: cashFlow.income,
-          expenseDetailData: cashFlow.expenses,
+          incomeDetailData: cashFlow.income.map((cat) => ({ ...cat, isTransactionType: false })),
+          expenseDetailData: cashFlow.expenses.map((cat) => ({ ...cat, isTransactionType: false })),
           groupingLabel: 'Category',
         };
       }
@@ -318,12 +362,14 @@ export const CashFlowReport: React.FC = () => {
           categoryName: item.name,
           total: item.total,
           transactionCount: item.count,
+          isTransactionType: true,
         })),
         expenseDetailData: Array.from(expenseByType.entries()).map(([id, item]) => ({
           categoryId: id,
           categoryName: item.name,
           total: item.total,
           transactionCount: item.count,
+          isTransactionType: true,
         })),
         groupingLabel: 'Transaction Type',
       };
@@ -349,45 +395,39 @@ export const CashFlowReport: React.FC = () => {
       {/* Period Selection */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={4}>
             <FormControl fullWidth size="small">
               <InputLabel>Period</InputLabel>
-              <Select value={periodType} label="Period" onChange={handlePeriodChange}>
+              <Select
+                value={periodType}
+                label="Period"
+                onChange={handlePeriodChange}
+                renderValue={(value) => {
+                  if (value === 'custom') {
+                    return `Custom: ${startDate} to ${endDate}`;
+                  }
+                  const labels: Record<string, string> = {
+                    'current-month': 'Current Month',
+                    'last-month': 'Last Month',
+                    'current-quarter': 'Current Quarter',
+                    'last-quarter': 'Last Quarter',
+                    'current-year': 'Current Year',
+                    'last-year': 'Last Year',
+                  };
+                  return labels[value] || value;
+                }}
+              >
                 <MenuItem value="current-month">Current Month</MenuItem>
                 <MenuItem value="last-month">Last Month</MenuItem>
                 <MenuItem value="current-quarter">Current Quarter</MenuItem>
                 <MenuItem value="last-quarter">Last Quarter</MenuItem>
                 <MenuItem value="current-year">Current Year</MenuItem>
                 <MenuItem value="last-year">Last Year</MenuItem>
-                <MenuItem value="custom">Custom Range</MenuItem>
+                <MenuItem value="custom">Custom Range...</MenuItem>
               </Select>
             </FormControl>
           </Grid>
           <Grid item xs={12} sm={6} md={2.5}>
-            <TextField
-              label="Start Date"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-              disabled={periodType !== 'custom'}
-              size="small"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={2.5}>
-            <TextField
-              label="End Date"
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-              disabled={periodType !== 'custom'}
-              size="small"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={2}>
             <FormControl fullWidth size="small">
               <InputLabel>Currency</InputLabel>
               <Select
@@ -403,7 +443,7 @@ export const CashFlowReport: React.FC = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={2}>
+          <Grid item xs={12} sm={6} md={4.5}>
             <FormControl fullWidth size="small">
               <InputLabel>Categories</InputLabel>
               <Select
@@ -428,6 +468,19 @@ export const CashFlowReport: React.FC = () => {
               </Select>
             </FormControl>
           </Grid>
+          {selectedCategories.length > 0 && (
+            <Grid item xs={12} sm={6} md={1}>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handleClearFilters}
+                fullWidth
+                sx={{ height: '40px' }}
+              >
+                Clear
+              </Button>
+            </Grid>
+          )}
         </Grid>
       </Paper>
 
@@ -550,15 +603,20 @@ export const CashFlowReport: React.FC = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>{groupingLabel}</TableCell>
-                    <TableCell align="right">Transactions</TableCell>
                     <TableCell align="right">Total</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {incomeDetailData.map((item) => (
-                    <TableRow key={item.categoryId}>
+                    <TableRow
+                      key={item.categoryId}
+                      onClick={() => handleCategoryClick(item.categoryId, item.isTransactionType)}
+                      sx={{
+                        cursor: 'pointer',
+                        '&:hover': { backgroundColor: 'action.hover' },
+                      }}
+                    >
                       <TableCell>{item.categoryName}</TableCell>
-                      <TableCell align="right">{item.transactionCount}</TableCell>
                       <TableCell align="right">
                         {formatCurrency(item.total, currencyCode)}
                       </TableCell>
@@ -566,7 +624,7 @@ export const CashFlowReport: React.FC = () => {
                   ))}
                   {incomeDetailData.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={3} align="center">
+                      <TableCell colSpan={2} align="center">
                         No income transactions
                       </TableCell>
                     </TableRow>
@@ -586,15 +644,20 @@ export const CashFlowReport: React.FC = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>{groupingLabel}</TableCell>
-                    <TableCell align="right">Transactions</TableCell>
                     <TableCell align="right">Total</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {expenseDetailData.map((item) => (
-                    <TableRow key={item.categoryId}>
+                    <TableRow
+                      key={item.categoryId}
+                      onClick={() => handleCategoryClick(item.categoryId, item.isTransactionType)}
+                      sx={{
+                        cursor: 'pointer',
+                        '&:hover': { backgroundColor: 'action.hover' },
+                      }}
+                    >
                       <TableCell>{item.categoryName}</TableCell>
-                      <TableCell align="right">{item.transactionCount}</TableCell>
                       <TableCell align="right">
                         {formatCurrency(item.total, currencyCode)}
                       </TableCell>
@@ -602,7 +665,7 @@ export const CashFlowReport: React.FC = () => {
                   ))}
                   {expenseDetailData.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={3} align="center">
+                      <TableCell colSpan={2} align="center">
                         No expense transactions
                       </TableCell>
                     </TableRow>
@@ -613,6 +676,37 @@ export const CashFlowReport: React.FC = () => {
           </Paper>
         </Grid>
       </Grid>
+
+      {/* Custom Date Range Dialog */}
+      <Dialog open={customDateDialogOpen} onClose={handleCancelCustomDates}>
+        <DialogTitle>Select Custom Date Range</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1, minWidth: 300 }}>
+            <TextField
+              label="Start Date"
+              type="date"
+              value={tempStartDate}
+              onChange={(e) => setTempStartDate(e.target.value)}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              label="End Date"
+              type="date"
+              value={tempEndDate}
+              onChange={(e) => setTempEndDate(e.target.value)}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelCustomDates}>Cancel</Button>
+          <Button onClick={handleApplyCustomDates} variant="contained">
+            Apply
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

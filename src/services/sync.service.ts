@@ -178,7 +178,7 @@ class SyncService {
       const budgetStore = useBudgetStore.getState();
       const exchangeRateStore = useExchangeRateStore.getState();
 
-      const appVersion: DataFile = {
+      const appVersion: DataFile = structuredClone({
         version: '1.0.0',
         transactions: transactionStore.transactions,
         budgets: budgetStore.budgets,
@@ -190,11 +190,9 @@ class SyncService {
         archivedYears: state.archivedYears,
         baseCurrency: state.baseCurrency,
         lastModified: state.baseVersion?.lastModified || new Date().toISOString(),
-      };
+      });
 
-      // Conflict detection: check if file has been modified externally
       let dataToSave = appVersion;
-
       if (state.fileContentHash && state.baseVersion) {
         try {
           // Re-read current file content
@@ -256,18 +254,12 @@ class SyncService {
         }
       }
 
-      // Update lastModified timestamp right before saving
-      dataToSave = {
-        ...dataToSave,
-        lastModified: new Date().toISOString(),
-      };
-
       await storage.saveDataFile(dataToSave);
 
       // Update file hash and base version after successful save
       const newHash = await calculateDataFileHash(dataToSave);
       const savedAt = new Date().toISOString();
-      state.setFileMetadata(newHash, savedAt, structuredClone(dataToSave));
+      state.setFileMetadata(newHash, savedAt, dataToSave);
 
       state.markAsSaved();
       // Get the actual filename from storage provider

@@ -2,6 +2,8 @@
  * Hash utilities for file integrity checking
  */
 
+import { DataFile } from '@/types/models';
+
 /**
  * Calculate MD5 hash of a string using Web Crypto API
  * @param content - String content to hash
@@ -28,7 +30,7 @@ export async function calculateMD5Hash(content: string): Promise<string> {
  * @param dataFile - DataFile object to hash
  * @returns Promise resolving to hex string of hash
  */
-export async function calculateDataFileHash(dataFile: unknown): Promise<string> {
+export async function calculateDataFileHash(dataFile: DataFile): Promise<string> {
   const jsonString = JSON.stringify(dataFile);
   return calculateMD5Hash(jsonString);
 }

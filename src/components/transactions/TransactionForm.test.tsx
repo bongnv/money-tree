@@ -1,12 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TransactionForm } from './TransactionForm';
-import type {
-  Transaction,
-  Account,
-  TransactionType,
-  Category,
-} from '../../types/models';
+import type { Transaction, Account, TransactionType, Category } from '../../types/models';
 import { Group, AccountType } from '../../types/enums';
 
 jest.mock('../../stores/useAssetStore', () => ({

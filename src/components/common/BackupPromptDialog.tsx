@@ -45,10 +45,10 @@ export const BackupPromptDialog: React.FC<BackupPromptDialogProps> = ({
       <DialogContent>
         <Alert severity="warning" sx={{ mb: 2 }}>
           {daysSinceBackup === null ? (
-            <>You haven't backed up your data yet.</>
+            <>You haven&apos;t backed up your data yet.</>
           ) : (
             <>
-              It's been {daysSinceBackup} day{daysSinceBackup !== 1 ? 's' : ''} since your last
+              It&apos;s been {daysSinceBackup} day{daysSinceBackup !== 1 ? 's' : ''} since your last
               backup.
             </>
           )}

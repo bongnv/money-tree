@@ -8,6 +8,9 @@ import {
   identifyArchivableYears,
   shouldPromptArchive,
   createArchiveFile,
+  saveArchiveFile,
+  updateMainFileAfterArchive,
+  getArchivedYears,
 } from './archive.service';
 import { useTransactionStore } from '../stores/useTransactionStore';
 import { useAccountStore } from '../stores/useAccountStore';
@@ -15,7 +18,10 @@ import { useBudgetStore } from '../stores/useBudgetStore';
 import { useAssetStore } from '../stores/useAssetStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
 import { useExchangeRateStore } from '../stores/useExchangeRateStore';
+import { useAppStore } from '../stores/useAppStore';
 import { calculationService } from './calculation.service';
+import { StorageFactory } from './storage/StorageFactory';
+import { CurrencyCode } from '../types/enums';
 
 // Mock the stores
 jest.mock('../stores/useTransactionStore');
@@ -24,6 +30,8 @@ jest.mock('../stores/useBudgetStore');
 jest.mock('../stores/useAssetStore');
 jest.mock('../stores/useCategoryStore');
 jest.mock('../stores/useExchangeRateStore');
+jest.mock('../stores/useAppStore');
+jest.mock('./storage/StorageFactory');
 
 describe('Archive Service', () => {
   beforeEach(() => {
@@ -521,6 +529,298 @@ describe('Archive Service', () => {
       expect(archiveFile.manualAssets[0].valueHistory).toHaveLength(2);
       expect(archiveFile.manualAssets[0].valueHistory![0].date).toBe('2024-06-01');
       expect(archiveFile.manualAssets[0].valueHistory![1].date).toBe('2024-12-01');
+    });
+  });
+
+  describe('saveArchiveFile', () => {
+    const mockProvider = {
+      saveFile: jest.fn().mockResolvedValue(undefined),
+      getFileName: jest.fn().mockReturnValue('money-tree.json'),
+      loadDataFile: jest.fn(),
+      saveDataFile: jest.fn(),
+    };
+
+    beforeEach(() => {
+      (StorageFactory.getCurrentProvider as jest.Mock).mockReturnValue(mockProvider);
+    });
+
+    it('should save archive file with correct filename', async () => {
+      const archiveFile = {
+        year: 2023,
+        archivedDate: '2024-01-01T00:00:00Z',
+        transactions: [],
+        budgets: [],
+        manualAssets: [],
+        exchangeRates: [],
+        accounts: [],
+        categories: [],
+        transactionTypes: [],
+        summary: {
+          transactionCount: 0,
+          closingNetWorth: 0,
+          closingBalances: {},
+        },
+      };
+
+      await saveArchiveFile(archiveFile);
+
+      expect(mockProvider.saveFile).toHaveBeenCalledWith(expect.any(Blob), 'money-tree-2023.json');
+    });
+
+    it('should create blob with correct content', async () => {
+      const archiveFile = {
+        year: 2024,
+        archivedDate: '2024-01-01T00:00:00Z',
+        transactions: [],
+        budgets: [],
+        manualAssets: [],
+        exchangeRates: [],
+        accounts: [],
+        categories: [],
+        transactionTypes: [],
+        summary: {
+          transactionCount: 5,
+          closingNetWorth: 1000,
+          closingBalances: {},
+        },
+      };
+
+      await saveArchiveFile(archiveFile);
+
+      const blobArg = mockProvider.saveFile.mock.calls[0][0];
+      expect(blobArg).toBeInstanceOf(Blob);
+      expect(blobArg.type).toBe('application/json');
+    });
+  });
+
+  describe('updateMainFileAfterArchive', () => {
+    it('should remove transactions from archived year', () => {
+      const mockSetTransactions = jest.fn();
+      (useTransactionStore.getState as jest.Mock).mockReturnValue({
+        transactions: [
+          {
+            id: '1',
+            date: '2023-01-01',
+            amount: 100,
+            accountId: 'acc1',
+            transactionTypeId: 'type1',
+            description: 'Test',
+            createdAt: '2023-01-01T00:00:00Z',
+            updatedAt: '2023-01-01T00:00:00Z',
+          },
+          {
+            id: '2',
+            date: '2024-01-01',
+            amount: 200,
+            accountId: 'acc1',
+            transactionTypeId: 'type1',
+            description: 'Test',
+            createdAt: '2024-01-01T00:00:00Z',
+            updatedAt: '2024-01-01T00:00:00Z',
+          },
+        ],
+        setTransactions: mockSetTransactions,
+      });
+
+      (useAccountStore.getState as jest.Mock).mockReturnValue({
+        accounts: [
+          {
+            id: 'acc1',
+            name: 'Test',
+            type: 'CHECKING',
+            initialBalance: 0,
+            currency: CurrencyCode.USD,
+            createdAt: '2023-01-01T00:00:00Z',
+            updatedAt: '2023-01-01T00:00:00Z',
+          },
+        ],
+        setAccounts: jest.fn(),
+      });
+
+      (useBudgetStore.getState as jest.Mock).mockReturnValue({
+        budgets: [],
+        setBudgets: jest.fn(),
+      });
+
+      (useAssetStore.getState as jest.Mock).mockReturnValue({
+        manualAssets: [],
+        setManualAssets: jest.fn(),
+      });
+
+      (useExchangeRateStore.getState as jest.Mock).mockReturnValue({
+        rates: [],
+        setRates: jest.fn(),
+      });
+
+      (useAppStore.getState as jest.Mock).mockReturnValue({
+        archivedYears: [],
+        addArchivedYear: jest.fn(),
+      });
+
+      jest.spyOn(calculationService, 'calculateAccountBalance').mockReturnValue(500);
+
+      const archiveReference = {
+        year: 2023,
+        archivedDate: '2024-01-01T00:00:00Z',
+        summary: { transactionCount: 1, closingNetWorth: 500, closingBalances: {} },
+      };
+
+      updateMainFileAfterArchive(2023, archiveReference);
+
+      expect(mockSetTransactions).toHaveBeenCalledWith([
+        {
+          id: '2',
+          date: '2024-01-01',
+          amount: 200,
+          accountId: 'acc1',
+          transactionTypeId: 'type1',
+          description: 'Test',
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+        },
+      ]);
+    });
+
+    it('should update account initial balances', () => {
+      const mockSetAccounts = jest.fn();
+      (useTransactionStore.getState as jest.Mock).mockReturnValue({
+        transactions: [
+          {
+            id: '1',
+            date: '2023-01-01',
+            amount: 100,
+            accountId: 'acc1',
+            transactionTypeId: 'type1',
+            description: 'Test',
+            createdAt: '2023-01-01T00:00:00Z',
+            updatedAt: '2023-01-01T00:00:00Z',
+          },
+        ],
+        setTransactions: jest.fn(),
+      });
+
+      (useAccountStore.getState as jest.Mock).mockReturnValue({
+        accounts: [
+          {
+            id: 'acc1',
+            name: 'Test',
+            type: 'CHECKING',
+            initialBalance: 0,
+            currency: CurrencyCode.USD,
+            createdAt: '2023-01-01T00:00:00Z',
+            updatedAt: '2023-01-01T00:00:00Z',
+          },
+        ],
+        setAccounts: mockSetAccounts,
+      });
+
+      (useBudgetStore.getState as jest.Mock).mockReturnValue({
+        budgets: [],
+        setBudgets: jest.fn(),
+      });
+
+      (useAssetStore.getState as jest.Mock).mockReturnValue({
+        manualAssets: [],
+        setManualAssets: jest.fn(),
+      });
+
+      (useExchangeRateStore.getState as jest.Mock).mockReturnValue({
+        rates: [],
+        setRates: jest.fn(),
+      });
+
+      (useAppStore.getState as jest.Mock).mockReturnValue({
+        archivedYears: [],
+        addArchivedYear: jest.fn(),
+      });
+
+      jest.spyOn(calculationService, 'calculateAccountBalance').mockReturnValue(1000);
+
+      const archiveReference = {
+        year: 2023,
+        archivedDate: '2024-01-01T00:00:00Z',
+        summary: { transactionCount: 1, closingNetWorth: 1000, closingBalances: {} },
+      };
+
+      updateMainFileAfterArchive(2023, archiveReference);
+
+      expect(mockSetAccounts).toHaveBeenCalledWith([
+        expect.objectContaining({
+          id: 'acc1',
+          initialBalance: 1000,
+        }),
+      ]);
+    });
+
+    it('should add archive reference to app state', () => {
+      const mockAddArchivedYear = jest.fn();
+      (useTransactionStore.getState as jest.Mock).mockReturnValue({
+        transactions: [],
+        setTransactions: jest.fn(),
+      });
+
+      (useAccountStore.getState as jest.Mock).mockReturnValue({
+        accounts: [],
+        setAccounts: jest.fn(),
+      });
+
+      (useBudgetStore.getState as jest.Mock).mockReturnValue({
+        budgets: [],
+        setBudgets: jest.fn(),
+      });
+
+      (useAssetStore.getState as jest.Mock).mockReturnValue({
+        manualAssets: [],
+        setManualAssets: jest.fn(),
+      });
+
+      (useExchangeRateStore.getState as jest.Mock).mockReturnValue({
+        rates: [],
+        setRates: jest.fn(),
+      });
+
+      (useAppStore.getState as jest.Mock).mockReturnValue({
+        archivedYears: [],
+        addArchivedYear: mockAddArchivedYear,
+      });
+
+      jest.spyOn(calculationService, 'calculateAccountBalance').mockReturnValue(0);
+
+      const archiveReference = {
+        year: 2023,
+        archivedDate: '2024-01-01T00:00:00Z',
+        summary: { transactionCount: 0, closingNetWorth: 0, closingBalances: {} },
+      };
+
+      updateMainFileAfterArchive(2023, archiveReference);
+
+      expect(mockAddArchivedYear).toHaveBeenCalledWith(archiveReference);
+    });
+  });
+
+  describe('getArchivedYears', () => {
+    it('should return archived years from app store', () => {
+      const archivedYears = [
+        {
+          year: 2022,
+          archivedDate: '2023-01-01T00:00:00Z',
+          summary: { transactionCount: 100, closingNetWorth: 5000, closingBalances: {} },
+        },
+        {
+          year: 2023,
+          archivedDate: '2024-01-01T00:00:00Z',
+          summary: { transactionCount: 150, closingNetWorth: 6000, closingBalances: {} },
+        },
+      ];
+
+      (useAppStore.getState as jest.Mock).mockReturnValue({
+        archivedYears,
+      });
+
+      const result = getArchivedYears();
+
+      expect(result).toEqual(archivedYears);
+      expect(result).toHaveLength(2);
     });
   });
 });

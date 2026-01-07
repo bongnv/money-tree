@@ -149,16 +149,18 @@ export class OneDriveProvider implements IStorageProvider {
       // Shared folder: use drives endpoint
       uploadPath = `/drives/${this.selectedFileInfo.driveId}/items/${this.selectedFileInfo.parentItemId}:/${filename}:/content`;
     } else {
-      // Personal drive: use root path
+      // Personal drive: construct path from main file location
       const mainPath = this.selectedFileInfo.filePath;
-      const filePath = mainPath.substring(0, mainPath.lastIndexOf('/') + 1) + filename;
-      uploadPath = filePath.startsWith('/')
-        ? `/me/drive/root:${filePath}:/content`
-        : `/me/drive/root:/${filePath}:/content`;
+      const folderPath = mainPath.substring(0, mainPath.lastIndexOf('/'));
+      const targetPath = folderPath ? `${folderPath}/${filename}` : `/${filename}`;
+
+      // Remove leading slash for OneDrive API (it expects paths without leading /)
+      const cleanPath = targetPath.startsWith('/') ? targetPath.substring(1) : targetPath;
+      uploadPath = `/me/drive/root:/${cleanPath}:/content`;
     }
 
-    // Convert blob to string or buffer for upload
-    const content = await blob.text();
+    // Convert blob to ArrayBuffer and upload
+    const content = await blob.arrayBuffer();
     await this.service.writeFile(uploadPath, content);
   }
 }

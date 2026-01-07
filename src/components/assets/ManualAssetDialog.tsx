@@ -5,6 +5,7 @@ import { useAssetStore } from '../../stores/useAssetStore';
 import type { ManualAsset } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
 import { formatDate } from '../../utils/date.utils';
+import { getAssetCurrentValue } from '../../utils/asset.utils';
 import { CurrencyCode } from '../../types/enums';
 
 interface ManualAssetDialogProps {
@@ -43,9 +44,13 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
 
   const handleSubmit = (assetData: Omit<ManualAsset, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (asset && isUpdateMode) {
-      // Update value workflow: move current value to history
-      setPreviousValue({ value: asset.value, date: asset.date });
-      updateAssetValue(asset.id, assetData.value, assetData.date, assetData.notes);
+      // Update value workflow: add new value to history
+      const currentValue = getAssetCurrentValue(asset);
+      const latestEntry = [...asset.valueHistory].sort((a, b) => b.date.localeCompare(a.date))[0];
+      setPreviousValue({ value: currentValue, date: latestEntry.date });
+      // Extract the new value entry from assetData
+      const newEntry = assetData.valueHistory[assetData.valueHistory.length - 1];
+      updateAssetValue(asset.id, newEntry.value, newEntry.date, newEntry.notes);
       setShowSuccessMessage(true);
       // Auto-close after showing success message
       setTimeout(() => {
@@ -87,22 +92,32 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
           </Alert>
         )}
 
-        {asset && isUpdateMode && (
-          <Box sx={{ mb: 2, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Current Value
-            </Typography>
-            <Typography variant="h6">{formatCurrency(asset.value, asset.currencyCode)}</Typography>
-            <Typography variant="body2" color="text.secondary">
-              As of {formatDate(asset.date)}
-            </Typography>
-            {asset.notes && (
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                Notes: {asset.notes}
-              </Typography>
-            )}
-          </Box>
-        )}
+        {asset &&
+          isUpdateMode &&
+          (() => {
+            const currentValue = getAssetCurrentValue(asset);
+            const latestEntry = [...asset.valueHistory].sort((a, b) =>
+              b.date.localeCompare(a.date)
+            )[0];
+            return (
+              <Box sx={{ mb: 2, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  Current Value
+                </Typography>
+                <Typography variant="h6">
+                  {formatCurrency(currentValue, asset.currencyCode)}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  As of {formatDate(latestEntry.date)}
+                </Typography>
+                {latestEntry.notes && (
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    Notes: {latestEntry.notes}
+                  </Typography>
+                )}
+              </Box>
+            );
+          })()}
 
         {!isUpdateMode && (
           <Alert severity="info" sx={{ mb: 2 }}>
@@ -117,7 +132,12 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
         <ManualAssetForm
           asset={
             isUpdateMode
-              ? { ...asset!, value: 0, date: new Date().toISOString().split('T')[0], notes: '' }
+              ? {
+                  ...asset!,
+                  valueHistory: [
+                    { value: 0, date: new Date().toISOString().split('T')[0], notes: '' },
+                  ],
+                }
               : asset
           }
           onSubmit={handleSubmit}

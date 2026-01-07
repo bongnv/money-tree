@@ -9,7 +9,7 @@ import { NotFoundPage } from './components/common/NotFoundPage';
 // Settings pages
 import { SettingsLayout } from './components/settings/SettingsLayout';
 import { PreferencesPage } from './components/settings/PreferencesPage';
-import { AccountsSettingsPage } from './components/settings/AccountsSettingsPage';
+import { AssetsSettingsPage } from './components/settings/AssetsSettingsPage';
 import { CategoriesListPage } from './components/settings/CategoriesListPage';
 import { CategoryDetailPage } from './components/settings/CategoryDetailPage';
 import { ExchangeRatesSettingsPage } from './components/settings/ExchangeRatesSettingsPage';
@@ -28,7 +28,7 @@ export const AppRoutes: React.FC = () => {
       <Route path="/settings" element={<SettingsLayout />}>
         <Route index element={<Navigate to="/settings/preferences" replace />} />
         <Route path="preferences" element={<PreferencesPage />} />
-        <Route path="accounts" element={<AccountsSettingsPage />} />
+        <Route path="accounts" element={<AssetsSettingsPage />} />
         <Route path="categories" element={<CategoriesListPage />} />
         <Route path="categories/:id" element={<CategoryDetailPage />} />
         <Route path="exchange-rates" element={<ExchangeRatesSettingsPage />} />

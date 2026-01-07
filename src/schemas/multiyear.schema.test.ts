@@ -15,6 +15,7 @@ describe('Multi-Year Schemas', () => {
           'account-1': 10000,
           'account-2': 40000,
         },
+        closingAssetValuations: {},
       };
 
       const result = YearEndSummarySchema.safeParse(validSummary);
@@ -26,6 +27,7 @@ describe('Multi-Year Schemas', () => {
         transactionCount: -1,
         closingNetWorth: 50000,
         closingBalances: {},
+        closingAssetValuations: {},
       };
 
       const result = YearEndSummarySchema.safeParse(invalidSummary);
@@ -37,6 +39,7 @@ describe('Multi-Year Schemas', () => {
         transactionCount: 50,
         closingNetWorth: -5000,
         closingBalances: {},
+        closingAssetValuations: {},
       };
 
       const result = YearEndSummarySchema.safeParse(validSummary);
@@ -53,6 +56,7 @@ describe('Multi-Year Schemas', () => {
           transactionCount: 100,
           closingNetWorth: 50000,
           closingBalances: {},
+          closingAssetValuations: {},
         },
       };
 
@@ -68,6 +72,7 @@ describe('Multi-Year Schemas', () => {
           transactionCount: 0,
           closingNetWorth: 0,
           closingBalances: {},
+          closingAssetValuations: {},
         },
       };
 
@@ -114,6 +119,7 @@ describe('Multi-Year Schemas', () => {
               transactionCount: 100,
               closingNetWorth: 50000,
               closingBalances: {},
+              closingAssetValuations: {},
             },
           },
         ],
@@ -164,11 +170,13 @@ describe('Multi-Year Schemas', () => {
         transactions: [],
         budgets: [],
         manualAssets: [],
+        exchangeRates: [],
         archivedDate: '2026-01-01T00:00:00.000Z',
         summary: {
           transactionCount: 100,
           closingNetWorth: 50000,
           closingBalances: {},
+          closingAssetValuations: {},
         },
       };
 
@@ -203,11 +211,13 @@ describe('Multi-Year Schemas', () => {
         transactions: [],
         budgets: [],
         manualAssets: [],
+        exchangeRates: [],
         archivedDate: '2026-01-01T00:00:00.000Z',
         summary: {
           transactionCount: 0,
           closingNetWorth: 0,
           closingBalances: {},
+          closingAssetValuations: {},
         },
       };
 

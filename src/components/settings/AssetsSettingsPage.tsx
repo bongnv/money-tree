@@ -3,7 +3,7 @@ import { Container, Box } from '@mui/material';
 import { AccountsPage } from '../accounts/AccountsPage';
 import { ManualAssetsPage } from '../assets/ManualAssetsPage';
 
-export const AccountsSettingsPage: React.FC = () => {
+export const AssetsSettingsPage: React.FC = () => {
   return (
     <Container maxWidth="lg">
       <AccountsPage />

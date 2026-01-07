@@ -9,6 +9,7 @@ import type { ManualAsset } from '../../types/models';
 import { AssetType } from '../../types/enums';
 import { formatCurrency } from '../../utils/currency.utils';
 import { formatDate } from '../../utils/date.utils';
+import { getAssetCurrentValue } from '../../utils/asset.utils';
 
 interface ManualAssetCardProps {
   asset: ManualAsset;
@@ -23,6 +24,8 @@ export const ManualAssetCard: React.FC<ManualAssetCardProps> = ({
   onDelete,
   onUpdateValue,
 }) => {
+  const currentValue = getAssetCurrentValue(asset);
+  const latestEntry = [...asset.valueHistory].sort((a, b) => b.date.localeCompare(a.date))[0];
   const assetTypeLabels: Record<AssetType, string> = {
     [AssetType.REAL_ESTATE]: 'Real Estate',
     [AssetType.SUPERANNUATION]: 'Superannuation',
@@ -74,13 +77,18 @@ export const ManualAssetCard: React.FC<ManualAssetCardProps> = ({
       </Box>
 
       <Typography variant="h5" color="primary" gutterBottom>
-        {formatCurrency(asset.value, asset.currencyCode)}
+        {formatCurrency(currentValue, asset.currencyCode)}
       </Typography>
 
       <Typography variant="body2" color="text.secondary" gutterBottom>
-        As of {formatDate(asset.date)}
+        As of {formatDate(latestEntry.date)}
       </Typography>
 
+      {latestEntry.notes && (
+        <Typography variant="body2" sx={{ mt: 1 }}>
+          {latestEntry.notes}
+        </Typography>
+      )}
       {onUpdateValue && (
         <Box sx={{ mt: 2 }}>
           <Button
@@ -93,11 +101,6 @@ export const ManualAssetCard: React.FC<ManualAssetCardProps> = ({
             Update Value
           </Button>
         </Box>
-      )}
-      {asset.notes && (
-        <Typography variant="body2" sx={{ mt: 1 }}>
-          {asset.notes}
-        </Typography>
       )}
     </Paper>
   );

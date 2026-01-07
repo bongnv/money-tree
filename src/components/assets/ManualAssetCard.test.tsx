@@ -8,10 +8,8 @@ describe('ManualAssetCard', () => {
     id: 'asset-1',
     name: 'House',
     type: AssetType.REAL_ESTATE,
-    value: 500000,
     currencyCode: 'USD',
-    date: '2024-01-15T00:00:00.000Z',
-    notes: 'Primary residence',
+    valueHistory: [{ date: '2024-01-15', value: 500000, notes: 'Primary residence' }],
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
   };
@@ -33,7 +31,10 @@ describe('ManualAssetCard', () => {
   });
 
   it('should render asset without notes', () => {
-    const assetWithoutNotes = { ...mockAsset, notes: undefined };
+    const assetWithoutNotes = {
+      ...mockAsset,
+      valueHistory: [{ date: '2024-01-15', value: 500000 }],
+    };
     render(
       <ManualAssetCard asset={assetWithoutNotes} onEdit={mockOnEdit} onDelete={mockOnDelete} />
     );

@@ -329,10 +329,8 @@ describe('Model Schemas', () => {
         id: 'asset-1',
         name: 'House',
         type: AssetType.REAL_ESTATE,
-        value: 500000,
         currencyCode: 'USD',
-        date: getDateString(),
-        notes: 'Primary residence',
+        valueHistory: [{ date: getDateString(), value: 500000, notes: 'Primary residence' }],
         createdAt: getDateTimeString(),
         updatedAt: getDateTimeString(),
       };
@@ -344,9 +342,8 @@ describe('Model Schemas', () => {
         id: 'asset-1',
         name: 'Super Fund',
         type: AssetType.SUPERANNUATION,
-        value: 25000,
         currencyCode: 'USD',
-        date: getDateString(),
+        valueHistory: [{ date: getDateString(), value: 25000 }],
         createdAt: getDateTimeString(),
         updatedAt: getDateTimeString(),
       };
@@ -357,9 +354,8 @@ describe('Model Schemas', () => {
       const invalidAsset = {
         name: 'House',
         type: AssetType.REAL_ESTATE,
-        value: 500000,
         currencyCode: 'USD',
-        date: getDateString(),
+        valueHistory: [{ date: getDateString(), value: 500000 }],
         createdAt: getDateTimeString(),
         updatedAt: getDateTimeString(),
       };
@@ -371,9 +367,8 @@ describe('Model Schemas', () => {
         id: 'asset-1',
         name: '',
         type: AssetType.REAL_ESTATE,
-        value: 500000,
         currencyCode: 'USD',
-        date: getDateString(),
+        valueHistory: [{ date: getDateString(), value: 500000 }],
         createdAt: getDateTimeString(),
         updatedAt: getDateTimeString(),
       };
@@ -385,9 +380,8 @@ describe('Model Schemas', () => {
         id: 'asset-1',
         name: 'House',
         type: 'invalid_type',
-        value: 500000,
         currencyCode: 'USD',
-        date: getDateString(),
+        valueHistory: [{ date: getDateString(), value: 500000 }],
         createdAt: getDateTimeString(),
         updatedAt: getDateTimeString(),
       };
@@ -400,9 +394,8 @@ describe('Model Schemas', () => {
           id: 'asset-1',
           name: 'Test Asset',
           type,
-          value: 10000,
           currencyCode: 'USD',
-          date: getDateString(),
+          valueHistory: [{ date: getDateString(), value: 10000 }],
           createdAt: getDateTimeString(),
           updatedAt: getDateTimeString(),
         };
@@ -415,10 +408,11 @@ describe('Model Schemas', () => {
         id: 'asset-1',
         name: 'House',
         type: AssetType.REAL_ESTATE,
-        value: 510000,
         currencyCode: 'USD',
-        date: '2026-04-01',
-        valueHistory: [{ date: '2026-01-01', value: 500000, notes: 'Initial purchase' }],
+        valueHistory: [
+          { date: '2026-01-01', value: 500000, notes: 'Initial purchase' },
+          { date: '2026-04-01', value: 510000 },
+        ],
         createdAt: getDateTimeString(),
         updatedAt: getDateTimeString(),
       };
@@ -430,13 +424,12 @@ describe('Model Schemas', () => {
         id: 'asset-1',
         name: 'House',
         type: AssetType.REAL_ESTATE,
-        value: 530000,
         currencyCode: 'USD',
-        date: '2026-10-01',
         valueHistory: [
           { date: '2026-01-01', value: 500000 },
           { date: '2026-04-01', value: 510000 },
           { date: '2026-07-01', value: 520000 },
+          { date: '2026-10-01', value: 530000 },
         ],
         createdAt: getDateTimeString(),
         updatedAt: getDateTimeString(),
@@ -449,9 +442,7 @@ describe('Model Schemas', () => {
         id: 'asset-1',
         name: 'House',
         type: AssetType.REAL_ESTATE,
-        value: 530000,
         currencyCode: 'USD',
-        date: '2026-10-01',
         valueHistory: [
           { date: '2026-04-01', value: 510000 },
           { date: '2026-01-01', value: 500000 }, // Out of order
@@ -462,38 +453,29 @@ describe('Model Schemas', () => {
       expect(() => ManualAssetSchema.parse(invalidAsset)).toThrow();
     });
 
-    it('should reject asset with history dates after current date', () => {
+    it('should reject asset with missing valueHistory', () => {
       const invalidAsset = {
         id: 'asset-1',
         name: 'House',
         type: AssetType.REAL_ESTATE,
-        value: 520000,
         currencyCode: 'USD',
-        date: '2026-07-01',
-        valueHistory: [
-          { date: '2026-08-01', value: 500000 }, // After current date
-        ],
         createdAt: getDateTimeString(),
         updatedAt: getDateTimeString(),
       };
       expect(() => ManualAssetSchema.parse(invalidAsset)).toThrow();
     });
 
-    it('should allow history date equal to current date', () => {
-      const validAsset = {
+    it('should reject asset with empty valueHistory', () => {
+      const invalidAsset = {
         id: 'asset-1',
         name: 'House',
         type: AssetType.REAL_ESTATE,
-        value: 520000,
         currencyCode: 'USD',
-        date: '2026-07-01',
-        valueHistory: [
-          { date: '2026-07-01', value: 500000 }, // Same as current date
-        ],
+        valueHistory: [],
         createdAt: getDateTimeString(),
         updatedAt: getDateTimeString(),
       };
-      expect(() => ManualAssetSchema.parse(validAsset)).not.toThrow();
+      expect(() => ManualAssetSchema.parse(invalidAsset)).toThrow();
     });
 
     it('should validate history entry without optional notes', () => {
@@ -501,11 +483,10 @@ describe('Model Schemas', () => {
         id: 'asset-1',
         name: 'House',
         type: AssetType.REAL_ESTATE,
-        value: 510000,
         currencyCode: 'USD',
-        date: '2026-04-01',
         valueHistory: [
           { date: '2026-01-01', value: 500000 }, // No notes
+          { date: '2026-04-01', value: 510000 },
         ],
         createdAt: getDateTimeString(),
         updatedAt: getDateTimeString(),
@@ -518,9 +499,7 @@ describe('Model Schemas', () => {
         id: 'asset-1',
         name: 'House',
         type: AssetType.REAL_ESTATE,
-        value: 510000,
         currencyCode: 'USD',
-        date: '2026-04-01',
         valueHistory: [
           { date: '01/01/2026', value: 500000 }, // Invalid format
         ],

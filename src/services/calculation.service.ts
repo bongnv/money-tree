@@ -1,4 +1,5 @@
 import type { Transaction, Account, Budget, ManualAsset } from '../types/models';
+import { getAssetCurrentValue } from '../utils/asset.utils';
 
 /**
  * Calculation service for account balances and transaction totals
@@ -374,6 +375,7 @@ class CalculationService {
 
     let totalAssets = 0;
     for (const asset of manualAssets) {
+      const assetValue = getAssetCurrentValue(asset);
       if (baseCurrency && getRateForMonth && currentMonth && asset.currencyCode) {
         if (asset.currencyCode !== baseCurrency) {
           const rate = getRateForMonth(currentMonth, asset.currencyCode, baseCurrency);
@@ -382,12 +384,12 @@ class CalculationService {
               `Missing exchange rate for ${asset.currencyCode.toUpperCase()} → ${baseCurrency.toUpperCase()} in ${currentMonth}. Please fetch exchange rates in Settings → Exchange Rates.`
             );
           }
-          totalAssets += asset.value * rate;
+          totalAssets += assetValue * rate;
         } else {
-          totalAssets += asset.value;
+          totalAssets += assetValue;
         }
       } else {
-        totalAssets += asset.value;
+        totalAssets += assetValue;
       }
     }
 

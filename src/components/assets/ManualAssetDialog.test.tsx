@@ -58,7 +58,7 @@ describe('ManualAssetDialog', () => {
           expect.objectContaining({
             name: 'House',
             type: AssetType.REAL_ESTATE,
-            value: 500000,
+            valueHistory: expect.arrayContaining([expect.objectContaining({ value: 500000 })]),
             id: expect.any(String),
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
@@ -74,10 +74,8 @@ describe('ManualAssetDialog', () => {
       id: 'asset-1',
       name: 'House',
       type: AssetType.REAL_ESTATE,
-      value: 500000,
       currencyCode: 'USD',
-      date: '2024-01-15T00:00:00.000Z',
-      notes: 'Primary residence',
+      valueHistory: [{ date: '2024-01-15', value: 500000, notes: 'Primary residence' }],
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     };
@@ -104,7 +102,7 @@ describe('ManualAssetDialog', () => {
         expect(mockUpdateManualAsset).toHaveBeenCalledWith(
           'asset-1',
           expect.objectContaining({
-            value: 600000,
+            valueHistory: expect.arrayContaining([expect.objectContaining({ value: 600000 })]),
           })
         );
         expect(mockOnClose).toHaveBeenCalled();
@@ -117,7 +115,7 @@ describe('ManualAssetDialog', () => {
       id: 'asset-1',
       name: 'House',
       type: AssetType.REAL_ESTATE,
-      value: 500000,
+      valueHistory: [{ date: '2024-01-15', value: 500000 }],
       currencyCode: 'USD',
       date: '2026-01-01',
       notes: 'Initial purchase',

@@ -26,7 +26,7 @@ const drawerWidth = 240;
 
 const navItems = [
   { path: '/settings/preferences', label: 'Preferences', icon: <SettingsIcon /> },
-  { path: '/settings/accounts', label: 'Accounts', icon: <AccountsIcon /> },
+  { path: '/settings/accounts', label: 'Assets', icon: <AccountsIcon /> },
   { path: '/settings/categories', label: 'Categories', icon: <CategoryIcon /> },
   { path: '/settings/exchange-rates', label: 'Exchange Rates', icon: <ExchangeRateIcon /> },
   { path: '/settings/archives', label: 'Archives', icon: <ArchiveIcon /> },

@@ -26,10 +26,15 @@ describe('useAssetStore', () => {
     id: 'asset-1',
     name: 'House',
     type: AssetType.REAL_ESTATE,
-    value: 500000,
     currencyCode: 'USD',
-    date: new Date().toISOString(),
     notes: 'Primary residence',
+    valueHistory: [
+      {
+        date: new Date().toISOString().split('T')[0],
+        value: 500000,
+        notes: 'Initial valuation',
+      },
+    ],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -238,7 +243,7 @@ describe('useAssetStore', () => {
   });
 
   describe('updateAssetValue', () => {
-    it('should update asset value and move current to history', () => {
+    it('should add new value entry to history', () => {
       const { result } = renderHook(() => useAssetStore());
 
       act(() => {
@@ -250,18 +255,25 @@ describe('useAssetStore', () => {
       });
 
       const updatedAsset = result.current.manualAssets[0];
-      expect(updatedAsset.value).toBe(510000);
-      expect(updatedAsset.date).toBe('2026-04-01');
-      expect(updatedAsset.notes).toBe('Market appraisal');
-      expect(updatedAsset.valueHistory).toHaveLength(1);
-      expect(updatedAsset.valueHistory![0].value).toBe(500000);
+      expect(updatedAsset.valueHistory).toHaveLength(2);
+      // Should have original value and new value
+      expect(updatedAsset.valueHistory.some((v) => v.value === 500000)).toBe(true);
+      expect(updatedAsset.valueHistory.some((v) => v.value === 510000)).toBe(true);
+      // The latest entry should be the new value
+      const sorted = [...updatedAsset.valueHistory].sort((a, b) => b.date.localeCompare(a.date));
+      expect(sorted[0].value).toBe(510000);
+      expect(sorted[0].date).toBe('2026-04-01');
+      expect(sorted[0].notes).toBe('Market appraisal');
     });
 
     it('should add to existing history when updating value', () => {
       const { result } = renderHook(() => useAssetStore());
       const assetWithHistory: ManualAsset = {
         ...mockAsset,
-        valueHistory: [{ date: '2025-01-01', value: 450000, notes: 'Initial' }],
+        valueHistory: [
+          { date: '2025-01-01', value: 450000, notes: 'Initial' },
+          { date: '2025-06-01', value: 500000, notes: 'Current' },
+        ],
       };
 
       act(() => {
@@ -273,9 +285,10 @@ describe('useAssetStore', () => {
       });
 
       const updatedAsset = result.current.manualAssets[0];
-      expect(updatedAsset.valueHistory).toHaveLength(2);
-      expect(updatedAsset.valueHistory![0].value).toBe(450000);
-      expect(updatedAsset.valueHistory![1].value).toBe(500000);
+      expect(updatedAsset.valueHistory).toHaveLength(3);
+      expect(updatedAsset.valueHistory.some((v) => v.value === 450000)).toBe(true);
+      expect(updatedAsset.valueHistory.some((v) => v.value === 500000)).toBe(true);
+      expect(updatedAsset.valueHistory.some((v) => v.value === 510000)).toBe(true);
     });
 
     it('should mark unsaved changes', () => {
@@ -302,7 +315,7 @@ describe('useAssetStore', () => {
         ...mockAsset,
         id: 'asset-2',
         name: 'Car',
-        value: 30000,
+        valueHistory: [{ date: '2026-01-01', value: 30000 }],
       };
 
       act(() => {
@@ -314,8 +327,18 @@ describe('useAssetStore', () => {
         result.current.updateAssetValue('asset-1', 510000, '2026-04-01');
       });
 
-      expect(result.current.manualAssets[0].value).toBe(510000);
-      expect(result.current.manualAssets[1].value).toBe(30000);
+      const asset1 = result.current.manualAssets[0];
+      const asset2Updated = result.current.manualAssets[1];
+
+      // Asset 1 should have new value
+      const asset1Latest = [...asset1.valueHistory].sort((a, b) => b.date.localeCompare(a.date))[0];
+      expect(asset1Latest.value).toBe(510000);
+
+      // Asset 2 should be unchanged
+      const asset2Latest = [...asset2Updated.valueHistory].sort((a, b) =>
+        b.date.localeCompare(a.date)
+      )[0];
+      expect(asset2Latest.value).toBe(30000);
     });
   });
 });

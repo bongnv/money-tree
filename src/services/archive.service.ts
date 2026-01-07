@@ -13,8 +13,14 @@ import { useCategoryStore } from '../stores/useCategoryStore';
 import { useAppStore } from '../stores/useAppStore';
 import { calculationService } from './calculation.service';
 import { StorageFactory } from './storage/StorageFactory';
-import type { ArchiveFile, ArchivedYearReference, YearEndSummary } from '../types/models';
+import type {
+  ArchiveFile,
+  ArchivedYearReference,
+  YearEndSummary,
+  ExchangeRate,
+} from '../types/models';
 import { CurrencyCode } from '../types/enums';
+import { getAssetClosingValue } from '../utils/asset.utils';
 
 /**
  * Check if archive trigger conditions are met (3+ years exist in main file)
@@ -67,17 +73,24 @@ export function calculateYearEndSummary(year: number, baseCurrency: CurrencyCode
     closingBalances[account.id] = balance;
   });
 
+  // Calculate closing valuations for each manual asset
+  const closingAssetValuations: Record<string, number> = {};
+  manualAssets.forEach((asset) => {
+    closingAssetValuations[asset.id] = getAssetClosingValue(asset, year);
+  });
+
   return {
     transactionCount,
     closingNetWorth,
     closingBalances,
+    closingAssetValuations,
   };
 }
 
 /**
  * Identify years that can be archived
  * Returns only the OLDEST year to ensure initialBalance is correct when archiving
- * Excludes current year (cannot archive an incomplete year)
+ * Excludes years less than 2 years older than current year (e.g., in 2026, only 2024 and below are eligible)
  *
  * Important: Only oldest year can be archived to maintain data integrity:
  * - Archiving removes transactions from main file
@@ -87,13 +100,14 @@ export function calculateYearEndSummary(year: number, baseCurrency: CurrencyCode
 export function identifyArchivableYears(): number[] {
   const transactions = useTransactionStore.getState().transactions;
   const currentYear = new Date().getFullYear();
+  const cutoffYear = currentYear - 2; // Only years at least 2 years old
 
   let oldestYear: number | null = null;
 
-  // Find the oldest completed year in a single pass
+  // Find the oldest eligible year in a single pass
   for (const transaction of transactions) {
     const year = new Date(transaction.date).getFullYear();
-    if (year < currentYear && (oldestYear === null || year < oldestYear)) {
+    if (year <= cutoffYear && (oldestYear === null || year < oldestYear)) {
       oldestYear = year;
     }
   }
@@ -138,6 +152,7 @@ export function createArchiveFile(year: number, baseCurrency: CurrencyCode): Arc
   const accounts = useAccountStore.getState().accounts;
   const categories = useCategoryStore.getState().categories;
   const transactionTypes = useCategoryStore.getState().transactionTypes;
+  const exchangeRates = useExchangeRateStore.getState().rates;
 
   // Filter data for the specified year
   const yearTransactions = transactions.filter((transaction) => {
@@ -154,11 +169,17 @@ export function createArchiveFile(year: number, baseCurrency: CurrencyCode): Arc
   // Manual assets - include those with valueHistory entries in this year
   const yearManualAssets = manualAssets.map((asset) => ({
     ...asset,
-    valueHistory: (asset.valueHistory || []).filter((entry: { date: string; value: number }) => {
+    valueHistory: asset.valueHistory.filter((entry: { date: string; value: number }) => {
       const entryYear = new Date(entry.date).getFullYear();
       return entryYear === year;
     }),
   }));
+
+  // Exchange rates - include those from this year
+  const yearExchangeRates = exchangeRates.filter((rate: ExchangeRate) => {
+    const rateYear = parseInt(rate.month.split('-')[0], 10);
+    return rateYear === year;
+  });
 
   // Calculate year-end summary
   const summary = calculateYearEndSummary(year, baseCurrency);
@@ -173,6 +194,7 @@ export function createArchiveFile(year: number, baseCurrency: CurrencyCode): Arc
     transactions: yearTransactions,
     budgets: yearBudgets,
     manualAssets: yearManualAssets,
+    exchangeRates: yearExchangeRates,
     archivedDate: new Date().toISOString(),
     summary,
   };
@@ -201,6 +223,7 @@ export function updateMainFileAfterArchive(
   const budgetStore = useBudgetStore.getState();
   const assetStore = useAssetStore.getState();
   const accountStore = useAccountStore.getState();
+  const exchangeRateStore = useExchangeRateStore.getState();
 
   // Calculate closing balances for accounts before removing transactions
   const accountClosingBalances: Record<string, number> = {};
@@ -242,12 +265,19 @@ export function updateMainFileAfterArchive(
   // Remove manual asset history entries from the archived year
   const updatedAssets = assetStore.manualAssets.map((asset) => ({
     ...asset,
-    valueHistory: (asset.valueHistory || []).filter((entry: { date: string; value: number }) => {
+    valueHistory: asset.valueHistory.filter((entry: { date: string; value: number }) => {
       const entryYear = new Date(entry.date).getFullYear();
       return entryYear !== year;
     }),
   }));
   assetStore.setManualAssets(updatedAssets);
+
+  // Remove exchange rates from the archived year
+  const remainingExchangeRates = exchangeRateStore.rates.filter((rate: ExchangeRate) => {
+    const rateYear = parseInt(rate.month.split('-')[0], 10);
+    return rateYear !== year;
+  });
+  exchangeRateStore.setRates(remainingExchangeRates);
 
   // Add archive reference to app state (using the one passed in)
   const appState = useAppStore.getState();

@@ -8,13 +8,12 @@ describe('AssetValueHistoryDialog', () => {
     id: 'asset-1',
     name: 'Test House',
     type: AssetType.REAL_ESTATE,
-    value: 550000,
     currencyCode: 'USD',
-    date: '2026-10-01',
     valueHistory: [
       { date: '2026-01-01', value: 500000, notes: 'Initial' },
       { date: '2026-04-01', value: 520000, notes: 'Q1 appraisal' },
       { date: '2026-07-01', value: 530000 },
+      { date: '2026-10-01', value: 550000 },
     ],
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-10-01T00:00:00.000Z',
@@ -76,7 +75,7 @@ describe('AssetValueHistoryDialog', () => {
   it('should display message when no history exists', () => {
     const assetWithoutHistory: ManualAsset = {
       ...mockAsset,
-      valueHistory: undefined,
+      valueHistory: [],
     };
 
     render(<AssetValueHistoryDialog open={true} asset={assetWithoutHistory} {...mockCallbacks} />);

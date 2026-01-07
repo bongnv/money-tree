@@ -1,6 +1,7 @@
 import type { Account, ManualAsset, Transaction, TransactionType, Category } from '../types/models';
 import { AccountType, AssetType, Group } from '../types/enums';
 import { calculationService } from './calculation.service';
+import { getAssetCurrentValue } from '../utils/asset.utils';
 
 export interface BalanceSheetData {
   assets: AssetGroup[];
@@ -84,10 +85,8 @@ class ReportService {
       ? transactions.filter((t) => t.date <= asOfDate)
       : transactions;
 
-    // Filter manual assets up to the date
-    const filteredManualAssets = asOfDate
-      ? manualAssets.filter((a) => a.date <= asOfDate)
-      : manualAssets;
+    // Manual assets don't need date filtering - valueHistory handles historical values
+    const filteredManualAssets = manualAssets;
 
     // Get month for rate lookup (YYYY-MM format)
     const rateMonth = asOfDate
@@ -181,21 +180,25 @@ class ReportService {
 
     // Add manual assets (positive value)
     manualAssets
-      .filter((a) => a.value >= 0 && a.type !== AssetType.LIABILITY)
+      .filter((a) => {
+        const value = getAssetCurrentValue(a);
+        return value >= 0 && a.type !== AssetType.LIABILITY;
+      })
       .forEach((asset) => {
         const groupName = this.getManualAssetGroupName(asset.type);
         if (!groups.has(groupName)) {
           groups.set(groupName, []);
         }
 
-        let convertedValue = asset.value;
+        const assetValue = getAssetCurrentValue(asset);
+        let convertedValue = assetValue;
         let conversionRate: number | undefined;
 
         // Apply currency conversion if base currency is specified
         if (baseCurrency && getRateForMonth && rateMonth && asset.currencyCode !== baseCurrency) {
           const rate = getRateForMonth(rateMonth, asset.currencyCode, baseCurrency);
           if (rate !== null) {
-            convertedValue = asset.value * rate;
+            convertedValue = assetValue * rate;
             conversionRate = rate;
           }
         }
@@ -320,14 +323,18 @@ class ReportService {
 
     // Add manual liabilities
     manualAssets
-      .filter((a) => a.type === AssetType.LIABILITY || a.value < 0)
+      .filter((a) => {
+        const value = getAssetCurrentValue(a);
+        return a.type === AssetType.LIABILITY || value < 0;
+      })
       .forEach((asset) => {
         const groupName = 'Liabilities';
         if (!groups.has(groupName)) {
           groups.set(groupName, []);
         }
 
-        const liability = Math.abs(asset.value);
+        const assetValue = getAssetCurrentValue(asset);
+        const liability = Math.abs(assetValue);
         let convertedValue = liability;
         let conversionRate: number | undefined;
 

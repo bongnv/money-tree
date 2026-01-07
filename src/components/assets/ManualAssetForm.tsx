@@ -19,13 +19,17 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
   updateValueOnly = false,
 }) => {
   const currencies = getAllCurrencies();
+  const latestEntry =
+    asset?.valueHistory && asset.valueHistory.length > 0
+      ? [...asset.valueHistory].sort((a, b) => b.date.localeCompare(a.date))[0]
+      : { value: 0, date: getTodayDate(), notes: '' };
   const [formData, setFormData] = useState({
     name: asset?.name || '',
     type: asset?.type || AssetType.OTHER,
-    value: asset?.value?.toString() || '0',
+    value: latestEntry.value?.toString() || '0',
     currencyCode: asset?.currencyCode || CurrencyCode.USD,
-    date: asset?.date || getTodayDate(),
-    notes: asset?.notes || '',
+    date: latestEntry.date || getTodayDate(),
+    notes: latestEntry.notes || '',
   });
 
   // Form data is initialized from asset prop
@@ -71,10 +75,15 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
     onSubmit({
       name: formData.name.trim(),
       type: formData.type,
-      value: parseFloat(formData.value),
       currencyCode: formData.currencyCode as CurrencyCode,
-      date: toDateString(formData.date),
-      notes: formData.notes.trim() || undefined,
+      valueHistory: [
+        ...(updateValueOnly ? asset?.valueHistory || [] : []),
+        {
+          value: parseFloat(formData.value),
+          date: toDateString(formData.date),
+          notes: formData.notes.trim() || undefined,
+        },
+      ],
     });
   };
 

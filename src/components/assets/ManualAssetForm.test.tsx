@@ -59,8 +59,12 @@ describe('ManualAssetForm', () => {
           expect.objectContaining({
             name: 'Super Fund',
             type: AssetType.SUPERANNUATION,
-            value: 500000,
             currencyCode: 'USD',
+            valueHistory: expect.arrayContaining([
+              expect.objectContaining({
+                value: 500000,
+              }),
+            ]),
           })
         );
       });
@@ -93,10 +97,8 @@ describe('ManualAssetForm', () => {
       id: 'asset-1',
       name: 'House',
       type: AssetType.REAL_ESTATE,
-      value: 500000,
       currencyCode: 'USD',
-      date: '2024-01-15T00:00:00.000Z',
-      notes: 'Primary residence',
+      valueHistory: [{ date: '2024-01-15', value: 500000, notes: 'Primary residence' }],
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     };
@@ -128,7 +130,11 @@ describe('ManualAssetForm', () => {
         expect(mockOnSubmit).toHaveBeenCalledWith(
           expect.objectContaining({
             name: 'House',
-            value: 600000,
+            valueHistory: expect.arrayContaining([
+              expect.objectContaining({
+                value: 600000,
+              }),
+            ]),
           })
         );
       });
@@ -180,8 +186,12 @@ describe('ManualAssetForm', () => {
         expect(mockOnSubmit).toHaveBeenCalledWith(
           expect.objectContaining({
             name: 'Car',
-            value: 25000,
-            notes: undefined,
+            valueHistory: expect.arrayContaining([
+              expect.objectContaining({
+                value: 25000,
+                notes: undefined,
+              }),
+            ]),
           })
         );
       });

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Transaction } from '../types/models';
 import { useAppStore } from './useAppStore';
 import { useAssetStore } from './useAssetStore';
+import { getAssetCurrentValue } from '../utils/asset.utils';
 
 interface TransactionState {
   transactions: Transaction[];
@@ -39,9 +40,10 @@ export const useTransactionStore = create<TransactionState & TransactionActions>
       const asset = assetStore.getManualAssetById(assetId!);
 
       if (asset) {
+        const currentValue = getAssetCurrentValue(asset);
         const newValue = transaction.fromAssetId
-          ? asset.value - transaction.amount // Liquidation: decrease asset value
-          : asset.value + transaction.amount; // Purchase: increase asset value
+          ? currentValue - transaction.amount // Liquidation: decrease asset value
+          : currentValue + transaction.amount; // Purchase: increase asset value
 
         assetStore.updateAssetValue(
           assetId!,

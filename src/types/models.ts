@@ -120,11 +120,9 @@ export interface ManualAsset {
   id: string;
   name: string;
   type: AssetType;
-  value: number; // Current value (can be negative for liabilities)
   currencyCode: CurrencyCode;
-  date: string; // Date string in YYYY-MM-DD format - date of valuation
   notes?: string;
-  valueHistory?: AssetValueHistory[]; // Historical values (excluding current)
+  valueHistory: AssetValueHistory[]; // All historical values, sorted by date (latest is current)
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }
@@ -137,6 +135,7 @@ export interface YearEndSummary {
   transactionCount: number;
   closingNetWorth: number;
   closingBalances: Record<string, number>; // accountId -> closing balance
+  closingAssetValuations: Record<string, number>; // assetId -> closing valuation
 }
 
 /**
@@ -181,6 +180,7 @@ export interface ArchiveFile {
   transactions: Transaction[];
   budgets: Budget[];
   manualAssets: ManualAsset[];
+  exchangeRates: ExchangeRate[];
   archivedDate: string; // ISO date string
   summary: YearEndSummary;
 }

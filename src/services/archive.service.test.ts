@@ -14,6 +14,7 @@ import { useAccountStore } from '../stores/useAccountStore';
 import { useBudgetStore } from '../stores/useBudgetStore';
 import { useAssetStore } from '../stores/useAssetStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
+import { useExchangeRateStore } from '../stores/useExchangeRateStore';
 import { calculationService } from './calculation.service';
 
 // Mock the stores
@@ -22,6 +23,7 @@ jest.mock('../stores/useAccountStore');
 jest.mock('../stores/useBudgetStore');
 jest.mock('../stores/useAssetStore');
 jest.mock('../stores/useCategoryStore');
+jest.mock('../stores/useExchangeRateStore');
 
 describe('Archive Service', () => {
   beforeEach(() => {
@@ -102,7 +104,11 @@ describe('Archive Service', () => {
   });
 
   describe('identifyArchivableYears', () => {
-    it('should return years sorted from oldest to newest', () => {
+    it('should return only years at least 2 years older than current year', () => {
+      // Set the system date to 2026-01-01
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-01-01'));
+
       (useTransactionStore.getState as jest.Mock).mockReturnValue({
         transactions: [
           {
@@ -112,7 +118,6 @@ describe('Archive Service', () => {
             amount: 100,
             accountId: 'acc1',
             transactionTypeId: 'type1',
-
             createdAt: '2025-01-15T00:00:00Z',
             updatedAt: '2025-01-15T00:00:00Z',
           },
@@ -123,7 +128,6 @@ describe('Archive Service', () => {
             amount: 200,
             accountId: 'acc1',
             transactionTypeId: 'type1',
-
             createdAt: '2023-03-20T00:00:00Z',
             updatedAt: '2023-03-20T00:00:00Z',
           },
@@ -134,7 +138,6 @@ describe('Archive Service', () => {
             amount: 300,
             accountId: 'acc1',
             transactionTypeId: 'type1',
-
             createdAt: '2024-06-10T00:00:00Z',
             updatedAt: '2024-06-10T00:00:00Z',
           },
@@ -142,8 +145,12 @@ describe('Archive Service', () => {
       });
 
       const years = identifyArchivableYears();
-      // Should return only the oldest year (2023) to ensure sequential archiving
+      // Should return only the oldest eligible year (2023)
+      // 2024 is cutoff year, so only 2023 and below are eligible
+      // 2024 and 2025 are too recent (not at least 2 years old)
       expect(years).toEqual([2023]);
+
+      jest.useRealTimers();
     });
 
     it('should return empty array when no transactions', () => {
@@ -285,6 +292,11 @@ describe('Archive Service', () => {
         manualAssets: [],
       });
 
+      (useExchangeRateStore.getState as jest.Mock).mockReturnValue({
+        rates: [],
+        getRateForMonth: jest.fn(),
+      });
+
       // Mock calculationService.calculateNetWorth
       const mockCalculateNetWorth = jest.fn().mockReturnValue(75000);
       const mockCalculateAccountBalance = jest.fn().mockReturnValue(25000);
@@ -383,6 +395,25 @@ describe('Archive Service', () => {
         },
       ];
 
+      const mockExchangeRates = [
+        {
+          id: 'rate1',
+          month: '2024-01',
+          fromCurrency: 'EUR',
+          toCurrency: 'USD',
+          rate: 1.1,
+          createdAt: '2024-01-01T00:00:00Z',
+        },
+        {
+          id: 'rate2',
+          month: '2025-01',
+          fromCurrency: 'EUR',
+          toCurrency: 'USD',
+          rate: 1.2,
+          createdAt: '2025-01-01T00:00:00Z',
+        },
+      ];
+
       (useTransactionStore.getState as jest.Mock).mockReturnValue({
         transactions: mockTransactions,
       });
@@ -404,6 +435,11 @@ describe('Archive Service', () => {
         transactionTypes: mockTransactionTypes,
       });
 
+      (useExchangeRateStore.getState as jest.Mock).mockReturnValue({
+        rates: mockExchangeRates,
+        getRateForMonth: jest.fn(),
+      });
+
       // Mock calculationService
       const mockCalculateNetWorth = jest.fn().mockReturnValue(10000);
       const mockCalculateAccountBalance = jest.fn().mockReturnValue(5000);
@@ -421,6 +457,8 @@ describe('Archive Service', () => {
       expect(archiveFile.accounts).toEqual(mockAccounts);
       expect(archiveFile.categories).toEqual(mockCategories);
       expect(archiveFile.transactionTypes).toEqual(mockTransactionTypes);
+      expect(archiveFile.exchangeRates).toHaveLength(1);
+      expect(archiveFile.exchangeRates[0].id).toBe('rate1');
       expect(archiveFile.archivedDate).toBeDefined();
       expect(archiveFile.summary.transactionCount).toBe(1);
       expect(archiveFile.summary.closingNetWorth).toBe(10000);
@@ -465,6 +503,11 @@ describe('Archive Service', () => {
       (useCategoryStore.getState as jest.Mock).mockReturnValue({
         categories: [],
         transactionTypes: [],
+      });
+
+      (useExchangeRateStore.getState as jest.Mock).mockReturnValue({
+        rates: [],
+        getRateForMonth: jest.fn(),
       });
 
       const mockCalculateNetWorth = jest.fn().mockReturnValue(1200);

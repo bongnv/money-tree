@@ -23,6 +23,7 @@ import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import { ManualAsset } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
 import { formatDate } from '../../utils/date.utils';
+import { getAssetCurrentValue } from '../../utils/asset.utils';
 import { LineChart } from '../charts/LineChart';
 import { getCompleteValueHistory, calculateAssetValueGrowth } from '../../services/history.service';
 
@@ -96,6 +97,7 @@ export const AssetValueHistoryDialog: React.FC<AssetValueHistoryDialogProps> = (
 
   // Get historical entries only (excluding current value)
   const historicalEntries = asset.valueHistory || [];
+  const currentValue = getAssetCurrentValue(asset);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
@@ -104,7 +106,7 @@ export const AssetValueHistoryDialog: React.FC<AssetValueHistoryDialogProps> = (
           <Box>
             <Typography variant="h6">{asset.name}</Typography>
             <Typography variant="body2" color="text.secondary">
-              Current Value: {formatCurrency(asset.value, asset.currencyCode)}
+              Current Value: {formatCurrency(currentValue, asset.currencyCode)}
             </Typography>
           </Box>
           {growth && (
@@ -213,75 +215,86 @@ export const AssetValueHistoryDialog: React.FC<AssetValueHistoryDialogProps> = (
               </TableRow>
             </TableHead>
             <TableBody>
-              {/* Current value row */}
-              <TableRow sx={{ backgroundColor: 'action.hover' }}>
-                <TableCell>
-                  <strong>{formatDate(asset.date)}</strong>
-                </TableCell>
-                <TableCell align="right">
-                  <strong>{formatCurrency(asset.value, asset.currencyCode)}</strong>
-                </TableCell>
-                <TableCell align="right">
-                  {historicalEntries.length > 0 && (
-                    <Typography
-                      variant="body2"
-                      color={
-                        asset.value - historicalEntries[historicalEntries.length - 1].value >= 0
-                          ? 'success.main'
-                          : 'error.main'
-                      }
-                    >
-                      {asset.value - historicalEntries[historicalEntries.length - 1].value >= 0
-                        ? '+'
-                        : ''}
-                      {formatCurrency(
-                        asset.value - historicalEntries[historicalEntries.length - 1].value,
-                        asset.currencyCode
-                      )}
-                    </Typography>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <em>Current Value</em>
-                </TableCell>
-              </TableRow>
-
-              {/* Historical entries */}
               {historicalEntries.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center">
+                  <TableCell colSpan={4} align="center">
                     <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
                       No historical values recorded yet.
                     </Typography>
                   </TableCell>
                 </TableRow>
               ) : (
-                historicalEntries.map((entry, index) => {
-                  const nextValue =
-                    index === historicalEntries.length - 1
-                      ? asset.value
-                      : historicalEntries[index + 1].value;
-                  const change = nextValue - entry.value;
-
-                  return (
-                    <TableRow key={index}>
-                      <TableCell>{formatDate(entry.date)}</TableCell>
-                      <TableCell align="right">
-                        {formatCurrency(entry.value, asset.currencyCode)}
-                      </TableCell>
-                      <TableCell align="right">
+                <>
+                  {/* Current value row */}
+                  <TableRow sx={{ backgroundColor: 'action.hover' }}>
+                    <TableCell>
+                      <strong>
+                        {formatDate(historicalEntries[historicalEntries.length - 1].date)}
+                      </strong>
+                    </TableCell>
+                    <TableCell align="right">
+                      <strong>{formatCurrency(currentValue, asset.currencyCode)}</strong>
+                    </TableCell>
+                    <TableCell align="right">
+                      {historicalEntries.length > 1 && (
                         <Typography
                           variant="body2"
-                          color={change >= 0 ? 'success.main' : 'error.main'}
+                          color={
+                            currentValue - historicalEntries[historicalEntries.length - 2].value >=
+                            0
+                              ? 'success.main'
+                              : 'error.main'
+                          }
                         >
-                          {change >= 0 ? '+' : ''}
-                          {formatCurrency(change, asset.currencyCode)}
+                          {currentValue - historicalEntries[historicalEntries.length - 2].value >= 0
+                            ? '+'
+                            : ''}
+                          {formatCurrency(
+                            currentValue - historicalEntries[historicalEntries.length - 2].value,
+                            asset.currencyCode
+                          )}
                         </Typography>
-                      </TableCell>
-                      <TableCell>{entry.notes || '-'}</TableCell>
-                    </TableRow>
-                  );
-                })
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <em>Current Value</em>
+                    </TableCell>
+                  </TableRow>
+
+                  {/* Historical entries */}
+                  {historicalEntries.length > 1 &&
+                    // Show all but the last entry (since last entry is shown as current value)
+                    historicalEntries
+                      .slice(0, -1)
+                      .reverse()
+                      .map((entry, index) => {
+                        const actualIndex = historicalEntries.length - 2 - index;
+                        const nextValue =
+                          actualIndex === historicalEntries.length - 2
+                            ? currentValue
+                            : historicalEntries[actualIndex + 1].value;
+                        const change = nextValue - entry.value;
+
+                        return (
+                          <TableRow key={actualIndex}>
+                            <TableCell>{formatDate(entry.date)}</TableCell>
+                            <TableCell align="right">
+                              {formatCurrency(entry.value, asset.currencyCode)}
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography
+                                variant="body2"
+                                color={change >= 0 ? 'success.main' : 'error.main'}
+                              >
+                                {change >= 0 ? '+' : ''}
+                                {formatCurrency(change, asset.currencyCode)}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>{entry.notes || '-'}</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                </>
               )}
             </TableBody>
           </Table>

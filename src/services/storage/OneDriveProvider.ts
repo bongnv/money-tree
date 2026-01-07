@@ -34,19 +34,20 @@ export class OneDriveProvider implements IStorageProvider {
   }
 
   /**
-   * Get file content URL based on selected file or default path
+   * Get file content URL based on selected file
+   * @throws Error if fileId is not set
    */
   private getFileUrl(): string {
-    if (this.selectedFileInfo.fileId) {
-      // For shared folders, use drives endpoint
-      if (this.selectedFileInfo.driveId) {
-        return `/drives/${this.selectedFileInfo.driveId}/items/${this.selectedFileInfo.fileId}/content`;
-      }
-      // For personal drive, use me endpoint
-      return `/me/drive/items/${this.selectedFileInfo.fileId}/content`;
+    if (!this.selectedFileInfo.fileId) {
+      throw new Error('Cannot load file: fileId is not set');
     }
-    // Use default path for new files
-    return graphConfig.getFileContentUrl();
+
+    // For shared folders, use drives endpoint
+    if (this.selectedFileInfo.driveId) {
+      return `/drives/${this.selectedFileInfo.driveId}/items/${this.selectedFileInfo.fileId}/content`;
+    }
+    // For personal drive, use me endpoint
+    return `/me/drive/items/${this.selectedFileInfo.fileId}/content`;
   }
 
   /**

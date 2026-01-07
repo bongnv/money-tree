@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, useNavigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Backdrop, CircularProgress } from '@mui/material';
@@ -10,6 +10,7 @@ import { WelcomeDialog } from './components/common/WelcomeDialog';
 import { NotificationSnackbar } from './components/common/NotificationSnackbar';
 import { MergePreviewDialog, ConflictResolution } from './components/common/MergePreviewDialog';
 import { ArchivePrompt } from './components/common/ArchivePrompt';
+import { BackupPromptDialog } from './components/common/BackupPromptDialog';
 import { AppRoutes } from './routes';
 import { useAppStore } from './stores/useAppStore';
 import { syncService } from './services/sync.service';
@@ -17,35 +18,34 @@ import { FilePickerService } from './services/storage/FilePickerService';
 import { StorageFactory, StorageProviderType } from './services/storage/StorageFactory';
 import { SelectedFileInfo } from './services/storage/OneDriveProvider';
 import { MergeResult } from './services/merge.service';
+import { backupService } from './services/backup.service';
 import {
   shouldPromptArchive,
   identifyArchivableYears,
   calculateYearEndSummary,
-  createArchiveFile,
-  saveArchiveFile,
-  updateMainFileAfterArchive,
 } from './services/archive.service';
 
 const WELCOME_DISMISSED_KEY = 'moneyTree.welcomeDismissed';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const navigate = useNavigate();
   const {
     error,
     setError,
     hasUnsavedChanges,
     snackbar,
     hideSnackbar,
-    showSnackbar,
     baseCurrency,
     archivePromptPostponedAt,
     setArchivePromptPostponedAt,
+    lastBackupDate,
     isLoading,
   } = useAppStore();
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
   const [showArchivePrompt, setShowArchivePrompt] = useState(false);
+  const [showBackupPrompt, setShowBackupPrompt] = useState(false);
   const [archiveYearSummary, setArchiveYearSummary] = useState<any>(null);
   const [archiveYear, setArchiveYear] = useState<number | null>(null);
-  const [isArchiving, setIsArchiving] = useState(false);
   const [mergeDialogState, setMergeDialogState] = useState<{
     open: boolean;
     mergeResult: MergeResult | null;
@@ -84,6 +84,8 @@ const App: React.FC = () => {
       } else {
         // File loaded successfully, check if archive prompt should be shown
         checkArchivePrompt();
+        // Check if backup prompt should be shown
+        checkBackupPrompt();
       }
     };
 
@@ -107,6 +109,12 @@ const App: React.FC = () => {
         setArchiveYearSummary(summary);
         setShowArchivePrompt(true);
       }
+    }
+  };
+
+  const checkBackupPrompt = () => {
+    if (backupService.shouldPromptBackup(lastBackupDate)) {
+      setShowBackupPrompt(true);
     }
   };
 
@@ -140,6 +148,8 @@ const App: React.FC = () => {
       // Load data from the selected file
       await syncService.loadDataFile();
       setShowWelcomeDialog(false);
+      // Check if backup prompt should be shown
+      checkBackupPrompt();
     } catch (error) {
       console.error('Failed to open file:', error);
       throw error; // Re-throw so WelcomeDialog can show error
@@ -177,6 +187,8 @@ const App: React.FC = () => {
 
     await syncService.loadDataFile();
     setShowWelcomeDialog(false);
+    // Check if backup prompt should be shown
+    checkBackupPrompt();
   };
 
   const handleListOneDriveFolders = async (parentItem?: any) => {
@@ -202,57 +214,32 @@ const App: React.FC = () => {
     setMergeDialogState({ open: false, mergeResult: null, resolve: null });
   };
 
-  const handleArchiveNow = async () => {
-    if (!archiveYear) return;
-
-    setShowArchivePrompt(false);
-    setIsArchiving(true);
-
-    try {
-      // Create archive file
-      const archiveFile = createArchiveFile(archiveYear, baseCurrency);
-
-      // Save archive file
-      await saveArchiveFile(archiveFile);
-
-      // Create archive reference
-      const archiveReference = {
-        year: archiveYear,
-        archivedDate: archiveFile.archivedDate,
-        summary: archiveFile.summary,
-      };
-
-      // Update main file - remove archived data
-      updateMainFileAfterArchive(archiveYear, archiveReference);
-
-      // Sync changes to storage
-      await syncService.syncNow();
-
-      showSnackbar(
-        `Year ${archiveYear} archived successfully. Data has been removed from the main file.`,
-        'success'
-      );
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to archive year';
-      showSnackbar(message, 'error');
-    } finally {
-      setIsArchiving(false);
-    }
-  };
-
   const handleArchiveRemindLater = () => {
     setShowArchivePrompt(false);
     setArchivePromptPostponedAt(new Date().toISOString());
   };
 
+  const handleArchiveGoToSettings = () => {
+    setShowArchivePrompt(false);
+    // Navigate to archive settings page using React Router
+    navigate('/settings/archives');
+  };
+
+  const handleGoToBackupSettings = () => {
+    setShowBackupPrompt(false);
+    // Navigate to preferences page using React Router
+    navigate('/settings/preferences');
+  };
+
+  const handleDismissBackupPrompt = () => {
+    setShowBackupPrompt(false);
+  };
+
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <BrowserRouter>
-        <MainLayout>
-          <AppRoutes />
-        </MainLayout>
-      </BrowserRouter>
+    <>
+      <MainLayout>
+        <AppRoutes />
+      </MainLayout>
       <WelcomeDialog
         open={showWelcomeDialog}
         onOpenLocalFile={handleOpenLocalFile}
@@ -281,16 +268,30 @@ const App: React.FC = () => {
           year={archiveYear}
           yearSummary={archiveYearSummary}
           baseCurrency={baseCurrency}
-          onArchiveNow={handleArchiveNow}
+          onGoToSettings={handleArchiveGoToSettings}
           onRemindLater={handleArchiveRemindLater}
         />
       )}
-      <Backdrop
-        open={isLoading || isArchiving}
-        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
-      >
+      <BackupPromptDialog
+        open={showBackupPrompt}
+        lastBackupDate={lastBackupDate}
+        onGoToSettings={handleGoToBackupSettings}
+        onDismiss={handleDismissBackupPrompt}
+      />
+      <Backdrop open={isLoading} sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <CircularProgress color="inherit" />
       </Backdrop>
+    </>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
     </ThemeProvider>
   );
 };

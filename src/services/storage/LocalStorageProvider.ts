@@ -1,4 +1,4 @@
-import type { DataFile, ArchiveFile } from '../../types/models';
+import type { DataFile } from '../../types/models';
 import { DataFileSchema } from '../../schemas/models.schema';
 import type { IStorageProvider } from './IStorageProvider';
 
@@ -105,25 +105,56 @@ export class LocalStorageProvider implements IStorageProvider {
   }
 
   /**
-   * Save archive file for a specific year
+   * Save a blob file (e.g., backup ZIP, archive JSON)
    * Shows file picker for user to select save location
-   * @param archiveFile The archive file to save
+   * @param blob The blob data to save
+   * @param filename The suggested filename
    */
-  async saveArchiveFile(archiveFile: ArchiveFile): Promise<void> {
+  async saveFile(blob: Blob, filename: string): Promise<void> {
     // Show save file picker with suggested name
     const { FilePickerService } = await import('./FilePickerService');
-    const suggestedName = `${this.fileHandle.name.replace('.json', '')}-${archiveFile.year}.json`;
-    const fileHandle = await FilePickerService.showSaveFilePicker(suggestedName);
+
+    // Determine file type based on extension
+    const isZip = filename.endsWith('.zip');
+    const fileHandle = isZip
+      ? await this.showZipSaveFilePicker(filename)
+      : await FilePickerService.showSaveFilePicker(filename);
 
     if (!fileHandle) {
-      throw new Error('Archive save cancelled');
+      throw new Error('File save cancelled');
     }
 
-    const content = JSON.stringify(archiveFile, null, 2);
-
-    // Write to file
+    // Write blob to file
     const writable = await fileHandle.createWritable();
-    await writable.write(content);
+    await writable.write(blob);
     await writable.close();
+  }
+
+  /**
+   * Show file picker for saving ZIP files
+   * @param suggestedName - Suggested file name
+   * @returns Selected file handle or null if cancelled
+   */
+  private async showZipSaveFilePicker(suggestedName: string): Promise<FileSystemFileHandle | null> {
+    try {
+      const fileHandle = await window.showSaveFilePicker({
+        suggestedName,
+        types: [
+          {
+            description: 'ZIP Archive',
+            accept: {
+              'application/zip': ['.zip'],
+            },
+          },
+        ],
+      });
+      return fileHandle;
+    } catch (error) {
+      // User cancelled the picker
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return null;
+      }
+      throw error;
+    }
   }
 }

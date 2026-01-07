@@ -167,6 +167,7 @@ export interface DataFile {
   archivedYears: ArchivedYearReference[]; // References to archived years
   baseCurrency: CurrencyCode; // Base currency for reporting
   lastModified: string; // ISO date string
+  lastBackupDate?: string; // ISO date string - last successful backup timestamp
 }
 
 /**

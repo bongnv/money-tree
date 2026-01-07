@@ -11,11 +11,14 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  CircularProgress,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import LogoutIcon from '@mui/icons-material/Logout';
+import BackupIcon from '@mui/icons-material/Backup';
 import { useAppStore } from '../../stores/useAppStore';
 import { syncService } from '../../services/sync.service';
+import { backupService } from '../../services/backup.service';
 import { StorageFactory, StorageProviderType } from '../../services/storage/StorageFactory';
 import { formatDistance } from 'date-fns';
 import { useAccountStore } from '../../stores/useAccountStore';
@@ -26,8 +29,9 @@ import { useBudgetStore } from '../../stores/useBudgetStore';
 
 export const DataSyncSettings: React.FC = () => {
   const navigate = useNavigate();
-  const { fileName, lastSaved, hasUnsavedChanges } = useAppStore();
+  const { fileName, lastSaved, hasUnsavedChanges, lastBackupDate, showSnackbar } = useAppStore();
   const [disconnectDialogOpen, setDisconnectDialogOpen] = React.useState(false);
+  const [backupLoading, setBackupLoading] = React.useState(false);
 
   const getStorageLocation = (): string => {
     const providerType = StorageFactory.getProviderType();
@@ -75,6 +79,36 @@ export const DataSyncSettings: React.FC = () => {
       return formatDistance(new Date(lastSaved), new Date(), { addSuffix: true });
     } catch {
       return 'Unknown';
+    }
+  };
+
+  const getLastBackupText = (): string => {
+    if (!lastBackupDate) return 'Never';
+    try {
+      return formatDistance(new Date(lastBackupDate), new Date(), { addSuffix: true });
+    } catch {
+      return 'Unknown';
+    }
+  };
+
+  const handleCreateBackup = async () => {
+    try {
+      setBackupLoading(true);
+
+      // Save backup (backs up baseVersion, updates lastBackupDate, sets unsavedChanges)
+      await backupService.saveBackupToStorage();
+
+      showSnackbar('Backup saved successfully. Remember to save to update backup date.', 'success');
+    } catch (error) {
+      if (error instanceof Error && error.message === 'User cancelled') {
+        // User cancelled file picker, don't show error
+        return;
+      }
+      const message =
+        error instanceof Error ? error.message : 'Failed to create backup. Please try again.';
+      showSnackbar(message, 'error');
+    } finally {
+      setBackupLoading(false);
     }
   };
 
@@ -134,6 +168,46 @@ export const DataSyncSettings: React.FC = () => {
                   </Grid>
                 </Grid>
               </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Backup Section */}
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Data Backup
+              </Typography>
+
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Last Backup
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 2 }}>
+                  {getLastBackupText()}
+                </Typography>
+              </Box>
+
+              <Typography variant="body2" color="text.secondary" paragraph>
+                Create a compressed backup of your data. Backups are saved as ZIP files and can be
+                stored locally or on OneDrive.
+              </Typography>
+
+              <Typography variant="body2" color="text.secondary" paragraph>
+                Note: Backups save the last saved state of your data. Make sure to save any pending
+                changes before creating a backup.
+              </Typography>
+
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={backupLoading ? <CircularProgress size={20} /> : <BackupIcon />}
+                onClick={handleCreateBackup}
+                disabled={backupLoading || !fileName}
+              >
+                {backupLoading ? 'Creating Backup...' : 'Create Backup'}
+              </Button>
             </CardContent>
           </Card>
         </Grid>

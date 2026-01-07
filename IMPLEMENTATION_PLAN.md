@@ -2063,3 +2063,296 @@ These features will be implemented after the MVP is validated by users.
 16. Verify only the field with a default is hidden in quick entry
 17. Verify in full dialog the defaulted field is disabled, other is editable
 18. Test with transaction types that have no defaults (all fields visible/editable)
+---
+
+## Phase 24: Data Backup and Recovery (FR-13)
+
+**Implements:** FR-13.1, FR-13.2, FR-13.3
+
+**Goal:** Enable users to create compressed backups of their data and receive reminders when backups are overdue.
+
+### 24.1 Add Backup Metadata to Data Model
+
+**File:** `src/types/models.ts`
+
+Add optional backup timestamp to DataFile interface:
+
+```typescript
+export interface DataFile {
+  version: string;
+  transactions: Transaction[];
+  budgets: Budget[];
+  manualAssets: ManualAsset[];
+  exchangeRates: ExchangeRate[];
+  accounts: Account[];
+  categories: Category[];
+  transactionTypes: TransactionType[];
+  archivedYears: number[];
+  baseCurrency: CurrencyCode;
+  lastModified: string;
+  lastBackupDate?: string; // ISO 8601 timestamp of last successful backup
+}
+```
+
+**File:** `src/stores/useAppStore.ts`
+
+Add lastBackupDate to app state:
+
+```typescript
+interface AppState {
+  // ... existing fields
+  lastBackupDate: string | null;
+  setLastBackupDate: (date: string) => void;
+}
+```
+
+**File:** `src/schemas/models.schema.ts`
+
+Add validation for new field:
+
+```typescript
+export const DataFileSchema = z.object({
+  // ... existing fields
+  lastBackupDate: z.string().optional(),
+});
+```
+
+- [x] Update DataFile interface with lastBackupDate field
+- [x] Add lastBackupDate state to useAppStore
+- [x] Add setLastBackupDate action to useAppStore
+- [x] Update DataFileSchema with optional lastBackupDate validation
+- [x] Load lastBackupDate from DataFile into appStore on file load
+- [x] Include lastBackupDate from appStore when saving DataFile
+- [x] **Write tests**: Verify schema accepts DataFile with and without lastBackupDate
+- [x] **Test UI**: Existing data files load correctly
+
+### 24.2 Create Backup Service
+
+**File:** `src/services/backup.service.ts`
+
+Create new service for backup operations:
+
+```typescript
+class BackupService {
+  /**
+   * Check if backup is needed based on last backup date
+   * Returns true if no backup or backup older than threshold (30 days)
+   */
+  shouldPromptBackup(lastBackupDate?: string): boolean;
+
+  /**
+   * Save backup file using storage provider (local or OneDrive)
+   * - Backs up the baseVersion (last saved state) from appStore
+   * - Creates compressed ZIP backup of data file
+   * - Generates filename with timestamp (money-tree-backup-YYYY-MM-DD-HHmmss.zip)
+   * - Uses file picker to let user choose backup location
+   * - Updates lastBackupDate in appStore after successful save
+   * - Sets unsavedChanges flag to trigger save of updated metadata
+   * - Similar to archive file saving workflow
+   */
+  async saveBackupToStorage(): Promise<void>;
+}
+
+export const backupService = new BackupService();
+```
+
+Implementation details:
+- Use JSZip library for compression
+- BACKUP_THRESHOLD = 30 days (configurable constant)
+- Include app version in backup metadata
+- Use storage provider (StorageFactory) for saving backup files
+- File picker integration for backup location selection
+- Backup baseVersion (not current state) to ensure consistent saved state
+- Update lastBackupDate in appStore and set unsavedChanges = true
+
+- [x] Install JSZip package: `npm install jszip @types/jszip`
+- [x] Create backup.service.ts with BackupService class
+- [x] Implement shouldPromptBackup method (30-day threshold)
+- [x] Implement saveBackupToStorage method:
+  - [x] Get baseVersion from useAppStore (the last saved state)
+  - [x] If no baseVersion, throw error (cannot backup unsaved data)
+  - [x] Compress baseVersion to ZIP using JSZip
+  - [x] Generate filename: money-tree-backup-YYYY-MM-DD-HHmmss.zip
+  - [x] Use StorageFactory.getProvider() to get current storage provider
+  - [x] Trigger file picker for backup location selection
+  - [x] Save ZIP file to selected location
+  - [x] Update appStore.lastBackupDate with current timestamp
+  - [x] Set appStore.unsavedChanges = true to trigger save indicator
+- [x] **Write tests**: Test shouldPromptBackup and saveBackupToStorage
+- [x] **Test UI**: N/A (service layer only)
+
+### 24.3 Add Backup Prompt Dialog
+
+**File:** `src/components/common/BackupPromptDialog.tsx`
+
+Create new dialog component for backup reminders:
+
+```typescript
+interface BackupPromptDialogProps {
+  open: boolean;
+  lastBackupDate?: string;
+  onGoToSettings: () => void;
+  onDismiss: () => void;
+}
+
+export const BackupPromptDialog: React.FC<BackupPromptDialogProps>;
+```
+
+UI requirements:
+- Show days since last backup (or "Never backed up")
+- Two action buttons: "Go to Backup Settings" and "Remind Me Later"
+- Friendly, non-intrusive messaging
+- Display backup recommendations
+- Simplified flow: redirect to settings instead of handling backup in dialog
+
+- [x] Create BackupPromptDialog component
+- [x] Implement dialog UI with backup message and action buttons
+- [x] Calculate and display days since last backup
+- [x] Handle "Go to Backup Settings" click (navigate to /settings/preferences)
+- [x] Handle "Remind Me Later" click (close dialog)
+- [x] Add appropriate MUI styling and icons
+- [x] **Write tests**: Test component renders with various lastBackupDate values
+- [x] **Test UI**: Dialog displays correctly with proper formatting
+
+### 24.4 Integrate Backup Prompt in App Load
+
+**File:** `src/App.tsx`
+
+Add backup prompt check after successful data load:
+
+```typescript
+// After successful loadDataFile in autoLoad
+const state = useAppStore.getState();
+if (backupService.shouldPromptBackup(state.lastBackupDate)) {
+  setShowBackupPrompt(true);
+}
+```
+
+State management:
+- Add showBackupPrompt state
+- Show BackupPromptDialog when needed
+- Navigate to settings when user wants to backup
+
+- [x] Add showBackupPrompt state to App component
+- [x] Check backup status after autoLoad succeeds
+- [x] Check backup status after handleConnectOneDrive
+- [x] Check backup status after handleOpenExisting
+- [x] Add BackupPromptDialog to App component
+- [x] Implement handleGoToSettings handler (navigate to /settings/preferences and close dialog)
+- [x] Implement handleDismissBackup handler (close dialog)
+- [x] **Write tests**: Test backup prompt appears when conditions met
+- [x] **Test UI**: Backup prompt shows after loading old data
+
+### 24.5 Add Manual Backup to Settings
+
+**File:** `src/components/settings/DataSyncSettings.tsx`
+
+Add backup section to Data & Sync settings:
+
+UI additions:
+- New "Backup" section below sync settings
+- Show last backup date (or "Never")
+- "Create Backup" button
+- Loading state during backup creation
+- Success/error notifications
+
+```typescript
+const handleCreateBackup = async () => {
+  try {
+    setBackupLoading(true);
+    
+    // Save backup (backs up baseVersion, updates lastBackupDate, sets unsavedChanges)
+    await backupService.saveBackupToStorage();
+    
+    showSnackbar('Backup saved successfully. Remember to save to update backup date.', 'success');
+  } catch (error) {
+    if (error.message === 'User cancelled') {
+      // User cancelled file picker, don't show error
+      return;
+    }
+    showSnackbar('Failed to create backup', 'error');
+  } finally {
+    setBackupLoading(false);
+  }
+};
+```
+
+- [x] Add backup section to DataSyncSettings component
+- [x] Display last backup date from appStore.lastBackupDate
+- [x] Add "Create Backup" button with loading state
+- [x] Implement handleCreateBackup handler:
+  - [x] Call backupService.saveBackupToStorage() (no parameters needed)
+  - [x] Show success notification mentioning need to save
+  - [x] Handle user cancellation gracefully (no error message)
+- [x] Verify unsaved changes indicator appears after backup
+- [x] **Write tests**: Test backup button triggers backup flow and sets unsavedChanges
+- [x] **Test UI**: Manual backup from settings works end-to-end
+
+### 24.6 Update Sync Service to Preserve Backup Date
+
+**File:** `src/services/sync.service.ts`
+
+Ensure lastBackupDate from appStore is included when saving:
+
+```typescript
+// In syncNow method, include lastBackupDate from appStore
+const appVersion: DataFile = {
+  // ... existing fields
+  lastBackupDate: useAppStore.getState().lastBackupDate || undefined,
+};
+```
+
+- [x] Update syncNow to include lastBackupDate from appStore when creating DataFile
+- [x] Ensure lastBackupDate persists through save/load cycles
+- [x] Update loadDataFile to set lastBackupDate in appStore from loaded file
+- [x] **Write tests**: Verify lastBackupDate preserved after sync
+- [x] **Test UI**: Backup date survives sync operations
+
+### 24.7 Testing & Documentation
+
+End-to-end testing:
+- [x] Test backup prompt appears on first load (no backup)
+- [x] Test backup prompt appears when backup > 30 days old
+- [x] Test backup prompt does not appear when backup < 30 days
+- [x] Test manual backup from settings creates ZIP file
+- [x] Test backup file contains valid JSON data
+- [x] Test backup filename includes correct timestamp
+- [x] Test lastBackupDate updates after successful backup
+- [x] Test backup works with Local, OneDrive storage providers
+- [x] Test backup with large data files (performance)
+- [x] **Write tests**: Integration tests for backup flow
+- [x] **Test UI**: Complete manual verification
+
+**Manual Verification (User):**
+1. Open app with data file that has never been backed up
+2. Verify backup prompt dialog appears showing "Never backed up"
+3. Click "Remind Me Later" and verify dialog closes
+4. Reload app and verify prompt appears again (still no backup)
+5. Click "Go to Backup Settings" button in prompt
+6. Verify navigates to Settings > Data & Sync page and dialog closes
+7. Verify "Last Backup" shows "Never" in backup section
+8. Click "Create Backup" button
+9. Verify loading state appears
+10. Verify file picker dialog appears (same as archive save)
+11. Select backup location and save
+12. Verify success message appears mentioning need to save
+13. **Verify unsaved changes indicator appears in header (backup date updated)**
+14. Navigate to backup location and verify ZIP file exists with correct filename format
+15. Extract ZIP and verify it contains valid JSON matching last saved state (baseVersion)
+16. Click Save button in header to persist lastBackupDate to file
+17. Verify unsaved changes indicator disappears
+18. Verify "Last Backup" date updates to current date in settings
+19. Close and reopen app
+20. Verify backup prompt does not appear (backup is recent)
+21. Make some edits but don't save (create unsaved changes)
+22. Navigate to Settings > Data & Sync
+23. Create another backup
+24. Verify backup contains last saved state, not unsaved edits
+25. Use app for 31+ days (or manually set lastBackupDate to old date in file)
+26. Reload app and verify backup prompt appears again showing days since last backup
+27. Click "Go to Backup Settings" to navigate to settings page
+28. Test backup with OneDrive storage provider
+29. Verify backup can be saved to OneDrive folder
+30. Test backup with Local storage provider
+31. Verify backup can be saved to any local folder
+32. Test cancelling file picker and verify no error message appears

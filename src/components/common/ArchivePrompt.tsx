@@ -19,7 +19,7 @@ export interface ArchivePromptProps {
   year: number;
   yearSummary: YearEndSummary;
   baseCurrency: CurrencyCode;
-  onArchiveNow: () => void;
+  onGoToSettings: () => void;
   onRemindLater: () => void;
 }
 
@@ -28,7 +28,7 @@ export const ArchivePrompt: React.FC<ArchivePromptProps> = ({
   year,
   yearSummary,
   baseCurrency,
-  onArchiveNow,
+  onGoToSettings,
   onRemindLater,
 }) => {
   return (
@@ -70,8 +70,8 @@ export const ArchivePrompt: React.FC<ArchivePromptProps> = ({
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button onClick={onRemindLater}>Remind Me Later</Button>
-        <Button onClick={onArchiveNow} variant="contained" color="primary">
-          Archive Now
+        <Button onClick={onGoToSettings} variant="contained" color="primary">
+          Go to Archive Settings
         </Button>
       </DialogActions>
     </Dialog>

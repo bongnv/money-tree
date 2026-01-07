@@ -14,7 +14,7 @@ describe('ArchivePrompt', () => {
     closingBalances: {},
   };
 
-  const mockOnArchiveNow = jest.fn();
+  const mockOnGoToSettings = jest.fn();
   const mockOnRemindLater = jest.fn();
 
   beforeEach(() => {
@@ -28,7 +28,7 @@ describe('ArchivePrompt', () => {
         year={2023}
         yearSummary={mockYearSummary}
         baseCurrency={CurrencyCode.USD}
-        onArchiveNow={mockOnArchiveNow}
+        onGoToSettings={mockOnGoToSettings}
         onRemindLater={mockOnRemindLater}
       />
     );
@@ -38,22 +38,22 @@ describe('ArchivePrompt', () => {
     expect(screen.getByText('150')).toBeInTheDocument();
   });
 
-  it('should call onArchiveNow when Archive Now button is clicked', () => {
+  it('should call onGoToSettings when Go to Archive Settings button is clicked', () => {
     render(
       <ArchivePrompt
         open={true}
         year={2023}
         yearSummary={mockYearSummary}
         baseCurrency={CurrencyCode.USD}
-        onArchiveNow={mockOnArchiveNow}
+        onGoToSettings={mockOnGoToSettings}
         onRemindLater={mockOnRemindLater}
       />
     );
 
-    const archiveButton = screen.getByRole('button', { name: /Archive Now/i });
+    const archiveButton = screen.getByRole('button', { name: /Go to Archive Settings/i });
     fireEvent.click(archiveButton);
 
-    expect(mockOnArchiveNow).toHaveBeenCalledTimes(1);
+    expect(mockOnGoToSettings).toHaveBeenCalledTimes(1);
   });
 
   it('should call onRemindLater when Remind Me Later button is clicked', () => {
@@ -63,7 +63,7 @@ describe('ArchivePrompt', () => {
         year={2023}
         yearSummary={mockYearSummary}
         baseCurrency={CurrencyCode.USD}
-        onArchiveNow={mockOnArchiveNow}
+        onGoToSettings={mockOnGoToSettings}
         onRemindLater={mockOnRemindLater}
       />
     );
@@ -81,7 +81,7 @@ describe('ArchivePrompt', () => {
         year={2023}
         yearSummary={mockYearSummary}
         baseCurrency={CurrencyCode.USD}
-        onArchiveNow={mockOnArchiveNow}
+        onGoToSettings={mockOnGoToSettings}
         onRemindLater={mockOnRemindLater}
       />
     );
@@ -96,7 +96,7 @@ describe('ArchivePrompt', () => {
         year={2023}
         yearSummary={mockYearSummary}
         baseCurrency={CurrencyCode.USD}
-        onArchiveNow={mockOnArchiveNow}
+        onGoToSettings={mockOnGoToSettings}
         onRemindLater={mockOnRemindLater}
       />
     );
@@ -112,7 +112,7 @@ describe('ArchivePrompt', () => {
         year={2023}
         yearSummary={mockYearSummary}
         baseCurrency={CurrencyCode.USD}
-        onArchiveNow={mockOnArchiveNow}
+        onGoToSettings={mockOnGoToSettings}
         onRemindLater={mockOnRemindLater}
       />
     );

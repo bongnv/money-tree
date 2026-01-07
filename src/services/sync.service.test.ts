@@ -25,7 +25,7 @@ describe('SyncService', () => {
       loadDataFile: mockLoadDataFile,
       initialize: jest.fn().mockResolvedValue(undefined),
       getFileName: jest.fn().mockReturnValue('test.json'),
-      saveArchiveFile: jest.fn().mockResolvedValue(undefined),
+      saveFile: jest.fn().mockResolvedValue(undefined),
     });
 
     jest.spyOn(window, 'confirm').mockReturnValue(false);
@@ -416,7 +416,7 @@ describe('SyncService', () => {
         saveDataFile: mockSaveDataFile,
         loadDataFile: mockLoadDataFile.mockResolvedValue(mockDataFile),
         getFileName: jest.fn().mockReturnValue('test.json'),
-        saveArchiveFile: jest.fn().mockResolvedValue(undefined),
+        saveFile: jest.fn().mockResolvedValue(undefined),
       });
 
       const result = await syncService.autoLoad();
@@ -430,7 +430,7 @@ describe('SyncService', () => {
         saveDataFile: mockSaveDataFile,
         loadDataFile: mockLoadDataFile.mockRejectedValue(new Error('Load failed')),
         getFileName: jest.fn().mockReturnValue('test.json'),
-        saveArchiveFile: jest.fn().mockResolvedValue(undefined),
+        saveFile: jest.fn().mockResolvedValue(undefined),
       });
 
       const result = await syncService.autoLoad();

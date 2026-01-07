@@ -190,6 +190,7 @@ class SyncService {
         archivedYears: state.archivedYears,
         baseCurrency: state.baseCurrency,
         lastModified: state.baseVersion?.lastModified || new Date().toISOString(),
+        lastBackupDate: state.lastBackupDate || undefined,
       });
 
       let dataToSave = appVersion;
@@ -327,6 +328,9 @@ class SyncService {
       if (dataFile) {
         // Store archived years in app state
         state.setArchivedYears(dataFile.archivedYears || []);
+
+        // Store last backup date in app state
+        state.setLastBackupDate(dataFile.lastBackupDate || null);
 
         // Calculate and store file hash for conflict detection
         const fileHash = await calculateDataFileHash(dataFile);

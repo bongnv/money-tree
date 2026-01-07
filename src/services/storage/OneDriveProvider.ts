@@ -1,5 +1,5 @@
 import type { IStorageProvider } from './IStorageProvider';
-import type { DataFile, ArchiveFile } from '../../types/models';
+import type { DataFile } from '../../types/models';
 import { DataFileSchema } from '../../schemas/models.schema';
 import { errorMessages } from '../../config/onedrive.config';
 import type { OneDriveService } from './OneDriveService';
@@ -137,32 +137,28 @@ export class OneDriveProvider implements IStorageProvider {
   }
 
   /**
-   * Save archive file to OneDrive
-   * File info must be provided (from external file picker)
-   * @param archiveFile The archive file to save
-   * @param fileInfo The selected file information (from FilePickerService)
+   * Save a blob file (e.g., backup ZIP, archive JSON) to OneDrive
+   * Saves next to the main file in the same folder
+   * @param blob The blob data to save
+   * @param filename The filename to use
    */
-  async saveArchiveFile(archiveFile: ArchiveFile): Promise<void> {
-    // Auto-generate archive file name next to main file
-    const mainFileName = this.getFileName();
-    const archiveFileName = mainFileName.replace('.json', `-${archiveFile.year}.json`);
-
-    const content = JSON.stringify(archiveFile, null, 2);
-
+  async saveFile(blob: Blob, filename: string): Promise<void> {
     let uploadPath: string;
 
     if (this.selectedFileInfo.driveId && this.selectedFileInfo.parentItemId) {
       // Shared folder: use drives endpoint
-      uploadPath = `/drives/${this.selectedFileInfo.driveId}/items/${this.selectedFileInfo.parentItemId}:/${archiveFileName}:/content`;
+      uploadPath = `/drives/${this.selectedFileInfo.driveId}/items/${this.selectedFileInfo.parentItemId}:/${filename}:/content`;
     } else {
       // Personal drive: use root path
       const mainPath = this.selectedFileInfo.filePath;
-      const archivePath = mainPath.substring(0, mainPath.lastIndexOf('/') + 1) + archiveFileName;
-      uploadPath = archivePath.startsWith('/')
-        ? `/me/drive/root:${archivePath}:/content`
-        : `/me/drive/root:/${archivePath}:/content`;
+      const filePath = mainPath.substring(0, mainPath.lastIndexOf('/') + 1) + filename;
+      uploadPath = filePath.startsWith('/')
+        ? `/me/drive/root:${filePath}:/content`
+        : `/me/drive/root:/${filePath}:/content`;
     }
 
+    // Convert blob to string or buffer for upload
+    const content = await blob.text();
     await this.service.writeFile(uploadPath, content);
   }
 }

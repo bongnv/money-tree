@@ -1,4 +1,4 @@
-import type { DataFile, ArchiveFile } from '../../types/models';
+import type { DataFile } from '../../types/models';
 
 /**
  * Storage provider interface
@@ -25,12 +25,13 @@ export interface IStorageProvider {
   saveDataFile(data: DataFile): Promise<void>;
 
   /**
-   * Save archive file for a specific year
+   * Save a blob file (e.g., backup ZIP, archive JSON)
    * Provider handles showing file picker (Local) or determining location (OneDrive)
-   * @param archiveFile The archive file to save
+   * @param blob The blob data to save
+   * @param filename The suggested filename
    * @throws Error if saving fails or user cancels
    */
-  saveArchiveFile(archiveFile: ArchiveFile): Promise<void>;
+  saveFile(blob: Blob, filename: string): Promise<void>;
 
   /**
    * Get the name of the current file

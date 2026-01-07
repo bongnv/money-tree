@@ -707,3 +707,31 @@ interface Budget {
 - Credit card payments: always to same card account
 
 Setting defaults reduces data entry and simplifies the UI for common workflows.
+### FR-13: Data Backup and Recovery (Post-MVP)
+
+**FR-13.1** [x] Automatic backup reminder - *Phase 24*
+- Check last backup timestamp when data file is loaded
+- Prompt user if no backup exists or last backup is older than 1 month
+- Non-blocking notification that allows user to backup now or dismiss
+- Store last backup timestamp in main data file
+
+**FR-13.2** [x] Manual backup creation - *Phase 24*
+- Backup option in Settings page under Data & Sync section
+- Compress main data file (ZIP format) when creating backup
+- Include timestamp in backup filename (e.g., `money-tree-backup-2026-01-07.zip`)
+- Download compressed backup to user's device
+- Update last backup timestamp after successful backup
+
+**FR-13.3** [x] Backup file format - *Phase 24*
+- ZIP archive containing the JSON data file
+- Preserve original file structure inside ZIP
+- Include metadata: backup creation date, app version
+- Human-readable filename with date
+
+**Rationale**: Users need protection against data loss from:
+- Accidental deletion or corruption
+- Device failure or browser data clearing
+- User error during editing
+- File storage provider issues
+
+Regular backups provide peace of mind and recovery options without requiring constant manual attention.

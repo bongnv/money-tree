@@ -25,6 +25,8 @@ interface AppState {
   baseVersion: DataFile | null;
   // Archive settings
   archivePromptPostponedAt: string | null; // ISO date when user clicked "Remind Me Later"
+  // Backup metadata
+  lastBackupDate: string | null; // ISO date of last successful backup
 }
 
 interface AppActions {
@@ -45,6 +47,8 @@ interface AppActions {
   clearFileMetadata: () => void;
   // Archive actions
   setArchivePromptPostponedAt: (timestamp: string | null) => void;
+  // Backup actions
+  setLastBackupDate: (date: string | null) => void;
 }
 
 export const useAppStore = create<AppState & AppActions>((set) => ({
@@ -64,6 +68,7 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
   fileLoadedAt: null,
   baseVersion: null,
   archivePromptPostponedAt: storageService.getArchivePromptPostponedAt(),
+  lastBackupDate: null,
 
   setFileName: (fileName) => {
     set({ fileName });
@@ -108,6 +113,7 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
       fileContentHash: null,
       fileLoadedAt: null,
       baseVersion: null,
+      lastBackupDate: null,
     });
   },
 
@@ -149,5 +155,9 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
       storageService.clearArchivePromptPostponedAt();
     }
     set({ archivePromptPostponedAt: timestamp });
+  },
+
+  setLastBackupDate: (date) => {
+    set({ lastBackupDate: date, hasUnsavedChanges: true });
   },
 }));

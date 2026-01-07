@@ -96,7 +96,6 @@ export class OneDriveService {
         this.msalInstance.setActiveAccount(account);
       }
     }
-
     if (account) {
       this.account = account;
       await this.createGraphClient();

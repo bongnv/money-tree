@@ -172,14 +172,6 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
                     </Typography>
                   </Box>
                 </Box>
-                {isOneDriveConfigured() && (
-                  <Alert severity="info" sx={{ mt: 2 }}>
-                    <Typography variant="body2">
-                      A popup window will open for Microsoft sign-in. If blocked, look for a popup
-                      icon in your browser&apos;s address bar and allow it.
-                    </Typography>
-                  </Alert>
-                )}
               </CardContent>
               <CardActions>
                 <Button

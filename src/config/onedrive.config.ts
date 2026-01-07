@@ -20,6 +20,10 @@
  *   ONEDRIVE_CLIENT_ID=your-client-id
  */
 
+// Detect Safari browser
+const isSafari =
+  typeof window !== 'undefined' && /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
 export const msalConfig = {
   auth: {
     // Client ID must be injected via ONEDRIVE_CLIENT_ID environment variable at build time
@@ -34,7 +38,8 @@ export const msalConfig = {
     redirectUri: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
   },
   cache: {
-    cacheLocation: 'localStorage', // Store tokens in localStorage (more persistent than sessionStorage)
+    // Safari ITP blocks localStorage writes during popup flow, use sessionStorage instead
+    cacheLocation: isSafari ? 'sessionStorage' : 'localStorage',
     storeAuthStateInCookie: true, // Required for Safari and browsers with strict privacy settings
   },
 };

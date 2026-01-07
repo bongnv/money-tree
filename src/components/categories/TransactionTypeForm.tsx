@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { TextField, MenuItem, Box, Button } from '@mui/material';
 import type { TransactionType, Category } from '../../types/models';
 import { Group } from '../../types/enums';
+import { useAccountStore } from '../../stores/useAccountStore';
 
 interface TransactionTypeFormProps {
   transactionType?: TransactionType;
@@ -18,11 +19,15 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
+  const accounts = useAccountStore((state) => state.accounts);
+
   const [formData, setFormData] = useState({
     name: transactionType?.name || '',
     categoryId: transactionType?.categoryId || categoryId || '',
     group: transactionType?.group || Group.EXPENSE,
     description: transactionType?.description || '',
+    defaultFromAccountId: transactionType?.defaultFromAccountId || '',
+    defaultToAccountId: transactionType?.defaultToAccountId || '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -58,15 +63,35 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
       categoryId: formData.categoryId,
       group: formData.group,
       description: formData.description.trim() || undefined,
+      defaultFromAccountId: formData.defaultFromAccountId || undefined,
+      defaultToAccountId: formData.defaultToAccountId || undefined,
     });
   };
 
   const handleChange =
     (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setFormData({
-        ...formData,
-        [field]: e.target.value,
-      });
+      const newValue = e.target.value;
+
+      // If changing group from TRANSFER to something else, clear default accounts
+      if (field === 'group' && newValue !== Group.TRANSFER) {
+        setFormData({
+          ...formData,
+          group: newValue as Group,
+          defaultFromAccountId: '',
+          defaultToAccountId: '',
+        });
+      } else if (field === 'group') {
+        setFormData({
+          ...formData,
+          group: newValue as Group,
+        });
+      } else {
+        setFormData({
+          ...formData,
+          [field]: newValue,
+        });
+      }
+
       if (errors[field]) {
         setErrors({ ...errors, [field]: '' });
       }
@@ -147,6 +172,52 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
         multiline
         rows={3}
       />
+
+      {formData.group === Group.TRANSFER && (
+        <>
+          <TextField
+            fullWidth
+            select
+            label="Default From Account"
+            value={formData.defaultFromAccountId}
+            onChange={handleChange('defaultFromAccountId')}
+            margin="normal"
+            helperText="Optional: Pre-set the 'from' account for this transaction type"
+          >
+            <MenuItem value="">
+              <em>None</em>
+            </MenuItem>
+            {accounts
+              .filter((account) => account.isActive)
+              .map((account) => (
+                <MenuItem key={account.id} value={account.id}>
+                  {account.name}
+                </MenuItem>
+              ))}
+          </TextField>
+
+          <TextField
+            fullWidth
+            select
+            label="Default To Account"
+            value={formData.defaultToAccountId}
+            onChange={handleChange('defaultToAccountId')}
+            margin="normal"
+            helperText="Optional: Pre-set the 'to' account for this transaction type"
+          >
+            <MenuItem value="">
+              <em>None</em>
+            </MenuItem>
+            {accounts
+              .filter((account) => account.isActive)
+              .map((account) => (
+                <MenuItem key={account.id} value={account.id}>
+                  {account.name}
+                </MenuItem>
+              ))}
+          </TextField>
+        </>
+      )}
 
       <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
         <Button onClick={onCancel}>Cancel</Button>

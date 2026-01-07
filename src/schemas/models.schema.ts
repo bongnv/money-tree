@@ -48,6 +48,8 @@ export const TransactionTypeSchema = z.object({
   group: z.nativeEnum(Group),
   description: z.string().optional(),
   isActive: z.boolean().optional().default(true),
+  defaultFromAccountId: z.string().optional(),
+  defaultToAccountId: z.string().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });

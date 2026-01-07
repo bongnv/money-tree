@@ -682,3 +682,28 @@ interface Budget {
 - Budget: **Add `currencyId`** - budget amounts must be in specific currency
 - Transaction: Inherits currency from account, no direct field needed
 - Categories/TransactionTypes: No currency needed (classification only)
+
+### FR-12: Transaction Type Account Defaults (Post-MVP)
+
+**FR-12.1** [x] Default account configuration for transfer transaction types - *Phase 23*
+- Transaction types in TRANSFER group can have optional default accounts
+- `defaultFromAccountId` - sets "from account" automatically when creating transaction
+- `defaultToAccountId` - sets "to account" automatically when creating transaction
+- Defaults can be set independently (one, both, or neither)
+- User cannot change default accounts in transaction form (enforced)
+- Simplifies repetitive transfers (e.g., "Salary" always from employer account)
+
+**FR-12.2** [x] Simplified quick entry UI for transfer types with defaults - *Phase 23*
+- Hide account fields in quick entry row when defaults are set
+- Only show account fields that have no default configured
+- Show which defaults are being used (subtle indicator or read-only display)
+- Full transaction dialog disables (not hides) fields with defaults to show which accounts are used
+- Reduces visual clutter and prevents errors for common transfer patterns
+
+**Rationale**: Many transfer transactions are repetitive with predictable accounts:
+- Salary transfers: always from same source account
+- Regular savings: always to same savings account
+- Loan payments: always from same account
+- Credit card payments: always to same card account
+
+Setting defaults reduces data entry and simplifies the UI for common workflows.

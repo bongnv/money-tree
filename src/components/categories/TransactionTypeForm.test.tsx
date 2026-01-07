@@ -2,9 +2,35 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TransactionTypeForm } from './TransactionTypeForm';
 import { Group } from '../../types/enums';
-import type { Category, TransactionType } from '../../types/models';
+import type { Category, TransactionType, Account } from '../../types/models';
+import { useAccountStore } from '../../stores/useAccountStore';
+
+jest.mock('../../stores/useAccountStore');
 
 describe('TransactionTypeForm', () => {
+  const mockAccounts: Account[] = [
+    {
+      id: 'acc-1',
+      name: 'Checking Account',
+      type: 'bank_account' as any,
+      currencyCode: 'USD' as any,
+      initialBalance: 1000,
+      isActive: true,
+      createdAt: '2024-01-01T00:00:00.000Z',
+      updatedAt: '2024-01-01T00:00:00.000Z',
+    },
+    {
+      id: 'acc-2',
+      name: 'Savings Account',
+      type: 'bank_account' as any,
+      currencyCode: 'USD' as any,
+      initialBalance: 5000,
+      isActive: true,
+      createdAt: '2024-01-01T00:00:00.000Z',
+      updatedAt: '2024-01-01T00:00:00.000Z',
+    },
+  ];
+
   const mockCategories: Category[] = [
     {
       id: 'cat-1',
@@ -25,6 +51,7 @@ describe('TransactionTypeForm', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (useAccountStore as unknown as jest.Mock).mockReturnValue(mockAccounts);
   });
 
   it('should render empty form for new transaction type', () => {
@@ -219,5 +246,164 @@ describe('TransactionTypeForm', () => {
     await user.type(screen.getByLabelText(/transaction type name/i), 'Test');
 
     expect(screen.queryByText(/transaction type name is required/i)).not.toBeInTheDocument();
+  });
+
+  describe('Default Account Fields', () => {
+    it('should show default account fields when group is TRANSFER', async () => {
+      const user = userEvent.setup();
+      render(
+        <TransactionTypeForm
+          categories={mockCategories}
+          onSubmit={mockOnSubmit}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      // Select TRANSFER group
+      const groupSelect = screen.getByLabelText(/group/i);
+      await user.click(groupSelect);
+      await user.click(screen.getByRole('option', { name: /transfer/i }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/default from account/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/default to account/i)).toBeInTheDocument();
+      });
+    });
+
+    it('should not show default account fields when group is not TRANSFER', () => {
+      render(
+        <TransactionTypeForm
+          categories={mockCategories}
+          onSubmit={mockOnSubmit}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      expect(screen.queryByLabelText(/default from account/i)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/default to account/i)).not.toBeInTheDocument();
+    });
+
+    it('should clear default accounts when changing from TRANSFER to another group', async () => {
+      const user = userEvent.setup();
+      render(
+        <TransactionTypeForm
+          categories={mockCategories}
+          onSubmit={mockOnSubmit}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      // Select TRANSFER group
+      const groupSelect = screen.getByLabelText(/group/i);
+      await user.click(groupSelect);
+      await user.click(screen.getByRole('option', { name: /transfer/i }));
+
+      // Select default accounts
+      await waitFor(() => {
+        expect(screen.getByLabelText(/default from account/i)).toBeInTheDocument();
+      });
+
+      const fromAccountSelect = screen.getByLabelText(/default from account/i);
+      await user.click(fromAccountSelect);
+      await user.click(screen.getByRole('option', { name: /checking account/i }));
+
+      // Change group to EXPENSE
+      await user.click(groupSelect);
+      await user.click(screen.getByRole('option', { name: /expense/i }));
+
+      // Default account fields should be hidden
+      await waitFor(() => {
+        expect(screen.queryByLabelText(/default from account/i)).not.toBeInTheDocument();
+      });
+    });
+
+    it('should submit with default accounts when set', async () => {
+      const user = userEvent.setup();
+      render(
+        <TransactionTypeForm
+          categories={mockCategories}
+          onSubmit={mockOnSubmit}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      // Fill in required fields
+      await user.type(screen.getByLabelText(/transaction type name/i), 'Salary Transfer');
+
+      const categorySelect = screen.getByLabelText(/category/i);
+      await user.click(categorySelect);
+      await user.click(screen.getByRole('option', { name: /salary/i }));
+
+      // Select TRANSFER group
+      const groupSelect = screen.getByLabelText(/group/i);
+      await user.click(groupSelect);
+      await user.click(screen.getByRole('option', { name: /transfer/i }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/default from account/i)).toBeInTheDocument();
+      });
+
+      // Select default accounts
+      const fromAccountSelect = screen.getByLabelText(/default from account/i);
+      await user.click(fromAccountSelect);
+      await user.click(screen.getByRole('option', { name: /checking account/i }));
+
+      const toAccountSelect = screen.getByLabelText(/default to account/i);
+      await user.click(toAccountSelect);
+      await user.click(screen.getByRole('option', { name: /savings account/i }));
+
+      // Submit form
+      const submitButton = screen.getByRole('button', { name: /create/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockOnSubmit).toHaveBeenCalledWith({
+          name: 'Salary Transfer',
+          categoryId: 'cat-2',
+          group: Group.TRANSFER,
+          description: undefined,
+          defaultFromAccountId: 'acc-1',
+          defaultToAccountId: 'acc-2',
+        });
+      });
+    });
+
+    it('should submit without default accounts when not set', async () => {
+      const user = userEvent.setup();
+      render(
+        <TransactionTypeForm
+          categories={mockCategories}
+          onSubmit={mockOnSubmit}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      // Fill in required fields
+      await user.type(screen.getByLabelText(/transaction type name/i), 'General Transfer');
+
+      const categorySelect = screen.getByLabelText(/category/i);
+      await user.click(categorySelect);
+      await user.click(screen.getByRole('option', { name: /groceries/i }));
+
+      // Select TRANSFER group
+      const groupSelect = screen.getByLabelText(/group/i);
+      await user.click(groupSelect);
+      await user.click(screen.getByRole('option', { name: /transfer/i }));
+
+      // Submit form without selecting default accounts
+      const submitButton = screen.getByRole('button', { name: /create/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockOnSubmit).toHaveBeenCalledWith({
+          name: 'General Transfer',
+          categoryId: 'cat-1',
+          group: Group.TRANSFER,
+          description: undefined,
+          defaultFromAccountId: undefined,
+          defaultToAccountId: undefined,
+        });
+      });
+    });
   });
 });

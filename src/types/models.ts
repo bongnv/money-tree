@@ -50,6 +50,8 @@ export interface TransactionType {
   group: Group;
   description?: string;
   isActive?: boolean;
+  defaultFromAccountId?: string; // Default from account (TRANSFER group only)
+  defaultToAccountId?: string; // Default to account (TRANSFER group only)
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }

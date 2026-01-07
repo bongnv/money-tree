@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo } from 'react';
-import { Box, TextField, IconButton, Tooltip, Autocomplete } from '@mui/material';
+import { Box, TextField, IconButton, Tooltip, Autocomplete, Chip } from '@mui/material';
 import { Add as AddIcon, Clear as ClearIcon, MoreHoriz as MoreIcon } from '@mui/icons-material';
 import type {
   Transaction,
@@ -88,6 +88,15 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
     }
     return null;
   }, [formData.transactionTypeId, transactionTypes]);
+
+  // Get selected transaction type with defaults
+  const selectedTransactionType = useMemo(() => {
+    return transactionTypes.find((tt) => tt.id === formData.transactionTypeId);
+  }, [formData.transactionTypeId, transactionTypes]);
+
+  // Check if accounts have defaults (should be hidden in quick entry)
+  const hasFromAccountDefault = !!selectedTransactionType?.defaultFromAccountId;
+  const hasToAccountDefault = !!selectedTransactionType?.defaultToAccountId;
 
   const validate = (): boolean => {
     const transactionType = transactionTypes.find((tt) => tt.id === formData.transactionTypeId);
@@ -276,13 +285,17 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
   const activeAccounts = accounts.filter((a) => a.isActive);
 
   const showFromAccount =
-    selectedGroup === Group.EXPENSE ||
-    selectedGroup === Group.TRANSFER ||
-    selectedGroup === Group.ASSET_PURCHASE;
+    (selectedGroup === Group.EXPENSE ||
+      selectedGroup === Group.TRANSFER ||
+      selectedGroup === Group.ASSET_PURCHASE) &&
+    !hasFromAccountDefault; // Hide if default is set
+
   const showToAccount =
-    selectedGroup === Group.INCOME ||
-    selectedGroup === Group.TRANSFER ||
-    selectedGroup === Group.ASSET_SALE;
+    (selectedGroup === Group.INCOME ||
+      selectedGroup === Group.TRANSFER ||
+      selectedGroup === Group.ASSET_SALE) &&
+    !hasToAccountDefault; // Hide if default is set
+
   const showFromAsset = selectedGroup === Group.ASSET_SALE;
   const showToAsset = selectedGroup === Group.ASSET_PURCHASE;
 
@@ -354,21 +367,33 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
             toAssetId: '',
           };
 
-          // Clear fromAccount if not needed for new group
+          // Apply default accounts or clear if not needed
           if (
-            newGroup !== Group.EXPENSE &&
-            newGroup !== Group.TRANSFER &&
-            newGroup !== Group.ASSET_PURCHASE
+            newGroup === Group.EXPENSE ||
+            newGroup === Group.TRANSFER ||
+            newGroup === Group.ASSET_PURCHASE
           ) {
+            // Apply default from account if set, otherwise keep current
+            if (newTransactionType?.defaultFromAccountId) {
+              updates.fromAccountId = newTransactionType.defaultFromAccountId;
+            }
+          } else {
+            // Clear fromAccount if not needed for new group
             updates.fromAccountId = '';
           }
 
-          // Clear toAccount if not needed for new group
+          // Apply default to account or clear if not needed
           if (
-            newGroup !== Group.INCOME &&
-            newGroup !== Group.TRANSFER &&
-            newGroup !== Group.ASSET_SALE
+            newGroup === Group.INCOME ||
+            newGroup === Group.TRANSFER ||
+            newGroup === Group.ASSET_SALE
           ) {
+            // Apply default to account if set, otherwise keep current
+            if (newTransactionType?.defaultToAccountId) {
+              updates.toAccountId = newTransactionType.defaultToAccountId;
+            }
+          } else {
+            // Clear toAccount if not needed for new group
             updates.toAccountId = '';
           }
 
@@ -398,6 +423,20 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
         )}
         sx={{ minWidth: 180 }}
       />
+
+      {(hasFromAccountDefault || hasToAccountDefault) && (
+        <Chip
+          label={
+            hasFromAccountDefault && hasToAccountDefault
+              ? `From: ${accounts.find((a) => a.id === selectedTransactionType?.defaultFromAccountId)?.name} → To: ${accounts.find((a) => a.id === selectedTransactionType?.defaultToAccountId)?.name}`
+              : hasFromAccountDefault
+                ? `From: ${accounts.find((a) => a.id === selectedTransactionType?.defaultFromAccountId)?.name}`
+                : `To: ${accounts.find((a) => a.id === selectedTransactionType?.defaultToAccountId)?.name}`
+          }
+          size="small"
+          sx={{ alignSelf: 'center' }}
+        />
+      )}
 
       {showFromAccount && (
         <Autocomplete

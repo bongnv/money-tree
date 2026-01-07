@@ -1976,3 +1976,90 @@ These features will be implemented after the MVP is validated by users.
 10. Click back/breadcrumb to return to categories list
 11. Test navigation to other settings sections (Accounts, Exchange Rates, Archives, Preferences)
 12. Verify all settings functionality works as before
+
+---
+
+## Phase 23: Transaction Type Account Defaults (Post-MVP)
+
+**Requirements**: FR-12.1 (Default account configuration), FR-12.2 (Simplified UI)
+
+**Goal**: Allow transaction types in TRANSFER group to have default accounts that automatically populate and are enforced when creating transactions, simplifying repetitive transfers.
+
+### 23.1 Update TransactionType Model
+- [x] Add `defaultFromAccountId?: string` to TransactionType interface in models.ts
+- [x] Add `defaultToAccountId?: string` to TransactionType interface in models.ts
+- [x] Add validation: defaults only valid for TRANSFER group types
+- [x] Update schema validation in models.schema.ts
+- [ ] **Write tests**: Test schema validation for default account fields
+- [ ] **Test UI**: N/A (model change only)
+
+### 23.2 Update Transaction Type Management UI
+- [x] Add account selection fields to transaction type dialog (create/edit)
+- [x] Show "Default From Account" and "Default To Account" dropdowns
+- [x] Only enable default fields when group is TRANSFER
+- [x] Clear defaults if group changes from TRANSFER to another group
+- [x] Show help text: "Defaults are enforced - users cannot change these accounts"
+- [ ] **Write tests**: Test transaction type dialog with default account fields
+- [ ] **Test UI**: Create/edit transaction types with default accounts
+
+### 23.3 Update Transaction Creation Logic
+- [x] Modify transaction form to auto-populate accounts from type defaults
+- [x] In full dialog: Disable (not hide) account fields if defaults are set
+- [x] In quick entry: Hide account fields completely if defaults are set
+- [x] Show disabled account dropdown with selected default value in full dialog
+- [x] Apply defaults in both quick entry row and full transaction dialog
+- [ ] **Write tests**: Test transaction form with default accounts
+- [ ] **Test UI**: Create transactions with types that have defaults
+
+### 23.4 Update Quick Entry Row UI
+- [x] Conditionally render account fields based on transaction type defaults
+- [x] Hide "From Account" field completely if selected type has `defaultFromAccountId`
+- [x] Hide "To Account" field completely if selected type has `defaultToAccountId`
+- [x] Show compact indicator of which accounts are being used (subtle label/icon)
+- [x] Update form validation to use defaults when fields are hidden
+- [ ] **Write tests**: Test quick entry with various default configurations
+- [ ] **Test UI**: Quick entry row adapts based on transaction type selection
+
+### 23.5 Update Transaction Store Logic
+- [x] Modify transaction creation to apply default accounts from type
+- [x] Ensure defaults are applied before validation
+- [x] Handle case where default account no longer exists (show error)
+- [x] Update transaction validation to check defaults
+- [ ] **Write tests**: Test transaction store with default accounts
+- [ ] **Test UI**: Transactions created with correct default accounts
+
+### 23.6 Update Transaction Edit Dialog
+- [x] Apply same disable logic for account fields during edit (show but disable)
+- [x] Prevent changing accounts if they were set by defaults
+- [x] Show clear indicator that accounts are locked by transaction type
+- [x] Allow changing transaction type (which may change account field status)
+- [ ] **Write tests**: Test transaction editing with default accounts
+- [ ] **Test UI**: Edit transactions and verify account fields behave correctly
+
+### 23.7 Migration and Data Integrity
+- [N/A] No migration needed - new optional fields are backward compatible
+- [x] Existing transaction types default to undefined for new fields
+- [x] No data migration needed (new optional fields)
+- [ ] Add validation service check: warn if default account doesn't exist
+- [ ] **Write tests**: Test backward compatibility with existing data
+- [ ] **Test UI**: Existing transactions work unchanged
+
+**Manual Verification (User):**
+1. Navigate to Settings > Categories
+2. Select a category with TRANSFER group transaction types
+3. Create a new transaction type in TRANSFER group
+4. Set "Default From Account" to a specific account
+5. Set "Default To Account" to another account
+6. Save the transaction type
+7. Go to Dashboard quick entry
+8. Select the new transaction type
+9. Verify "From Account" and "To Account" fields are hidden in quick entry
+10. Verify subtle indicator shows which accounts are being used
+11. Create a transaction and verify it uses the default accounts
+12. Click on the transaction to open full edit dialog
+13. Verify account fields are visible but disabled (showing selected defaults)
+14. Try to change accounts and verify they cannot be changed
+15. Create another TRANSFER type with only one default set
+16. Verify only the field with a default is hidden in quick entry
+17. Verify in full dialog the defaulted field is disabled, other is editable
+18. Test with transaction types that have no defaults (all fields visible/editable)

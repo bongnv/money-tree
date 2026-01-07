@@ -151,6 +151,45 @@ describe('Model Schemas', () => {
       };
       expect(() => TransactionTypeSchema.parse(invalidTransactionType)).toThrow();
     });
+
+    it('should validate transaction type with default accounts', () => {
+      const validTransactionType = {
+        id: 'tt1',
+        name: 'Salary Transfer',
+        categoryId: 'cat1',
+        group: Group.TRANSFER,
+        defaultFromAccountId: 'acc1',
+        defaultToAccountId: 'acc2',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      expect(() => TransactionTypeSchema.parse(validTransactionType)).not.toThrow();
+    });
+
+    it('should validate transaction type with only one default account', () => {
+      const validTransactionType = {
+        id: 'tt1',
+        name: 'Salary Transfer',
+        categoryId: 'cat1',
+        group: Group.TRANSFER,
+        defaultFromAccountId: 'acc1',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      expect(() => TransactionTypeSchema.parse(validTransactionType)).not.toThrow();
+    });
+
+    it('should validate transaction type without default accounts', () => {
+      const validTransactionType = {
+        id: 'tt1',
+        name: 'Transfer',
+        categoryId: 'cat1',
+        group: Group.TRANSFER,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      expect(() => TransactionTypeSchema.parse(validTransactionType)).not.toThrow();
+    });
   });
 
   describe('TransactionSchema', () => {

@@ -50,6 +50,15 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     return null;
   }, [formData.transactionTypeId, transactionTypes]);
 
+  // Get selected transaction type
+  const selectedTransactionType = useMemo(() => {
+    return transactionTypes.find((tt) => tt.id === formData.transactionTypeId);
+  }, [formData.transactionTypeId, transactionTypes]);
+
+  // Check if accounts are set by defaults (and should be disabled)
+  const fromAccountIsDefault = selectedTransactionType?.defaultFromAccountId;
+  const toAccountIsDefault = selectedTransactionType?.defaultToAccountId;
+
   const validate = (): boolean => {
     const transactionType = transactionTypes.find((tt) => tt.id === formData.transactionTypeId);
     const fromAccount = formData.fromAccountId
@@ -141,7 +150,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     return options;
   }, [groupedTransactionTypes]);
 
-  const selectedTransactionType = transactionTypeOptions.find(
+  const selectedTransactionTypeOption = transactionTypeOptions.find(
     (opt) => opt.id === formData.transactionTypeId
   );
 
@@ -214,10 +223,26 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         options={transactionTypeOptions}
         getOptionLabel={(option) => option.name}
         groupBy={(option) => option.categoryName}
-        value={selectedTransactionType || null}
+        value={selectedTransactionTypeOption || null}
         onChange={(_event, newValue) => {
           const newId = newValue?.id || '';
-          setFormData({ ...formData, transactionTypeId: newId });
+          const newTransactionType = transactionTypes.find((tt) => tt.id === newId);
+
+          // Apply default accounts when transaction type changes
+          const updates: Partial<typeof formData> = {
+            transactionTypeId: newId,
+          };
+
+          if (newTransactionType) {
+            if (newTransactionType.defaultFromAccountId) {
+              updates.fromAccountId = newTransactionType.defaultFromAccountId;
+            }
+            if (newTransactionType.defaultToAccountId) {
+              updates.toAccountId = newTransactionType.defaultToAccountId;
+            }
+          }
+
+          setFormData({ ...formData, ...updates });
           if (errors.transactionTypeId) {
             setErrors({ ...errors, transactionTypeId: '' });
           }
@@ -243,8 +268,11 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           value={formData.fromAccountId}
           onChange={handleChange('fromAccountId')}
           error={!!errors.fromAccountId}
-          helperText={errors.fromAccountId}
+          helperText={
+            fromAccountIsDefault ? 'Account is set by transaction type' : errors.fromAccountId
+          }
           required
+          disabled={!!fromAccountIsDefault}
         >
           <MenuItem value="">
             <em>None</em>
@@ -288,8 +316,11 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           value={formData.toAccountId}
           onChange={handleChange('toAccountId')}
           error={!!errors.toAccountId}
-          helperText={errors.toAccountId}
+          helperText={
+            toAccountIsDefault ? 'Account is set by transaction type' : errors.toAccountId
+          }
           required
+          disabled={!!toAccountIsDefault}
         >
           <MenuItem value="">
             <em>None</em>

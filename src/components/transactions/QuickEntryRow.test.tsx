@@ -90,6 +90,16 @@ describe('QuickEntryRow', () => {
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
     },
+    {
+      id: 'type-4',
+      name: 'Salary Deposit',
+      categoryId: 'cat-3',
+      group: Group.TRANSFER,
+      defaultFromAccountId: 'acc-1',
+      defaultToAccountId: 'acc-2',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    },
   ];
 
   const mockTransactions: any[] = [];
@@ -672,6 +682,128 @@ describe('QuickEntryRow', () => {
       await waitFor(() => {
         expect(screen.getByText('Paycheck')).toBeInTheDocument();
         expect(screen.queryByText('Groceries')).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Default Account Fields', () => {
+    it('should hide account fields when transaction type has defaults', async () => {
+      const user = userEvent.setup();
+      render(
+        <QuickEntryRow
+          accounts={mockAccounts}
+          categories={mockCategories}
+          transactionTypes={mockTransactionTypes}
+          transactions={mockTransactions}
+          onSubmit={mockOnSubmit}
+          onOpenFullDialog={mockOnOpenFullDialog}
+          manualAssets={[]}
+        />
+      );
+
+      // Select transaction type with defaults
+      const typeInputs = screen.getAllByPlaceholderText('Type');
+      const typeCombobox = typeInputs.find((input) => input.getAttribute('role') === 'combobox');
+      await user.click(typeCombobox!);
+      await user.click(screen.getByText('Salary Deposit'));
+
+      // Account fields should be hidden
+      await waitFor(() => {
+        expect(screen.queryByPlaceholderText('From')).not.toBeInTheDocument();
+        expect(screen.queryByPlaceholderText('To')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should show indicator chip with default account names', async () => {
+      const user = userEvent.setup();
+      render(
+        <QuickEntryRow
+          accounts={mockAccounts}
+          categories={mockCategories}
+          transactionTypes={mockTransactionTypes}
+          transactions={mockTransactions}
+          onSubmit={mockOnSubmit}
+          onOpenFullDialog={mockOnOpenFullDialog}
+          manualAssets={[]}
+        />
+      );
+
+      // Select transaction type with defaults
+      const typeInputs = screen.getAllByPlaceholderText('Type');
+      const typeCombobox = typeInputs.find((input) => input.getAttribute('role') === 'combobox');
+      await user.click(typeCombobox!);
+      await user.click(screen.getByText('Salary Deposit'));
+
+      // Should show indicator with account names
+      await waitFor(() => {
+        expect(screen.getByText(/From: Checking.*To: Savings/)).toBeInTheDocument();
+      });
+    });
+
+    it('should show account fields when transaction type has no defaults', async () => {
+      const user = userEvent.setup();
+      render(
+        <QuickEntryRow
+          accounts={mockAccounts}
+          categories={mockCategories}
+          transactionTypes={mockTransactionTypes}
+          transactions={mockTransactions}
+          onSubmit={mockOnSubmit}
+          onOpenFullDialog={mockOnOpenFullDialog}
+          manualAssets={[]}
+        />
+      );
+
+      // Select transaction type without defaults
+      const typeInputs = screen.getAllByPlaceholderText('Type');
+      const typeCombobox = typeInputs.find((input) => input.getAttribute('role') === 'combobox');
+      await user.click(typeCombobox!);
+      await user.click(screen.getByText('Account Transfer'));
+
+      // Account fields should be visible
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('From')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('To')).toBeInTheDocument();
+      });
+    });
+
+    it('should submit with default accounts', async () => {
+      const user = userEvent.setup();
+      render(
+        <QuickEntryRow
+          accounts={mockAccounts}
+          categories={mockCategories}
+          transactionTypes={mockTransactionTypes}
+          transactions={mockTransactions}
+          onSubmit={mockOnSubmit}
+          onOpenFullDialog={mockOnOpenFullDialog}
+          manualAssets={[]}
+        />
+      );
+
+      // Fill in amount
+      const amountInput = screen.getByPlaceholderText('Amount');
+      await user.type(amountInput, '1000');
+
+      // Select transaction type with defaults
+      const typeInputs = screen.getAllByPlaceholderText('Type');
+      const typeCombobox = typeInputs.find((input) => input.getAttribute('role') === 'combobox');
+      await user.click(typeCombobox!);
+      await user.click(screen.getByText('Salary Deposit'));
+
+      // Submit
+      const addButton = screen.getByRole('button', { name: /add transaction/i });
+      await user.click(addButton);
+
+      await waitFor(() => {
+        expect(mockOnSubmit).toHaveBeenCalledWith(
+          expect.objectContaining({
+            amount: 1000,
+            transactionTypeId: 'type-4',
+            fromAccountId: 'acc-1',
+            toAccountId: 'acc-2',
+          })
+        );
       });
     });
   });

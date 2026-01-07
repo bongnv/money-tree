@@ -1,12 +1,26 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TransactionForm } from './TransactionForm';
-import type { Transaction, Account, TransactionType, Category } from '../../types/models';
+import type {
+  Transaction,
+  Account,
+  TransactionType,
+  Category,
+} from '../../types/models';
 import { Group, AccountType } from '../../types/enums';
 
 jest.mock('../../stores/useAssetStore', () => ({
   useAssetStore: () => ({
-    manualAssets: [],
+    manualAssets: [
+      {
+        id: 'asset-1',
+        name: 'Stocks',
+        currencyCode: 'USD',
+        currentValue: 10000,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+    ],
   }),
 }));
 
@@ -103,6 +117,16 @@ const mockTransactionTypes: TransactionType[] = [
   },
   {
     id: 'type-4',
+    name: 'Salary Transfer',
+    categoryId: 'cat-3',
+    group: Group.TRANSFER,
+    defaultFromAccountId: 'acc-1',
+    defaultToAccountId: 'acc-2',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'type-5',
     name: 'Stock Purchase',
     categoryId: 'cat-4',
     group: Group.ASSET_PURCHASE,
@@ -110,7 +134,7 @@ const mockTransactionTypes: TransactionType[] = [
     updatedAt: '2024-01-01T00:00:00.000Z',
   },
   {
-    id: 'type-5',
+    id: 'type-6',
     name: 'Stock Sale',
     categoryId: 'cat-5',
     group: Group.ASSET_SALE,
@@ -427,6 +451,91 @@ describe('TransactionForm', () => {
 
     await waitFor(() => {
       expect(screen.queryByText(/amount is required/i)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Default Account Fields', () => {
+    it('should disable from account when transaction type has defaultFromAccountId', async () => {
+      const user = userEvent.setup();
+      render(<TransactionForm {...defaultProps} />);
+
+      // Select transaction type with defaults
+      const typeSelect = screen.getByLabelText(/transaction type/i);
+      await user.click(typeSelect);
+      await user.click(screen.getByText('Salary Transfer'));
+
+      await waitFor(() => {
+        // Verify account name is displayed and field is disabled
+        expect(screen.getAllByText('Checking')[0]).toBeInTheDocument();
+        const fromAccountField = screen.getByLabelText(/from account/i).parentElement;
+        expect(fromAccountField).toHaveClass('Mui-disabled');
+      });
+    });
+
+    it('should disable to account when transaction type has defaultToAccountId', async () => {
+      const user = userEvent.setup();
+      render(<TransactionForm {...defaultProps} />);
+
+      // Select transaction type with defaults
+      const typeSelect = screen.getByLabelText(/transaction type/i);
+      await user.click(typeSelect);
+      await user.click(screen.getByText('Salary Transfer'));
+
+      await waitFor(() => {
+        // Verify account name is displayed and field is disabled
+        expect(screen.getByText('Savings')).toBeInTheDocument();
+        const toAccountField = screen.getByLabelText(/to account/i).parentElement;
+        expect(toAccountField).toHaveClass('Mui-disabled');
+      });
+    });
+
+    it('should show helper text for disabled account fields', async () => {
+      const user = userEvent.setup();
+      render(<TransactionForm {...defaultProps} />);
+
+      // Select transaction type with defaults
+      const typeSelect = screen.getByLabelText(/transaction type/i);
+      await user.click(typeSelect);
+      await user.click(screen.getByText('Salary Transfer'));
+
+      await waitFor(() => {
+        expect(screen.getAllByText(/account is set by transaction type/i).length).toBeGreaterThan(
+          0
+        );
+      });
+    });
+
+    it('should not disable accounts when transaction type has no defaults', async () => {
+      const user = userEvent.setup();
+      render(<TransactionForm {...defaultProps} />);
+
+      // Select transaction type without defaults
+      const typeSelect = screen.getByLabelText(/transaction type/i);
+      await user.click(typeSelect);
+      await user.click(screen.getByText('Between Accounts'));
+
+      await waitFor(() => {
+        const fromAccountField = screen.getByLabelText(/from account/i).parentElement;
+        const toAccountField = screen.getByLabelText(/to account/i).parentElement;
+        expect(fromAccountField).not.toHaveClass('Mui-disabled');
+        expect(toAccountField).not.toHaveClass('Mui-disabled');
+      });
+    });
+
+    it('should populate account fields when selecting type with defaults', async () => {
+      const user = userEvent.setup();
+      render(<TransactionForm {...defaultProps} />);
+
+      // Select transaction type with defaults
+      const typeSelect = screen.getByLabelText(/transaction type/i);
+      await user.click(typeSelect);
+      await user.click(screen.getByText('Salary Transfer'));
+
+      await waitFor(() => {
+        // Verify both account names are displayed
+        expect(screen.getAllByText('Checking')[0]).toBeInTheDocument();
+        expect(screen.getByText('Savings')).toBeInTheDocument();
+      });
     });
   });
 });

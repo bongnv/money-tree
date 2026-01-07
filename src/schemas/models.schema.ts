@@ -175,9 +175,11 @@ export const ArchivedYearReferenceSchema = z.object({
 });
 
 /**
- * Zod schema for YearData
+ * Zod schema for DataFile
+ * Note: Currencies are not stored in the data file as they are fixed defaults
  */
-export const YearDataSchema = z.object({
+export const DataFileSchema = z.object({
+  version: z.string().min(1, 'Version is required'),
   transactions: z
     .array(TransactionSchema)
     .nullable()
@@ -198,15 +200,6 @@ export const YearDataSchema = z.object({
     .nullable()
     .optional()
     .transform((val) => val ?? []),
-});
-
-/**
- * Zod schema for DataFile
- * Note: Currencies are not stored in the data file as they are fixed defaults
- */
-export const DataFileSchema = z.object({
-  version: z.string().min(1, 'Version is required'),
-  years: z.record(z.string(), YearDataSchema),
   accounts: z
     .array(AccountSchema)
     .nullable()

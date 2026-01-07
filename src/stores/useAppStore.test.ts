@@ -14,23 +14,11 @@ describe('useAppStore', () => {
   it('should initialize with default state', () => {
     const { result } = renderHook(() => useAppStore());
 
-    expect(result.current.currentYear).toBe(new Date().getFullYear());
     expect(result.current.fileName).toBeNull();
     expect(result.current.lastSaved).toBeNull();
     expect(result.current.hasUnsavedChanges).toBe(false);
     expect(result.current.isLoading).toBe(false);
     expect(result.current.error).toBeNull();
-  });
-
-  it('should set current year and persist to storage', () => {
-    const { result } = renderHook(() => useAppStore());
-
-    act(() => {
-      result.current.setCurrentYear(2024);
-    });
-
-    expect(result.current.currentYear).toBe(2024);
-    expect(storageService.getCurrentYear()).toBe(2024);
   });
 
   it('should mark changes as unsaved', () => {
@@ -129,7 +117,6 @@ describe('useAppStore', () => {
     const { result } = renderHook(() => useAppStore());
 
     act(() => {
-      result.current.setCurrentYear(2024);
       result.current.setFileName('test.json');
       result.current.setUnsavedChanges(true);
       result.current.setLoading(true);
@@ -137,12 +124,10 @@ describe('useAppStore', () => {
       result.current.resetState();
     });
 
-    expect(result.current.currentYear).toBe(new Date().getFullYear());
     expect(result.current.fileName).toBeNull();
     expect(result.current.lastSaved).toBeNull();
     expect(result.current.hasUnsavedChanges).toBe(false);
     expect(result.current.isLoading).toBe(false);
     expect(result.current.error).toBeNull();
-    expect(storageService.getCurrentYear()).toBeNull();
   });
 });

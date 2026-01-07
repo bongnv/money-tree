@@ -124,7 +124,6 @@ describe('SyncService', () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
-      useAppStore.getState().setCurrentYear(2024);
       useAppStore.getState().setUnsavedChanges(true);
 
       mockLoadDataFile.mockResolvedValue(null);
@@ -135,9 +134,10 @@ describe('SyncService', () => {
       expect(mockSaveDataFile).toHaveBeenCalledWith(
         expect.objectContaining({
           version: '1.0.0',
-          years: expect.objectContaining({
-            '2024': expect.any(Object),
-          }),
+          transactions: expect.any(Array),
+          budgets: expect.any(Array),
+          manualAssets: expect.any(Array),
+          exchangeRates: expect.any(Array),
         })
       );
 
@@ -145,7 +145,6 @@ describe('SyncService', () => {
     });
 
     it('should sync empty data file when no domain data', async () => {
-      useAppStore.getState().setCurrentYear(2024);
       useAppStore.getState().setUnsavedChanges(true);
       mockLoadDataFile.mockResolvedValue(null);
       mockSaveDataFile.mockResolvedValue(undefined);
@@ -156,14 +155,10 @@ describe('SyncService', () => {
         expect.objectContaining({
           version: '1.0.0',
           accounts: [],
-          years: expect.objectContaining({
-            '2024': expect.objectContaining({
-              transactions: [],
-              budgets: [],
-              manualAssets: [],
-              exchangeRates: [],
-            }),
-          }),
+          transactions: [],
+          budgets: [],
+          manualAssets: [],
+          exchangeRates: [],
         })
       );
     });
@@ -180,7 +175,6 @@ describe('SyncService', () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
-      useAppStore.getState().setCurrentYear(2024);
       useAppStore.getState().setUnsavedChanges(false);
 
       await syncService.syncNow();
@@ -200,7 +194,6 @@ describe('SyncService', () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
-      useAppStore.getState().setCurrentYear(2024);
       useAppStore.getState().setUnsavedChanges(true);
 
       mockSaveDataFile.mockRejectedValue(new Error('Sync failed'));
@@ -221,7 +214,6 @@ describe('SyncService', () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
-      useAppStore.getState().setCurrentYear(2024);
       useAppStore.getState().setUnsavedChanges(true);
 
       mockLoadDataFile.mockResolvedValue(null);
@@ -254,7 +246,6 @@ describe('SyncService', () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
-      useAppStore.getState().setCurrentYear(2024);
       useAppStore.getState().setUnsavedChanges(true);
 
       mockLoadDataFile.mockResolvedValue(null);
@@ -280,14 +271,10 @@ describe('SyncService', () => {
     it('should load data file', async () => {
       const mockDataFile: DataFile = {
         version: '1.0.0',
-        years: {
-          '2024': {
-            transactions: [],
-            budgets: [],
-            manualAssets: [],
-            exchangeRates: [],
-          },
-        },
+        transactions: [],
+        budgets: [],
+        manualAssets: [],
+        exchangeRates: [],
         accounts: [
           {
             id: '1',
@@ -309,26 +296,25 @@ describe('SyncService', () => {
 
       mockLoadDataFile.mockResolvedValue(mockDataFile);
 
-      await syncService.loadDataFile(2024);
+      await syncService.loadDataFile();
 
       expect(mockLoadDataFile).toHaveBeenCalled();
       expect(useAccountStore.getState().accounts).toHaveLength(1);
       expect(useAccountStore.getState().accounts[0].name).toBe('Test Account');
-      expect(useAppStore.getState().currentYear).toBe(2024);
       expect(useAppStore.getState().hasUnsavedChanges).toBe(false);
     });
 
     it('should handle load errors', async () => {
       mockLoadDataFile.mockRejectedValue(new Error('Load failed'));
 
-      await expect(syncService.loadDataFile(2024)).rejects.toThrow('Load failed');
+      await expect(syncService.loadDataFile()).rejects.toThrow('Load failed');
       expect(useAppStore.getState().error).toBe('Load failed');
     });
 
     it('should handle cancelled load', async () => {
       mockLoadDataFile.mockResolvedValue(null);
 
-      await syncService.loadDataFile(2024);
+      await syncService.loadDataFile();
 
       // Should not throw and should not modify stores
       expect(useAccountStore.getState().accounts).toHaveLength(0);
@@ -363,7 +349,6 @@ describe('SyncService', () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
-      useAppStore.getState().setCurrentYear(2024);
       useAppStore.getState().setUnsavedChanges(true);
 
       mockSaveDataFile.mockResolvedValue(undefined);
@@ -391,7 +376,6 @@ describe('SyncService', () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
-      useAppStore.getState().setCurrentYear(2024);
       useAppStore.getState().setUnsavedChanges(false);
 
       syncService.startAutoSave();
@@ -417,14 +401,10 @@ describe('SyncService', () => {
       const mockInitialize = jest.fn().mockResolvedValue(undefined);
       const mockDataFile: DataFile = {
         version: '1.0.0',
-        years: {
-          '2024': {
-            transactions: [],
-            budgets: [],
-            manualAssets: [],
-            exchangeRates: [],
-          },
-        },
+        transactions: [],
+        budgets: [],
+        manualAssets: [],
+        exchangeRates: [],
         accounts: [],
         categories: [],
         transactionTypes: [],
@@ -439,8 +419,6 @@ describe('SyncService', () => {
         saveArchiveFile: jest.fn().mockResolvedValue(undefined),
       });
 
-      useAppStore.getState().setCurrentYear(2024);
-
       const result = await syncService.autoLoad();
 
       expect(result).toBe(true);
@@ -454,8 +432,6 @@ describe('SyncService', () => {
         getFileName: jest.fn().mockReturnValue('test.json'),
         saveArchiveFile: jest.fn().mockResolvedValue(undefined),
       });
-
-      useAppStore.getState().setCurrentYear(2024);
 
       const result = await syncService.autoLoad();
 

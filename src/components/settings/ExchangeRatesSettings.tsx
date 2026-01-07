@@ -21,12 +21,12 @@ import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
 import { useAppStore } from '../../stores/useAppStore';
 
 export const ExchangeRatesSettings: React.FC = () => {
-  const currentYear = useAppStore((state) => state.currentYear);
   const baseCurrency = useAppStore((state) => state.baseCurrency);
   const rates = useExchangeRateStore((state) => state.rates);
   const loading = useExchangeRateStore((state) => state.loading);
   const errors = useExchangeRateStore((state) => state.errors);
 
+  const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
 
   // Count loading rates

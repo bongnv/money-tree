@@ -75,26 +75,31 @@ export function calculateYearEndSummary(year: number, baseCurrency: CurrencyCode
 }
 
 /**
- * Identify years that can be archived (oldest years in the file)
- * Returns array of years sorted from oldest to newest
+ * Identify years that can be archived
+ * Returns only the OLDEST year to ensure initialBalance is correct when archiving
  * Excludes current year (cannot archive an incomplete year)
+ *
+ * Important: Only oldest year can be archived to maintain data integrity:
+ * - Archiving removes transactions from main file
+ * - Account initialBalance for next year depends on archived year's closing balances
+ * - Must archive sequentially from oldest to newest
  */
 export function identifyArchivableYears(): number[] {
   const transactions = useTransactionStore.getState().transactions;
   const currentYear = new Date().getFullYear();
 
-  // Get unique years from transactions
-  const years = new Set<number>();
-  transactions.forEach((transaction) => {
-    const year = new Date(transaction.date).getFullYear();
-    // Only include completed years (not current year)
-    if (year < currentYear) {
-      years.add(year);
-    }
-  });
+  let oldestYear: number | null = null;
 
-  // Convert to sorted array (oldest first)
-  return Array.from(years).sort((a, b) => a - b);
+  // Find the oldest completed year in a single pass
+  for (const transaction of transactions) {
+    const year = new Date(transaction.date).getFullYear();
+    if (year < currentYear && (oldestYear === null || year < oldestYear)) {
+      oldestYear = year;
+    }
+  }
+
+  // Return only the oldest year to ensure sequential archiving
+  return oldestYear !== null ? [oldestYear] : [];
 }
 
 /**
@@ -247,9 +252,6 @@ export function updateMainFileAfterArchive(
   // Add archive reference to app state (using the one passed in)
   const appState = useAppStore.getState();
   appState.addArchivedYear(_archiveReference);
-
-  // Remove year from years object in app state
-  appState.removeYear(year);
 }
 
 /**

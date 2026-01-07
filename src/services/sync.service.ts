@@ -115,31 +115,22 @@ class SyncService {
           break;
 
         case 'transaction':
-        case 'asset':
-        case 'budget': {
-          // Find which year this entity belongs to
-          const years = Object.keys(result.years || {});
-          for (const year of years) {
-            const yearData = result.years?.[year];
-            if (!yearData) continue;
-
-            if (conflict.type === 'transaction') {
-              yearData.transactions = yearData.transactions.filter(
-                (t) => t.id !== conflict.entityId
-              );
-              yearData.transactions.push(chosenVersion as any);
-            } else if (conflict.type === 'asset') {
-              yearData.manualAssets = yearData.manualAssets.filter(
-                (a) => a.id !== conflict.entityId
-              );
-              yearData.manualAssets.push(chosenVersion as any);
-            } else if (conflict.type === 'budget') {
-              yearData.budgets = yearData.budgets.filter((b) => b.id !== conflict.entityId);
-              yearData.budgets.push(chosenVersion as any);
-            }
-          }
+          if (!result.transactions) result.transactions = [];
+          result.transactions = result.transactions.filter((t) => t.id !== conflict.entityId);
+          result.transactions.push(chosenVersion as any);
           break;
-        }
+
+        case 'asset':
+          if (!result.manualAssets) result.manualAssets = [];
+          result.manualAssets = result.manualAssets.filter((a) => a.id !== conflict.entityId);
+          result.manualAssets.push(chosenVersion as any);
+          break;
+
+        case 'budget':
+          if (!result.budgets) result.budgets = [];
+          result.budgets = result.budgets.filter((b) => b.id !== conflict.entityId);
+          result.budgets.push(chosenVersion as any);
+          break;
       }
     });
 
@@ -187,19 +178,12 @@ class SyncService {
       const budgetStore = useBudgetStore.getState();
       const exchangeRateStore = useExchangeRateStore.getState();
 
-      const currentYearStr = String(state.currentYear);
-
       const appVersion: DataFile = {
         version: '1.0.0',
-        years: {
-          ...state.years,
-          [currentYearStr]: {
-            transactions: transactionStore.transactions,
-            budgets: budgetStore.budgets,
-            manualAssets: assetStore.manualAssets,
-            exchangeRates: exchangeRateStore.rates,
-          },
-        },
+        transactions: transactionStore.transactions,
+        budgets: budgetStore.budgets,
+        manualAssets: assetStore.manualAssets,
+        exchangeRates: exchangeRateStore.rates,
         accounts: accountStore.accounts,
         categories: categoryStore.categories,
         transactionTypes: categoryStore.transactionTypes,
@@ -339,7 +323,7 @@ class SyncService {
   /**
    * Load data file for a specific year
    */
-  async loadDataFile(year: number): Promise<void> {
+  async loadDataFile(): Promise<void> {
     const state = useAppStore.getState();
     state.setLoading(true);
     state.setError(null);
@@ -349,8 +333,7 @@ class SyncService {
       const dataFile = await storage.loadDataFile();
 
       if (dataFile) {
-        // Store multi-year coordination data in app state
-        state.setYears(dataFile.years || {});
+        // Store archived years in app state
         state.setArchivedYears(dataFile.archivedYears || []);
 
         // Calculate and store file hash for conflict detection
@@ -358,32 +341,18 @@ class SyncService {
         const loadedAt = new Date().toISOString();
         state.setFileMetadata(fileHash, loadedAt, structuredClone(dataFile));
 
-        // Distribute shared data to domain stores
+        // Distribute data to domain stores
         useAccountStore.getState().setAccounts(dataFile.accounts || []);
         useCategoryStore.getState().setCategories(dataFile.categories || []);
         useCategoryStore.getState().setTransactionTypes(dataFile.transactionTypes || []);
+        useTransactionStore.getState().setTransactions(dataFile.transactions || []);
+        useAssetStore.getState().setManualAssets(dataFile.manualAssets || []);
+        useBudgetStore.getState().setBudgets(dataFile.budgets || []);
+        useExchangeRateStore.getState().setRates(dataFile.exchangeRates || []);
 
         // Load base currency from data file (schema provides default if not present)
         state.setBaseCurrency(dataFile.baseCurrency);
 
-        // Get year-specific data
-        const yearStr = String(year);
-        const yearData = dataFile.years?.[yearStr];
-
-        if (yearData) {
-          useTransactionStore.getState().setTransactions(yearData.transactions || []);
-          useAssetStore.getState().setManualAssets(yearData.manualAssets || []);
-          useBudgetStore.getState().setBudgets(yearData.budgets || []);
-          useExchangeRateStore.getState().setRates(yearData.exchangeRates || []);
-        } else {
-          // No data for this year, initialize with empty arrays
-          useTransactionStore.getState().setTransactions([]);
-          useAssetStore.getState().setManualAssets([]);
-          useBudgetStore.getState().setBudgets([]);
-          useExchangeRateStore.getState().setRates([]);
-        }
-
-        state.setCurrentYear(year);
         // Get the actual filename from storage provider
         const fileName = storage.getFileName();
         state.setFileName(fileName);
@@ -407,8 +376,7 @@ class SyncService {
 
     try {
       // Try to load file from provider (initialization happens in constructor)
-      const currentYear = state.currentYear || new Date().getFullYear();
-      await this.loadDataFile(currentYear);
+      await this.loadDataFile();
       return true;
     } catch (error) {
       const providerType = StorageFactory.getProviderType();

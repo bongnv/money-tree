@@ -1,7 +1,6 @@
 import {
   YearEndSummarySchema,
   ArchivedYearReferenceSchema,
-  YearDataSchema,
   DataFileSchema,
   ArchiveFileSchema,
 } from './models.schema';
@@ -77,73 +76,14 @@ describe('Multi-Year Schemas', () => {
     });
   });
 
-  describe('YearDataSchema', () => {
-    it('should validate valid year data', () => {
-      const validYearData = {
-        transactions: [
-          {
-            id: 'tx-1',
-            date: '2025-01-01',
-            amount: 100,
-            transactionTypeId: 'type-1',
-            fromAccountId: 'account-1',
-            createdAt: '2025-01-01T10:00:00.000Z',
-            updatedAt: '2025-01-01T10:00:00.000Z',
-          },
-        ],
-        budgets: [],
-        manualAssets: [],
-      };
-
-      const result = YearDataSchema.safeParse(validYearData);
-      expect(result.success).toBe(true);
-    });
-
-    it('should handle null arrays', () => {
-      const yearDataWithNulls = {
-        transactions: null,
-        budgets: null,
-        manualAssets: null,
-      };
-
-      const result = YearDataSchema.safeParse(yearDataWithNulls);
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.transactions).toEqual([]);
-        expect(result.data.budgets).toEqual([]);
-        expect(result.data.manualAssets).toEqual([]);
-      }
-    });
-
-    it('should handle missing arrays', () => {
-      const yearDataMissing = {};
-
-      const result = YearDataSchema.safeParse(yearDataMissing);
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.transactions).toEqual([]);
-        expect(result.data.budgets).toEqual([]);
-        expect(result.data.manualAssets).toEqual([]);
-      }
-    });
-  });
-
   describe('DataFileSchema', () => {
-    it('should validate a valid multi-year data file', () => {
+    it('should validate a valid data file with flat arrays', () => {
       const validFile = {
         version: '2.0.0',
-        years: {
-          '2025': {
-            transactions: [],
-            budgets: [],
-            manualAssets: [],
-          },
-          '2026': {
-            transactions: [],
-            budgets: [],
-            manualAssets: [],
-          },
-        },
+        transactions: [],
+        budgets: [],
+        manualAssets: [],
+        exchangeRates: [],
         accounts: [],
         categories: [],
         transactionTypes: [],
@@ -158,13 +98,10 @@ describe('Multi-Year Schemas', () => {
     it('should validate file with archived years', () => {
       const fileWithArchives = {
         version: '2.0.0',
-        years: {
-          '2026': {
-            transactions: [],
-            budgets: [],
-            manualAssets: [],
-          },
-        },
+        transactions: [],
+        budgets: [],
+        manualAssets: [],
+        exchangeRates: [],
         accounts: [],
         categories: [],
         transactionTypes: [],
@@ -190,7 +127,10 @@ describe('Multi-Year Schemas', () => {
     it('should handle null arrays', () => {
       const fileWithNulls = {
         version: '2.0.0',
-        years: {},
+        transactions: null,
+        budgets: null,
+        manualAssets: null,
+        exchangeRates: null,
         accounts: null,
         categories: null,
         transactionTypes: null,
@@ -201,6 +141,10 @@ describe('Multi-Year Schemas', () => {
       const result = DataFileSchema.safeParse(fileWithNulls);
       expect(result.success).toBe(true);
       if (result.success) {
+        expect(result.data.transactions).toEqual([]);
+        expect(result.data.budgets).toEqual([]);
+        expect(result.data.manualAssets).toEqual([]);
+        expect(result.data.exchangeRates).toEqual([]);
         expect(result.data.accounts).toEqual([]);
         expect(result.data.categories).toEqual([]);
         expect(result.data.transactionTypes).toEqual([]);

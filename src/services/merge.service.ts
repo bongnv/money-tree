@@ -234,57 +234,45 @@ export function performThreeWayMerge(
   autoMergedCount += transactionTypesResult.merged.length - transactionTypesResult.conflicts.length;
   allConflicts.push(...transactionTypesResult.conflicts);
 
-  // Merge year-specific data
-  const allYears = new Set([
-    ...Object.keys(base.years || {}),
-    ...Object.keys(fileVersion.years || {}),
-    ...Object.keys(appVersion.years || {}),
-  ]);
+  // Merge transactions (flat array)
+  const transactionsResult = mergeEntities(
+    base.transactions || [],
+    fileVersion.transactions || [],
+    appVersion.transactions || [],
+    'transaction'
+  );
+  autoMergedCount += transactionsResult.merged.length - transactionsResult.conflicts.length;
+  allConflicts.push(...transactionsResult.conflicts);
 
-  const mergedYears: DataFile['years'] = {};
+  // Merge budgets (flat array)
+  const budgetsResult = mergeEntities(
+    base.budgets || [],
+    fileVersion.budgets || [],
+    appVersion.budgets || [],
+    'budget'
+  );
+  autoMergedCount += budgetsResult.merged.length - budgetsResult.conflicts.length;
+  allConflicts.push(...budgetsResult.conflicts);
 
-  for (const year of allYears) {
-    const baseYear = base.years?.[year];
-    const fileYear = fileVersion.years?.[year];
-    const appYear = appVersion.years?.[year];
+  // Merge manual assets (flat array)
+  const assetsResult = mergeEntities(
+    base.manualAssets || [],
+    fileVersion.manualAssets || [],
+    appVersion.manualAssets || [],
+    'asset'
+  );
+  autoMergedCount += assetsResult.merged.length - assetsResult.conflicts.length;
+  allConflicts.push(...assetsResult.conflicts);
 
-    // Merge transactions for this year
-    const transactionsResult = mergeEntities(
-      baseYear?.transactions || [],
-      fileYear?.transactions || [],
-      appYear?.transactions || [],
-      'transaction'
-    );
-    autoMergedCount += transactionsResult.merged.length - transactionsResult.conflicts.length;
-    allConflicts.push(...transactionsResult.conflicts);
-
-    // Merge manual assets for this year
-    const assetsResult = mergeEntities(
-      baseYear?.manualAssets || [],
-      fileYear?.manualAssets || [],
-      appYear?.manualAssets || [],
-      'asset'
-    );
-    autoMergedCount += assetsResult.merged.length - assetsResult.conflicts.length;
-    allConflicts.push(...assetsResult.conflicts);
-
-    // Merge budgets for this year
-    const budgetsResult = mergeEntities(
-      baseYear?.budgets || [],
-      fileYear?.budgets || [],
-      appYear?.budgets || [],
-      'budget'
-    );
-    autoMergedCount += budgetsResult.merged.length - budgetsResult.conflicts.length;
-    allConflicts.push(...budgetsResult.conflicts);
-
-    mergedYears[year] = {
-      transactions: transactionsResult.merged as Transaction[],
-      manualAssets: assetsResult.merged as ManualAsset[],
-      budgets: budgetsResult.merged as Budget[],
-      exchangeRates: appYear?.exchangeRates || fileYear?.exchangeRates || [],
-    };
-  }
+  // Merge exchange rates (flat array)
+  const exchangeRatesResult = mergeEntities(
+    base.exchangeRates || [],
+    fileVersion.exchangeRates || [],
+    appVersion.exchangeRates || [],
+    'transaction' // Using 'transaction' as type since there's no specific exchangeRate conflict type
+  );
+  autoMergedCount += exchangeRatesResult.merged.length - exchangeRatesResult.conflicts.length;
+  allConflicts.push(...exchangeRatesResult.conflicts);
 
   // For conflicts, we can't include them in merged data yet
   // They'll need to be resolved by the user first
@@ -293,7 +281,10 @@ export function performThreeWayMerge(
 
   const merged: DataFile = {
     version: appVersion.version,
-    years: mergedYears,
+    transactions: transactionsResult.merged as Transaction[],
+    budgets: budgetsResult.merged as Budget[],
+    manualAssets: assetsResult.merged as ManualAsset[],
+    exchangeRates: exchangeRatesResult.merged,
     accounts: accountsResult.merged as Account[],
     categories: categoriesResult.merged as Category[],
     transactionTypes: transactionTypesResult.merged as TransactionType[],

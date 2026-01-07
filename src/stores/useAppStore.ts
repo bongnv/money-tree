@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { storageService } from '../services/storage.service';
 import { AlertColor } from '@mui/material';
-import { DataFile, YearData, ArchivedYearReference } from '../types/models';
+import { DataFile, ArchivedYearReference } from '../types/models';
 import { CurrencyCode } from '../types/enums';
 
 interface SnackbarState {
@@ -11,7 +11,6 @@ interface SnackbarState {
 }
 
 interface AppState {
-  currentYear: number;
   fileName: string | null;
   lastSaved: string | null;
   hasUnsavedChanges: boolean;
@@ -19,8 +18,6 @@ interface AppState {
   error: string | null;
   snackbar: SnackbarState;
   baseCurrency: CurrencyCode; // Currency for reporting
-  // Multi-year data coordination
-  years: Record<string, YearData>; // All years data from file
   archivedYears: ArchivedYearReference[]; // References to archived years
   // Conflict detection metadata
   fileContentHash: string | null;
@@ -31,7 +28,6 @@ interface AppState {
 }
 
 interface AppActions {
-  setCurrentYear: (year: number) => void;
   setFileName: (fileName: string | null) => void;
   setLastSaved: (timestamp: string) => void;
   setUnsavedChanges: (hasChanges: boolean) => void;
@@ -42,9 +38,6 @@ interface AppActions {
   showSnackbar: (message: string, severity?: AlertColor) => void;
   hideSnackbar: () => void;
   setBaseCurrency: (currencyCode: CurrencyCode) => void;
-  // Multi-year coordination actions
-  setYears: (years: Record<string, YearData>) => void;
-  removeYear: (year: number) => void;
   setArchivedYears: (archivedYears: ArchivedYearReference[]) => void;
   addArchivedYear: (reference: ArchivedYearReference) => void;
   // Conflict detection actions
@@ -54,13 +47,7 @@ interface AppActions {
   setArchivePromptPostponedAt: (timestamp: string | null) => void;
 }
 
-const getCurrentYear = (): number => {
-  const stored = storageService.getCurrentYear();
-  return stored || new Date().getFullYear();
-};
-
 export const useAppStore = create<AppState & AppActions>((set) => ({
-  currentYear: getCurrentYear(),
   fileName: null,
   lastSaved: null,
   hasUnsavedChanges: false,
@@ -72,17 +59,11 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
     severity: 'info',
   },
   baseCurrency: CurrencyCode.USD,
-  years: {},
   archivedYears: [],
   fileContentHash: null,
   fileLoadedAt: null,
   baseVersion: null,
   archivePromptPostponedAt: storageService.getArchivePromptPostponedAt(),
-
-  setCurrentYear: (year) => {
-    storageService.setCurrentYear(year);
-    set({ currentYear: year });
-  },
 
   setFileName: (fileName) => {
     set({ fileName });
@@ -112,7 +93,6 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
   resetState: () => {
     storageService.clearAll();
     set({
-      currentYear: new Date().getFullYear(),
       fileName: null,
       lastSaved: null,
       hasUnsavedChanges: false,
@@ -124,7 +104,6 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
         severity: 'info',
       },
       baseCurrency: CurrencyCode.USD,
-      years: {},
       archivedYears: [],
       fileContentHash: null,
       fileLoadedAt: null,
@@ -142,17 +121,6 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
 
   setBaseCurrency: (currencyCode) => {
     set({ baseCurrency: currencyCode, hasUnsavedChanges: true });
-  },
-
-  setYears: (years) => {
-    set({ years });
-  },
-
-  removeYear: (year) => {
-    set((state) => {
-      const { [String(year)]: removed, ...remainingYears } = state.years;
-      return { years: remainingYears, hasUnsavedChanges: true };
-    });
   },
 
   setArchivedYears: (archivedYears) => {

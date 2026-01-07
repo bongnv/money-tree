@@ -142,7 +142,8 @@ describe('Archive Service', () => {
       });
 
       const years = identifyArchivableYears();
-      expect(years).toEqual([2023, 2024, 2025]);
+      // Should return only the oldest year (2023) to ensure sequential archiving
+      expect(years).toEqual([2023]);
     });
 
     it('should return empty array when no transactions', () => {

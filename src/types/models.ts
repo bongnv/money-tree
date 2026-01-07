@@ -150,24 +150,16 @@ export interface ArchivedYearReference {
 }
 
 /**
- * Year Data
- * Data for a single year
- */
-export interface YearData {
-  transactions: Transaction[];
-  budgets: Budget[];
-  manualAssets: ManualAsset[];
-  exchangeRates: ExchangeRate[]; // Exchange rates for this year
-}
-
-/**
  * Data File model
- * Represents the complete data structure with multi-year support
+ * Represents the complete data structure with all transactions and data
  * Note: Currencies are not stored in the data file as they are fixed defaults
  */
 export interface DataFile {
   version: string; // Schema version for future compatibility
-  years: Record<string, YearData>; // year as string key -> year data
+  transactions: Transaction[]; // All transactions (all years)
+  budgets: Budget[]; // All budgets (all years)
+  manualAssets: ManualAsset[]; // All manual assets (all years)
+  exchangeRates: ExchangeRate[]; // All exchange rates (all years)
   accounts: Account[]; // Shared across all years
   categories: Category[]; // Shared across all years
   transactionTypes: TransactionType[]; // Shared across all years

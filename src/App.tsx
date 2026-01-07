@@ -33,7 +33,6 @@ const App: React.FC = () => {
     error,
     setError,
     hasUnsavedChanges,
-    currentYear,
     snackbar,
     hideSnackbar,
     showSnackbar,
@@ -139,7 +138,7 @@ const App: React.FC = () => {
       await StorageFactory.replaceProvider(StorageProviderType.LOCAL, { fileHandle });
 
       // Load data from the selected file
-      await syncService.loadDataFile(currentYear);
+      await syncService.loadDataFile();
       setShowWelcomeDialog(false);
     } catch (error) {
       console.error('Failed to open file:', error);
@@ -176,7 +175,7 @@ const App: React.FC = () => {
     // Finalize connection: switch provider and load file
     await StorageFactory.replaceProvider(StorageProviderType.ONEDRIVE, { fileInfo });
 
-    await syncService.loadDataFile(currentYear);
+    await syncService.loadDataFile();
     setShowWelcomeDialog(false);
   };
 

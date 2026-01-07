@@ -128,14 +128,10 @@ describe('LocalStorageProvider', () => {
     provider = new LocalStorageProvider();
     mockData = {
       version: '1.0.0',
-      years: {
-        '2024': {
-          transactions: [],
-          budgets: [],
-          manualAssets: [],
-          exchangeRates: [],
-        },
-      },
+      transactions: [],
+      budgets: [],
+      manualAssets: [],
+      exchangeRates: [],
       accounts: [],
       categories: [],
       transactionTypes: [],
@@ -183,7 +179,10 @@ describe('LocalStorageProvider', () => {
     it('should handle data file with null arrays', async () => {
       const dataWithNulls = {
         version: '1.0.0',
-        years: {},
+        transactions: null,
+        budgets: null,
+        manualAssets: null,
+        exchangeRates: null,
         accounts: null,
         categories: null,
         transactionTypes: null,
@@ -200,6 +199,10 @@ describe('LocalStorageProvider', () => {
 
       const result = await provider.loadDataFile();
       expect(result).toBeDefined();
+      expect(result?.transactions).toEqual([]);
+      expect(result?.budgets).toEqual([]);
+      expect(result?.manualAssets).toEqual([]);
+      expect(result?.exchangeRates).toEqual([]);
       expect(result?.accounts).toEqual([]);
       expect(result?.categories).toEqual([]);
       expect(result?.transactionTypes).toEqual([]);

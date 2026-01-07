@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { storageService } from '../services/storage.service';
 import { AlertColor } from '@mui/material';
-import { DataFile } from '../types/models';
+import { DataFile, YearData, ArchivedYearReference } from '../types/models';
 import { CurrencyCode } from '../types/enums';
 
 interface SnackbarState {
@@ -19,6 +19,9 @@ interface AppState {
   error: string | null;
   snackbar: SnackbarState;
   baseCurrency: CurrencyCode; // Currency for reporting
+  // Multi-year data coordination
+  years: Record<string, YearData>; // All years data from file
+  archivedYears: ArchivedYearReference[]; // References to archived years
   // Conflict detection metadata
   fileContentHash: string | null;
   fileLoadedAt: string | null;
@@ -39,6 +42,11 @@ interface AppActions {
   showSnackbar: (message: string, severity?: AlertColor) => void;
   hideSnackbar: () => void;
   setBaseCurrency: (currencyCode: CurrencyCode) => void;
+  // Multi-year coordination actions
+  setYears: (years: Record<string, YearData>) => void;
+  removeYear: (year: number) => void;
+  setArchivedYears: (archivedYears: ArchivedYearReference[]) => void;
+  addArchivedYear: (reference: ArchivedYearReference) => void;
   // Conflict detection actions
   setFileMetadata: (hash: string, loadedAt: string, baseVersion: DataFile) => void;
   clearFileMetadata: () => void;
@@ -64,6 +72,8 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
     severity: 'info',
   },
   baseCurrency: CurrencyCode.USD,
+  years: {},
+  archivedYears: [],
   fileContentHash: null,
   fileLoadedAt: null,
   baseVersion: null,
@@ -114,6 +124,8 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
         severity: 'info',
       },
       baseCurrency: CurrencyCode.USD,
+      years: {},
+      archivedYears: [],
       fileContentHash: null,
       fileLoadedAt: null,
       baseVersion: null,
@@ -130,6 +142,28 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
 
   setBaseCurrency: (currencyCode) => {
     set({ baseCurrency: currencyCode, hasUnsavedChanges: true });
+  },
+
+  setYears: (years) => {
+    set({ years });
+  },
+
+  removeYear: (year) => {
+    set((state) => {
+      const { [String(year)]: removed, ...remainingYears } = state.years;
+      return { years: remainingYears, hasUnsavedChanges: true };
+    });
+  },
+
+  setArchivedYears: (archivedYears) => {
+    set({ archivedYears });
+  },
+
+  addArchivedYear: (reference) => {
+    set((state) => ({
+      archivedYears: [...state.archivedYears, reference],
+      hasUnsavedChanges: true,
+    }));
   },
 
   setFileMetadata: (hash, loadedAt, baseVersion) => {

@@ -10,6 +10,7 @@ import { useAssetStore } from '../stores/useAssetStore';
 import { useExchangeRateStore } from '../stores/useExchangeRateStore';
 import { useBudgetStore } from '../stores/useBudgetStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
+import { useAppStore } from '../stores/useAppStore';
 import { calculationService } from './calculation.service';
 import { StorageFactory } from './storage/StorageFactory';
 import type { ArchiveFile, ArchivedYearReference, YearEndSummary } from '../types/models';
@@ -243,15 +244,18 @@ export function updateMainFileAfterArchive(
   }));
   assetStore.setManualAssets(updatedAssets);
 
-  // TODO: Add archive reference to useAppStore.archivedYears array
-  // This will be implemented when we update DataFile structure to include archivedYears
+  // Add archive reference to app state (using the one passed in)
+  const appState = useAppStore.getState();
+  appState.addArchivedYear(_archiveReference);
+
+  // Remove year from years object in app state
+  appState.removeYear(year);
 }
 
 /**
  * Get archived year references from app store
  */
 export function getArchivedYears(): ArchivedYearReference[] {
-  // TODO: This will be stored in useAppStore once we implement the full data structure
-  // For now, return empty array
-  return [];
+  const appState = useAppStore.getState();
+  return appState.archivedYears;
 }

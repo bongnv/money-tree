@@ -35,7 +35,6 @@ function isAuthError(error: unknown): boolean {
 class SyncService {
   private autoSaveTimerId: NodeJS.Timeout | null = null;
   private isSaving = false;
-  private cachedDataFile: DataFile | null = null;
   private mergeHandler: MergeHandler | null = null;
 
   /**
@@ -193,7 +192,7 @@ class SyncService {
       const appVersion: DataFile = {
         version: '1.0.0',
         years: {
-          ...this.cachedDataFile?.years,
+          ...state.years,
           [currentYearStr]: {
             transactions: transactionStore.transactions,
             budgets: budgetStore.budgets,
@@ -204,7 +203,7 @@ class SyncService {
         accounts: accountStore.accounts,
         categories: categoryStore.categories,
         transactionTypes: categoryStore.transactionTypes,
-        archivedYears: this.cachedDataFile?.archivedYears || [],
+        archivedYears: state.archivedYears,
         baseCurrency: state.baseCurrency,
         lastModified: state.baseVersion?.lastModified || new Date().toISOString(),
       };
@@ -281,9 +280,6 @@ class SyncService {
 
       await storage.saveDataFile(dataToSave);
 
-      // Update cache with what we just saved
-      this.cachedDataFile = dataToSave;
-
       // Update file hash and base version after successful save
       const newHash = await calculateDataFileHash(dataToSave);
       const savedAt = new Date().toISOString();
@@ -353,8 +349,9 @@ class SyncService {
       const dataFile = await storage.loadDataFile();
 
       if (dataFile) {
-        // Cache the loaded data file
-        this.cachedDataFile = dataFile;
+        // Store multi-year coordination data in app state
+        state.setYears(dataFile.years || {});
+        state.setArchivedYears(dataFile.archivedYears || []);
 
         // Calculate and store file hash for conflict detection
         const fileHash = await calculateDataFileHash(dataFile);
@@ -464,9 +461,6 @@ class SyncService {
 
     // Clear provider config from localStorage
     localStorage.removeItem('moneyTree.storageProviderConfig');
-
-    // Clear the cached data file
-    this.cachedDataFile = null;
 
     // Clear all domain stores
     useAccountStore.getState().setAccounts([]);

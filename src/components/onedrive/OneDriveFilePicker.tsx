@@ -130,11 +130,17 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
         ? `${selectedFile.parentReference.path}/${selectedFile.name}`
         : `/${selectedFile.name}`;
 
+      // Determine if we're in a shared folder
+      const isSharedFolder = currentFolder?.remoteItem !== undefined;
+      const driveId = isSharedFolder
+        ? currentFolder?.remoteItem?.parentReference?.driveId
+        : undefined;
+
       onSelect({
         fileId: selectedFile.id,
         filePath,
-        // For shared files, preserve drive info
-        driveId: selectedFile.remoteItem?.parentReference?.driveId,
+        // For shared files, preserve drive info from current folder context
+        driveId,
         parentItemId: selectedFile.parentReference?.id,
       });
     }

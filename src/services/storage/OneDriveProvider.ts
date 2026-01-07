@@ -1,7 +1,7 @@
 import type { IStorageProvider } from './IStorageProvider';
 import type { DataFile, ArchiveFile } from '../../types/models';
 import { DataFileSchema } from '../../schemas/models.schema';
-import { graphConfig, errorMessages } from '../../config/onedrive.config';
+import { errorMessages } from '../../config/onedrive.config';
 import type { OneDriveService } from './OneDriveService';
 
 /**
@@ -64,8 +64,14 @@ export class OneDriveProvider implements IStorageProvider {
         return `/me/drive/root:/${this.selectedFileInfo.filePath}:/content`;
       }
     } else {
-      // Update existing file by ID (works for both personal and shared)
-      return `/me/drive/items/${this.selectedFileInfo.fileId}/content`;
+      // Update existing file by ID
+      if (this.selectedFileInfo.driveId) {
+        // Shared folder: use drives endpoint
+        return `/drives/${this.selectedFileInfo.driveId}/items/${this.selectedFileInfo.fileId}/content`;
+      } else {
+        // Personal drive: use me endpoint
+        return `/me/drive/items/${this.selectedFileInfo.fileId}/content`;
+      }
     }
   }
 

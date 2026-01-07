@@ -49,13 +49,20 @@ export const BudgetsPage: React.FC = () => {
       'November',
       'December',
     ];
-    const monthStartDate = new Date(year, month, 1);
-    const monthEndDate = new Date(year, month + 1, 0);
+
+    // Format date as YYYY-MM-DD without timezone issues
+    const formatDate = (y: number, m: number, d: number): string => {
+      const paddedMonth = String(m).padStart(2, '0');
+      const paddedDay = String(d).padStart(2, '0');
+      return `${y}-${paddedMonth}-${paddedDay}`;
+    };
+
+    const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
 
     return {
       label: `${monthNames[month]} ${year}`,
-      startDate: monthStartDate.toISOString().split('T')[0],
-      endDate: monthEndDate.toISOString().split('T')[0],
+      startDate: formatDate(year, month + 1, 1),
+      endDate: formatDate(year, month + 1, lastDayOfMonth),
     };
   };
 

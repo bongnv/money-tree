@@ -164,15 +164,10 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
       toAssetId: formData.toAssetId || undefined,
     });
 
-    // Clear form and focus on amount field
+    // Clear amount and description fields for next entry
     setFormData({
-      date: getDefaultDate(),
+      ...formData,
       amount: '',
-      transactionTypeId: formData.transactionTypeId, // Keep last used type
-      fromAccountId: formData.fromAccountId, // Keep last used account
-      toAccountId: formData.toAccountId, // Keep last used account
-      fromAssetId: '',
-      toAssetId: '',
       description: '',
     });
     setErrors({});
@@ -283,6 +278,19 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
     };
 
   const activeAccounts = accounts.filter((a) => a.isActive);
+
+  // Handle autocomplete keyboard behavior
+  const handleAutocompleteKeyDown = (
+    event: React.KeyboardEvent,
+    options: any[],
+    onChange: (value: any) => void
+  ) => {
+    // Only handle Tab and Enter when there's exactly one option
+    if ((event.key === 'Tab' || event.key === 'Enter') && options.length === 1) {
+      event.preventDefault();
+      onChange(options[0]);
+    }
+  };
 
   const showFromAccount =
     (selectedGroup === Group.EXPENSE ||
@@ -405,6 +413,51 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
             setErrors({ ...errors, transactionTypeId: '' });
           }
         }}
+        onKeyDown={(event) => {
+          handleAutocompleteKeyDown(event, transactionTypes, (value) => {
+            const newTypeId = value?.id || '';
+            const newTransactionType = transactionTypes.find((tt) => tt.id === newTypeId);
+            const newGroup = newTransactionType?.group;
+
+            const updates: Partial<typeof formData> = {
+              transactionTypeId: newTypeId,
+              fromAssetId: '',
+              toAssetId: '',
+            };
+
+            if (
+              newGroup === Group.EXPENSE ||
+              newGroup === Group.TRANSFER ||
+              newGroup === Group.ASSET_PURCHASE
+            ) {
+              if (newTransactionType?.defaultFromAccountId) {
+                updates.fromAccountId = newTransactionType.defaultFromAccountId;
+              }
+            } else {
+              updates.fromAccountId = '';
+            }
+
+            if (
+              newGroup === Group.INCOME ||
+              newGroup === Group.TRANSFER ||
+              newGroup === Group.ASSET_SALE
+            ) {
+              if (newTransactionType?.defaultToAccountId) {
+                updates.toAccountId = newTransactionType.defaultToAccountId;
+              }
+            } else {
+              updates.toAccountId = '';
+            }
+
+            setFormData({
+              ...formData,
+              ...updates,
+            });
+            if (errors.transactionTypeId) {
+              setErrors({ ...errors, transactionTypeId: '' });
+            }
+          });
+        }}
         getOptionLabel={(option) => option.name}
         groupBy={(option) => {
           const category = categories.find((c) => c.id === option.categoryId);
@@ -452,6 +505,17 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
               setErrors({ ...errors, fromAccountId: '' });
             }
           }}
+          onKeyDown={(event) => {
+            handleAutocompleteKeyDown(event, activeAccounts, (value) => {
+              setFormData({
+                ...formData,
+                fromAccountId: value?.id || '',
+              });
+              if (errors.fromAccountId) {
+                setErrors({ ...errors, fromAccountId: '' });
+              }
+            });
+          }}
           getOptionLabel={(option) => option.name}
           disableClearable={false}
           openOnFocus
@@ -481,6 +545,17 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
             if (errors.toAccountId) {
               setErrors({ ...errors, toAccountId: '' });
             }
+          }}
+          onKeyDown={(event) => {
+            handleAutocompleteKeyDown(event, activeAccounts, (value) => {
+              setFormData({
+                ...formData,
+                toAccountId: value?.id || '',
+              });
+              if (errors.toAccountId) {
+                setErrors({ ...errors, toAccountId: '' });
+              }
+            });
           }}
           getOptionLabel={(option) => option.name}
           disableClearable={false}
@@ -512,6 +587,17 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
               setErrors({ ...errors, fromAssetId: '' });
             }
           }}
+          onKeyDown={(event) => {
+            handleAutocompleteKeyDown(event, manualAssets, (value) => {
+              setFormData({
+                ...formData,
+                fromAssetId: value?.id || '',
+              });
+              if (errors.fromAssetId) {
+                setErrors({ ...errors, fromAssetId: '' });
+              }
+            });
+          }}
           getOptionLabel={(option) => option.name}
           disableClearable={false}
           openOnFocus
@@ -541,6 +627,17 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
             if (errors.toAssetId) {
               setErrors({ ...errors, toAssetId: '' });
             }
+          }}
+          onKeyDown={(event) => {
+            handleAutocompleteKeyDown(event, manualAssets, (value) => {
+              setFormData({
+                ...formData,
+                toAssetId: value?.id || '',
+              });
+              if (errors.toAssetId) {
+                setErrors({ ...errors, toAssetId: '' });
+              }
+            });
           }}
           getOptionLabel={(option) => option.name}
           disableClearable={false}

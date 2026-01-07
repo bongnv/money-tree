@@ -296,12 +296,11 @@ describe('QuickEntryRow', () => {
       expect(mockOnSubmit).toHaveBeenCalled();
     });
 
-    // Amount and description should be cleared
+    // Amount and description should be cleared for next entry
     expect(amountInput).toHaveValue(null);
     expect(descriptionInput).toHaveValue('');
 
-    // Type and account should be kept for rapid entry
-    // (Check by looking at the stored value, not displayed text)
+    // Type and accounts should be kept for rapid entry
   });
 
   it('should clear form when Escape key is pressed', async () => {

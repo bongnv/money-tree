@@ -94,9 +94,17 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({ value, onChange 
     }
   };
 
-  // Set default to current month if no value
-  const defaultPeriod = periods[currentMonth];
-  const currentValue = value || defaultPeriod.label;
+  // If no value is provided or value doesn't match any period, use current month
+  const currentMonthPeriod = periods[currentMonth];
+  const matchingPeriod = periods.find((p) => p.label === value);
+  const currentValue = matchingPeriod ? value : currentMonthPeriod.label;
+
+  // Notify parent if the value doesn't match and we're using the default
+  React.useEffect(() => {
+    if (!matchingPeriod && currentMonthPeriod) {
+      onChange(currentMonthPeriod);
+    }
+  }, []);
 
   return (
     <FormControl size="small" sx={{ minWidth: 200 }}>

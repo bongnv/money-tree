@@ -149,16 +149,19 @@ export const TransactionList: React.FC<TransactionListProps> = ({
       <DataGrid
         rows={transactions}
         columns={columns}
-        pageSizeOptions={[10, 25, 50, 100]}
         initialState={{
-          pagination: {
-            paginationModel: { pageSize: 25, page: 0 },
-          },
           sorting: {
-            sortModel: [{ field: 'date', sort: 'desc' }],
+            sortModel: [
+              { field: 'date', sort: 'desc' },
+              { field: 'id', sort: 'desc' },
+            ],
           },
         }}
         disableRowSelectionOnClick
+        rowHeight={52}
+        autoHeight={false}
+        scrollbarSize={10}
+        hideFooter
       />
     </Box>
   );

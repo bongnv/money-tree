@@ -151,7 +151,7 @@ describe('CashFlowReport', () => {
     renderWithRouter(<CashFlowReport />);
     // Check for the period dropdown and current selection
     expect(screen.getAllByText('Period').length).toBeGreaterThan(0);
-    expect(screen.getByText('Current Month')).toBeInTheDocument();
+    expect(screen.getByText('This Month')).toBeInTheDocument();
   });
 
   it('should display summary cards', () => {
@@ -187,7 +187,7 @@ describe('CashFlowReport', () => {
   it('should change period when dropdown value changes', () => {
     renderWithRouter(<CashFlowReport />);
     // Period selection should display current selection
-    expect(screen.getByText('Current Month')).toBeInTheDocument();
+    expect(screen.getByText('This Month')).toBeInTheDocument();
     // Period dropdown should be present
     const periodInputs = screen.getAllByText('Period');
     expect(periodInputs.length).toBeGreaterThan(0);

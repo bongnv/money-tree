@@ -135,7 +135,7 @@ export class OneDriveProvider implements IStorageProvider {
     DataFileSchema.parse(data);
 
     try {
-      const content = JSON.stringify(data, null, 2);
+      const content = JSON.stringify(data);
 
       // Upload file content
       const uploadUrl = this.buildUploadUrl(

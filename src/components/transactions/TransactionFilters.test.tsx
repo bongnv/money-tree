@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TransactionFilters, TransactionFiltersState } from './TransactionFilters';
 import type { Account, Category, TransactionType } from '../../types/models';
@@ -89,56 +89,13 @@ describe('TransactionFilters', () => {
       />
     );
 
-    expect(screen.getByLabelText(/from date/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/to date/i)).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /period/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/accounts/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/group/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/category/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/transaction type/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /clear/i })).toBeInTheDocument();
-  });
-
-  it('should update dateFrom when date is selected', async () => {
-    const user = userEvent.setup();
-    render(
-      <TransactionFilters
-        accounts={mockAccounts}
-        categories={mockCategories}
-        transactionTypes={mockTransactionTypes}
-        filters={defaultFilters}
-        onFiltersChange={mockOnFiltersChange}
-      />
-    );
-
-    const fromDateInput = screen.getByLabelText(/from date/i);
-    await user.type(fromDateInput, '2024-01-01');
-
-    expect(mockOnFiltersChange).toHaveBeenCalledWith({
-      ...defaultFilters,
-      dateFrom: '2024-01-01',
-    });
-  });
-
-  it('should update dateTo when date is selected', async () => {
-    const user = userEvent.setup();
-    render(
-      <TransactionFilters
-        accounts={mockAccounts}
-        categories={mockCategories}
-        transactionTypes={mockTransactionTypes}
-        filters={defaultFilters}
-        onFiltersChange={mockOnFiltersChange}
-      />
-    );
-
-    const toDateInput = screen.getByLabelText(/to date/i);
-    await user.type(toDateInput, '2024-12-31');
-
-    expect(mockOnFiltersChange).toHaveBeenCalledWith({
-      ...defaultFilters,
-      dateTo: '2024-12-31',
-    });
   });
 
   it('should update group filter', async () => {

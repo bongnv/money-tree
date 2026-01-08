@@ -50,7 +50,7 @@ class BackupService {
 
     // Create ZIP file
     const zip = new JSZip();
-    const dataJson = JSON.stringify(baseVersion, null, 2);
+    const dataJson = JSON.stringify(baseVersion);
     zip.file('money-tree.json', dataJson);
 
     // Generate ZIP blob

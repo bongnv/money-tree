@@ -20,6 +20,7 @@ import { TransactionDialog } from './TransactionDialog';
 import { TransactionList } from './TransactionList';
 import { TransactionFilters, TransactionFiltersState } from './TransactionFilters';
 import { QuickEntryRow } from './QuickEntryRow';
+import { getTodayDate } from '../../utils/date.utils';
 
 export const TransactionsPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -32,9 +33,14 @@ export const TransactionsPage: React.FC = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | undefined>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<Transaction | undefined>();
+
+  // Default to Year to Date
+  const today = getTodayDate();
+  const yearStart = `${today.slice(0, 4)}-01-01`;
+
   const [filters, setFilters] = useState<TransactionFiltersState>({
-    dateFrom: '',
-    dateTo: '',
+    dateFrom: yearStart,
+    dateTo: today,
     accountIds: [],
     categoryId: '',
     transactionTypeId: '',

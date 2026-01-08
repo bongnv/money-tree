@@ -211,7 +211,7 @@ export async function saveArchiveFile(archiveFile: ArchiveFile): Promise<void> {
   const provider = StorageFactory.getCurrentProvider();
   const fileName = provider.getFileName();
   const archiveFileName = fileName.replace('.json', `-${archiveFile.year}.json`);
-  const content = JSON.stringify(archiveFile, null, 2);
+  const content = JSON.stringify(archiveFile);
   const blob = new Blob([content], { type: 'application/json' });
   await provider.saveFile(blob, archiveFileName);
 }

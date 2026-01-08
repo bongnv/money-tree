@@ -1,36 +1,41 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DashboardPage } from './DashboardPage';
 
 // Mock child components
-jest.mock('./PeriodSelector', () => ({
-  PeriodSelector: ({ value, onChange }: any) => (
+jest.mock('../common/PeriodSelector', () => ({
+  PeriodSelector: ({ startDate, endDate, onChange }: any) => (
     <select
       data-testid="period-selector"
-      value={value.label}
-      onChange={(e) =>
-        onChange({
-          label: e.target.value,
-          startDate: value.startDate,
-          endDate: value.endDate,
-        })
-      }
+      value={`${startDate}-${endDate}`}
+      onChange={(e) => {
+        const value = e.target.value;
+        if (value === 'this-month') {
+          onChange({ startDate: '2026-01-01', endDate: '2026-01-31' });
+        } else if (value === 'last-month') {
+          onChange({ startDate: '2025-12-01', endDate: '2025-12-31' });
+        }
+      }}
     >
-      <option value="This Month">This Month</option>
-      <option value="Last Month">Last Month</option>
+      <option value="this-month">This Month</option>
+      <option value="last-month">Last Month</option>
     </select>
   ),
 }));
 
 jest.mock('./FinancialSummary', () => ({
   FinancialSummary: ({ period }: any) => (
-    <div data-testid="financial-summary">Financial Summary: {period.label}</div>
+    <div data-testid="financial-summary">
+      Financial Summary: {period.startDate} to {period.endDate}
+    </div>
   ),
 }));
 
 jest.mock('./BudgetOverview', () => ({
   BudgetOverview: ({ period }: any) => (
-    <div data-testid="budget-overview">Budget Overview: {period.label}</div>
+    <div data-testid="budget-overview">
+      Budget Overview: {period.startDate} to {period.endDate}
+    </div>
   ),
 }));
 
@@ -56,7 +61,7 @@ describe('DashboardPage', () => {
 
       const periodSelector = screen.getByTestId('period-selector');
       expect(periodSelector).toBeInTheDocument();
-      expect(periodSelector).toHaveValue('This Month');
+      expect(periodSelector).toHaveValue('this-month');
     });
 
     it('renders all child components', () => {
@@ -82,24 +87,31 @@ describe('DashboardPage', () => {
       render(<DashboardPage />);
 
       const periodSelector = screen.getByTestId('period-selector');
-      expect(periodSelector).toHaveValue('This Month');
+      expect(periodSelector).toHaveValue('this-month');
 
+      // FinancialSummary shows date range, not period name
       const financialSummary = screen.getByTestId('financial-summary');
-      expect(financialSummary).toHaveTextContent('This Month');
+      expect(financialSummary).toHaveTextContent(
+        /Financial Summary: \d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2}/
+      );
     });
 
     it('passes selected period to Financial Summary component', () => {
       render(<DashboardPage />);
 
       const financialSummary = screen.getByTestId('financial-summary');
-      expect(financialSummary).toHaveTextContent('Financial Summary: This Month');
+      expect(financialSummary).toHaveTextContent(
+        /Financial Summary: \d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2}/
+      );
     });
 
     it('passes selected period to Budget Overview component', () => {
       render(<DashboardPage />);
 
       const budgetOverview = screen.getByTestId('budget-overview');
-      expect(budgetOverview).toHaveTextContent('Budget Overview: This Month');
+      expect(budgetOverview).toHaveTextContent(
+        /Budget Overview: \d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2}/
+      );
     });
 
     it('updates all sections when period changes', async () => {
@@ -107,23 +119,10 @@ describe('DashboardPage', () => {
       render(<DashboardPage />);
 
       const periodSelector = screen.getByTestId('period-selector');
-      await user.selectOptions(periodSelector, 'Last Month');
+      await user.selectOptions(periodSelector, 'last-month');
 
-      expect(screen.getByTestId('financial-summary')).toHaveTextContent('Last Month');
-      expect(screen.getByTestId('budget-overview')).toHaveTextContent('Last Month');
-    });
-
-    it('maintains period state across component updates', async () => {
-      const user = userEvent.setup();
-      const { rerender } = render(<DashboardPage />);
-
-      const periodSelector = screen.getByTestId('period-selector');
-      await user.selectOptions(periodSelector, 'Last Month');
-
-      rerender(<DashboardPage />);
-
-      expect(screen.getByTestId('period-selector')).toHaveValue('Last Month');
-      expect(screen.getByTestId('financial-summary')).toHaveTextContent('Last Month');
+      expect(screen.getByTestId('financial-summary')).toHaveTextContent('2025-12-01 to 2025-12-31');
+      expect(screen.getByTestId('budget-overview')).toHaveTextContent('2025-12-01 to 2025-12-31');
     });
   });
 

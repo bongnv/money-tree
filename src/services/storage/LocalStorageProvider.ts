@@ -93,7 +93,7 @@ export class LocalStorageProvider implements IStorageProvider {
 
     // Write to file
     const writable = await this.fileHandle.createWritable();
-    await writable.write(JSON.stringify(data, null, 2));
+    await writable.write(JSON.stringify(data));
     await writable.close();
   }
 

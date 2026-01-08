@@ -27,11 +27,19 @@ export const TransactionList: React.FC<TransactionListProps> = ({
   const getCategory = (id: string) => categories.find((c) => c.id === id);
   const getAccount = (id?: string) => (id ? accounts.find((a) => a.id === id) : undefined);
 
+  // Pre-sort transactions by date (desc) and id (desc)
+  const sortedTransactions = [...transactions].sort((a, b) => {
+    const dateCompare = b.date.localeCompare(a.date);
+    if (dateCompare !== 0) return dateCompare;
+    return b.id.localeCompare(a.id);
+  });
+
   const columns: GridColDef[] = [
     {
       field: 'date',
       headerName: 'Date',
       width: 120,
+      sortable: false,
       valueGetter: (_, row) => row.date,
       renderCell: (params: GridRenderCellParams) => formatDate(params.value),
     },
@@ -40,12 +48,14 @@ export const TransactionList: React.FC<TransactionListProps> = ({
       headerName: 'Description',
       flex: 1,
       minWidth: 150,
+      sortable: false,
       valueGetter: (_, row) => row.description || '—',
     },
     {
       field: 'category',
       headerName: 'Category',
       width: 150,
+      sortable: false,
       valueGetter: (_, row) => {
         const transactionType = getTransactionType(row.transactionTypeId);
         if (!transactionType) return '—';
@@ -84,6 +94,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
       width: 120,
       align: 'right',
       headerAlign: 'right',
+      sortable: false,
       valueGetter: (_, row) => row.amount,
       renderCell: (params: GridRenderCellParams) => {
         const fromAccount = getAccount(params.row.fromAccountId);
@@ -96,6 +107,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
       field: 'fromAccount',
       headerName: 'From',
       width: 130,
+      sortable: false,
       valueGetter: (_, row) => {
         const account = getAccount(row.fromAccountId);
         return account?.name || '—';
@@ -105,6 +117,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
       field: 'toAccount',
       headerName: 'To',
       width: 130,
+      sortable: false,
       valueGetter: (_, row) => {
         const account = getAccount(row.toAccountId);
         return account?.name || '—';
@@ -147,16 +160,9 @@ export const TransactionList: React.FC<TransactionListProps> = ({
   return (
     <Box sx={{ height: 600, width: '100%' }}>
       <DataGrid
-        rows={transactions}
+        rows={sortedTransactions}
         columns={columns}
-        initialState={{
-          sorting: {
-            sortModel: [
-              { field: 'date', sort: 'desc' },
-              { field: 'id', sort: 'desc' },
-            ],
-          },
-        }}
+        disableColumnSorting
         disableRowSelectionOnClick
         rowHeight={52}
         autoHeight={false}

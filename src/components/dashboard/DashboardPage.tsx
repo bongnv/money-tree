@@ -1,17 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Box, Typography, Container } from '@mui/material';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
-import { PeriodSelector, PeriodOption } from './PeriodSelector';
+import { PeriodSelector } from '../common/PeriodSelector';
 import { FinancialSummary } from './FinancialSummary';
 import { BudgetOverview } from './BudgetOverview';
 import { RecentTransactionsList } from './RecentTransactionsList';
 
 export const DashboardPage: React.FC = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState<PeriodOption>({
-    label: 'This Month',
-    startDate: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
-    endDate: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
-  });
+  const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
+
+  const selectedPeriod = useMemo(
+    () => ({ startDate, endDate, label: 'This Month', value: 'this-month' }),
+    [startDate, endDate]
+  );
+
+  const handlePeriodChange = (range: { startDate: string; endDate: string }) => {
+    setStartDate(range.startDate);
+    setEndDate(range.endDate);
+  };
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -19,7 +26,13 @@ export const DashboardPage: React.FC = () => {
         <Typography variant="h4" component="h1">
           Dashboard
         </Typography>
-        <PeriodSelector value={selectedPeriod} onChange={setSelectedPeriod} />
+        <PeriodSelector
+          startDate={startDate}
+          endDate={endDate}
+          onChange={handlePeriodChange}
+          allowCustom={false}
+          size="small"
+        />
       </Box>
 
       <Box sx={{ mb: 4 }}>

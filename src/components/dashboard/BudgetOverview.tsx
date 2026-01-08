@@ -6,7 +6,7 @@ import { useBudgetStore } from '../../stores/useBudgetStore';
 import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import { calculationService } from '../../services/calculation.service';
-import type { PeriodOption } from './PeriodSelector';
+import type { PeriodOption } from '../common/PeriodSelector';
 import { Group } from '../../types/enums';
 
 export interface BudgetOverviewProps {

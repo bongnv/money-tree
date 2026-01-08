@@ -6,7 +6,7 @@ import { useAssetStore } from '../../stores/useAssetStore';
 import { useAppStore } from '../../stores/useAppStore';
 import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
 import { AccountType } from '../../types/enums';
-import type { PeriodOption } from './PeriodSelector';
+import type { PeriodOption } from '../common/PeriodSelector';
 
 // Mock stores
 jest.mock('../../stores/useAccountStore');

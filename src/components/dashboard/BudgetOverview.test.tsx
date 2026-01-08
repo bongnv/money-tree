@@ -5,7 +5,7 @@ import { useBudgetStore } from '../../stores/useBudgetStore';
 import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import { Group } from '../../types/enums';
-import type { PeriodOption } from './PeriodSelector';
+import type { PeriodOption } from '../common/PeriodSelector';
 
 jest.mock('../../stores/useBudgetStore');
 jest.mock('../../stores/useTransactionStore');

@@ -255,7 +255,7 @@ describe('LocalStorageProvider', () => {
 
       await provider.saveDataFile(mockData);
 
-      expect(mockWritable.write).toHaveBeenCalledWith(JSON.stringify(mockData, null, 2));
+      expect(mockWritable.write).toHaveBeenCalledWith(JSON.stringify(mockData));
       expect(mockWritable.close).toHaveBeenCalled();
     });
 

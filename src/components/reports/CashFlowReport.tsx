@@ -7,7 +7,6 @@ import {
   Grid,
   Card,
   CardContent,
-  TextField,
   Table,
   TableBody,
   TableCell,
@@ -22,10 +21,6 @@ import {
   ListItemText,
   SelectChangeEvent,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
@@ -37,6 +32,7 @@ import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
 import { reportService } from '../../services/report.service';
 import { LineChart } from '../charts/LineChart';
 import { PieChart } from '../charts/PieChart';
+import { PeriodSelector } from '../common/PeriodSelector';
 import { formatCurrency } from '../../utils/currency.utils';
 import { getTodayDate } from '../../utils/date.utils';
 import type { CurrencyCode } from '../../types/enums';
@@ -53,17 +49,13 @@ export const CashFlowReport: React.FC = () => {
   const getRateForMonth = useExchangeRateStore((state) => state.getRateForMonth);
   const fetchRateIfMissing = useExchangeRateStore((state) => state.fetchRateIfMissing);
 
-  // Date range state
+  // Date range state - default to Year to Date
   const today = getTodayDate();
-  const firstDayOfMonth = `${today.slice(0, 7)}-01`;
-  const [startDate, setStartDate] = useState<string>(firstDayOfMonth);
+  const yearStart = `${today.slice(0, 4)}-01-01`;
+  const [startDate, setStartDate] = useState<string>(yearStart);
   const [endDate, setEndDate] = useState<string>(today);
-  const [periodType, setPeriodType] = useState<string>('current-month');
   const [conversionCurrency, setConversionCurrency] = useState<string>(baseCurrency);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [customDateDialogOpen, setCustomDateDialogOpen] = useState(false);
-  const [tempStartDate, setTempStartDate] = useState<string>(firstDayOfMonth);
-  const [tempEndDate, setTempEndDate] = useState<string>(today);
 
   // Use the selected currency for display
   const currencyCode = conversionCurrency as CurrencyCode;
@@ -103,76 +95,9 @@ export const CashFlowReport: React.FC = () => {
     });
   }, [conversionCurrency, startDate, endDate, transactions, accounts, fetchRateIfMissing]);
 
-  // Update date range based on period preset
-  const updatePeriodDates = (preset: string) => {
-    const [year, month, day] = today.split('-').map(Number);
-    const todayDate = new Date(year, month - 1, day);
-    let newStartDate: Date;
-    let newEndDate: Date = todayDate;
-
-    switch (preset) {
-      case 'current-month':
-        newStartDate = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
-        break;
-      case 'last-month': {
-        const lastMonth = new Date(todayDate.getFullYear(), todayDate.getMonth() - 1, 1);
-        newStartDate = lastMonth;
-        newEndDate = new Date(todayDate.getFullYear(), todayDate.getMonth(), 0); // Last day of previous month
-        break;
-      }
-      case 'current-quarter': {
-        const quarterStartMonth = Math.floor(todayDate.getMonth() / 3) * 3;
-        newStartDate = new Date(todayDate.getFullYear(), quarterStartMonth, 1);
-        break;
-      }
-      case 'last-quarter': {
-        const quarterStartMonth = Math.floor(todayDate.getMonth() / 3) * 3;
-        newStartDate = new Date(todayDate.getFullYear(), quarterStartMonth - 3, 1);
-        newEndDate = new Date(todayDate.getFullYear(), quarterStartMonth, 0);
-        break;
-      }
-      case 'current-year':
-        newStartDate = new Date(todayDate.getFullYear(), 0, 1);
-        break;
-      case 'last-year':
-        newStartDate = new Date(todayDate.getFullYear() - 1, 0, 1);
-        newEndDate = new Date(todayDate.getFullYear() - 1, 11, 31);
-        break;
-      case 'custom':
-        // Keep current dates
-        return;
-      default:
-        return;
-    }
-
-    const startStr = `${newStartDate.getFullYear()}-${String(newStartDate.getMonth() + 1).padStart(2, '0')}-${String(newStartDate.getDate()).padStart(2, '0')}`;
-    const endStr = `${newEndDate.getFullYear()}-${String(newEndDate.getMonth() + 1).padStart(2, '0')}-${String(newEndDate.getDate()).padStart(2, '0')}`;
-    setStartDate(startStr);
-    setEndDate(endStr);
-  };
-
-  const handlePeriodChange = (event: SelectChangeEvent<string>) => {
-    const newPeriod = event.target.value;
-    if (newPeriod === 'custom') {
-      // Open dialog for custom range
-      setTempStartDate(startDate);
-      setTempEndDate(endDate);
-      setCustomDateDialogOpen(true);
-      return;
-    }
-    setPeriodType(newPeriod);
-    updatePeriodDates(newPeriod);
-  };
-
-  const handleApplyCustomDates = () => {
-    setStartDate(tempStartDate);
-    setEndDate(tempEndDate);
-    setPeriodType('custom');
-    setCustomDateDialogOpen(false);
-  };
-
-  const handleCancelCustomDates = () => {
-    setCustomDateDialogOpen(false);
+  const handleDateRangeChange = (range: { startDate: string; endDate: string }) => {
+    setStartDate(range.startDate);
+    setEndDate(range.endDate);
   };
 
   // Calculate cash flow for selected period
@@ -212,12 +137,12 @@ export const CashFlowReport: React.FC = () => {
 
   // Calculate trend data
   const trendData = useMemo(() => {
-    const intervalDays =
-      periodType === 'current-year' || periodType === 'last-year'
-        ? 30
-        : periodType === 'current-quarter' || periodType === 'last-quarter'
-          ? 7
-          : 1;
+    // Determine interval based on date range duration
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const intervalDays = daysDiff > 180 ? 30 : daysDiff > 60 ? 7 : 1;
+
     const trend = reportService.calculateCashFlowTrend(
       filteredTransactions,
       transactionTypes,
@@ -245,7 +170,6 @@ export const CashFlowReport: React.FC = () => {
     categories,
     startDate,
     endDate,
-    periodType,
     accounts,
     effectiveBaseCurrency,
     effectiveGetRateForMonth,
@@ -396,39 +320,15 @@ export const CashFlowReport: React.FC = () => {
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} sm={6} md={4}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Period</InputLabel>
-              <Select
-                value={periodType}
-                label="Period"
-                onChange={handlePeriodChange}
-                renderValue={(value) => {
-                  if (value === 'custom') {
-                    return `Custom: ${startDate} to ${endDate}`;
-                  }
-                  const labels: Record<string, string> = {
-                    'current-month': 'Current Month',
-                    'last-month': 'Last Month',
-                    'current-quarter': 'Current Quarter',
-                    'last-quarter': 'Last Quarter',
-                    'current-year': 'Current Year',
-                    'last-year': 'Last Year',
-                  };
-                  return labels[value] || value;
-                }}
-              >
-                <MenuItem value="current-month">Current Month</MenuItem>
-                <MenuItem value="last-month">Last Month</MenuItem>
-                <MenuItem value="current-quarter">Current Quarter</MenuItem>
-                <MenuItem value="last-quarter">Last Quarter</MenuItem>
-                <MenuItem value="current-year">Current Year</MenuItem>
-                <MenuItem value="last-year">Last Year</MenuItem>
-                <MenuItem value="custom">Custom Range...</MenuItem>
-              </Select>
-            </FormControl>
+            <PeriodSelector
+              startDate={startDate}
+              endDate={endDate}
+              onChange={handleDateRangeChange}
+              fullWidth
+            />
           </Grid>
           <Grid item xs={12} sm={6} md={2.5}>
-            <FormControl fullWidth size="small">
+            <FormControl fullWidth>
               <InputLabel>Currency</InputLabel>
               <Select
                 value={conversionCurrency}
@@ -444,7 +344,7 @@ export const CashFlowReport: React.FC = () => {
             </FormControl>
           </Grid>
           <Grid item xs={12} sm={6} md={4.5}>
-            <FormControl fullWidth size="small">
+            <FormControl fullWidth>
               <InputLabel>Categories</InputLabel>
               <Select
                 multiple
@@ -468,19 +368,16 @@ export const CashFlowReport: React.FC = () => {
               </Select>
             </FormControl>
           </Grid>
-          {selectedCategories.length > 0 && (
-            <Grid item xs={12} sm={6} md={1}>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={handleClearFilters}
-                fullWidth
-                sx={{ height: '40px' }}
-              >
-                Clear
-              </Button>
-            </Grid>
-          )}
+          <Grid item xs={12} sm={6} md={1}>
+            <Button
+              variant="outlined"
+              onClick={handleClearFilters}
+              disabled={selectedCategories.length === 0}
+              fullWidth
+            >
+              Clear
+            </Button>
+          </Grid>
         </Grid>
       </Paper>
 
@@ -676,37 +573,6 @@ export const CashFlowReport: React.FC = () => {
           </Paper>
         </Grid>
       </Grid>
-
-      {/* Custom Date Range Dialog */}
-      <Dialog open={customDateDialogOpen} onClose={handleCancelCustomDates}>
-        <DialogTitle>Select Custom Date Range</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1, minWidth: 300 }}>
-            <TextField
-              label="Start Date"
-              type="date"
-              value={tempStartDate}
-              onChange={(e) => setTempStartDate(e.target.value)}
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-              label="End Date"
-              type="date"
-              value={tempEndDate}
-              onChange={(e) => setTempEndDate(e.target.value)}
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelCustomDates}>Cancel</Button>
-          <Button onClick={handleApplyCustomDates} variant="contained">
-            Apply
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };

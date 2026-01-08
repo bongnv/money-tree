@@ -7,7 +7,7 @@ import { useAssetStore } from '../../stores/useAssetStore';
 import { useAppStore } from '../../stores/useAppStore';
 import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
 import { calculationService } from '../../services/calculation.service';
-import type { PeriodOption } from './PeriodSelector';
+import type { PeriodOption } from '../common/PeriodSelector';
 
 export interface FinancialSummaryProps {
   period: PeriodOption;

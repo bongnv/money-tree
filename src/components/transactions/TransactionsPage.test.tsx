@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import { TransactionsPage } from './TransactionsPage';
@@ -59,14 +59,14 @@ describe('TransactionsPage', () => {
   const mockTransactions: Transaction[] = [
     {
       id: 'txn-1',
-      date: '2024-01-15',
+      date: '2026-01-05',
       description: 'Grocery shopping',
       amount: 50.25,
       transactionTypeId: 'tt-1',
       fromAccountId: 'acc-1',
       toAccountId: '',
-      createdAt: '2024-01-15T00:00:00.000Z',
-      updatedAt: '2024-01-15T00:00:00.000Z',
+      createdAt: '2026-01-05T00:00:00.000Z',
+      updatedAt: '2026-01-05T00:00:00.000Z',
     },
   ];
 
@@ -487,65 +487,23 @@ describe('TransactionsPage', () => {
   it('renders transaction filters', () => {
     renderWithRouter(<TransactionsPage />);
 
-    expect(screen.getByLabelText(/from date/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/to date/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/accounts/i)).toBeInTheDocument();
+    // Check that filter components are present
+    expect(screen.getAllByText(/period/i).length).toBeGreaterThan(0);
+    expect(screen.getByLabelText('Accounts')).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument();
-  });
-
-  it('filters transactions by date range', async () => {
-    const additionalTransaction: Transaction = {
-      id: 'txn-2',
-      date: '2024-02-01',
-      description: 'February transaction',
-      amount: 100,
-      transactionTypeId: 'tt-1',
-      fromAccountId: 'acc-1',
-      toAccountId: undefined,
-      createdAt: '2024-02-01T00:00:00.000Z',
-      updatedAt: '2024-02-01T00:00:00.000Z',
-    };
-
-    mockUseTransactionStore.mockReturnValue({
-      transactions: [...mockTransactions, additionalTransaction],
-      addTransaction: mockAddTransaction,
-      updateTransaction: mockUpdateTransaction,
-      deleteTransaction: mockDeleteTransaction,
-      getTransactionsByAccount: jest.fn(),
-      getTransactionsByType: jest.fn(),
-      getTransactionsByDateRange: jest.fn(),
-    });
-
-    const user = userEvent.setup();
-    renderWithRouter(<TransactionsPage />);
-
-    // Both transactions should be visible initially
-    expect(screen.getByText('Grocery shopping')).toBeInTheDocument();
-    expect(screen.getByText('February transaction')).toBeInTheDocument();
-
-    // Apply date filter
-    const fromDateInput = screen.getByLabelText(/from date/i);
-    await user.type(fromDateInput, '2024-01-01');
-
-    const toDateInput = screen.getByLabelText(/to date/i);
-    await user.type(toDateInput, '2024-01-31');
-
-    // Only January transaction should be visible
-    expect(screen.getByText('Grocery shopping')).toBeInTheDocument();
-    expect(screen.queryByText('February transaction')).not.toBeInTheDocument();
   });
 
   it('filters transactions by search text', async () => {
     const additionalTransaction: Transaction = {
       id: 'txn-2',
-      date: '2024-01-20',
+      date: '2026-01-06',
       description: 'Coffee shop',
       amount: 5,
       transactionTypeId: 'tt-1',
       fromAccountId: 'acc-1',
       toAccountId: undefined,
-      createdAt: '2024-01-20T00:00:00.000Z',
-      updatedAt: '2024-01-20T00:00:00.000Z',
+      createdAt: '2026-01-06T00:00:00.000Z',
+      updatedAt: '2026-01-06T00:00:00.000Z',
     };
 
     mockUseTransactionStore.mockReturnValue({

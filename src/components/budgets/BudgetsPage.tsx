@@ -16,7 +16,8 @@ import { useBudgetStore } from '../../stores/useBudgetStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import { useTransactionStore } from '../../stores/useTransactionStore';
 import { BudgetDialog } from './BudgetDialog';
-import { PeriodSelector, type PeriodOption } from './PeriodSelector';
+import { PeriodSelector } from '../common/PeriodSelector';
+import { getBudgetPresets } from './periodPresets';
 import type { Budget } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
 import { calculationService } from '../../services/calculation.service';
@@ -31,24 +32,10 @@ export const BudgetsPage: React.FC = () => {
   const [editingBudget, setEditingBudget] = useState<Budget | undefined>(undefined);
 
   // Initialize with current month
-  const getCurrentMonthPeriod = (): PeriodOption => {
+  const getCurrentMonthPeriod = () => {
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
-    const monthNames = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
 
     // Format date as YYYY-MM-DD without timezone issues
     const formatDate = (y: number, m: number, d: number): string => {
@@ -60,13 +47,12 @@ export const BudgetsPage: React.FC = () => {
     const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
 
     return {
-      label: `${monthNames[month]} ${year}`,
       startDate: formatDate(year, month + 1, 1),
       endDate: formatDate(year, month + 1, lastDayOfMonth),
     };
   };
 
-  const [selectedPeriod, setSelectedPeriod] = useState<PeriodOption>(getCurrentMonthPeriod());
+  const [selectedPeriod, setSelectedPeriod] = useState(getCurrentMonthPeriod());
 
   const handleAdd = () => {
     setEditingBudget(undefined);
@@ -217,7 +203,13 @@ export const BudgetsPage: React.FC = () => {
           Budgets
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <PeriodSelector value={selectedPeriod.label} onChange={setSelectedPeriod} />
+          <PeriodSelector
+            startDate={selectedPeriod.startDate}
+            endDate={selectedPeriod.endDate}
+            onChange={setSelectedPeriod}
+            presets={getBudgetPresets()}
+            allowCustom={false}
+          />
           <Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd}>
             Add Budget
           </Button>
@@ -225,7 +217,7 @@ export const BudgetsPage: React.FC = () => {
       </Box>
 
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Viewing period: {selectedPeriod.label}
+        Viewing period: {selectedPeriod.startDate} to {selectedPeriod.endDate}
       </Typography>
 
       {budgets.length === 0 ? (

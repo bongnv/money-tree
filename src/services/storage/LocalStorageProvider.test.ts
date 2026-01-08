@@ -276,4 +276,141 @@ describe('LocalStorageProvider', () => {
       expect(mockFileHandle.createWritable).toHaveBeenCalled();
     });
   });
+
+  describe('permission handling', () => {
+    it('should request read permission if not granted', async () => {
+      const mockFile = {
+        text: jest.fn().mockResolvedValue(JSON.stringify(mockData)),
+      };
+
+      const mockFileHandle = {
+        ...createMockFileHandle(mockFile),
+        queryPermission: jest.fn().mockResolvedValue('prompt'),
+        requestPermission: jest.fn().mockResolvedValue('granted'),
+        getFile: jest.fn().mockResolvedValue(mockFile),
+      };
+
+      provider = new LocalStorageProvider(mockFileHandle);
+      await provider.loadDataFile();
+
+      expect(mockFileHandle.requestPermission).toHaveBeenCalledWith({ mode: 'read' });
+    });
+
+    it('should throw error if read permission denied', async () => {
+      const mockFileHandle = {
+        ...createMockFileHandle(null),
+        queryPermission: jest.fn().mockResolvedValue('denied'),
+        requestPermission: jest.fn().mockResolvedValue('denied'),
+      };
+
+      provider = new LocalStorageProvider(mockFileHandle);
+
+      await expect(provider.loadDataFile()).rejects.toThrow(
+        'File permission expired. Please select the file again to grant permission.'
+      );
+    });
+
+    it('should request write permission if not granted', async () => {
+      const mockFile = {
+        text: jest.fn().mockResolvedValue(JSON.stringify(mockData)),
+      };
+
+      const mockFileHandle = {
+        ...createMockFileHandle(mockFile),
+        queryPermission: jest
+          .fn()
+          .mockResolvedValueOnce('granted') // for read
+          .mockResolvedValueOnce('prompt'), // for write
+        requestPermission: jest.fn().mockResolvedValue('granted'),
+        getFile: jest.fn().mockResolvedValue(mockFile),
+      };
+
+      provider = new LocalStorageProvider(mockFileHandle);
+      await provider.loadDataFile(); // Initialize
+      await provider.saveDataFile(mockData);
+
+      expect(mockFileHandle.requestPermission).toHaveBeenCalledWith({ mode: 'readwrite' });
+    });
+
+    it('should throw error if write permission denied', async () => {
+      const mockFile = {
+        text: jest.fn().mockResolvedValue(JSON.stringify(mockData)),
+      };
+
+      const mockFileHandle = {
+        ...createMockFileHandle(mockFile),
+        queryPermission: jest
+          .fn()
+          .mockResolvedValueOnce('granted') // for read
+          .mockResolvedValueOnce('denied'), // for write
+        requestPermission: jest.fn().mockResolvedValue('denied'),
+        getFile: jest.fn().mockResolvedValue(mockFile),
+      };
+
+      provider = new LocalStorageProvider(mockFileHandle);
+      await provider.loadDataFile(); // Initialize
+
+      await expect(provider.saveDataFile(mockData)).rejects.toThrow(
+        'File permission expired. Please select the file again to grant permission.'
+      );
+    });
+
+    it('should handle permission request failures', async () => {
+      const mockFileHandle = {
+        ...createMockFileHandle(null),
+        queryPermission: jest.fn().mockResolvedValue('prompt'),
+        requestPermission: jest.fn().mockRejectedValue(new Error('Permission request failed')),
+      };
+
+      provider = new LocalStorageProvider(mockFileHandle);
+
+      await expect(provider.loadDataFile()).rejects.toThrow(
+        'File permission expired. Please select the file again to grant permission.'
+      );
+    });
+  });
+
+  describe('saveFile', () => {
+    beforeEach(() => {
+      // Mock window.showSaveFilePicker
+      (window as any).showSaveFilePicker = jest.fn();
+    });
+
+    it('should save ZIP file with file picker', async () => {
+      const blob = new Blob(['test data']);
+      const mockFileHandle = createMockFileHandle(null);
+      (window as any).showSaveFilePicker = jest.fn().mockResolvedValue(mockFileHandle);
+
+      await provider.saveFile(blob, 'backup.zip');
+
+      expect(window.showSaveFilePicker).toHaveBeenCalledWith({
+        suggestedName: 'backup.zip',
+        types: [
+          {
+            description: 'ZIP Archive',
+            accept: {
+              'application/zip': ['.zip'],
+            },
+          },
+        ],
+      });
+      expect(mockFileHandle.createWritable).toHaveBeenCalled();
+    });
+
+    it('should handle user cancellation', async () => {
+      const blob = new Blob(['test data']);
+      const abortError = new DOMException('User cancelled', 'AbortError');
+      (window as any).showSaveFilePicker = jest.fn().mockRejectedValue(abortError);
+
+      await expect(provider.saveFile(blob, 'backup.zip')).rejects.toThrow('File save cancelled');
+    });
+
+    it('should rethrow non-abort errors', async () => {
+      const blob = new Blob(['test data']);
+      const error = new Error('Unknown error');
+      (window as any).showSaveFilePicker = jest.fn().mockRejectedValue(error);
+
+      await expect(provider.saveFile(blob, 'backup.zip')).rejects.toThrow('Unknown error');
+    });
+  });
 });

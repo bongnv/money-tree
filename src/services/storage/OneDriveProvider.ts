@@ -170,17 +170,17 @@ export class OneDriveProvider implements IStorageProvider {
   async saveFile(blob: Blob, filename: string): Promise<void> {
     // Extract the actual path (remove Graph API prefixes)
     const actualPath = this.extractActualPath(this.selectedFileInfo.filePath);
-    
+
     // Determine the folder path from main file location
     const lastSlashIndex = actualPath.lastIndexOf('/');
     const folderPath = lastSlashIndex >= 0 ? actualPath.substring(0, lastSlashIndex) : '';
-    
+
     // Build full path: folder/filename or just filename if in root
     const fullPath = folderPath ? `${folderPath}/${filename}` : filename;
-    
+
     // Build upload URL (always creates new file, never uses fileId)
     const uploadPath = this.buildUploadUrl(fullPath, null);
-    
+
     // Upload blob directly
     await this.service.writeFile(uploadPath, blob);
   }

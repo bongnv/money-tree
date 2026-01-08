@@ -1,10 +1,4 @@
-import {
-  fetchCurrentRate,
-  findFallbackRate,
-  getTransactionMonth,
-  getCurrentMonth,
-  getAllMonthsInYear,
-} from './exchangeRate.service';
+import { fetchCurrentRate, findFallbackRate } from './exchangeRate.service';
 
 // Mock fetch for API tests
 global.fetch = jest.fn();
@@ -177,43 +171,6 @@ describe('exchangeRate.service', () => {
     it('should handle year boundaries correctly', () => {
       const rate = findFallbackRate(mockRates, '2026-01', 'EUR', 'USD');
       expect(rate).toBe(1.17); // December 2025
-    });
-  });
-
-  describe('getTransactionMonth', () => {
-    it('should extract month from date string', () => {
-      expect(getTransactionMonth('2026-01-15')).toBe('2026-01');
-      expect(getTransactionMonth('2025-12-31')).toBe('2025-12');
-      expect(getTransactionMonth('2026-03-01')).toBe('2026-03');
-    });
-  });
-
-  describe('getCurrentMonth', () => {
-    it('should return current month in YYYY-MM format', () => {
-      const result = getCurrentMonth();
-      expect(result).toMatch(/^\d{4}-\d{2}$/);
-
-      // Verify it's a valid month
-      const [year, month] = result.split('-').map(Number);
-      expect(year).toBeGreaterThan(2020);
-      expect(month).toBeGreaterThanOrEqual(1);
-      expect(month).toBeLessThanOrEqual(12);
-    });
-  });
-
-  describe('getAllMonthsInYear', () => {
-    it('should return all 12 months for a year', () => {
-      const months = getAllMonthsInYear(2026);
-      expect(months).toHaveLength(12);
-      expect(months[0]).toBe('2026-01');
-      expect(months[11]).toBe('2026-12');
-    });
-
-    it('should format months with leading zeros', () => {
-      const months = getAllMonthsInYear(2025);
-      months.forEach((month) => {
-        expect(month).toMatch(/^\d{4}-\d{2}$/);
-      });
     });
   });
 });

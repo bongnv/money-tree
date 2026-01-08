@@ -179,36 +179,3 @@ export function findFallbackRate(
 
   return null;
 }
-
-/**
- * Get transaction month from date string
- * @param date Date string in YYYY-MM-DD format
- * @returns Month in YYYY-MM format
- */
-export function getTransactionMonth(date: string): string {
-  return date.substring(0, 7); // Extract YYYY-MM
-}
-
-/**
- * Get current month in YYYY-MM format
- * @returns Current month string
- */
-export function getCurrentMonth(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  return `${year}-${month}`;
-}
-
-/**
- * Get all months in a year
- * @param year Year number
- * @returns Array of month strings in YYYY-MM format
- */
-export function getAllMonthsInYear(year: number): string[] {
-  const months: string[] = [];
-  for (let month = 1; month <= 12; month++) {
-    months.push(`${year}-${String(month).padStart(2, '0')}`);
-  }
-  return months;
-}

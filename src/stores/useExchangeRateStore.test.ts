@@ -74,8 +74,6 @@ describe('useExchangeRateStore', () => {
     });
 
     it('should fetch rate from API if missing for current month', async () => {
-      // Mock getCurrentMonth to return 2026-01
-      jest.spyOn(exchangeRateService, 'getCurrentMonth').mockReturnValue('2026-01');
       const mockFindFallbackRate = jest.spyOn(exchangeRateService, 'findFallbackRate');
       mockFindFallbackRate.mockReturnValue(null); // No fallback available
       const mockFetchCurrentRate = jest.spyOn(exchangeRateService, 'fetchCurrentRate');

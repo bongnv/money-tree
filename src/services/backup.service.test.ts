@@ -50,47 +50,51 @@ describe('BackupService', () => {
 
   describe('shouldPromptBackup', () => {
     it('should return false when lastBackupDate is null and no baseVersion exists', () => {
-      useAppStore.setState({ baseVersion: null });
-      const result = backupService.shouldPromptBackup(null);
+      useAppStore.setState({ baseVersion: null, lastBackupDate: null });
+      const result = backupService.shouldPromptBackup();
       expect(result).toBe(false);
     });
 
     it('should return false when lastBackupDate is undefined and no baseVersion exists', () => {
-      useAppStore.setState({ baseVersion: null });
-      const result = backupService.shouldPromptBackup(undefined);
+      useAppStore.setState({ baseVersion: null, lastBackupDate: null });
+      const result = backupService.shouldPromptBackup();
       expect(result).toBe(false);
     });
 
     it('should return true when never backed up but baseVersion exists', () => {
-      useAppStore.setState({ baseVersion: mockDataFile });
-      const result = backupService.shouldPromptBackup(null);
+      useAppStore.setState({ baseVersion: mockDataFile, lastBackupDate: null });
+      const result = backupService.shouldPromptBackup();
       expect(result).toBe(true);
     });
 
     it('should return true when backup is older than 30 days', () => {
       const oldDate = new Date();
       oldDate.setDate(oldDate.getDate() - 31);
-      const result = backupService.shouldPromptBackup(oldDate.toISOString());
+      useAppStore.setState({ lastBackupDate: oldDate.toISOString() });
+      const result = backupService.shouldPromptBackup();
       expect(result).toBe(true);
     });
 
     it('should return false when backup is within 30 days', () => {
       const recentDate = new Date();
       recentDate.setDate(recentDate.getDate() - 15);
-      const result = backupService.shouldPromptBackup(recentDate.toISOString());
+      useAppStore.setState({ lastBackupDate: recentDate.toISOString() });
+      const result = backupService.shouldPromptBackup();
       expect(result).toBe(false);
     });
 
     it('should return true when backup is exactly 30 days old', () => {
       const date = new Date();
       date.setDate(date.getDate() - 30);
-      const result = backupService.shouldPromptBackup(date.toISOString());
+      useAppStore.setState({ lastBackupDate: date.toISOString() });
+      const result = backupService.shouldPromptBackup();
       expect(result).toBe(true);
     });
 
     it('should return false when backup is today', () => {
       const today = new Date().toISOString();
-      const result = backupService.shouldPromptBackup(today);
+      useAppStore.setState({ lastBackupDate: today });
+      const result = backupService.shouldPromptBackup();
       expect(result).toBe(false);
     });
   });

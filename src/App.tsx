@@ -111,7 +111,8 @@ const AppContent: React.FC = () => {
   };
 
   const checkBackupPrompt = () => {
-    if (backupService.shouldPromptBackup(lastBackupDate)) {
+    const shouldPrompt = backupService.shouldPromptBackup();
+    if (shouldPrompt) {
       setShowBackupPrompt(true);
     } else {
       setShowBackupPrompt(false);

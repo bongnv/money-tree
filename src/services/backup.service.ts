@@ -13,10 +13,12 @@ class BackupService {
    * Check if backup is needed based on last backup date
    * Returns true if backup older than threshold (30 days) or never backed up with saved data
    */
-  shouldPromptBackup(lastBackupDate?: string | null): boolean {
+  shouldPromptBackup(): boolean {
+    const state = useAppStore.getState();
+    const lastBackupDate = state.lastBackupDate;
+
     if (!lastBackupDate) {
       // Never backed up - only prompt if there's saved data to back up
-      const state = useAppStore.getState();
       return !!state.baseVersion;
     }
 

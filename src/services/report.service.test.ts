@@ -608,4 +608,430 @@ describe('ReportService', () => {
       expect(result[0].netCashFlow).toBe(2500);
     });
   });
+
+  describe('calculateBudgetPerformance', () => {
+    const mockTypes: TransactionType[] = [
+      {
+        id: 'type1',
+        name: 'Groceries',
+        categoryId: 'cat1',
+        group: Group.EXPENSE,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+      {
+        id: 'type3',
+        name: 'Salary',
+        categoryId: 'cat2',
+        group: Group.INCOME,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+    ];
+
+    const mockCategories: Category[] = [
+      {
+        id: 'cat1',
+        name: 'Food',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+      {
+        id: 'cat2',
+        name: 'Income',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+    ];
+
+    const mockBudgets = [
+      {
+        id: 'budget1',
+        transactionTypeId: 'type1', // Groceries (EXPENSE)
+        amount: 500,
+        currencyCode: 'USD' as const,
+        period: 'monthly' as const,
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+      {
+        id: 'budget2',
+        transactionTypeId: 'type3', // Salary (INCOME)
+        amount: 5000,
+        currencyCode: 'USD' as const,
+        period: 'monthly' as const,
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+    ];
+
+    const budgetTransactions: Transaction[] = [
+      {
+        id: 'tx1',
+        date: '2024-01-15',
+        amount: 300,
+        transactionTypeId: 'type1', // Groceries
+        fromAccountId: 'acc1',
+        createdAt: '2024-01-15T00:00:00.000Z',
+        updatedAt: '2024-01-15T00:00:00.000Z',
+      },
+      {
+        id: 'tx2',
+        date: '2024-01-20',
+        amount: 4500,
+        transactionTypeId: 'type3', // Salary
+        toAccountId: 'acc1',
+        createdAt: '2024-01-20T00:00:00.000Z',
+        updatedAt: '2024-01-20T00:00:00.000Z',
+      },
+    ];
+
+    it('should calculate budget performance for single month', () => {
+      const result = reportService.calculateBudgetPerformance(
+        mockBudgets,
+        budgetTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-01-31'
+      );
+
+      expect(result.items).toHaveLength(2);
+      expect(result.totalBudgetedExpenses).toBe(500);
+      expect(result.totalActualExpenses).toBe(300);
+      expect(result.totalBudgetedIncome).toBe(5000);
+      expect(result.totalActualIncome).toBe(4500);
+    });
+
+    it('should calculate percent used correctly', () => {
+      const result = reportService.calculateBudgetPerformance(
+        mockBudgets,
+        budgetTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-01-31'
+      );
+
+      const groceryItem = result.items.find((item) => item.transactionTypeId === 'type1');
+      expect(groceryItem?.percentUsed).toBe(60); // 300/500 * 100
+
+      const salaryItem = result.items.find((item) => item.transactionTypeId === 'type3');
+      expect(salaryItem?.percentUsed).toBe(90); // 4500/5000 * 100
+    });
+
+    it('should calculate remaining correctly', () => {
+      const result = reportService.calculateBudgetPerformance(
+        mockBudgets,
+        budgetTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-01-31'
+      );
+
+      const groceryItem = result.items.find((item) => item.transactionTypeId === 'type1');
+      expect(groceryItem?.remaining).toBe(200); // 500 - 300
+
+      const salaryItem = result.items.find((item) => item.transactionTypeId === 'type3');
+      expect(salaryItem?.remaining).toBe(500); // 5000 - 4500
+    });
+
+    it('should identify income vs expense correctly', () => {
+      const result = reportService.calculateBudgetPerformance(
+        mockBudgets,
+        budgetTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-01-31'
+      );
+
+      const groceryItem = result.items.find((item) => item.transactionTypeId === 'type1');
+      expect(groceryItem?.isIncome).toBe(false);
+
+      const salaryItem = result.items.find((item) => item.transactionTypeId === 'type3');
+      expect(salaryItem?.isIncome).toBe(true);
+    });
+
+    it('should calculate health score correctly', () => {
+      const result = reportService.calculateBudgetPerformance(
+        mockBudgets,
+        budgetTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-01-31'
+      );
+
+      // Expense score: (500-300)/500 * 100 = 40
+      // Income score: min(4500/5000 * 100, 100) = 90
+      // Average: (40 + 90) / 2 = 65
+      expect(result.overallHealthScore).toBeCloseTo(65, 0);
+    });
+
+    it('should prorate budget for partial period', () => {
+      const result = reportService.calculateBudgetPerformance(
+        mockBudgets,
+        budgetTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-03-31' // 3 months
+      );
+
+      // Monthly budget * 3 months
+      expect(result.totalBudgetedExpenses).toBe(1500); // 500 * 3
+      expect(result.totalBudgetedIncome).toBe(15000); // 5000 * 3
+    });
+
+    it('should handle empty budgets', () => {
+      const result = reportService.calculateBudgetPerformance(
+        [],
+        budgetTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-01-31'
+      );
+
+      expect(result.items).toHaveLength(0);
+      expect(result.totalBudgetedExpenses).toBe(0);
+      expect(result.totalActualExpenses).toBe(0);
+      expect(result.overallHealthScore).toBe(100); // Default when no budgets
+    });
+
+    it('should handle empty transactions', () => {
+      const result = reportService.calculateBudgetPerformance(
+        mockBudgets,
+        [],
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-01-31'
+      );
+
+      expect(result.items).toHaveLength(2);
+      expect(result.totalActualExpenses).toBe(0);
+      expect(result.totalActualIncome).toBe(0);
+      // All remaining equals budgeted
+      expect(result.totalRemainingExpenses).toBe(500);
+      expect(result.totalRemainingIncome).toBe(5000);
+    });
+
+    it('should convert budget currency when base currency provided', () => {
+      const eurBudgets = [
+        {
+          ...mockBudgets[0],
+          id: 'budget3',
+          currencyCode: 'EUR' as const,
+          amount: 500,
+        },
+      ];
+
+      const getRateForMonth = (month: string, from: string, to: string) => {
+        if (from === 'EUR' && to === 'USD') return 1.1;
+        return null;
+      };
+
+      const result = reportService.calculateBudgetPerformance(
+        eurBudgets,
+        [],
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-01-31',
+        mockAccounts,
+        'USD',
+        getRateForMonth
+      );
+
+      expect(result.totalBudgetedExpenses).toBe(550); // 500 EUR * 1.1
+    });
+
+    it('should convert transaction currency when base currency provided', () => {
+      const eurAccounts = [
+        {
+          ...mockAccounts[0],
+          currencyCode: 'EUR' as const,
+        },
+      ];
+
+      const getRateForMonth = (month: string, from: string, to: string) => {
+        if (from === 'EUR' && to === 'USD') return 1.1;
+        return null;
+      };
+
+      const result = reportService.calculateBudgetPerformance(
+        mockBudgets,
+        budgetTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-01-31',
+        eurAccounts,
+        'USD',
+        getRateForMonth
+      );
+
+      // Transaction amount 300 EUR * 1.1 = 330 USD
+      expect(result.totalActualExpenses).toBe(330);
+    });
+  });
+
+  describe('calculateBudgetTrend', () => {
+    const mockTypes: TransactionType[] = [
+      {
+        id: 'type1',
+        name: 'Groceries',
+        categoryId: 'cat1',
+        group: Group.EXPENSE,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+    ];
+
+    const mockCategories: Category[] = [
+      {
+        id: 'cat1',
+        name: 'Food',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+    ];
+
+    const mockBudgets = [
+      {
+        id: 'budget1',
+        transactionTypeId: 'type1',
+        amount: 500,
+        currencyCode: 'USD' as const,
+        period: 'monthly' as const,
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+    ];
+
+    const trendTransactions: Transaction[] = [
+      {
+        id: 'tx1',
+        date: '2024-01-15',
+        amount: 300,
+        transactionTypeId: 'type1',
+        fromAccountId: 'acc1',
+        createdAt: '2024-01-15T00:00:00.000Z',
+        updatedAt: '2024-01-15T00:00:00.000Z',
+      },
+      {
+        id: 'tx2',
+        date: '2024-02-15',
+        amount: 600,
+        transactionTypeId: 'type1',
+        fromAccountId: 'acc1',
+        createdAt: '2024-02-15T00:00:00.000Z',
+        updatedAt: '2024-02-15T00:00:00.000Z',
+      },
+    ];
+
+    it('should calculate trend points over time', () => {
+      const result = reportService.calculateBudgetTrend(
+        mockBudgets,
+        trendTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-02-29',
+        30
+      );
+
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0]).toHaveProperty('date');
+      expect(result[0]).toHaveProperty('budgeted');
+      expect(result[0]).toHaveProperty('actual');
+      expect(result[0]).toHaveProperty('variance');
+    });
+
+    it('should calculate variance correctly', () => {
+      const result = reportService.calculateBudgetTrend(
+        mockBudgets,
+        trendTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-01-31',
+        30
+      );
+
+      // First period: budgeted 500, actual 300, variance = -200 (under budget)
+      expect(result[0].budgeted).toBe(500);
+      expect(result[0].actual).toBe(300);
+      expect(result[0].variance).toBe(-200);
+    });
+
+    it('should respect interval parameter', () => {
+      const result = reportService.calculateBudgetTrend(
+        mockBudgets,
+        trendTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-02-29',
+        15
+      );
+
+      // Should have approximately 4 data points for 60-day period with 15-day intervals
+      expect(result.length).toBeGreaterThanOrEqual(4);
+    });
+
+    it('should return empty array for invalid date range', () => {
+      const result = reportService.calculateBudgetTrend(
+        mockBudgets,
+        trendTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-02-01',
+        '2024-01-01', // End before start
+        30
+      );
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should handle empty budgets', () => {
+      const result = reportService.calculateBudgetTrend(
+        [],
+        trendTransactions,
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-01-31',
+        30
+      );
+
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0].budgeted).toBe(0);
+    });
+
+    it('should handle empty transactions', () => {
+      const result = reportService.calculateBudgetTrend(
+        mockBudgets,
+        [],
+        mockTypes,
+        mockCategories,
+        '2024-01-01',
+        '2024-01-31',
+        30
+      );
+
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0].actual).toBe(0);
+      expect(result[0].variance).toBe(-500); // 0 - 500 (no spending vs budget)
+    });
+  });
 });

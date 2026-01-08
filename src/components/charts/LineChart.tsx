@@ -22,6 +22,7 @@ export interface LineChartProps {
     dataKey: string;
     name: string;
     color?: string;
+    strokeDasharray?: string; // e.g., "5 5" for dashed line
   }>;
   xAxisKey?: string;
   height?: number;
@@ -70,6 +71,7 @@ export const LineChart: React.FC<LineChartProps> = ({
               name={line.name}
               stroke={line.color || theme.palette.primary.main}
               strokeWidth={2}
+              strokeDasharray={line.strokeDasharray}
               dot={{ r: 4 }}
               activeDot={{ r: 6 }}
             />

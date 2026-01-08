@@ -17,8 +17,6 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Checkbox,
-  ListItemText,
   SelectChangeEvent,
   Button,
 } from '@mui/material';
@@ -33,8 +31,10 @@ import { reportService } from '../../services/report.service';
 import { LineChart } from '../charts/LineChart';
 import { PieChart } from '../charts/PieChart';
 import { PeriodSelector } from '../common/PeriodSelector';
+import { CategoryFilter } from '../common/CategoryFilter';
 import { formatCurrency } from '../../utils/currency.utils';
 import { getTodayDate } from '../../utils/date.utils';
+import { CHART_COLORS } from '../../theme';
 import type { CurrencyCode } from '../../types/enums';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
 import { Group } from '../../types/enums';
@@ -66,31 +66,28 @@ export const CashFlowReport: React.FC = () => {
 
   // Automatically fetch missing exchange rates in background
   useEffect(() => {
-    // Get unique currency-month pairs from transactions in the date range
     const rateRequests = new Set<string>();
     const filteredTransactions = transactions.filter(
       (t) => t.date >= startDate && t.date <= endDate
     );
 
     filteredTransactions.forEach((transaction) => {
-      // Check both fromAccountId and toAccountId
       const accountIds = [transaction.fromAccountId, transaction.toAccountId].filter(Boolean);
 
       accountIds.forEach((accountId) => {
         const account = accounts.find((a) => a.id === accountId);
         if (account?.currencyCode && account.currencyCode !== conversionCurrency) {
-          const month = transaction.date.slice(0, 7); // YYYY-MM
+          const month = transaction.date.slice(0, 7);
           const key = `${month}-${account.currencyCode}`;
           rateRequests.add(key);
         }
       });
     });
 
-    // Fetch missing rates
     rateRequests.forEach((key) => {
       const parts = key.split('-');
-      const month = `${parts[0]}-${parts[1]}`; // YYYY-MM
-      const currency = parts.slice(2).join('-'); // Handle currency codes with dashes
+      const month = `${parts[0]}-${parts[1]}`;
+      const currency = parts.slice(2).join('-');
       fetchRateIfMissing(month, currency, conversionCurrency);
     });
   }, [conversionCurrency, startDate, endDate, transactions, accounts, fetchRateIfMissing]);
@@ -344,29 +341,12 @@ export const CashFlowReport: React.FC = () => {
             </FormControl>
           </Grid>
           <Grid item xs={12} sm={6} md={4.5}>
-            <FormControl fullWidth>
-              <InputLabel>Categories</InputLabel>
-              <Select
-                multiple
-                value={selectedCategories}
-                label="Categories"
-                onChange={handleCategoryChange}
-                renderValue={(selected) =>
-                  selected.length === 0
-                    ? 'All'
-                    : selected.length === 1
-                      ? categories.find((c) => c.id === selected[0])?.name || ''
-                      : `${selected.length} selected`
-                }
-              >
-                {categories.map((category) => (
-                  <MenuItem key={category.id} value={category.id}>
-                    <Checkbox checked={selectedCategories.includes(category.id)} />
-                    <ListItemText primary={category.name} />
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <CategoryFilter
+              categories={categories}
+              selectedCategories={selectedCategories}
+              onChange={handleCategoryChange}
+              onClear={handleClearFilters}
+            />
           </Grid>
           <Grid item xs={12} sm={6} md={1}>
             <Button
@@ -439,9 +419,13 @@ export const CashFlowReport: React.FC = () => {
           <LineChart
             data={trendData}
             lines={[
-              { dataKey: 'Income', color: '#4caf50', name: 'Income' },
-              { dataKey: 'Expenses', color: '#f44336', name: 'Expenses' },
-              { dataKey: 'Net Cash Flow', color: '#2196f3', name: 'Net Cash Flow' },
+              { dataKey: 'Income', color: CHART_COLORS.simple.income, name: 'Income' },
+              { dataKey: 'Expenses', color: CHART_COLORS.simple.expense, name: 'Expenses' },
+              {
+                dataKey: 'Net Cash Flow',
+                color: CHART_COLORS.simple.netCashFlow,
+                name: 'Net Cash Flow',
+              },
             ]}
             height={300}
             formatValue={(value: number) => formatCurrency(value, currencyCode)}

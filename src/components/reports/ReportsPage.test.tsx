@@ -10,16 +10,23 @@ jest.mock('./CashFlowReport', () => ({
   CashFlowReport: () => <div data-testid="cash-flow-report">Cash Flow Report</div>,
 }));
 
+jest.mock('./BudgetPerformanceReport', () => ({
+  BudgetPerformanceReport: () => (
+    <div data-testid="budget-performance-report">Budget Performance Report</div>
+  ),
+}));
+
 describe('ReportsPage', () => {
   it('renders the page title', () => {
     render(<ReportsPage />);
     expect(screen.getByText('Financial Reports')).toBeInTheDocument();
   });
 
-  it('renders tabs for Balance Sheet and Cash Flow', () => {
+  it('renders tabs for Balance Sheet, Cash Flow, and Budget Performance', () => {
     render(<ReportsPage />);
     expect(screen.getByRole('tab', { name: /balance sheet/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /cash flow/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /budget performance/i })).toBeInTheDocument();
   });
 
   it('shows Balance Sheet tab by default', () => {
@@ -47,5 +54,14 @@ describe('ReportsPage', () => {
     render(<ReportsPage />);
     const balanceSheetTab = screen.getByRole('tab', { name: /balance sheet/i });
     expect(balanceSheetTab).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('shows Budget Performance report when tab is clicked', () => {
+    render(<ReportsPage />);
+
+    const budgetPerformanceTab = screen.getByRole('tab', { name: /budget performance/i });
+    fireEvent.click(budgetPerformanceTab);
+
+    expect(screen.getByTestId('budget-performance-report')).toBeInTheDocument();
   });
 });

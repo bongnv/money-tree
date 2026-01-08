@@ -11,7 +11,7 @@ import {
 import type { Budget } from '../../types/models';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
-import { CurrencyCode } from '../../types/enums';
+import { CurrencyCode, Group } from '../../types/enums';
 
 interface BudgetDialogProps {
   open: boolean;
@@ -34,12 +34,15 @@ export const BudgetDialog: React.FC<BudgetDialogProps> = ({ open, budget, onClos
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Group transaction types by category
+  // Group transaction types by category - only show income and expense types
   const groupedTransactionTypes = categories
     .map((category) => ({
       category,
       transactionTypes: transactionTypes.filter(
-        (tt) => tt.categoryId === category.id && tt.isActive !== false
+        (tt) =>
+          tt.categoryId === category.id &&
+          tt.isActive !== false &&
+          (tt.group === Group.INCOME || tt.group === Group.EXPENSE)
       ),
     }))
     .filter((group) => group.transactionTypes.length > 0);

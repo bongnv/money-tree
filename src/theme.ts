@@ -127,4 +127,30 @@ const themeOptions: ThemeOptions = {
 // Create theme instance
 const theme = createTheme(themeOptions);
 
+// Chart color constants for consistent data visualization
+export const CHART_COLORS = {
+  // Income colors (green shades)
+  income: {
+    target: theme.palette.primary.dark, // Darker green for budgeted/target #005005
+    actual: theme.palette.primary.main, // Main green for actual #2e7d32
+  },
+  // Expense colors (red/orange shades)
+  expense: {
+    budgeted: theme.palette.error.main, // Red for budgeted #d32f2f
+    actual: theme.palette.warning.main, // Orange for actual #ed6c02
+  },
+  // Simple semantic colors (for charts without actual/budget distinction)
+  simple: {
+    income: theme.palette.success.main, // Green #2e7d32
+    expense: theme.palette.error.main, // Red #d32f2f
+    netCashFlow: theme.palette.info.main, // Blue for net #0288d1
+  },
+  // Alternative colors for multi-series charts
+  alt1: theme.palette.info.main, // Light blue #0288d1
+  alt2: theme.palette.secondary.main, // Blue #1976d2
+  // For positive/negative indicators
+  positive: theme.palette.success.main, // Green
+  negative: theme.palette.error.main, // Red
+} as const;
+
 export default theme;

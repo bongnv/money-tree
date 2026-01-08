@@ -42,7 +42,7 @@ export const TransactionsPage: React.FC = () => {
     dateFrom: yearStart,
     dateTo: today,
     accountIds: [],
-    categoryId: '',
+    categoryIds: [],
     transactionTypeId: '',
     searchText: '',
     group: '',
@@ -60,7 +60,7 @@ export const TransactionsPage: React.FC = () => {
         dateFrom: dateFrom || '',
         dateTo: dateTo || '',
         accountIds: [],
-        categoryId: categoryId || '',
+        categoryIds: categoryId ? [categoryId] : [],
         transactionTypeId: transactionTypeId || '',
         searchText: '',
         group: '',
@@ -99,11 +99,11 @@ export const TransactionsPage: React.FC = () => {
       }
 
       // Category filter (via transaction type)
-      if (filters.categoryId) {
+      if (filters.categoryIds.length > 0) {
         const transactionType = transactionTypes.find(
           (t) => t.id === transaction.transactionTypeId
         );
-        if (!transactionType || transactionType.categoryId !== filters.categoryId) {
+        if (!transactionType || !filters.categoryIds.includes(transactionType.categoryId)) {
           return false;
         }
       }

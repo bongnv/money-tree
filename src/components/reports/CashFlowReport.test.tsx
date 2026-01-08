@@ -3,12 +3,18 @@ import { MemoryRouter } from 'react-router-dom';
 import { CashFlowReport } from './CashFlowReport';
 import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
+import { useAccountStore } from '../../stores/useAccountStore';
+import { useAppStore } from '../../stores/useAppStore';
+import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
 import type { Transaction, TransactionType, Category } from '../../types/models';
 import { Group } from '../../types/enums';
 
 // Mock stores
 jest.mock('../../stores/useTransactionStore');
 jest.mock('../../stores/useCategoryStore');
+jest.mock('../../stores/useAccountStore');
+jest.mock('../../stores/useAppStore');
+jest.mock('../../stores/useExchangeRateStore');
 
 // Mock date utils to return a consistent date
 jest.mock('../../utils/date.utils', () => ({
@@ -38,6 +44,11 @@ const mockUseTransactionStore = useTransactionStore as jest.MockedFunction<
   typeof useTransactionStore
 >;
 const mockUseCategoryStore = useCategoryStore as jest.MockedFunction<typeof useCategoryStore>;
+const mockUseAccountStore = useAccountStore as jest.MockedFunction<typeof useAccountStore>;
+const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>;
+const mockUseExchangeRateStore = useExchangeRateStore as jest.MockedFunction<
+  typeof useExchangeRateStore
+>;
 
 describe('CashFlowReport', () => {
   const mockCategories: Category[] = [
@@ -130,6 +141,14 @@ describe('CashFlowReport', () => {
       selector({
         transactionTypes: mockTransactionTypes,
         categories: mockCategories,
+      } as any)
+    );
+    mockUseAccountStore.mockImplementation((selector) => selector({ accounts: [] } as any));
+    mockUseAppStore.mockImplementation((selector) => selector({ baseCurrency: 'USD' } as any));
+    mockUseExchangeRateStore.mockImplementation((selector) =>
+      selector({
+        getRateForMonth: jest.fn(() => null),
+        fetchRateIfMissing: jest.fn(),
       } as any)
     );
   });

@@ -1,4 +1,11 @@
-import type { Account, ManualAsset, Transaction, TransactionType, Category } from '../types/models';
+import type {
+  Account,
+  ManualAsset,
+  Transaction,
+  TransactionType,
+  Category,
+  Budget,
+} from '../types/models';
 import { AccountType, AssetType, Group } from '../types/enums';
 import { calculationService } from './calculation.service';
 import { getAssetCurrentValue } from '../utils/asset.utils';
@@ -54,6 +61,39 @@ export interface CashFlowTrendPoint {
   income: number;
   expenses: number;
   netCashFlow: number;
+}
+
+export interface BudgetPerformanceItem {
+  budgetId: string;
+  transactionTypeId: string;
+  transactionTypeName: string;
+  categoryId: string;
+  categoryName: string;
+  budgetedAmount: number;
+  actualAmount: number;
+  remaining: number;
+  percentUsed: number;
+  isIncome: boolean;
+}
+
+export interface BudgetPerformanceData {
+  items: BudgetPerformanceItem[];
+  totalBudgetedIncome: number;
+  totalActualIncome: number;
+  totalRemainingIncome: number;
+  totalBudgetedExpenses: number;
+  totalActualExpenses: number;
+  totalRemainingExpenses: number;
+  overallHealthScore: number;
+}
+
+export interface BudgetTrendPoint {
+  date: string;
+  budgeted: number;
+  actual: number;
+  variance: number;
+  budgetedIncome: number;
+  actualIncome: number;
 }
 
 export type PeriodType = 'monthly' | 'quarterly' | 'yearly' | 'custom';
@@ -752,6 +792,238 @@ class ReportService {
         income: cashFlow.totalIncome,
         expenses: cashFlow.totalExpenses,
         netCashFlow: cashFlow.netCashFlow,
+      });
+
+      // Move to next period
+      currentDate.setDate(currentDate.getDate() + intervalDays);
+    }
+
+    return trendPoints;
+  }
+
+  /**
+   * Calculate budget performance for a period
+   * @param budgets All budgets
+   * @param transactions All transactions
+   * @param transactionTypes All transaction types
+   * @param categories All categories
+   * @param startDate Start date (YYYY-MM-DD)
+   * @param endDate End date (YYYY-MM-DD)
+   * @param accounts All accounts (needed for currency lookup)
+   * @param baseCurrency Optional base currency for conversion
+   * @param getRateForMonth Optional function to get exchange rate
+   * @returns Budget performance data
+   */
+  calculateBudgetPerformance(
+    budgets: Budget[],
+    transactions: Transaction[],
+    transactionTypes: TransactionType[],
+    categories: Category[],
+    startDate: string,
+    endDate: string,
+    accounts?: Account[],
+    baseCurrency?: string,
+    getRateForMonth?: (month: string, from: string, to: string) => number | null
+  ): BudgetPerformanceData {
+    const items: BudgetPerformanceItem[] = [];
+    let totalBudgetedIncome = 0;
+    let totalActualIncome = 0;
+    let totalBudgetedExpenses = 0;
+    let totalActualExpenses = 0;
+
+    // Group budgets by transaction type for easier lookup
+    const budgetsByType = new Map<string, Budget>();
+    budgets.forEach((budget) => {
+      budgetsByType.set(budget.transactionTypeId, budget);
+    });
+
+    // Process each transaction type that has a budget
+    budgetsByType.forEach((budget, transactionTypeId) => {
+      const transactionType = transactionTypes.find((tt) => tt.id === transactionTypeId);
+      if (!transactionType) return;
+
+      const category = categories.find((c) => c.id === transactionType.categoryId);
+      if (!category) return;
+
+      // Prorate budget for the viewing period
+      const budgetedAmount = calculationService.prorateBudgetForPeriod(budget, startDate, endDate);
+
+      // Convert budget to base currency if needed
+      let convertedBudgetedAmount = budgetedAmount;
+      if (baseCurrency && getRateForMonth && budget.currencyCode !== baseCurrency) {
+        const month = startDate.slice(0, 7);
+        const rate = getRateForMonth(month, budget.currencyCode, baseCurrency);
+        if (rate !== null) {
+          convertedBudgetedAmount = budgetedAmount * rate;
+        }
+      }
+
+      // Calculate actual amount with currency conversion
+      let actualAmount = 0;
+      const relevantTransactions = transactions.filter(
+        (t) => t.transactionTypeId === transactionTypeId && t.date >= startDate && t.date <= endDate
+      );
+
+      relevantTransactions.forEach((transaction) => {
+        let convertedAmount = transaction.amount;
+
+        // Convert transaction amount to base currency if needed
+        if (baseCurrency && getRateForMonth && accounts) {
+          const accountId = transaction.fromAccountId || transaction.toAccountId;
+          const account = accounts.find((a) => a.id === accountId);
+
+          if (account && account.currencyCode !== baseCurrency) {
+            const month = transaction.date.slice(0, 7);
+            const rate = getRateForMonth(month, account.currencyCode, baseCurrency);
+            if (rate !== null) {
+              convertedAmount = transaction.amount * rate;
+            }
+          }
+        }
+
+        actualAmount += convertedAmount;
+      });
+
+      const remaining = convertedBudgetedAmount - actualAmount;
+      const percentUsed =
+        convertedBudgetedAmount > 0 ? (actualAmount / convertedBudgetedAmount) * 100 : 0;
+      const isIncome = transactionType.group === Group.INCOME;
+
+      items.push({
+        budgetId: budget.id,
+        transactionTypeId: transactionType.id,
+        transactionTypeName: transactionType.name,
+        categoryId: category.id,
+        categoryName: category.name,
+        budgetedAmount: convertedBudgetedAmount,
+        actualAmount,
+        remaining,
+        percentUsed,
+        isIncome,
+      });
+
+      // Accumulate totals
+      if (isIncome) {
+        totalBudgetedIncome += convertedBudgetedAmount;
+        totalActualIncome += actualAmount;
+      } else {
+        totalBudgetedExpenses += convertedBudgetedAmount;
+        totalActualExpenses += actualAmount;
+      }
+    });
+
+    // Calculate overall health score (0-100)
+    // For income: higher actual is better (score = min(actual/budgeted * 100, 100))
+    // For expenses: lower actual is better (score = max((budgeted-actual)/budgeted * 100, 0))
+    let healthScore = 100;
+    const scores: number[] = [];
+
+    items.forEach((item) => {
+      if (item.isIncome) {
+        // Income: 100% when meeting target, proportionally less when below
+        const score =
+          item.budgetedAmount > 0 ? (item.actualAmount / item.budgetedAmount) * 100 : 100;
+        scores.push(Math.min(score, 100));
+      } else {
+        // Expenses: 100% when well under budget, 0% when over budget
+        const score =
+          item.budgetedAmount > 0
+            ? ((item.budgetedAmount - item.actualAmount) / item.budgetedAmount) * 100
+            : 100;
+        scores.push(Math.max(Math.min(score, 100), 0));
+      }
+    });
+
+    if (scores.length > 0) {
+      healthScore = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+    }
+
+    return {
+      items,
+      totalBudgetedIncome,
+      totalActualIncome,
+      totalRemainingIncome: totalBudgetedIncome - totalActualIncome,
+      totalBudgetedExpenses,
+      totalActualExpenses,
+      totalRemainingExpenses: totalBudgetedExpenses - totalActualExpenses,
+      overallHealthScore: healthScore,
+    };
+  }
+
+  /**
+   * Calculate budget trend over time
+   * @param budgets All budgets
+   * @param transactions All transactions
+   * @param transactionTypes All transaction types
+   * @param categories All categories
+   * @param startDate Start date (YYYY-MM-DD)
+   * @param endDate End date (YYYY-MM-DD)
+   * @param intervalDays Interval between data points in days
+   * @param accounts All accounts (needed for currency lookup)
+   * @param baseCurrency Optional base currency for conversion
+   * @param getRateForMonth Optional function to get exchange rate
+   * @returns Array of budget trend points
+   */
+  calculateBudgetTrend(
+    budgets: Budget[],
+    transactions: Transaction[],
+    transactionTypes: TransactionType[],
+    categories: Category[],
+    startDate: string,
+    endDate: string,
+    intervalDays: number = 30,
+    accounts?: Account[],
+    baseCurrency?: string,
+    getRateForMonth?: (month: string, from: string, to: string) => number | null
+  ): BudgetTrendPoint[] {
+    // Parse dates
+    const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
+    const [endYear, endMonth, endDay] = endDate.split('-').map(Number);
+    const start = new Date(startYear, startMonth - 1, startDay);
+    const end = new Date(endYear, endMonth - 1, endDay);
+
+    if (start > end) return [];
+
+    const trendPoints: BudgetTrendPoint[] = [];
+    const currentDate = new Date(start);
+
+    // Track cumulative totals
+    let cumulativeBudgeted = 0;
+    let cumulativeActual = 0;
+
+    while (currentDate <= end) {
+      const periodEnd = new Date(currentDate);
+      periodEnd.setDate(periodEnd.getDate() + intervalDays - 1);
+      if (periodEnd > end) periodEnd.setTime(end.getTime());
+
+      // Format end date as YYYY-MM-DD
+      const periodEndStr = `${periodEnd.getFullYear()}-${String(periodEnd.getMonth() + 1).padStart(2, '0')}-${String(periodEnd.getDate()).padStart(2, '0')}`;
+
+      // Calculate budget performance from START to this point (cumulative)
+      const performance = this.calculateBudgetPerformance(
+        budgets,
+        transactions,
+        transactionTypes,
+        categories,
+        startDate, // Always from the start
+        periodEndStr, // To this period end
+        accounts,
+        baseCurrency,
+        getRateForMonth
+      );
+
+      // Use cumulative totals for expenses and income
+      cumulativeBudgeted = performance.totalBudgetedExpenses;
+      cumulativeActual = performance.totalActualExpenses;
+      const variance = cumulativeActual - cumulativeBudgeted;
+
+      trendPoints.push({
+        date: periodEndStr, // Use end date to show "as of" this date
+        budgeted: cumulativeBudgeted,
+        actual: cumulativeActual,
+        variance,
+        budgetedIncome: performance.totalBudgetedIncome,
+        actualIncome: performance.totalActualIncome,
       });
 
       // Move to next period

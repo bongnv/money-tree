@@ -17,6 +17,7 @@ import { useCategoryStore } from '../../stores/useCategoryStore';
 import { useTransactionStore } from '../../stores/useTransactionStore';
 import { BudgetDialog } from './BudgetDialog';
 import { PeriodSelector } from '../common/PeriodSelector';
+import { CategoryFilter } from '../common/CategoryFilter';
 import { getBudgetPresets } from './periodPresets';
 import type { Budget } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
@@ -25,11 +26,12 @@ import { Group, CurrencyCode } from '../../types/enums';
 
 export const BudgetsPage: React.FC = () => {
   const { budgets, addBudget, updateBudget, deleteBudget } = useBudgetStore();
-  const { transactionTypes, getCategoryById } = useCategoryStore();
+  const { transactionTypes, getCategoryById, categories } = useCategoryStore();
   const { transactions } = useTransactionStore();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | undefined>(undefined);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   // Initialize with current month
   const getCurrentMonthPeriod = () => {
@@ -111,12 +113,20 @@ export const BudgetsPage: React.FC = () => {
   // Group budget items by category with progress data
   const groupedBudgets = useMemo(() => {
     // Filter budgets that are active during the selected period
-    const activeBudgets = budgets.filter((budget) => {
+    let activeBudgets = budgets.filter((budget) => {
       // Check if budget overlaps with selected period
       return (
         budget.startDate <= selectedPeriod.endDate && budget.endDate >= selectedPeriod.startDate
       );
     });
+
+    // Filter by selected categories if any
+    if (selectedCategories.length > 0) {
+      activeBudgets = activeBudgets.filter((budget) => {
+        const transactionType = transactionTypes.find((tt) => tt.id === budget.transactionTypeId);
+        return transactionType && selectedCategories.includes(transactionType.categoryId);
+      });
+    }
 
     return activeBudgets.reduce(
       (acc, budget) => {
@@ -181,7 +191,14 @@ export const BudgetsPage: React.FC = () => {
         }
       >
     );
-  }, [budgets, transactionTypes, transactions, selectedPeriod, getCategoryById]);
+  }, [
+    budgets,
+    transactionTypes,
+    transactions,
+    selectedPeriod,
+    getCategoryById,
+    selectedCategories,
+  ]);
 
   const getSectionTitle = (categoryGroup: Group): string => {
     return categoryGroup === Group.INCOME ? 'Targets' : 'Budgets';
@@ -210,6 +227,23 @@ export const BudgetsPage: React.FC = () => {
             presets={getBudgetPresets()}
             allowCustom={false}
           />
+          <CategoryFilter
+            categories={categories}
+            selectedCategories={selectedCategories}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSelectedCategories(typeof value === 'string' ? value.split(',') : value);
+            }}
+            onClear={() => setSelectedCategories([])}
+            label="Filter by Category"
+            fullWidth={false}
+            sx={{ minWidth: 250 }}
+          />
+          {selectedCategories.length > 0 && (
+            <Button variant="outlined" onClick={() => setSelectedCategories([])} size="small">
+              Clear Filter
+            </Button>
+          )}
           <Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd}>
             Add Budget
           </Button>

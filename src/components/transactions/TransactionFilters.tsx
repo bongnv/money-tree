@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import { Clear as ClearIcon } from '@mui/icons-material';
 import { PeriodSelector } from '../common/PeriodSelector';
+import { CategoryFilter } from '../common/CategoryFilter';
 import type { Account, Category, TransactionType } from '../../types/models';
 import { Group } from '../../types/enums';
 
@@ -19,7 +20,7 @@ export interface TransactionFiltersState {
   dateFrom: string;
   dateTo: string;
   accountIds: string[];
-  categoryId: string;
+  categoryIds: string[];
   transactionTypeId: string;
   searchText: string;
   group: Group | '';
@@ -65,7 +66,7 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
       dateFrom: '',
       dateTo: '',
       accountIds: [],
-      categoryId: '',
+      categoryIds: [],
       transactionTypeId: '',
       searchText: '',
       group: '',
@@ -76,7 +77,7 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
     filters.dateFrom ||
     filters.dateTo ||
     filters.accountIds.length > 0 ||
-    filters.categoryId ||
+    filters.categoryIds.length > 0 ||
     filters.transactionTypeId ||
     filters.searchText ||
     filters.group;
@@ -150,20 +151,18 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
         {/* Second Row: Additional Filters */}
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'flex-start' }}>
           {/* Category Filter */}
-          <TextField
-            select
-            label="Category"
-            value={filters.categoryId}
-            onChange={(e) => handleChange('categoryId', e.target.value)}
+          <CategoryFilter
+            categories={categories}
+            selectedCategories={filters.categoryIds}
+            onChange={(event) => {
+              const value = event.target.value;
+              handleChange('categoryIds', typeof value === 'string' ? value.split(',') : value);
+            }}
+            onClear={() => handleChange('categoryIds', [])}
+            label="Categories"
+            fullWidth={false}
             sx={{ minWidth: 180, flexGrow: 1, maxWidth: 250 }}
-          >
-            <MenuItem value="">All Categories</MenuItem>
-            {categories.map((category) => (
-              <MenuItem key={category.id} value={category.id}>
-                {category.name}
-              </MenuItem>
-            ))}
-          </TextField>
+          />
 
           {/* Transaction Type Filter */}
           <TextField

@@ -2356,3 +2356,231 @@ End-to-end testing:
 30. Test backup with Local storage provider
 31. Verify backup can be saved to any local folder
 32. Test cancelling file picker and verify no error message appears
+
+---
+
+## Phase 24: Budget Performance Report (Post-MVP)
+
+**Requirements**: FR-7.12 (Budget Performance Report)
+
+**Goal**: Users can analyze budget performance with comprehensive visualizations and filtering similar to Cash Flow Report
+
+**Implementation Notes**:
+- All reports (Balance Sheet, Cash Flow, Budget Performance) use consistent `useEffect` pattern for exchange rate fetching
+- Each report directly calls `fetchRateIfMissing` from `useExchangeRateStore` within a `useEffect` hook
+- No custom hook wrapper needed - direct store access is cleaner and more maintainable
+- TransactionFilters keeps its single-select TextField for categories (CategoryFilter is for multi-select only)
+
+### 24.1 Create Budget Performance Calculation Service
+- [x] Add budget performance calculation methods to `src/services/report.service.ts`:
+  - [x] `calculateBudgetPerformance(budgets, transactions, transactionTypes, categories, startDate, endDate, accounts?, baseCurrency?, getRateForMonth?)` returns:
+    - [x] Array of budget performance items with: budgetId, transactionTypeId, transactionTypeName, categoryId, categoryName, budgetedAmount, actualAmount, remaining, percentUsed, isIncome
+    - [x] totalBudgeted, totalActual, totalRemaining for income and expenses separately
+    - [x] overallHealthScore (0-100, based on average adherence)
+  - [x] Reuse `calculationService.prorateBudgetForPeriod(budget, startDate, endDate)` for budget proration
+  - [x] Reuse `calculationService.calculateActualAmount(transactionTypeId, transactions, startDate, endDate)` for actual amounts
+  - [x] `calculateBudgetTrend(budgets, transactions, transactionTypes, categories, startDate, endDate, intervalDays, accounts?, baseCurrency?, getRateForMonth?)` returns:
+    - [x] Array of trend points with: date, budgeted, actual, variance
+    - [x] Use same interval calculation logic as Cash Flow Report (>180 days: 30-day, >60 days: 7-day, ≤60: 1-day)
+- [x] Handle multi-currency conversion using exchange rates (same pattern as Cash Flow Report)
+- [x] Support partial period overlaps (reuse calculationService.prorateBudgetForPeriod)
+- [x] Group results by category, then by transaction type
+- [x] **Write tests**: Budget performance calculations, multi-currency conversion (10+ tests, proration already tested)
+
+### 24.2 Create Reusable Category Filter Component
+- [x] Create `src/components/common/CategoryFilter.tsx`:
+  - [x] Props: categories, selectedCategories, onChange, onClear
+  - [x] Multi-select dropdown with checkboxes
+  - [x] Shows "All" when no categories selected
+  - [x] Shows category name when 1 selected, "X selected" when multiple
+  - [x] Includes Clear button (disabled when empty)
+  - [x] Reusable by both Cash Flow Report and Budget Performance Report
+- [x] **Write tests**: Component rendering, selection behavior, clear functionality (6+ tests)
+
+### 24.3 ~~Create Reusable Exchange Rate Fetching Hook~~ [DEPRECATED]
+**Note**: This task was completed but later deprecated in favor of consistent direct `useEffect` pattern across all reports.
+- [x] ~~Create `src/hooks/useExchangeRateFetching.ts`:~~
+  - [x] ~~Custom hook that accepts: transactions, accounts, startDate, endDate, conversionCurrency~~
+  - [x] ~~Extracts the exchange rate fetching logic from Cash Flow Report~~
+  - [x] ~~Automatically detects required currency pairs and months from filtered transactions~~
+  - [x] ~~Uses fetchRateIfMissing from useExchangeRateStore to fetch in background~~
+  - [x] ~~Returns nothing (side effect only - populates exchange rate store)~~
+  - [ ] Pattern from Cash Flow Report:
+    ```tsx
+    useEffect(() => {
+      const rateRequests = new Set<string>();
+      const filteredTransactions = transactions.filter(
+        (t) => t.date >= startDate && t.date <= endDate
+      );
+      // Collect unique currency-month pairs
+      filteredTransactions.forEach((transaction) => {
+        const accountIds = [transaction.fromAccountId, transaction.toAccountId].filter(Boolean);
+        accountIds.forEach((accountId) => {
+          const account = accounts.find((a) => a.id === accountId);
+          if (account?.currencyCode && account.currencyCode !== conversionCurrency) {
+            const month = transaction.date.slice(0, 7);
+            const key = `${month}-${account.currencyCode}`;
+            rateRequests.add(key);
+          }
+        });
+      });
+      // Fetch missing rates
+      rateRequests.forEach((key) => {
+        const parts = key.split('-');
+        const month = `${parts[0]}-${parts[1]}`;
+        const currency = parts.slice(2).join('-');
+        fetchRateIfMissing(month, currency, conversionCurrency);
+      });
+    }, [conversionCurrency, startDate, endDate, transactions, accounts, fetchRateIfMissing]);
+    ```
+- [x] **Write tests**: Hook behavior with various transaction/account scenarios (6+ tests)
+
+### 24.4 Build Budget Performance Report Component
+- [x] Create `src/components/reports/BudgetPerformanceReport.tsx`:
+  - [x] Import necessary stores (budget, transaction, category, account, app, exchangeRate)
+  - [x] State management for: startDate, endDate, conversionCurrency, selectedCategories
+  - [x] Default date range to Year to Date (YTD)
+  - [x] Use PeriodSelector component for date range selection (reuse from Cash Flow Report)
+  - [x] Currency selector dropdown (reuse pattern from Cash Flow Report)
+  - [x] Use CategoryFilter component for category filtering
+  - [x] Use useExchangeRateFetching hook to automatically fetch missing exchange rates in background
+  - [x] Filter transactions by selected date range
+  - [x] Filter by selected categories using same logic as Cash Flow Report:
+    ```tsx
+    const filteredTransactions = useMemo(() => {
+      if (selectedCategories.length === 0) return transactions;
+      return transactions.filter((tx) => {
+        const txType = transactionTypes.find((tt) => tt.id === tx.transactionTypeId);
+        return txType && selectedCategories.includes(txType.categoryId);
+      });
+    }, [transactions, transactionTypes, selectedCategories]);
+    ```
+- [x] **Write tests**: Component rendering, state management, filter interactions (8+ tests)
+
+### 24.5 Add Summary Cards Section
+- [x] Create three summary cards at top of report:
+  - [x] Total Budgeted card:
+    - [x] Show total budgeted amount for period
+    - [x] Separate display for income targets vs expense budgets
+    - [x] Format with selected currency using formatCurrency utility
+  - [x] Total Actual card:
+    - [x] Show total actual spending/earning for period
+    - [x] Color indicator based on performance
+    - [x] Format with selected currency using formatCurrency utility
+  - [x] Overall Performance card:
+    - [x] Show overall health score (0-100)
+    - [x] Visual indicator (green/yellow/red)
+    - [x] Brief text summary ("On Track", "Needs Attention", etc.)
+- [x] Cards should be responsive (3 columns on desktop, stack on mobile)
+- [x] **Write tests**: Summary card calculations, color coding, responsive layout (8+ tests)
+
+### 24.6 Add Budget vs Actual Trend Chart
+- [x] Add trend chart showing budget vs actual over time:
+  - [x] Use LineChart component (reuse from Cash Flow Report)
+  - [x] Two lines: "Budgeted" and "Actual"
+  - [x] X-axis: time periods (daily, weekly, or monthly based on date range)
+  - [x] Y-axis: amounts in selected currency
+  - [x] Reuse interval determination logic from Cash Flow Report:
+    ```tsx
+    const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const intervalDays = daysDiff > 180 ? 30 : daysDiff > 60 ? 7 : 1;
+    ```
+  - [x] Chart title: "Budget vs Actual Trend"
+  - [x] Format values using formatCurrency utility
+  - [x] Tooltip on hover showing date, budgeted amount, actual amount, variance
+- [x] Chart should be responsive (full width on mobile)
+- [x] **Write tests**: Trend calculation, chart data formatting (6+ tests, interval logic already tested)
+
+### 24.7 Add Variance Analysis Chart
+
+### 24.7 Add Pie Charts for Category Breakdown
+- [ ] Add two side-by-side pie charts:
+  - [ ] Budget Allocation Chart (left):
+    - [ ] Shows how total budget is allocated across categories
+    - [ ] Slices represent % of total budget per category
+    - [ ] Title: "Budget Allocation by Category"
+  - [ ] Actual Spending Chart (right):
+    - [ ] Shows actual spending/income across categories
+    - [ ] Slices represent % of total actual per category
+    - [ ] Title: "Actual Spending by Category"
+  - [ ] Use PieChart component (reuse from Cash Flow Report)
+### 24.7 Add Variance Analysis Chart
+- [x] Add variance bar chart showing over/under performance:
+  - [x] Use BarChart component
+  - [x] X-axis: categories or transaction types
+  - [x] Y-axis: variance amount (actual - budgeted)
+  - [x] Bars:
+    - [x] Positive variance (over budget) in red extending up
+    - [x] Negative variance (under budget) in green extending down
+    - [x] For income: invert colors (over target = green, under target = red)
+  - [x] Zero baseline line
+  - [x] Chart title: "Budget Variance by Category"
+  - [x] Tooltip showing category/type name, budgeted, actual, variance
+  - [x] Sort bars by variance magnitude (largest over/under first)
+- [x] Chart should be responsive (full width, adjust bar spacing on mobile)
+- [x] **Write tests**: Variance calculation, color assignment, sorting logic (8+ tests)
+
+### 24.8 Add Budget Performance Table
+- [x] Create detailed table view showing budget items:
+  - [x] Group by category (collapsible sections)
+  - [x] Columns: Transaction Type, Budgeted, Actual, Remaining, % Used, Progress Bar
+  - [x] Context-aware labels:
+    - [x] Income sections: "Target" for Budgeted column, green when ≥100%, yellow 80-99%, red <80%
+    - [x] Expense sections: "Budget" for Budgeted column, green <80%, yellow 80-100%, red >100%
+  - [x] Visual progress bars with context-aware colors
+  - [x] Category subtotals showing aggregated amounts
+  - [x] Click on row navigates to filtered transaction list (same as Cash Flow Report)
+  - [x] Empty state: "No budgets found for this period. Create budgets in the Budgets section."
+- [x] Format all currency values using formatCurrency utility
+- [x] When categories filtered: show transaction types without category grouping (same pattern as Cash Flow Report)
+- [x] **Write tests**: Table rendering, grouping logic, click-through navigation, empty state (12+ tests)
+
+### 24.9 Refactor Cash Flow Report to Use Reusable Components
+- [x] Update `src/components/reports/CashFlowReport.tsx`:
+  - [x] Replace inline category filter UI with CategoryFilter component
+  - [x] Pass categories, selectedCategories, handleCategoryChange, handleClearFilters as props
+  - [x] Verify existing functionality still works (no breaking changes)
+- [x] Update `src/components/reports/CashFlowReport.test.tsx`:
+  - [x] Update tests to work with new CategoryFilter component
+  - [x] Verify category filtering still works as expected
+- [x] **Write tests**: Verify no regressions in Cash Flow Report (3+ tests)
+
+### 24.10 Integrate Budget Performance Report into Reports Page
+- [x] Update `src/components/reports/ReportsPage.tsx`:
+  - [x] Import BudgetPerformanceReport component
+  - [x] Add third tab: "Budget Performance"
+  - [x] Add TabPanel for Budget Performance Report (index 2)
+  - [x] Update tab navigation to include new tab
+- [x] Update `src/components/reports/ReportsPage.test.tsx`:
+  - [x] Add tests for Budget Performance tab navigation
+  - [x] Verify tab displays when selected
+  - [x] Test tab switching between all three tabs
+- [x] **Write tests**: Tab navigation, component integration (5+ tests)
+
+### 24.11 Manual UI Verification
+**Manual Verification (User):**
+1. Navigate to Reports > Budget Performance tab
+2. Verify default view shows Year to Date period
+3. Verify summary cards show correct totals and overall health score
+4. Verify trend chart displays budget vs actual lines over time
+5. Verify variance chart shows over/under budget with correct colors
+6. Verify budget performance table displays all budgets with correct calculations
+7. Change period to "This Month" and verify all data updates
+8. Select a custom date range and verify filtering works
+9. Select specific categories from multi-select dropdown
+10. Verify table groups by transaction type instead of category when filtered
+11. Verify Clear button resets category filter
+12. Change currency selector to different currency
+13. Verify all amounts convert correctly
+14. Click on budget item in table and verify navigation to filtered transactions
+15. Create some transactions and verify actual amounts update in real-time
+16. Test with mix of income and expense budgets
+17. Verify context-aware colors (income green when over target, expenses green when under budget)
+18. Test with budgets that have partial period overlap
+19. Verify prorated amounts display correctly
+20. Test responsive layout on mobile (cards stack, charts stack, table scrolls)
+21. Test with no budgets and verify empty state message
+22. Test with multi-currency transactions and verify exchange rate conversion
+23. Compare calculated values with manual calculations to verify accuracy
+24. Test Cash Flow Report still works with refactored CategoryFilter and useExchangeRateFetching
+25. Verify no regressions in Cash Flow Report functionality

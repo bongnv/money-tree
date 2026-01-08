@@ -66,7 +66,7 @@ describe('TransactionFilters', () => {
     dateFrom: '',
     dateTo: '',
     accountIds: [],
-    categoryId: '',
+    categoryIds: [],
     transactionTypeId: '',
     searchText: '',
     group: '',
@@ -92,7 +92,7 @@ describe('TransactionFilters', () => {
     expect(screen.getByRole('combobox', { name: /period/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/accounts/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/group/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/category/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/categories/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/transaction type/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /clear/i })).toBeInTheDocument();
@@ -134,7 +134,7 @@ describe('TransactionFilters', () => {
       />
     );
 
-    const categorySelect = screen.getByLabelText(/^category$/i);
+    const categorySelect = screen.getByLabelText(/categories/i);
     await user.click(categorySelect);
 
     const categoryOption = await screen.findByRole('option', { name: /food & dining/i });
@@ -142,7 +142,7 @@ describe('TransactionFilters', () => {
 
     expect(mockOnFiltersChange).toHaveBeenCalledWith({
       ...defaultFilters,
-      categoryId: 'cat-1',
+      categoryIds: ['cat-1'],
     });
   });
 
@@ -244,7 +244,7 @@ describe('TransactionFilters', () => {
       dateFrom: '2024-01-01',
       dateTo: '2024-12-31',
       accountIds: ['acc-1'],
-      categoryId: 'cat-1',
+      categoryIds: ['cat-1'],
       transactionTypeId: 'tt-1',
       searchText: 'coffee',
       group: Group.EXPENSE,
@@ -267,7 +267,7 @@ describe('TransactionFilters', () => {
       dateFrom: '',
       dateTo: '',
       accountIds: [],
-      categoryId: '',
+      categoryIds: [],
       transactionTypeId: '',
       searchText: '',
       group: '',
@@ -321,10 +321,9 @@ describe('TransactionFilters', () => {
       />
     );
 
-    const categorySelect = screen.getByLabelText(/^category$/i);
+    const categorySelect = screen.getByLabelText(/categories/i);
     await user.click(categorySelect);
 
-    expect(await screen.findByRole('option', { name: /all categories/i })).toBeInTheDocument();
     expect(await screen.findByRole('option', { name: /food & dining/i })).toBeInTheDocument();
     expect(await screen.findByRole('option', { name: /salary/i })).toBeInTheDocument();
   });

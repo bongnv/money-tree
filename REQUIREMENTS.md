@@ -219,15 +219,21 @@ The MVP focuses on core personal finance tracking functionality with local file 
 - Alert when exceeding budget
 - Unusual spending pattern notifications
 
-**FR-7.11** [ ] Variance analysis for completed periods
-
-**FR-7.12** [ ] Budget vs Actual report with charts
-
-**FR-7.13** [ ] Historical budget performance tracking
-
-**FR-7.14** [ ] In-period budget adjustments with history
-
-**FR-7.15** [ ] Budget rollover options
+**FR-7.12** [x] Budget Performance Report (Reports section)
+- Table view showing budgeted amount, actual amount, remaining, and % used for each budget item
+- Visual progress indicators and charts
+- Period selection with presets (This Month, Last Month, This Quarter, Last Quarter, This Year, YTD, Last Year, Custom)
+- Multi-select category filtering (filters show all categories by default)
+- When categories filtered: group results by transaction type instead of category
+- Click-through to filtered transaction list
+- Currency selector for multi-currency support with automatic exchange rate conversion
+- Context-aware metrics: "Target" with achievement % for income, "Budget" with usage % for expenses
+- Color coding: Income (Green ≥100%, Yellow 80-99%, Red <80%); Expenses (Green <80%, Yellow 80-100%, Red >100%)
+- Trend chart showing budget vs actual over time (similar to Cash Flow trend)
+- Pie charts for budget allocation and spending by category
+- Variance chart highlighting over/under performance
+- Overall budget health score and summary statistics
+- Prorated budget calculations for partial period overlaps
 
 ### FR-8: Financial Reports
 

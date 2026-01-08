@@ -34,54 +34,75 @@ export class OneDriveProvider implements IStorageProvider {
   }
 
   /**
-   * Get file content URL based on selected file
-   * @throws Error if fileId is not set
+   * Extract actual file path from Graph API format
+   * Converts '/drive/root:/folder/file.json' to 'folder/file.json'
+   * Or '/file.json' to 'file.json'
    */
-  private getFileUrl(): string {
-    if (!this.selectedFileInfo.fileId) {
-      throw new Error('Cannot load file: fileId is not set');
+  private extractActualPath(graphPath: string): string {
+    // Remove Graph API prefixes like '/drive/root:' or just leading '/'
+    const match = graphPath.match(/^\/drive\/root:(.+)$/);
+    if (match) {
+      return match[1].replace(/^\/+/, ''); // Remove leading slashes from extracted path
     }
-
-    // For shared folders, use drives endpoint
-    if (this.selectedFileInfo.driveId) {
-      return `/drives/${this.selectedFileInfo.driveId}/items/${this.selectedFileInfo.fileId}/content`;
-    }
-    // For personal drive, use me endpoint
-    return `/me/drive/items/${this.selectedFileInfo.fileId}/content`;
+    // Fallback: just remove leading slashes
+    return graphPath.replace(/^\/+/, '');
   }
 
   /**
-   * Get file upload URL based on selected file
+   * Check if we're using a shared folder
    */
-  private getUploadUrl(): string {
-    if (!this.selectedFileInfo.fileId) {
-      // Create new file
-      if (this.selectedFileInfo.driveId && this.selectedFileInfo.parentItemId) {
-        // Shared folder: use drives endpoint
-        return `/drives/${this.selectedFileInfo.driveId}/items/${this.selectedFileInfo.parentItemId}:/${this.getFileName()}:/content`;
-      } else {
-        // Personal drive: use root path
-        return `/me/drive/root:/${this.selectedFileInfo.filePath}:/content`;
-      }
-    } else {
-      // Update existing file by ID
-      if (this.selectedFileInfo.driveId) {
-        // Shared folder: use drives endpoint
-        return `/drives/${this.selectedFileInfo.driveId}/items/${this.selectedFileInfo.fileId}/content`;
-      } else {
-        // Personal drive: use me endpoint
-        return `/me/drive/items/${this.selectedFileInfo.fileId}/content`;
-      }
+  private isSharedFolder(): boolean {
+    return !!(this.selectedFileInfo.driveId && this.selectedFileInfo.parentItemId);
+  }
+
+  /**
+   * Build file content URL (for reading) - always uses file ID
+   * @param fileId The OneDrive file ID
+   * @returns Graph API endpoint for file content
+   */
+  private buildContentUrl(fileId: string): string {
+    if (this.isSharedFolder()) {
+      return `/drives/${this.selectedFileInfo.driveId}/items/${fileId}/content`;
     }
+    return `/me/drive/items/${fileId}/content`;
+  }
+
+  /**
+   * Build upload URL (for writing) - uses file ID if available, path otherwise
+   * @param filename The file path to create/update
+   * @param fileId Optional file ID to update existing file
+   * @returns Graph API endpoint for upload
+   */
+  private buildUploadUrl(filename: string, fileId?: string | null): string {
+    if (fileId) {
+      // Update existing file by ID (more efficient)
+      return this.buildContentUrl(fileId);
+    }
+
+    // Create new file by path
+    const cleanPath = filename.replace(/^\/+|\/+$/g, '');
+    if (!cleanPath) {
+      throw new Error('Invalid filename: cannot be empty');
+    }
+
+    if (this.isSharedFolder()) {
+      return `/drives/${this.selectedFileInfo.driveId}/items/${this.selectedFileInfo.parentItemId}:/${cleanPath}:/content`;
+    }
+    return `/me/drive/root:/${cleanPath}:/content`;
   }
 
   /**
    * Load data file from OneDrive
    */
   async loadDataFile(): Promise<DataFile | null> {
+    if (!this.selectedFileInfo.fileId) {
+      throw new Error('Cannot load file: fileId is not set');
+    }
+
     try {
       // Download file content (will wait for initialization and check auth)
-      const response = await this.service.readFile(this.getFileUrl());
+      const fileUrl = this.buildContentUrl(this.selectedFileInfo.fileId);
+      const response = await this.service.readFile(fileUrl);
 
       // Parse and validate
       const data = typeof response === 'string' ? JSON.parse(response) : response;
@@ -117,7 +138,11 @@ export class OneDriveProvider implements IStorageProvider {
       const content = JSON.stringify(data, null, 2);
 
       // Upload file content
-      const response = await this.service.writeFile(this.getUploadUrl(), content);
+      const uploadUrl = this.buildUploadUrl(
+        this.selectedFileInfo.filePath,
+        this.selectedFileInfo.fileId
+      );
+      const response = await this.service.writeFile(uploadUrl, content);
 
       // If this was a new file, update the file ID
       if (!this.selectedFileInfo.fileId) {
@@ -143,24 +168,20 @@ export class OneDriveProvider implements IStorageProvider {
    * @param filename The filename to use
    */
   async saveFile(blob: Blob, filename: string): Promise<void> {
-    let uploadPath: string;
-
-    if (this.selectedFileInfo.driveId && this.selectedFileInfo.parentItemId) {
-      // Shared folder: use drives endpoint
-      uploadPath = `/drives/${this.selectedFileInfo.driveId}/items/${this.selectedFileInfo.parentItemId}:/${filename}:/content`;
-    } else {
-      // Personal drive: construct path from main file location
-      const mainPath = this.selectedFileInfo.filePath;
-      const folderPath = mainPath.substring(0, mainPath.lastIndexOf('/'));
-      const targetPath = folderPath ? `${folderPath}/${filename}` : `/${filename}`;
-
-      // Remove leading slash for OneDrive API (it expects paths without leading /)
-      const cleanPath = targetPath.startsWith('/') ? targetPath.substring(1) : targetPath;
-      uploadPath = `/me/drive/root:/${cleanPath}:/content`;
-    }
-
-    // Convert blob to ArrayBuffer and upload
-    const content = await blob.arrayBuffer();
-    await this.service.writeFile(uploadPath, content);
+    // Extract the actual path (remove Graph API prefixes)
+    const actualPath = this.extractActualPath(this.selectedFileInfo.filePath);
+    
+    // Determine the folder path from main file location
+    const lastSlashIndex = actualPath.lastIndexOf('/');
+    const folderPath = lastSlashIndex >= 0 ? actualPath.substring(0, lastSlashIndex) : '';
+    
+    // Build full path: folder/filename or just filename if in root
+    const fullPath = folderPath ? `${folderPath}/${filename}` : filename;
+    
+    // Build upload URL (always creates new file, never uses fileId)
+    const uploadPath = this.buildUploadUrl(fullPath, null);
+    
+    // Upload blob directly
+    await this.service.writeFile(uploadPath, blob);
   }
 }

@@ -84,8 +84,6 @@ const AppContent: React.FC = () => {
       } else {
         // File loaded successfully, check if archive prompt should be shown
         checkArchivePrompt();
-        // Check if backup prompt should be shown
-        checkBackupPrompt();
       }
     };
 
@@ -115,8 +113,16 @@ const AppContent: React.FC = () => {
   const checkBackupPrompt = () => {
     if (backupService.shouldPromptBackup(lastBackupDate)) {
       setShowBackupPrompt(true);
+    } else {
+      setShowBackupPrompt(false);
     }
   };
+
+  // Re-check backup prompt when lastBackupDate changes
+  useEffect(() => {
+    checkBackupPrompt();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastBackupDate]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -148,8 +154,6 @@ const AppContent: React.FC = () => {
       // Load data from the selected file
       await syncService.loadDataFile();
       setShowWelcomeDialog(false);
-      // Check if backup prompt should be shown
-      checkBackupPrompt();
     } catch (error) {
       console.error('Failed to open file:', error);
       throw error; // Re-throw so WelcomeDialog can show error
@@ -187,8 +191,6 @@ const AppContent: React.FC = () => {
 
     await syncService.loadDataFile();
     setShowWelcomeDialog(false);
-    // Check if backup prompt should be shown
-    checkBackupPrompt();
   };
 
   const handleListOneDriveFolders = async (parentItem?: any) => {

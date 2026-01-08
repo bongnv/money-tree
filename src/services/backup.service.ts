@@ -11,11 +11,13 @@ class BackupService {
 
   /**
    * Check if backup is needed based on last backup date
-   * Returns true if no backup or backup older than threshold (30 days)
+   * Returns true if backup older than threshold (30 days) or never backed up with saved data
    */
   shouldPromptBackup(lastBackupDate?: string | null): boolean {
     if (!lastBackupDate) {
-      return true; // Never backed up
+      // Never backed up - only prompt if there's saved data to back up
+      const state = useAppStore.getState();
+      return !!state.baseVersion;
     }
 
     const lastBackup = new Date(lastBackupDate);
@@ -71,6 +73,7 @@ class BackupService {
       if (error instanceof Error && error.message === 'File save cancelled') {
         throw error;
       }
+      console.warn('Backup save failed:', error);
       throw new Error(
         `Failed to save backup: ${error instanceof Error ? error.message : 'Unknown error'}`
       );

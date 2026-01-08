@@ -49,13 +49,21 @@ describe('BackupService', () => {
   });
 
   describe('shouldPromptBackup', () => {
-    it('should return true when lastBackupDate is null', () => {
+    it('should return false when lastBackupDate is null and no baseVersion exists', () => {
+      useAppStore.setState({ baseVersion: null });
       const result = backupService.shouldPromptBackup(null);
-      expect(result).toBe(true);
+      expect(result).toBe(false);
     });
 
-    it('should return true when lastBackupDate is undefined', () => {
+    it('should return false when lastBackupDate is undefined and no baseVersion exists', () => {
+      useAppStore.setState({ baseVersion: null });
       const result = backupService.shouldPromptBackup(undefined);
+      expect(result).toBe(false);
+    });
+
+    it('should return true when never backed up but baseVersion exists', () => {
+      useAppStore.setState({ baseVersion: mockDataFile });
+      const result = backupService.shouldPromptBackup(null);
       expect(result).toBe(true);
     });
 

@@ -211,9 +211,9 @@ export class OneDriveService {
   /**
    * Write file to OneDrive using Graph API endpoint
    * @param endpoint The Graph API endpoint (e.g., '/me/drive/items/{id}/content')
-   * @param content The file content to write (string for text files, ArrayBuffer for binary)
+   * @param content The file content to write (string for text files, Blob for binary)
    */
-  async writeFile(endpoint: string, content: string | ArrayBuffer): Promise<any> {
+  async writeFile(endpoint: string, content: string | Blob): Promise<any> {
     await this.ensureInitialized();
     this.ensureGraphClient();
 

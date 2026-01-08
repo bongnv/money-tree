@@ -27,11 +27,11 @@ export const TransactionList: React.FC<TransactionListProps> = ({
   const getCategory = (id: string) => categories.find((c) => c.id === id);
   const getAccount = (id?: string) => (id ? accounts.find((a) => a.id === id) : undefined);
 
-  // Pre-sort transactions by date (desc) and id (desc)
+  // Pre-sort transactions by date (desc) and createdAt (desc)
   const sortedTransactions = [...transactions].sort((a, b) => {
     const dateCompare = b.date.localeCompare(a.date);
     if (dateCompare !== 0) return dateCompare;
-    return b.id.localeCompare(a.id);
+    return b.createdAt.localeCompare(a.createdAt);
   });
 
   const columns: GridColDef[] = [

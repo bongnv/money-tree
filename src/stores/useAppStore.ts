@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { storageService } from '../services/storage.service';
 import { AlertColor } from '@mui/material';
 import { DataFile, ArchivedYearReference } from '../types/models';
 import { CurrencyCode } from '../types/enums';
@@ -23,8 +22,6 @@ interface AppState {
   fileContentHash: string | null;
   fileLoadedAt: string | null;
   baseVersion: DataFile | null;
-  // Archive settings
-  archivePromptPostponedAt: string | null; // ISO date when user clicked "Remind Me Later"
   // Backup metadata
   lastBackupDate: string | null; // ISO date of last successful backup
 }
@@ -45,8 +42,6 @@ interface AppActions {
   // Conflict detection actions
   setFileMetadata: (hash: string, loadedAt: string, baseVersion: DataFile) => void;
   clearFileMetadata: () => void;
-  // Archive actions
-  setArchivePromptPostponedAt: (timestamp: string | null) => void;
   // Backup actions
   setLastBackupDate: (date: string | null) => void;
 }
@@ -67,7 +62,6 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
   fileContentHash: null,
   fileLoadedAt: null,
   baseVersion: null,
-  archivePromptPostponedAt: storageService.getArchivePromptPostponedAt(),
   lastBackupDate: null,
 
   setFileName: (fileName) => {
@@ -96,7 +90,7 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
   },
 
   resetState: () => {
-    storageService.clearAll();
+    localStorage.removeItem('moneytree_storage_provider');
     set({
       fileName: null,
       lastSaved: null,
@@ -146,15 +140,6 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
 
   clearFileMetadata: () => {
     set({ fileContentHash: null, fileLoadedAt: null, baseVersion: null });
-  },
-
-  setArchivePromptPostponedAt: (timestamp) => {
-    if (timestamp) {
-      storageService.setArchivePromptPostponedAt(timestamp);
-    } else {
-      storageService.clearArchivePromptPostponedAt();
-    }
-    set({ archivePromptPostponedAt: timestamp });
   },
 
   setLastBackupDate: (date) => {

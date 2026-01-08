@@ -23,22 +23,6 @@ import { CurrencyCode } from '../types/enums';
 import { getAssetClosingValue } from '../utils/asset.utils';
 
 /**
- * Check if archive trigger conditions are met (3+ years exist in main file)
- */
-export function detectArchiveTrigger(): boolean {
-  const transactions = useTransactionStore.getState().transactions;
-
-  // Get unique years from transactions
-  const years = new Set<number>();
-  transactions.forEach((transaction) => {
-    const year = new Date(transaction.date).getFullYear();
-    years.add(year);
-  });
-
-  return years.size >= 3;
-}
-
-/**
  * Calculate year-end summary for a specific year
  */
 export function calculateYearEndSummary(year: number, baseCurrency: CurrencyCode): YearEndSummary {
@@ -115,31 +99,6 @@ export function identifyArchivableYear(): number | null {
   }
 
   return oldestYear;
-}
-
-/**
- * Check if archive prompt should be shown based on conditions and user preferences
- * @param lastPostponedDate ISO date string when user last postponed, or null
- */
-export function shouldPromptArchive(lastPostponedDate: string | null): boolean {
-  // Check if 3+ years exist
-  if (!detectArchiveTrigger()) {
-    return false;
-  }
-
-  // If never postponed, show prompt
-  if (!lastPostponedDate) {
-    return true;
-  }
-
-  // Check if 30 days have passed since last postpone
-  const lastPostponed = new Date(lastPostponedDate);
-  const now = new Date();
-  const daysSincePostpone = Math.floor(
-    (now.getTime() - lastPostponed.getTime()) / (1000 * 60 * 60 * 24)
-  );
-
-  return daysSincePostpone >= 30;
 }
 
 /**

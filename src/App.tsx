@@ -19,11 +19,7 @@ import { StorageFactory, StorageProviderType } from './services/storage/StorageF
 import { SelectedFileInfo } from './services/storage/OneDriveProvider';
 import { MergeResult } from './services/merge.service';
 import { backupService } from './services/backup.service';
-import {
-  shouldPromptArchive,
-  identifyArchivableYear,
-  calculateYearEndSummary,
-} from './services/archive.service';
+import { identifyArchivableYear, calculateYearEndSummary } from './services/archive.service';
 
 const WELCOME_DISMISSED_KEY = 'moneyTree.welcomeDismissed';
 
@@ -36,8 +32,6 @@ const AppContent: React.FC = () => {
     snackbar,
     hideSnackbar,
     baseCurrency,
-    archivePromptPostponedAt,
-    setArchivePromptPostponedAt,
     lastBackupDate,
     isLoading,
   } = useAppStore();
@@ -99,24 +93,17 @@ const AppContent: React.FC = () => {
   }, []); // Only run once on mount
 
   const checkArchivePrompt = () => {
-    if (shouldPromptArchive(archivePromptPostponedAt)) {
-      const archivableYear = identifyArchivableYear();
-      if (archivableYear !== null) {
-        const summary = calculateYearEndSummary(archivableYear, baseCurrency);
-        setArchiveYear(archivableYear);
-        setArchiveYearSummary(summary);
-        setShowArchivePrompt(true);
-      }
+    const archivableYear = identifyArchivableYear();
+    if (archivableYear !== null) {
+      const summary = calculateYearEndSummary(archivableYear, baseCurrency);
+      setArchiveYear(archivableYear);
+      setArchiveYearSummary(summary);
+      setShowArchivePrompt(true);
     }
   };
 
   const checkBackupPrompt = () => {
-    const shouldPrompt = backupService.shouldPromptBackup();
-    if (shouldPrompt) {
-      setShowBackupPrompt(true);
-    } else {
-      setShowBackupPrompt(false);
-    }
+    setShowBackupPrompt(backupService.shouldPromptBackup());
   };
 
   useEffect(() => {
@@ -211,11 +198,6 @@ const AppContent: React.FC = () => {
     setMergeDialogState({ open: false, mergeResult: null, resolve: null });
   };
 
-  const handleArchiveRemindLater = () => {
-    setShowArchivePrompt(false);
-    setArchivePromptPostponedAt(new Date().toISOString());
-  };
-
   const handleArchiveGoToSettings = () => {
     setShowArchivePrompt(false);
     // Navigate to archive settings page using React Router
@@ -226,10 +208,6 @@ const AppContent: React.FC = () => {
     setShowBackupPrompt(false);
     // Navigate to preferences page using React Router
     navigate('/settings/preferences');
-  };
-
-  const handleDismissBackupPrompt = () => {
-    setShowBackupPrompt(false);
   };
 
   return (
@@ -266,14 +244,14 @@ const AppContent: React.FC = () => {
           yearSummary={archiveYearSummary}
           baseCurrency={baseCurrency}
           onGoToSettings={handleArchiveGoToSettings}
-          onRemindLater={handleArchiveRemindLater}
+          onRemindLater={() => setShowArchivePrompt(false)}
         />
       )}
       <BackupPromptDialog
         open={showBackupPrompt}
         lastBackupDate={lastBackupDate}
         onGoToSettings={handleGoToBackupSettings}
-        onDismiss={handleDismissBackupPrompt}
+        onDismiss={() => setShowBackupPrompt(false)}
       />
       <Backdrop open={isLoading} sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <CircularProgress color="inherit" />

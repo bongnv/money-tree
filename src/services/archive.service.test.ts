@@ -3,10 +3,8 @@
  */
 
 import {
-  detectArchiveTrigger,
   calculateYearEndSummary,
   identifyArchivableYear,
-  shouldPromptArchive,
   createArchiveFile,
   saveArchiveFile,
   updateMainFileAfterArchive,
@@ -36,79 +34,6 @@ jest.mock('./storage/StorageFactory');
 describe('Archive Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  describe('detectArchiveTrigger', () => {
-    it('should return false when less than 3 years exist', () => {
-      (useTransactionStore.getState as jest.Mock).mockReturnValue({
-        transactions: [
-          {
-            id: '1',
-            date: '2024-01-15',
-            description: 'Test',
-            amount: 100,
-            accountId: 'acc1',
-            transactionTypeId: 'type1',
-            createdAt: '2024-01-15T00:00:00Z',
-            updatedAt: '2024-01-15T00:00:00Z',
-          },
-          {
-            id: '2',
-            date: '2025-03-20',
-            description: 'Test',
-            amount: 200,
-            accountId: 'acc1',
-            transactionTypeId: 'type1',
-            createdAt: '2025-03-20T00:00:00Z',
-            updatedAt: '2025-03-20T00:00:00Z',
-          },
-        ],
-      });
-
-      expect(detectArchiveTrigger()).toBe(false);
-    });
-
-    it('should return true when 3 or more years exist', () => {
-      (useTransactionStore.getState as jest.Mock).mockReturnValue({
-        transactions: [
-          {
-            id: '1',
-            date: '2023-01-15',
-            description: 'Test',
-            amount: 100,
-            accountId: 'acc1',
-            transactionTypeId: 'type1',
-
-            createdAt: '2023-01-15T00:00:00Z',
-            updatedAt: '2023-01-15T00:00:00Z',
-          },
-          {
-            id: '2',
-            date: '2024-03-20',
-            description: 'Test',
-            amount: 200,
-            accountId: 'acc1',
-            transactionTypeId: 'type1',
-
-            createdAt: '2024-03-20T00:00:00Z',
-            updatedAt: '2024-03-20T00:00:00Z',
-          },
-          {
-            id: '3',
-            date: '2025-06-10',
-            description: 'Test',
-            amount: 300,
-            accountId: 'acc1',
-            transactionTypeId: 'type1',
-
-            createdAt: '2025-06-10T00:00:00Z',
-            updatedAt: '2025-06-10T00:00:00Z',
-          },
-        ],
-      });
-
-      expect(detectArchiveTrigger()).toBe(true);
-    });
   });
 
   describe('identifyArchivableYear', () => {
@@ -168,87 +93,6 @@ describe('Archive Service', () => {
 
       const year = identifyArchivableYear();
       expect(year).toBeNull();
-    });
-  });
-
-  describe('shouldPromptArchive', () => {
-    beforeEach(() => {
-      // Mock 3 years of data
-      (useTransactionStore.getState as jest.Mock).mockReturnValue({
-        transactions: [
-          {
-            id: '1',
-            date: '2023-01-15',
-            description: 'Test',
-            amount: 100,
-            accountId: 'acc1',
-            transactionTypeId: 'type1',
-
-            createdAt: '2023-01-15T00:00:00Z',
-            updatedAt: '2023-01-15T00:00:00Z',
-          },
-          {
-            id: '2',
-            date: '2024-03-20',
-            description: 'Test',
-            amount: 200,
-            accountId: 'acc1',
-            transactionTypeId: 'type1',
-
-            createdAt: '2024-03-20T00:00:00Z',
-            updatedAt: '2024-03-20T00:00:00Z',
-          },
-          {
-            id: '3',
-            date: '2025-06-10',
-            description: 'Test',
-            amount: 300,
-            accountId: 'acc1',
-            transactionTypeId: 'type1',
-
-            createdAt: '2025-06-10T00:00:00Z',
-            updatedAt: '2025-06-10T00:00:00Z',
-          },
-        ],
-      });
-    });
-
-    it('should return true when never postponed and 3+ years exist', () => {
-      expect(shouldPromptArchive(null)).toBe(true);
-    });
-
-    it('should return false when postponed less than 30 days ago', () => {
-      const tenDaysAgo = new Date();
-      tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
-
-      expect(shouldPromptArchive(tenDaysAgo.toISOString())).toBe(false);
-    });
-
-    it('should return true when postponed 30+ days ago', () => {
-      const fortyDaysAgo = new Date();
-      fortyDaysAgo.setDate(fortyDaysAgo.getDate() - 40);
-
-      expect(shouldPromptArchive(fortyDaysAgo.toISOString())).toBe(true);
-    });
-
-    it('should return false when less than 3 years exist', () => {
-      (useTransactionStore.getState as jest.Mock).mockReturnValue({
-        transactions: [
-          {
-            id: '1',
-            date: '2024-01-15',
-            description: 'Test',
-            amount: 100,
-            accountId: 'acc1',
-            transactionTypeId: 'type1',
-
-            createdAt: '2024-01-15T00:00:00Z',
-            updatedAt: '2024-01-15T00:00:00Z',
-          },
-        ],
-      });
-
-      expect(shouldPromptArchive(null)).toBe(false);
     });
   });
 

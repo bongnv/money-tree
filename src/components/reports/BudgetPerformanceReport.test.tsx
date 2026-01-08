@@ -185,7 +185,8 @@ describe('BudgetPerformanceReport', () => {
   it('should display budget performance table', () => {
     renderComponent();
     expect(screen.getByText('Budget Performance Details')).toBeInTheDocument();
-    expect(screen.getByText('Groceries')).toBeInTheDocument();
+    // When no category filter is selected, shows categories
+    expect(screen.getByText('Food')).toBeInTheDocument();
   });
 
   it('should render trend chart', () => {
@@ -234,14 +235,23 @@ describe('BudgetPerformanceReport', () => {
     expect(clearButton).toBeInTheDocument();
   });
 
-  it('should navigate to transactions when row clicked', async () => {
+  it('should navigate to transactions when transaction type row clicked', async () => {
     const user = userEvent.setup();
     renderComponent();
 
-    const groceryRow = screen.getByText('Groceries').closest('tr');
-    if (groceryRow) {
-      await user.click(groceryRow);
-      expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/transactions?'));
+    // First click on category to filter and show transaction types
+    const foodRow = screen.getByText('Food').closest('tr');
+    if (foodRow) {
+      await user.click(foodRow);
+
+      // Now transaction types should be visible
+      const groceryRow = screen.getByText('Groceries').closest('tr');
+      if (groceryRow) {
+        await user.click(groceryRow);
+        // Should navigate to transactions page with filter
+        expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/transactions?'));
+        expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('transactionTypeId='));
+      }
     }
   });
 

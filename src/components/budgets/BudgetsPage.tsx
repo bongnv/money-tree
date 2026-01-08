@@ -6,7 +6,6 @@ import {
   Paper,
   List,
   ListItem,
-  ListItemText,
   IconButton,
   Divider,
   LinearProgress,
@@ -290,56 +289,54 @@ export const BudgetsPage: React.FC = () => {
                     ) => (
                       <React.Fragment key={budget.id}>
                         {index > 0 && <Divider />}
-                        <ListItem sx={{ flexDirection: 'column', alignItems: 'stretch', py: 2 }}>
+                        <ListItem sx={{ flexDirection: 'column', alignItems: 'stretch', py: 1.5 }}>
                           <Box
                             sx={{
                               display: 'flex',
                               justifyContent: 'space-between',
-                              alignItems: 'center',
-                              mb: 1,
+                              alignItems: 'flex-start',
+                              mb: 0.5,
                             }}
                           >
-                            <ListItemText
-                              primary={transactionType.name}
-                              secondary={
+                            <Box sx={{ flex: 1 }}>
+                              <Typography variant="body1" fontWeight="medium">
+                                {transactionType.name}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 0.25 }}
+                              >
                                 <Box component="span">
-                                  <Box component="span" sx={{ display: 'block' }}>
-                                    {formatCurrency(actualAmount, CurrencyCode.USD)} of{' '}
-                                    {formatCurrency(proratedBudget, CurrencyCode.USD)} (
-                                    {percentage.toFixed(0)}
-                                    %)
-                                  </Box>
-                                  <Box
-                                    component="span"
-                                    sx={{
-                                      display: 'block',
-                                      fontSize: '0.75rem',
-                                      color: 'text.secondary',
-                                    }}
-                                  >
-                                    Original: {formatCurrency(budget.amount, CurrencyCode.USD)}{' '}
-                                    {budget.period}
-                                    {' • '}
-                                    {formatDateRange(budget)}
-                                  </Box>
+                                  {formatCurrency(actualAmount, CurrencyCode.USD)} of{' '}
+                                  {formatCurrency(proratedBudget, CurrencyCode.USD)}
                                 </Box>
-                              }
-                            />
-                            <Box>
+                                <Box component="span" sx={{ color: 'text.primary' }}>
+                                  ({percentage.toFixed(0)}%)
+                                </Box>
+                                <Box component="span">•</Box>
+                                <Box component="span">
+                                  {formatCurrency(budget.amount, CurrencyCode.USD)} {budget.period}
+                                </Box>
+                                <Box component="span">•</Box>
+                                <Box component="span">{formatDateRange(budget)}</Box>
+                              </Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', ml: 1 }}>
                               <IconButton
-                                edge="end"
+                                size="small"
                                 aria-label="edit"
                                 onClick={() => handleEdit(budget)}
-                                sx={{ mr: 1 }}
+                                sx={{ mr: 0.5 }}
                               >
-                                <EditIcon />
+                                <EditIcon fontSize="small" />
                               </IconButton>
                               <IconButton
-                                edge="end"
+                                size="small"
                                 aria-label="delete"
                                 onClick={() => handleDelete(budget)}
                               >
-                                <DeleteIcon />
+                                <DeleteIcon fontSize="small" />
                               </IconButton>
                             </Box>
                           </Box>
@@ -347,7 +344,7 @@ export const BudgetsPage: React.FC = () => {
                             variant="determinate"
                             value={Math.min(percentage, 100)}
                             color={getProgressColor(percentage, isIncome) as any}
-                            sx={{ height: 8, borderRadius: 1 }}
+                            sx={{ height: 6, borderRadius: 1 }}
                           />
                         </ListItem>
                       </React.Fragment>

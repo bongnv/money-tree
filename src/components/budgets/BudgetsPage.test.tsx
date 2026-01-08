@@ -151,7 +151,7 @@ describe('BudgetsPage', () => {
     expect(screen.getByText('Housing Budgets')).toBeInTheDocument();
     expect(screen.getByText('Rent')).toBeInTheDocument();
     // Check that budget amounts are displayed
-    expect(screen.getByText(/Original: \$1,?500\.00 monthly/)).toBeInTheDocument();
+    expect(screen.getByText(/\$1,?500\.00 monthly/)).toBeInTheDocument();
   });
 
   it('should open dialog when Add Budget button is clicked', () => {
@@ -266,9 +266,9 @@ describe('BudgetsPage', () => {
     render(<BudgetsPage />);
 
     // Should show original budget with period
-    expect(screen.getByText(/Original: \$1,?500\.00 monthly/)).toBeInTheDocument();
-    expect(screen.getByText(/Original: \$4,?500\.00 quarterly/)).toBeInTheDocument();
-    expect(screen.getByText(/Original: \$18,?000\.00 yearly/)).toBeInTheDocument();
+    expect(screen.getByText(/\$1,?500\.00 monthly/)).toBeInTheDocument();
+    expect(screen.getByText(/\$4,?500\.00 quarterly/)).toBeInTheDocument();
+    expect(screen.getByText(/\$18,?000\.00 yearly/)).toBeInTheDocument();
   });
 
   it('should display progress bars with actual spending', () => {
@@ -283,7 +283,7 @@ describe('BudgetsPage', () => {
     render(<BudgetsPage />);
 
     // Should show original budget and progress bars
-    expect(screen.getByText(/Original: \$1,?500\.00 monthly/)).toBeInTheDocument();
+    expect(screen.getByText(/\$1,?500\.00 monthly/)).toBeInTheDocument();
     // Progress bars should be rendered (MUI LinearProgress)
     const progressBars = document.querySelectorAll('.MuiLinearProgress-root');
     expect(progressBars.length).toBeGreaterThanOrEqual(1);
@@ -303,7 +303,7 @@ describe('BudgetsPage', () => {
     render(<BudgetsPage />);
 
     // Should show original quarterly budget
-    expect(screen.getByText(/Original: \$4,?500\.00 quarterly/)).toBeInTheDocument();
+    expect(screen.getByText(/\$4,?500\.00 quarterly/)).toBeInTheDocument();
   });
 
   it('should prorate yearly budgets for current month', () => {
@@ -320,7 +320,7 @@ describe('BudgetsPage', () => {
     render(<BudgetsPage />);
 
     // Should show original yearly budget
-    expect(screen.getByText(/Original: \$18,?000\.00 yearly/)).toBeInTheDocument();
+    expect(screen.getByText(/\$18,?000\.00 yearly/)).toBeInTheDocument();
   });
 
   it('should show context-aware section titles for income vs expenses', () => {
@@ -357,6 +357,6 @@ describe('BudgetsPage', () => {
     // Should show total row
     expect(screen.getByText('Total')).toBeInTheDocument();
     // Should show original budget
-    expect(screen.getByText(/Original: \$1,?500\.00 monthly/)).toBeInTheDocument();
+    expect(screen.getByText(/\$1,?500\.00 monthly/)).toBeInTheDocument();
   });
 });

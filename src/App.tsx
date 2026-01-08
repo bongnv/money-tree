@@ -121,6 +121,37 @@ const AppContent: React.FC = () => {
     };
   }, [hasUnsavedChanges]);
 
+  // Auto-reload data when tab becomes visible (with 30-minute throttle)
+  useEffect(() => {
+    let lastReloadTime = 0;
+    const RELOAD_THROTTLE_MS = 30 * 60 * 1000; // 30 minutes
+
+    const handleVisibilityChange = async () => {
+      // Read fresh state values when event fires
+      const state = useAppStore.getState();
+
+      // Only reload if: tab is visible, no unsaved changes, and data is loaded
+      if (document.hidden || state.hasUnsavedChanges || !state.baseVersion) {
+        return;
+      }
+
+      const now = Date.now();
+      if (now - lastReloadTime < RELOAD_THROTTLE_MS) {
+        // Too soon since last reload, skip
+        return;
+      }
+
+      lastReloadTime = now;
+      await syncService.loadDataFile();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []); // Register once on mount
+
   const handleOpenLocalFile = async () => {
     try {
       // Show file picker to select a local file

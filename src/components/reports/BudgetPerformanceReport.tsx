@@ -204,42 +204,99 @@ export const BudgetPerformanceReport: React.FC = () => {
     return <WarningIcon sx={{ fontSize: 40, color: 'warning.main' }} />;
   };
 
-  const handleItemClick = (itemId: string, isTransactionType: boolean) => {
-    const params = new URLSearchParams();
-    if (isTransactionType) {
-      params.set('transactionTypeId', itemId);
+  const handleItemClick = (itemId: string, isCategory: boolean) => {
+    if (isCategory) {
+      // Filter on same page for category clicks
+      setSelectedCategories([itemId]);
     } else {
-      params.set('categoryId', itemId);
+      // Navigate to transactions page for transaction type clicks
+      const params = new URLSearchParams();
+      params.set('transactionTypeId', itemId);
+      params.set('dateFrom', startDate);
+      params.set('dateTo', endDate);
+      navigate(`/transactions?${params.toString()}`);
     }
-    params.set('dateFrom', startDate);
-    params.set('dateTo', endDate);
-    navigate(`/transactions?${params.toString()}`);
   };
 
-  // Group items by category
-  const groupedItems = useMemo(() => {
+  // Group items by category for display
+  const groupedItems: Array<
+    | {
+        categoryId: string;
+        categoryName: string;
+        isCategory: true;
+        budgetedAmount: number;
+        actualAmount: number;
+        remaining: number;
+        percentUsed: number;
+        isIncome: boolean;
+      }
+    | {
+        categoryId: string;
+        categoryName: string;
+        isCategory: false;
+        transactionTypeId: string;
+        transactionTypeName: string;
+        budgetedAmount: number;
+        actualAmount: number;
+        remaining: number;
+        percentUsed: number;
+        isIncome: boolean;
+      }
+  > = useMemo(() => {
     if (selectedCategories.length > 0) {
-      // When filtered, don't group by category
-      return [
-        {
-          categoryId: 'all',
-          categoryName: 'All Items',
-          items: performance.items,
-        },
-      ];
+      // When filtered, show individual transaction types
+      return performance.items.map((item) => ({
+        categoryId: item.categoryId,
+        categoryName: item.categoryName,
+        isCategory: false as const,
+        // Transaction type details
+        transactionTypeId: item.transactionTypeId,
+        transactionTypeName: item.transactionTypeName,
+        budgetedAmount: item.budgetedAmount,
+        actualAmount: item.actualAmount,
+        remaining: item.remaining,
+        percentUsed: item.percentUsed,
+        isIncome: item.isIncome,
+      }));
     }
 
-    const groups = new Map<string, typeof performance.items>();
+    // When no filter, aggregate by category
+    const categoryMap = new Map<
+      string,
+      {
+        categoryId: string;
+        categoryName: string;
+        budgetedAmount: number;
+        actualAmount: number;
+        isIncome: boolean;
+      }
+    >();
+
     performance.items.forEach((item) => {
-      const existing = groups.get(item.categoryId) || [];
-      existing.push(item);
-      groups.set(item.categoryId, existing);
+      const existing = categoryMap.get(item.categoryId);
+      if (existing) {
+        existing.budgetedAmount += item.budgetedAmount;
+        existing.actualAmount += item.actualAmount;
+      } else {
+        categoryMap.set(item.categoryId, {
+          categoryId: item.categoryId,
+          categoryName: item.categoryName,
+          budgetedAmount: item.budgetedAmount,
+          actualAmount: item.actualAmount,
+          isIncome: item.isIncome,
+        });
+      }
     });
 
-    return Array.from(groups.entries()).map(([categoryId, items]) => ({
-      categoryId,
-      categoryName: items[0]?.categoryName || 'Unknown',
-      items,
+    return Array.from(categoryMap.values()).map((cat) => ({
+      categoryId: cat.categoryId,
+      categoryName: cat.categoryName,
+      isCategory: true as const,
+      budgetedAmount: cat.budgetedAmount,
+      actualAmount: cat.actualAmount,
+      remaining: cat.budgetedAmount - cat.actualAmount,
+      percentUsed: cat.budgetedAmount > 0 ? (cat.actualAmount / cat.budgetedAmount) * 100 : 0,
+      isIncome: cat.isIncome,
     }));
   }, [performance.items, selectedCategories]);
 
@@ -459,83 +516,72 @@ export const BudgetPerformanceReport: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {groupedItems.map((group) => (
-                  <React.Fragment key={group.categoryId}>
-                    {selectedCategories.length === 0 && (
-                      <TableRow sx={{ backgroundColor: 'action.hover' }}>
-                        <TableCell colSpan={6}>
-                          <Typography variant="subtitle2" fontWeight="bold">
-                            {group.categoryName}
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    {group.items.map((item) => {
-                      const progressColor = item.isIncome
-                        ? item.percentUsed >= 100
-                          ? 'success'
-                          : item.percentUsed >= 80
-                            ? 'warning'
-                            : 'error'
-                        : item.percentUsed <= 80
-                          ? 'success'
-                          : item.percentUsed <= 100
-                            ? 'warning'
-                            : 'error';
+                {groupedItems.map((item) => {
+                  const progressColor = item.isIncome
+                    ? item.percentUsed >= 100
+                      ? 'success'
+                      : item.percentUsed >= 80
+                        ? 'warning'
+                        : 'error'
+                    : item.percentUsed <= 80
+                      ? 'success'
+                      : item.percentUsed <= 100
+                        ? 'warning'
+                        : 'error';
 
-                      return (
-                        <TableRow
-                          key={item.budgetId}
-                          hover
-                          sx={{ cursor: 'pointer' }}
-                          onClick={() => handleItemClick(item.transactionTypeId, true)}
+                  return (
+                    <TableRow
+                      key={item.isCategory ? item.categoryId : item.transactionTypeId}
+                      hover
+                      sx={{ cursor: 'pointer' }}
+                      onClick={() =>
+                        handleItemClick(
+                          item.isCategory ? item.categoryId : item.transactionTypeId,
+                          item.isCategory
+                        )
+                      }
+                    >
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          {item.isCategory ? item.categoryName : item.transactionTypeName}
+                          {item.isIncome && <Chip label="Income" size="small" color="success" />}
+                        </Box>
+                      </TableCell>
+                      <TableCell align="right">
+                        {formatCurrency(item.budgetedAmount, currencyCode)}
+                      </TableCell>
+                      <TableCell align="right">
+                        {formatCurrency(item.actualAmount, currencyCode)}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography
+                          color={
+                            item.remaining >= 0
+                              ? item.isIncome
+                                ? 'error.main'
+                                : 'success.main'
+                              : item.isIncome
+                                ? 'success.main'
+                                : 'error.main'
+                          }
                         >
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              {selectedCategories.length === 0 && '  '}
-                              {item.transactionTypeName}
-                              {item.isIncome && (
-                                <Chip label="Income" size="small" color="success" />
-                              )}
-                            </Box>
-                          </TableCell>
-                          <TableCell align="right">
-                            {formatCurrency(item.budgetedAmount, currencyCode)}
-                          </TableCell>
-                          <TableCell align="right">
-                            {formatCurrency(item.actualAmount, currencyCode)}
-                          </TableCell>
-                          <TableCell align="right">
-                            <Typography
-                              color={
-                                item.remaining >= 0
-                                  ? item.isIncome
-                                    ? 'error.main'
-                                    : 'success.main'
-                                  : item.isIncome
-                                    ? 'success.main'
-                                    : 'error.main'
-                              }
-                            >
-                              {formatCurrency(Math.abs(item.remaining), currencyCode)}
-                            </Typography>
-                          </TableCell>
-                          <TableCell align="right">{item.percentUsed.toFixed(1)}%</TableCell>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <LinearProgress
-                                variant="determinate"
-                                value={Math.min(item.percentUsed, 100)}
-                                color={progressColor}
-                                sx={{ flexGrow: 1, height: 8, borderRadius: 1 }}
-                              />
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </React.Fragment>
-                ))}
+                          {formatCurrency(Math.abs(item.remaining), currencyCode)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">{item.percentUsed.toFixed(1)}%</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <LinearProgress
+                            variant="determinate"
+                            value={Math.min(item.percentUsed, 100)}
+                            color={progressColor}
+                            sx={{ flexGrow: 1, height: 8, borderRadius: 1 }}
+                          />
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </TableContainer>

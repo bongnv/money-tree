@@ -182,15 +182,17 @@ export const CashFlowReport: React.FC = () => {
   };
 
   const handleCategoryClick = (categoryId: string, isTransactionType: boolean = false) => {
-    const params = new URLSearchParams();
     if (isTransactionType) {
+      // Navigate to transactions page for transaction type clicks
+      const params = new URLSearchParams();
       params.set('transactionTypeId', categoryId);
+      params.set('dateFrom', startDate);
+      params.set('dateTo', endDate);
+      navigate(`/transactions?${params.toString()}`);
     } else {
-      params.set('categoryId', categoryId);
+      // Filter on same page for category clicks
+      setSelectedCategories([categoryId]);
     }
-    params.set('dateFrom', startDate);
-    params.set('dateTo', endDate);
-    navigate(`/transactions?${params.toString()}`);
   };
 
   const handleClearFilters = () => {

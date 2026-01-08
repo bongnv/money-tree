@@ -95,7 +95,7 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {/* First Row: Primary Filters */}
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'flex-start' }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
           {/* Date Range Filter */}
           <PeriodSelector
             startDate={filters.dateFrom}
@@ -149,7 +149,7 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
         </Box>
 
         {/* Second Row: Additional Filters */}
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'flex-start' }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
           {/* Category Filter */}
           <CategoryFilter
             categories={categories}

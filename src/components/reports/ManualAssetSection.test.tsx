@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 import { ManualAssetSection } from './ManualAssetSection';
 import { AssetGroup } from '../../services/report.service';
@@ -21,80 +22,76 @@ describe('ManualAssetSection', () => {
     },
   ];
 
-  it('should render section with title', () => {
-    render(
-      <ManualAssetSection title="Assets" groups={mockGroups} currencyCode={CurrencyCode.USD} />
+  const renderComponent = (props: {
+    title: string;
+    groups: AssetGroup[];
+    currencyCode: CurrencyCode;
+  }) => {
+    return render(
+      <BrowserRouter>
+        <ManualAssetSection {...props} />
+      </BrowserRouter>
     );
+  };
+
+  it('should render section with title', () => {
+    renderComponent({ title: 'Assets', groups: mockGroups, currencyCode: CurrencyCode.USD });
     expect(screen.getByText('Assets')).toBeInTheDocument();
   });
 
   it('should render all groups', () => {
-    render(
-      <ManualAssetSection title="Assets" groups={mockGroups} currencyCode={CurrencyCode.USD} />
-    );
+    renderComponent({ title: 'Assets', groups: mockGroups, currencyCode: CurrencyCode.USD });
     expect(screen.getByText('Bank Accounts')).toBeInTheDocument();
     expect(screen.getByText('Investments')).toBeInTheDocument();
   });
 
   it('should render all items within groups', () => {
-    render(
-      <ManualAssetSection title="Assets" groups={mockGroups} currencyCode={CurrencyCode.USD} />
-    );
+    renderComponent({ title: 'Assets', groups: mockGroups, currencyCode: CurrencyCode.USD });
     expect(screen.getByText('Checking')).toBeInTheDocument();
     expect(screen.getByText('Savings')).toBeInTheDocument();
     expect(screen.getByText('Stock Portfolio')).toBeInTheDocument();
   });
 
   it('should display subtotals for each group', () => {
-    render(
-      <ManualAssetSection title="Assets" groups={mockGroups} currencyCode={CurrencyCode.USD} />
-    );
+    renderComponent({ title: 'Assets', groups: mockGroups, currencyCode: CurrencyCode.USD });
     const subtotals = screen.getAllByText('Subtotal');
     expect(subtotals).toHaveLength(2);
   });
 
   it('should display total', () => {
-    render(
-      <ManualAssetSection title="Assets" groups={mockGroups} currencyCode={CurrencyCode.USD} />
-    );
+    renderComponent({ title: 'Assets', groups: mockGroups, currencyCode: CurrencyCode.USD });
     expect(screen.getByText('Total Assets')).toBeInTheDocument();
   });
 
   it('should not render when groups are empty', () => {
-    const { container } = render(
-      <ManualAssetSection title="Assets" groups={[]} currencyCode={CurrencyCode.USD} />
-    );
+    const { container } = renderComponent({
+      title: 'Assets',
+      groups: [],
+      currencyCode: CurrencyCode.USD,
+    });
     expect(container.firstChild).toBeNull();
   });
 
   it('should format currency values', () => {
-    render(
-      <ManualAssetSection title="Assets" groups={mockGroups} currencyCode={CurrencyCode.USD} />
-    );
+    renderComponent({ title: 'Assets', groups: mockGroups, currencyCode: CurrencyCode.USD });
     // Values should be formatted with currency symbol
     expect(screen.getByText(/\$2,000\.00/)).toBeInTheDocument();
     expect(screen.getByText(/\$3,000\.00/)).toBeInTheDocument();
   });
 
   it('should calculate and display correct total', () => {
-    render(
-      <ManualAssetSection title="Assets" groups={mockGroups} currencyCode={CurrencyCode.USD} />
-    );
+    renderComponent({ title: 'Assets', groups: mockGroups, currencyCode: CurrencyCode.USD });
     // Total should be sum of all group totals (5000 + 10000 = 15000)
     expect(screen.getByText(/\$15,000\.00/)).toBeInTheDocument();
   });
 
   it('should render table structure', () => {
-    render(
-      <ManualAssetSection title="Assets" groups={mockGroups} currencyCode={CurrencyCode.USD} />
-    );
+    renderComponent({ title: 'Assets', groups: mockGroups, currencyCode: CurrencyCode.USD });
     expect(screen.getByRole('table')).toBeInTheDocument();
   });
 
   it('should have correct table headers', () => {
-    render(
-      <ManualAssetSection title="Assets" groups={mockGroups} currencyCode={CurrencyCode.USD} />
-    );
+    renderComponent({ title: 'Assets', groups: mockGroups, currencyCode: CurrencyCode.USD });
     expect(screen.getByText('Type')).toBeInTheDocument();
     expect(screen.getByText('Name')).toBeInTheDocument();
     expect(screen.getByText('Value')).toBeInTheDocument();
@@ -102,9 +99,7 @@ describe('ManualAssetSection', () => {
 
   it('should handle single group', () => {
     const singleGroup = [mockGroups[0]];
-    render(
-      <ManualAssetSection title="Assets" groups={singleGroup} currencyCode={CurrencyCode.USD} />
-    );
+    renderComponent({ title: 'Assets', groups: singleGroup, currencyCode: CurrencyCode.USD });
     expect(screen.getByText('Bank Accounts')).toBeInTheDocument();
     expect(screen.getByText('Checking')).toBeInTheDocument();
   });
@@ -117,9 +112,7 @@ describe('ManualAssetSection', () => {
         items: [{ id: 'item1', name: 'Wallet', value: 1000, type: 'cash' }],
       },
     ];
-    render(
-      <ManualAssetSection title="Assets" groups={singleItemGroup} currencyCode={CurrencyCode.USD} />
-    );
+    renderComponent({ title: 'Assets', groups: singleItemGroup, currencyCode: CurrencyCode.USD });
     expect(screen.getByText('Wallet')).toBeInTheDocument();
     expect(screen.getAllByText(/\$1,000\.00/).length).toBeGreaterThan(0);
   });

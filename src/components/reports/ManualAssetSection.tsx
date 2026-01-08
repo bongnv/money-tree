@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -42,6 +43,7 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
   currencyCode,
   onManageHistory,
 }) => {
+  const navigate = useNavigate();
   const [expandedAssetId, setExpandedAssetId] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>('1y');
   const manualAssets = useAssetStore((state) => state.manualAssets);
@@ -120,6 +122,26 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
     return growth;
   };
 
+  const handleAccountClick = (accountId: string, event: React.MouseEvent) => {
+    // Prevent navigation if clicking on expand button or if it's a manual asset
+    if ((event.target as HTMLElement).closest('button')) {
+      return;
+    }
+
+    // Check if it's an account (not a manual asset) by checking if it's in the manualAssets
+    const isManualAsset = manualAssets.some((a) => a.id === accountId);
+    if (!isManualAsset) {
+      // It's a bank account, navigate to transactions with filter
+      navigate('/transactions', {
+        state: {
+          filters: {
+            account: [accountId],
+          },
+        },
+      });
+    }
+  };
+
   if (groups.length === 0) {
     return null;
   }
@@ -160,10 +182,16 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
                       <TableRow
                         hover
                         sx={{
-                          cursor: hasHistory ? 'pointer' : 'default',
+                          cursor: 'pointer',
                           backgroundColor: isExpanded ? 'action.selected' : undefined,
                         }}
-                        onClick={() => hasHistory && handleToggleExpand(item.id)}
+                        onClick={(e) => {
+                          if (hasHistory) {
+                            handleToggleExpand(item.id);
+                          } else {
+                            handleAccountClick(item.id, e);
+                          }
+                        }}
                       >
                         <TableCell>
                           {hasHistory && (

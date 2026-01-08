@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 import { BalanceSheet } from './BalanceSheet';
 import { useAccountStore } from '../../stores/useAccountStore';
@@ -72,39 +73,47 @@ describe('BalanceSheet', () => {
     );
   });
 
+  const renderComponent = () => {
+    return render(
+      <BrowserRouter>
+        <BalanceSheet />
+      </BrowserRouter>
+    );
+  };
+
   it('should render balance sheet title', () => {
-    render(<BalanceSheet />);
+    renderComponent();
     expect(screen.getByText('Balance Sheet')).toBeInTheDocument();
   });
 
   it('should render date selector', () => {
-    render(<BalanceSheet />);
+    renderComponent();
     expect(screen.getByLabelText('As of Date')).toBeInTheDocument();
   });
 
   it('should render comparison toggle buttons', () => {
-    render(<BalanceSheet />);
+    renderComponent();
     expect(screen.getByText('None')).toBeInTheDocument();
     expect(screen.getByText('M/M')).toBeInTheDocument();
     expect(screen.getByText('Y/Y')).toBeInTheDocument();
   });
 
   it('should render summary cards', () => {
-    render(<BalanceSheet />);
+    renderComponent();
     expect(screen.getAllByText('Total Assets')[0]).toBeInTheDocument();
     expect(screen.getByText('Total Liabilities')).toBeInTheDocument();
     expect(screen.getAllByText('Net Worth')[0]).toBeInTheDocument();
   });
 
   it('should update date when date input changes', () => {
-    render(<BalanceSheet />);
+    renderComponent();
     const dateInput = screen.getByLabelText('As of Date') as HTMLInputElement;
     fireEvent.change(dateInput, { target: { value: '2024-06-15' } });
     expect(dateInput.value).toBe('2024-06-15');
   });
 
   it('should change comparison type when toggle button clicked', () => {
-    render(<BalanceSheet />);
+    renderComponent();
     const monthButton = screen.getByText('M/M');
     fireEvent.click(monthButton);
     // The button should be in selected state after click
@@ -112,29 +121,29 @@ describe('BalanceSheet', () => {
   });
 
   it('should render net worth trend chart title', () => {
-    render(<BalanceSheet />);
+    renderComponent();
     expect(screen.getByText('Net Worth Trend (Past 12 Months)')).toBeInTheDocument();
   });
 
   it('should render assets section when data exists', () => {
-    render(<BalanceSheet />);
+    renderComponent();
     expect(screen.getByText('Assets')).toBeInTheDocument();
   });
 
   it('should render liabilities section when data exists', () => {
-    render(<BalanceSheet />);
+    renderComponent();
     // Liabilities section only renders if there are liability groups
     expect(screen.getByText('Total Liabilities')).toBeInTheDocument();
   });
 
   it('should render final net worth summary', () => {
-    render(<BalanceSheet />);
+    renderComponent();
     const netWorthElements = screen.getAllByText('Net Worth');
     expect(netWorthElements.length).toBeGreaterThan(1); // Should appear multiple times
   });
 
   it('should display currency formatted values', () => {
-    render(<BalanceSheet />);
+    renderComponent();
     // Should have dollar signs in the document
     const dollarsigns = screen.getAllByText(/\$/);
     expect(dollarsigns.length).toBeGreaterThan(0);
@@ -151,13 +160,13 @@ describe('BalanceSheet', () => {
       selector({ transactions: [] })
     );
 
-    render(<BalanceSheet />);
+    renderComponent();
     expect(screen.getByText('Balance Sheet')).toBeInTheDocument();
     expect(screen.getByText('Total Assets')).toBeInTheDocument();
   });
 
   it('should show comparison data when month-over-month is selected', () => {
-    render(<BalanceSheet />);
+    renderComponent();
     const monthButton = screen.getByText('M/M');
     fireEvent.click(monthButton);
     // Should display trending icons when comparison is active
@@ -165,7 +174,7 @@ describe('BalanceSheet', () => {
   });
 
   it('should show comparison data when year-over-year is selected', () => {
-    render(<BalanceSheet />);
+    renderComponent();
     const yearButton = screen.getByText('Y/Y');
     fireEvent.click(yearButton);
     expect(screen.getByText('Balance Sheet')).toBeInTheDocument();

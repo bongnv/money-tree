@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -24,6 +24,7 @@ import { getTodayDate } from '../../utils/date.utils';
 
 export const TransactionsPage: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const { transactions, addTransaction, updateTransaction, deleteTransaction } =
     useTransactionStore();
   const { accounts } = useAccountStore();
@@ -48,22 +49,26 @@ export const TransactionsPage: React.FC = () => {
     group: '',
   });
 
-  // Read URL parameters and apply to filters on mount (only once)
+  // Read URL parameters and location state, and apply to filters on mount (only once)
   useEffect(() => {
+    // Read from search params
     const categoryId = searchParams.get('categoryId');
     const transactionTypeId = searchParams.get('transactionTypeId');
     const dateFrom = searchParams.get('dateFrom');
     const dateTo = searchParams.get('dateTo');
 
-    if (categoryId || transactionTypeId || dateFrom || dateTo) {
+    // Read from location state (passed via navigate)
+    const stateFilters = (location.state as any)?.filters;
+
+    if (categoryId || transactionTypeId || dateFrom || dateTo || stateFilters) {
       setFilters({
-        dateFrom: dateFrom || '',
-        dateTo: dateTo || '',
-        accountIds: [],
-        categoryIds: categoryId ? [categoryId] : [],
-        transactionTypeId: transactionTypeId || '',
-        searchText: '',
-        group: '',
+        dateFrom: dateFrom || stateFilters?.dateFrom || '',
+        dateTo: dateTo || stateFilters?.dateTo || '',
+        accountIds: stateFilters?.account || [],
+        categoryIds: categoryId ? [categoryId] : stateFilters?.categoryIds || [],
+        transactionTypeId: transactionTypeId || stateFilters?.transactionType?.[0] || '',
+        searchText: stateFilters?.searchText || '',
+        group: stateFilters?.group || '',
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

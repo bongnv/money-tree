@@ -21,7 +21,7 @@ import { MergeResult } from './services/merge.service';
 import { backupService } from './services/backup.service';
 import {
   shouldPromptArchive,
-  identifyArchivableYears,
+  identifyArchivableYear,
   calculateYearEndSummary,
 } from './services/archive.service';
 
@@ -82,8 +82,9 @@ const AppContent: React.FC = () => {
           setShowWelcomeDialog(true);
         }
       } else {
-        // File loaded successfully, check if archive prompt should be shown
+        // File loaded successfully, check if archive and backup prompts should be shown
         checkArchivePrompt();
+        checkBackupPrompt();
       }
     };
 
@@ -99,11 +100,10 @@ const AppContent: React.FC = () => {
 
   const checkArchivePrompt = () => {
     if (shouldPromptArchive(archivePromptPostponedAt)) {
-      const archivableYears = identifyArchivableYears();
-      if (archivableYears.length > 0) {
-        const oldestYear = archivableYears[0];
-        const summary = calculateYearEndSummary(oldestYear, baseCurrency);
-        setArchiveYear(oldestYear);
+      const archivableYear = identifyArchivableYear();
+      if (archivableYear !== null) {
+        const summary = calculateYearEndSummary(archivableYear, baseCurrency);
+        setArchiveYear(archivableYear);
         setArchiveYearSummary(summary);
         setShowArchivePrompt(true);
       }
@@ -117,12 +117,6 @@ const AppContent: React.FC = () => {
       setShowBackupPrompt(false);
     }
   };
-
-  // Re-check backup prompt when lastBackupDate changes
-  useEffect(() => {
-    checkBackupPrompt();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lastBackupDate]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {

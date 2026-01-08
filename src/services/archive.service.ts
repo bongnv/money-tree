@@ -88,7 +88,7 @@ export function calculateYearEndSummary(year: number, baseCurrency: CurrencyCode
 }
 
 /**
- * Identify years that can be archived
+ * Identify the oldest year that can be archived
  * Returns only the OLDEST year to ensure initialBalance is correct when archiving
  * Excludes years less than 2 years older than current year (e.g., in 2026, only 2024 and below are eligible)
  *
@@ -96,8 +96,10 @@ export function calculateYearEndSummary(year: number, baseCurrency: CurrencyCode
  * - Archiving removes transactions from main file
  * - Account initialBalance for next year depends on archived year's closing balances
  * - Must archive sequentially from oldest to newest
+ *
+ * @returns The oldest archivable year, or null if no year is eligible
  */
-export function identifyArchivableYears(): number[] {
+export function identifyArchivableYear(): number | null {
   const transactions = useTransactionStore.getState().transactions;
   const currentYear = new Date().getFullYear();
   const cutoffYear = currentYear - 2; // Only years at least 2 years old
@@ -112,8 +114,7 @@ export function identifyArchivableYears(): number[] {
     }
   }
 
-  // Return only the oldest year to ensure sequential archiving
-  return oldestYear !== null ? [oldestYear] : [];
+  return oldestYear;
 }
 
 /**

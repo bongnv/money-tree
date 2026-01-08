@@ -5,7 +5,7 @@
 import {
   detectArchiveTrigger,
   calculateYearEndSummary,
-  identifyArchivableYears,
+  identifyArchivableYear,
   shouldPromptArchive,
   createArchiveFile,
   saveArchiveFile,
@@ -111,7 +111,7 @@ describe('Archive Service', () => {
     });
   });
 
-  describe('identifyArchivableYears', () => {
+  describe('identifyArchivableYear', () => {
     it('should return only years at least 2 years older than current year', () => {
       // Set the system date to 2026-01-01
       jest.useFakeTimers();
@@ -152,22 +152,22 @@ describe('Archive Service', () => {
         ],
       });
 
-      const years = identifyArchivableYears();
+      const year = identifyArchivableYear();
       // Should return only the oldest eligible year (2023)
       // 2024 is cutoff year, so only 2023 and below are eligible
       // 2024 and 2025 are too recent (not at least 2 years old)
-      expect(years).toEqual([2023]);
+      expect(year).toBe(2023);
 
       jest.useRealTimers();
     });
 
-    it('should return empty array when no transactions', () => {
+    it('should return null when no transactions', () => {
       (useTransactionStore.getState as jest.Mock).mockReturnValue({
         transactions: [],
       });
 
-      const years = identifyArchivableYears();
-      expect(years).toEqual([]);
+      const year = identifyArchivableYear();
+      expect(year).toBeNull();
     });
   });
 

@@ -9,4 +9,5 @@
 - [ ] BUG-9: "Invalid time value" when editing time field
 - [x] BUG-10: Expense transactions don't show in cash flow report - ROOT CAUSE: Transaction type linked to non-existent category. Cash flow report silently skips transactions where category lookup fails
 - [ ] BUG-11: App allows orphaned transaction types (linked to non-existent categories) to be selected, creating invalid transactions that don't appear in reports. Should validate category existence or filter out orphaned types from dropdowns
-- [ ] BUG-12: Fix archiving files for shared folder
+- [x] BUG-12: Fix archiving files for shared folder
+- [x] BUG-13: Backup prompt doesn't show when file is loaded for the first time and has never been backed up (lastBackupDate is null but baseVersion exists)

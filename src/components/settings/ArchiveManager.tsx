@@ -43,7 +43,8 @@ export const ArchiveManager: React.FC = () => {
     year: null,
   });
 
-  const archivableYears = identifyArchivableYears();
+  const archivableYear = identifyArchivableYear();
+  const archivableYears = archivableYear !== null ? [archivableYear] : [];
   const archivedYears = getArchivedYears();
 
   const handleExportYear = async (year: number) => {

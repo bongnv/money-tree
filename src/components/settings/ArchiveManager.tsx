@@ -22,7 +22,7 @@ import {
 import ArchiveIcon from '@mui/icons-material/Archive';
 import WarningIcon from '@mui/icons-material/Warning';
 import {
-  identifyArchivableYears,
+  identifyArchivableYear,
   createArchiveFile,
   saveArchiveFile,
   updateMainFileAfterArchive,

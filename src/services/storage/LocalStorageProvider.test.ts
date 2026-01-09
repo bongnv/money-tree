@@ -372,8 +372,9 @@ describe('LocalStorageProvider', () => {
 
   describe('saveFile', () => {
     beforeEach(() => {
-      // Mock window.showSaveFilePicker
+      // Mock window.showSaveFilePicker and showOpenFilePicker to simulate API support
       (window as any).showSaveFilePicker = jest.fn();
+      (window as any).showOpenFilePicker = jest.fn();
     });
 
     it('should save ZIP file with file picker', async () => {

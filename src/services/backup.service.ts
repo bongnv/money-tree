@@ -1,4 +1,4 @@
-import JSZip from 'jszip';
+import { strToU8, gzipSync } from 'fflate';
 import { useAppStore } from '../stores/useAppStore';
 import { StorageFactory } from './storage/StorageFactory';
 
@@ -48,13 +48,12 @@ class BackupService {
       throw new Error('Cannot create backup: No saved data found. Please save your data first.');
     }
 
-    // Create ZIP file
-    const zip = new JSZip();
+    // Create gzip compressed file with fflate
     const dataJson = JSON.stringify(baseVersion);
-    zip.file('money-tree.json', dataJson);
+    const uint8Array = strToU8(dataJson);
 
-    // Generate ZIP blob
-    const blob = await zip.generateAsync({ type: 'blob' });
+    // Compress with maximum compression level (9)
+    const compressed = gzipSync(uint8Array, { level: 9 });
 
     // Generate filename with timestamp
     const filename = this.generateBackupFilename();
@@ -64,7 +63,7 @@ class BackupService {
 
     try {
       // Save using storage provider (file picker for local, next to main file for OneDrive)
-      await provider.saveFile(blob, filename);
+      await provider.saveFile(compressed, filename);
 
       // Update lastBackupDate in appStore
       const now = new Date().toISOString();
@@ -95,7 +94,7 @@ class BackupService {
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const seconds = String(now.getSeconds()).padStart(2, '0');
 
-    return `money-tree-backup-${year}-${month}-${day}-${hours}${minutes}${seconds}.zip`;
+    return `money-tree-backup-${year}-${month}-${day}-${hours}${minutes}${seconds}.gz`;
   }
 }
 

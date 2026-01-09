@@ -10,12 +10,10 @@ import { CurrencyCode } from '../types/enums';
 
 // Mock dependencies
 jest.mock('./storage/StorageFactory');
-jest.mock('jszip', () => {
-  return jest.fn().mockImplementation(() => ({
-    file: jest.fn(),
-    generateAsync: jest.fn().mockResolvedValue(new Blob(['test'], { type: 'application/zip' })),
-  }));
-});
+jest.mock('fflate', () => ({
+  strToU8: jest.fn((str: string) => new Uint8Array(Buffer.from(str))),
+  gzipSync: jest.fn(() => new Uint8Array([31, 139, 8, 0])), // Mock gzip signature
+}));
 
 describe('BackupService', () => {
   const mockDataFile: DataFile = {
@@ -127,8 +125,8 @@ describe('BackupService', () => {
       await backupService.saveBackupToStorage();
 
       expect(mockProvider.saveFile).toHaveBeenCalledWith(
-        expect.any(Blob),
-        expect.stringMatching(/^money-tree-backup-\d{4}-\d{2}-\d{2}-\d{6}\.zip$/)
+        expect.any(Uint8Array),
+        expect.stringMatching(/^money-tree-backup-\d{4}-\d{2}-\d{2}-\d{6}\.gz$/)
       );
       expect(useAppStore.getState().setLastBackupDate).toHaveBeenCalledWith(expect.any(String));
       expect(useAppStore.getState().setUnsavedChanges).toHaveBeenCalledWith(true);
@@ -158,7 +156,7 @@ describe('BackupService', () => {
       const callArgs = mockProvider.saveFile.mock.calls[0];
       const filename = callArgs[1];
 
-      expect(filename).toMatch(/^money-tree-backup-\d{4}-\d{2}-\d{2}-\d{6}\.zip$/);
+      expect(filename).toMatch(/^money-tree-backup-\d{4}-\d{2}-\d{2}-\d{6}\.gz$/);
     });
 
     it('should backup baseVersion not current state', async () => {
@@ -168,8 +166,11 @@ describe('BackupService', () => {
       await backupService.saveBackupToStorage();
 
       expect(mockProvider.saveFile).toHaveBeenCalled();
-      // Verify JSZip was used (mocked to return blob)
-      expect(mockProvider.saveFile).toHaveBeenCalledWith(expect.any(Blob), expect.any(String));
+      // Verify gzipSync was used (mocked to return Uint8Array)
+      expect(mockProvider.saveFile).toHaveBeenCalledWith(
+        expect.any(Uint8Array),
+        expect.any(String)
+      );
     });
   });
 });

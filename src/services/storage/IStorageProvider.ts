@@ -25,13 +25,13 @@ export interface IStorageProvider {
   saveDataFile(data: DataFile): Promise<void>;
 
   /**
-   * Save a blob file (e.g., backup ZIP, archive JSON)
+   * Save a file (e.g., backup ZIP, archive JSON)
    * Provider handles showing file picker (Local) or determining location (OneDrive)
-   * @param blob The blob data to save
+   * @param data The data to save (string for JSON, Uint8Array for compressed/binary)
    * @param filename The suggested filename
    * @throws Error if saving fails or user cancels
    */
-  saveFile(blob: Blob, filename: string): Promise<void>;
+  saveFile(data: string | Uint8Array, filename: string): Promise<void>;
 
   /**
    * Get the name of the current file

@@ -105,56 +105,25 @@ export class LocalStorageProvider implements IStorageProvider {
   }
 
   /**
-   * Save a blob file (e.g., backup ZIP, archive JSON)
+   * Save a file (e.g., backup ZIP, archive JSON)
    * Shows file picker for user to select save location
-   * @param blob The blob data to save
+   * @param data The data to save (string for JSON, Uint8Array for compressed/binary)
    * @param filename The suggested filename
    */
-  async saveFile(blob: Blob, filename: string): Promise<void> {
+  async saveFile(data: string | Uint8Array, filename: string): Promise<void> {
     // Show save file picker with suggested name
     const { FilePickerService } = await import('./FilePickerService');
 
-    // Determine file type based on extension
-    const isZip = filename.endsWith('.zip');
-    const fileHandle = isZip
-      ? await this.showZipSaveFilePicker(filename)
-      : await FilePickerService.showSaveFilePicker(filename);
+    const fileHandle = await FilePickerService.showSaveFilePicker(filename);
 
     if (!fileHandle) {
       throw new Error('File save cancelled');
     }
 
-    // Write blob to file
+    // Write data to file
     const writable = await fileHandle.createWritable();
-    await writable.write(blob);
+    // Cast Uint8Array to avoid TypeScript incompatibility with SharedArrayBuffer
+    await writable.write(data instanceof Uint8Array ? (data as Uint8Array<ArrayBuffer>) : data);
     await writable.close();
-  }
-
-  /**
-   * Show file picker for saving ZIP files
-   * @param suggestedName - Suggested file name
-   * @returns Selected file handle or null if cancelled
-   */
-  private async showZipSaveFilePicker(suggestedName: string): Promise<FileSystemFileHandle | null> {
-    try {
-      const fileHandle = await window.showSaveFilePicker({
-        suggestedName,
-        types: [
-          {
-            description: 'ZIP Archive',
-            accept: {
-              'application/zip': ['.zip'],
-            },
-          },
-        ],
-      });
-      return fileHandle;
-    } catch (error) {
-      // User cancelled the picker
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        return null;
-      }
-      throw error;
-    }
   }
 }

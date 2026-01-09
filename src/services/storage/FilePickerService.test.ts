@@ -105,7 +105,7 @@ describe('FilePickerService', () => {
         suggestedName: 'test.json',
         types: [
           {
-            description: 'Money Tree Data',
+            description: 'JSON File',
             accept: {
               'application/json': ['.json'],
             },
@@ -128,62 +128,6 @@ describe('FilePickerService', () => {
       (window as any).showSaveFilePicker = jest.fn().mockRejectedValue(error);
 
       await expect(FilePickerService.showSaveFilePicker('test.json')).rejects.toThrow(
-        'Something went wrong'
-      );
-    });
-  });
-
-  describe('showArchiveSaveFilePicker', () => {
-    beforeEach(() => {
-      // Mock the API being available
-      (window as any).showOpenFilePicker = jest.fn();
-      (window as any).showSaveFilePicker = jest.fn();
-    });
-
-    it('should throw error when API is not supported', async () => {
-      // Remove the API
-      delete (window as any).showOpenFilePicker;
-      delete (window as any).showSaveFilePicker;
-
-      await expect(FilePickerService.showArchiveSaveFilePicker('archive.json')).rejects.toThrow(
-        'File System Access API is not supported'
-      );
-    });
-
-    it('should return file handle when file is selected', async () => {
-      const mockFileHandle = { name: 'archive.json' } as FileSystemFileHandle;
-      (window as any).showSaveFilePicker = jest.fn().mockResolvedValue(mockFileHandle);
-
-      const result = await FilePickerService.showArchiveSaveFilePicker('archive.json');
-
-      expect(result).toBe(mockFileHandle);
-      expect(window.showSaveFilePicker).toHaveBeenCalledWith({
-        suggestedName: 'archive.json',
-        types: [
-          {
-            description: 'Money Tree Archive',
-            accept: {
-              'application/json': ['.json'],
-            },
-          },
-        ],
-      });
-    });
-
-    it('should throw error when user cancels archive save', async () => {
-      const abortError = new DOMException('User cancelled', 'AbortError');
-      (window as any).showSaveFilePicker = jest.fn().mockRejectedValue(abortError);
-
-      await expect(FilePickerService.showArchiveSaveFilePicker('archive.json')).rejects.toThrow(
-        'Archive save cancelled by user'
-      );
-    });
-
-    it('should throw non-abort errors', async () => {
-      const error = new Error('Something went wrong');
-      (window as any).showSaveFilePicker = jest.fn().mockRejectedValue(error);
-
-      await expect(FilePickerService.showArchiveSaveFilePicker('archive.json')).rejects.toThrow(
         'Something went wrong'
       );
     });

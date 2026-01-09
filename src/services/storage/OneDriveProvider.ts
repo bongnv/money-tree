@@ -162,12 +162,12 @@ export class OneDriveProvider implements IStorageProvider {
   }
 
   /**
-   * Save a blob file (e.g., backup ZIP, archive JSON) to OneDrive
+   * Save a file (e.g., backup ZIP, archive JSON) to OneDrive
    * Saves next to the main file in the same folder
-   * @param blob The blob data to save
+   * @param data The data to save (string for JSON, Uint8Array for compressed/binary)
    * @param filename The filename to use
    */
-  async saveFile(blob: Blob, filename: string): Promise<void> {
+  async saveFile(data: string | Uint8Array, filename: string): Promise<void> {
     // Extract the actual path (remove Graph API prefixes)
     const actualPath = this.extractActualPath(this.selectedFileInfo.filePath);
 
@@ -181,7 +181,7 @@ export class OneDriveProvider implements IStorageProvider {
     // Build upload URL (always creates new file, never uses fileId)
     const uploadPath = this.buildUploadUrl(fullPath, null);
 
-    // Upload blob directly
-    await this.service.writeFile(uploadPath, blob);
+    // Upload data directly
+    await this.service.writeFile(uploadPath, data);
   }
 }

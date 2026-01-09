@@ -408,7 +408,10 @@ describe('Archive Service', () => {
 
       await saveArchiveFile(archiveFile);
 
-      expect(mockProvider.saveFile).toHaveBeenCalledWith(expect.any(Blob), 'money-tree-2023.json');
+      expect(mockProvider.saveFile).toHaveBeenCalledWith(
+        expect.any(String),
+        'money-tree-2023.json'
+      );
     });
 
     it('should create blob with correct content', async () => {
@@ -431,9 +434,10 @@ describe('Archive Service', () => {
 
       await saveArchiveFile(archiveFile);
 
-      const blobArg = mockProvider.saveFile.mock.calls[0][0];
-      expect(blobArg).toBeInstanceOf(Blob);
-      expect(blobArg.type).toBe('application/json');
+      const stringArg = mockProvider.saveFile.mock.calls[0][0];
+      expect(typeof stringArg).toBe('string');
+      const savedArchive = JSON.parse(stringArg);
+      expect(savedArchive).toEqual(archiveFile);
     });
   });
 

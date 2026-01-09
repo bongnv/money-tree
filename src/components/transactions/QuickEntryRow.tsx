@@ -1,6 +1,7 @@
 import React, { useState, useRef, useMemo } from 'react';
-import { Box, TextField, IconButton, Tooltip, Autocomplete, Chip } from '@mui/material';
+import { Box, TextField, IconButton, Tooltip, Chip } from '@mui/material';
 import { Add as AddIcon, Clear as ClearIcon, MoreHoriz as MoreIcon } from '@mui/icons-material';
+import { QuickEntryAutocomplete } from './QuickEntryAutocomplete';
 import type {
   Transaction,
   Account,
@@ -69,6 +70,7 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
   const amountRef = useRef<HTMLInputElement>(null);
   const dateRef = useRef<HTMLInputElement>(null);
   const typeRef = useRef<HTMLInputElement>(null);
@@ -194,23 +196,13 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Check if the focused element is a combobox with an open dropdown
-    const target = e.target as HTMLElement;
-    const isCombobox = target.getAttribute('role') === 'combobox';
-    const isDropdownOpen = target.getAttribute('aria-expanded') === 'true';
-
     if (e.key === 'Enter' && !e.shiftKey) {
-      // Don't submit if dropdown is open - let Autocomplete handle it
-      if (isCombobox && isDropdownOpen) {
-        return;
-      }
       e.preventDefault();
       handleSubmit();
     } else if (e.key === 'Escape') {
       e.preventDefault();
       handleClear();
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-      // Handle left/right arrow key navigation
       handleArrowNavigation(e);
     }
   };
@@ -277,20 +269,40 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
       }
     };
 
-  const activeAccounts = accounts.filter((a) => a.isActive);
+  const focusNextField = (currentRef: React.RefObject<HTMLInputElement>) => {
+    const fieldRefs = [dateRef, amountRef, typeRef];
 
-  // Handle autocomplete keyboard behavior
-  const handleAutocompleteKeyDown = (
-    event: React.KeyboardEvent,
-    options: any[],
-    onChange: (value: any) => void
-  ) => {
-    // Only handle Tab and Enter when there's exactly one option
-    if ((event.key === 'Tab' || event.key === 'Enter') && options.length === 1) {
-      event.preventDefault();
-      onChange(options[0]);
+    if (showFromAccount) fieldRefs.push(fromAccountRef);
+    if (showToAccount) fieldRefs.push(toAccountRef);
+    if (showFromAsset) fieldRefs.push(fromAssetRef);
+    if (showToAsset) fieldRefs.push(toAssetRef);
+    fieldRefs.push(descriptionRef);
+
+    const currentIndex = fieldRefs.indexOf(currentRef);
+    if (currentIndex !== -1) {
+      if (currentIndex < fieldRefs.length - 1) {
+        // Not the last field, focus next
+        setTimeout(() => {
+          const nextElement = fieldRefs[currentIndex + 1].current;
+          if (nextElement) {
+            const input = nextElement.querySelector('input');
+            if (input) {
+              input.focus();
+            } else {
+              nextElement.focus();
+            }
+          }
+        }, 0);
+      } else {
+        // Last field, submit the form
+        setTimeout(() => {
+          handleSubmit();
+        }, 0);
+      }
     }
   };
+
+  const activeAccounts = accounts.filter((a) => a.isActive);
 
   const showFromAccount =
     (selectedGroup === Group.EXPENSE ||
@@ -359,49 +371,42 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
         sx={{ width: 120 }}
       />
 
-      <Autocomplete
-        ref={typeRef}
+      <QuickEntryAutocomplete
+        inputRef={typeRef}
         options={transactionTypes}
         value={transactionTypes.find((tt) => tt.id === formData.transactionTypeId) || null}
-        onChange={(_, newValue) => {
+        onChange={(newValue) => {
           const newTypeId = newValue?.id || '';
           const newTransactionType = transactionTypes.find((tt) => tt.id === newTypeId);
           const newGroup = newTransactionType?.group;
 
-          // Clear fields that aren't needed for the new group
           const updates: Partial<typeof formData> = {
             transactionTypeId: newTypeId,
             fromAssetId: '',
             toAssetId: '',
           };
 
-          // Apply default accounts or clear if not needed
           if (
             newGroup === Group.EXPENSE ||
             newGroup === Group.TRANSFER ||
             newGroup === Group.ASSET_PURCHASE
           ) {
-            // Apply default from account if set, otherwise keep current
             if (newTransactionType?.defaultFromAccountId) {
               updates.fromAccountId = newTransactionType.defaultFromAccountId;
             }
           } else {
-            // Clear fromAccount if not needed for new group
             updates.fromAccountId = '';
           }
 
-          // Apply default to account or clear if not needed
           if (
             newGroup === Group.INCOME ||
             newGroup === Group.TRANSFER ||
             newGroup === Group.ASSET_SALE
           ) {
-            // Apply default to account if set, otherwise keep current
             if (newTransactionType?.defaultToAccountId) {
               updates.toAccountId = newTransactionType.defaultToAccountId;
             }
           } else {
-            // Clear toAccount if not needed for new group
             updates.toAccountId = '';
           }
 
@@ -412,69 +417,21 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
           if (errors.transactionTypeId) {
             setErrors({ ...errors, transactionTypeId: '' });
           }
-        }}
-        onKeyDown={(event) => {
-          handleAutocompleteKeyDown(event, transactionTypes, (value) => {
-            const newTypeId = value?.id || '';
-            const newTransactionType = transactionTypes.find((tt) => tt.id === newTypeId);
-            const newGroup = newTransactionType?.group;
 
-            const updates: Partial<typeof formData> = {
-              transactionTypeId: newTypeId,
-              fromAssetId: '',
-              toAssetId: '',
-            };
-
-            if (
-              newGroup === Group.EXPENSE ||
-              newGroup === Group.TRANSFER ||
-              newGroup === Group.ASSET_PURCHASE
-            ) {
-              if (newTransactionType?.defaultFromAccountId) {
-                updates.fromAccountId = newTransactionType.defaultFromAccountId;
-              }
-            } else {
-              updates.fromAccountId = '';
-            }
-
-            if (
-              newGroup === Group.INCOME ||
-              newGroup === Group.TRANSFER ||
-              newGroup === Group.ASSET_SALE
-            ) {
-              if (newTransactionType?.defaultToAccountId) {
-                updates.toAccountId = newTransactionType.defaultToAccountId;
-              }
-            } else {
-              updates.toAccountId = '';
-            }
-
-            setFormData({
-              ...formData,
-              ...updates,
-            });
-            if (errors.transactionTypeId) {
-              setErrors({ ...errors, transactionTypeId: '' });
-            }
-          });
+          // Focus next field if value was selected
+          if (newValue) {
+            focusNextField(typeRef);
+          }
         }}
         getOptionLabel={(option) => option.name}
         groupBy={(option) => {
           const category = categories.find((c) => c.id === option.categoryId);
           return category?.name || '';
         }}
-        disableClearable={false}
-        openOnFocus
-        size="small"
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            placeholder="Type"
-            error={!!errors.transactionTypeId}
-            helperText={errors.transactionTypeId}
-          />
-        )}
-        sx={{ minWidth: 180 }}
+        placeholder="Type"
+        error={!!errors.transactionTypeId}
+        helperText={errors.transactionTypeId}
+        minWidth={180}
       />
 
       {(hasFromAccountDefault || hasToAccountDefault) && (
@@ -492,11 +449,11 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
       )}
 
       {showFromAccount && (
-        <Autocomplete
-          ref={fromAccountRef}
+        <QuickEntryAutocomplete
+          inputRef={fromAccountRef}
           options={activeAccounts}
           value={activeAccounts.find((a) => a.id === formData.fromAccountId) || null}
-          onChange={(_, newValue) => {
+          onChange={(newValue) => {
             setFormData({
               ...formData,
               fromAccountId: newValue?.id || '',
@@ -504,40 +461,25 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
             if (errors.fromAccountId) {
               setErrors({ ...errors, fromAccountId: '' });
             }
-          }}
-          onKeyDown={(event) => {
-            handleAutocompleteKeyDown(event, activeAccounts, (value) => {
-              setFormData({
-                ...formData,
-                fromAccountId: value?.id || '',
-              });
-              if (errors.fromAccountId) {
-                setErrors({ ...errors, fromAccountId: '' });
-              }
-            });
+
+            // Focus next field if value was selected
+            if (newValue) {
+              focusNextField(fromAccountRef);
+            }
           }}
           getOptionLabel={(option) => option.name}
-          disableClearable={false}
-          openOnFocus
-          size="small"
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              placeholder="From"
-              error={!!errors.fromAccountId}
-              helperText={errors.fromAccountId}
-            />
-          )}
-          sx={{ minWidth: 150 }}
+          placeholder="From"
+          error={!!errors.fromAccountId}
+          helperText={errors.fromAccountId}
         />
       )}
 
       {showToAccount && (
-        <Autocomplete
-          ref={toAccountRef}
+        <QuickEntryAutocomplete
+          inputRef={toAccountRef}
           options={activeAccounts}
           value={activeAccounts.find((a) => a.id === formData.toAccountId) || null}
-          onChange={(_, newValue) => {
+          onChange={(newValue) => {
             setFormData({
               ...formData,
               toAccountId: newValue?.id || '',
@@ -545,40 +487,25 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
             if (errors.toAccountId) {
               setErrors({ ...errors, toAccountId: '' });
             }
-          }}
-          onKeyDown={(event) => {
-            handleAutocompleteKeyDown(event, activeAccounts, (value) => {
-              setFormData({
-                ...formData,
-                toAccountId: value?.id || '',
-              });
-              if (errors.toAccountId) {
-                setErrors({ ...errors, toAccountId: '' });
-              }
-            });
+
+            // Focus next field if value was selected
+            if (newValue) {
+              focusNextField(toAccountRef);
+            }
           }}
           getOptionLabel={(option) => option.name}
-          disableClearable={false}
-          openOnFocus
-          size="small"
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              placeholder="To"
-              error={!!errors.toAccountId}
-              helperText={errors.toAccountId}
-            />
-          )}
-          sx={{ minWidth: 150 }}
+          placeholder="To"
+          error={!!errors.toAccountId}
+          helperText={errors.toAccountId}
         />
       )}
 
       {showFromAsset && (
-        <Autocomplete
-          ref={fromAssetRef}
+        <QuickEntryAutocomplete
+          inputRef={fromAssetRef}
           options={manualAssets}
           value={manualAssets.find((a) => a.id === formData.fromAssetId) || null}
-          onChange={(_, newValue) => {
+          onChange={(newValue) => {
             setFormData({
               ...formData,
               fromAssetId: newValue?.id || '',
@@ -586,40 +513,25 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
             if (errors.fromAssetId) {
               setErrors({ ...errors, fromAssetId: '' });
             }
-          }}
-          onKeyDown={(event) => {
-            handleAutocompleteKeyDown(event, manualAssets, (value) => {
-              setFormData({
-                ...formData,
-                fromAssetId: value?.id || '',
-              });
-              if (errors.fromAssetId) {
-                setErrors({ ...errors, fromAssetId: '' });
-              }
-            });
+
+            // Focus next field if value was selected
+            if (newValue) {
+              focusNextField(fromAssetRef);
+            }
           }}
           getOptionLabel={(option) => option.name}
-          disableClearable={false}
-          openOnFocus
-          size="small"
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              placeholder="From Asset"
-              error={!!errors.fromAssetId}
-              helperText={errors.fromAssetId}
-            />
-          )}
-          sx={{ minWidth: 150 }}
+          placeholder="From Asset"
+          error={!!errors.fromAssetId}
+          helperText={errors.fromAssetId}
         />
       )}
 
       {showToAsset && (
-        <Autocomplete
-          ref={toAssetRef}
+        <QuickEntryAutocomplete
+          inputRef={toAssetRef}
           options={manualAssets}
           value={manualAssets.find((a) => a.id === formData.toAssetId) || null}
-          onChange={(_, newValue) => {
+          onChange={(newValue) => {
             setFormData({
               ...formData,
               toAssetId: newValue?.id || '',
@@ -627,31 +539,16 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
             if (errors.toAssetId) {
               setErrors({ ...errors, toAssetId: '' });
             }
-          }}
-          onKeyDown={(event) => {
-            handleAutocompleteKeyDown(event, manualAssets, (value) => {
-              setFormData({
-                ...formData,
-                toAssetId: value?.id || '',
-              });
-              if (errors.toAssetId) {
-                setErrors({ ...errors, toAssetId: '' });
-              }
-            });
+
+            // Focus next field if value was selected
+            if (newValue) {
+              focusNextField(toAssetRef);
+            }
           }}
           getOptionLabel={(option) => option.name}
-          disableClearable={false}
-          openOnFocus
-          size="small"
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              placeholder="To Asset"
-              error={!!errors.toAssetId}
-              helperText={errors.toAssetId}
-            />
-          )}
-          sx={{ minWidth: 150 }}
+          placeholder="To Asset"
+          error={!!errors.toAssetId}
+          helperText={errors.toAssetId}
         />
       )}
 

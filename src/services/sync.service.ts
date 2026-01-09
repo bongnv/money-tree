@@ -15,24 +15,6 @@ const AUTO_SAVE_INTERVAL = 1 * 60 * 1000; // 1 minute in milliseconds
 
 type MergeHandler = (mergeResult: MergeResult) => Promise<ConflictResolution[] | null>;
 
-/**
- * Check if an error is related to authentication/permission issues
- */
-function isAuthError(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-  const message = error.message.toLowerCase();
-  return (
-    message.includes('permission') ||
-    message.includes('authenticate') ||
-    message.includes('auth') ||
-    message.includes('expired') ||
-    message.includes('denied') ||
-    message.includes('popup') || // Safari popup blocker
-    message.includes('401') ||
-    message.includes('403')
-  );
-}
-
 class SyncService {
   private autoSaveTimerId: NodeJS.Timeout | null = null;
   private isSaving = false;
@@ -270,6 +252,7 @@ class SyncService {
       state.setError(null);
       state.showSnackbar('Data saved successfully', 'success');
     } catch (error) {
+      console.error('[SyncService] syncNow: Error during save:', error);
       const message = error instanceof Error ? error.message : 'Failed to sync';
       state.setError(message);
       state.showSnackbar(`Failed to save: ${message}`, 'error');
@@ -318,15 +301,22 @@ class SyncService {
    * Load data file for a specific year
    */
   async loadDataFile(): Promise<void> {
+    console.log('[SyncService] loadDataFile: Starting...');
     const state = useAppStore.getState();
     state.setLoading(true);
     state.setError(null);
 
     try {
+      console.log('[SyncService] loadDataFile: Getting storage provider...');
       const storage = StorageFactory.getCurrentProvider();
+      console.log('[SyncService] loadDataFile: Storage provider:', storage?.getName());
+
+      console.log('[SyncService] loadDataFile: Calling storage.loadDataFile()...');
       const dataFile = await storage.loadDataFile();
+      console.log('[SyncService] loadDataFile: Data loaded, dataFile exists:', !!dataFile);
 
       if (dataFile) {
+        console.log('[SyncService] loadDataFile: Processing data file...');
         // Store archived years in app state
         state.setArchivedYears(dataFile.archivedYears || []);
 
@@ -334,11 +324,14 @@ class SyncService {
         state.setLastBackupDate(dataFile.lastBackupDate || null);
 
         // Calculate and store file hash for conflict detection
+        console.log('[SyncService] loadDataFile: Calculating file hash...');
         const fileHash = await calculateDataFileHash(dataFile);
         const loadedAt = new Date().toISOString();
+        console.log('[SyncService] loadDataFile: File hash calculated, storing metadata...');
         state.setFileMetadata(fileHash, loadedAt, structuredClone(dataFile));
 
         // Distribute data to domain stores
+        console.log('[SyncService] loadDataFile: Distributing data to stores...');
         useAccountStore.getState().setAccounts(dataFile.accounts || []);
         useCategoryStore.getState().setCategories(dataFile.categories || []);
         useCategoryStore.getState().setTransactionTypes(dataFile.transactionTypes || []);
@@ -351,51 +344,39 @@ class SyncService {
         state.setBaseCurrency(dataFile.baseCurrency);
 
         // Get the actual filename from storage provider
+        console.log('[SyncService] loadDataFile: Getting filename from provider...');
         const fileName = storage.getFileName();
+        console.log('[SyncService] loadDataFile: Filename:', fileName);
         state.setFileName(fileName);
         state.markAsSaved();
+        console.log('[SyncService] loadDataFile: Data processing complete');
       }
     } catch (error) {
+      console.log('[SyncService] loadDataFile: Error caught:', error);
       const message = error instanceof Error ? error.message : 'Failed to load file';
       state.setError(message);
       throw error;
     } finally {
       state.setLoading(false);
+      console.log('[SyncService] loadDataFile: Finished');
     }
   }
 
   /**
    * Attempt to auto-load from cached file handle or authenticated cloud provider
    * Returns true if successful, false if no cached file or load failed
+   * NOTE: Authentication is handled by App.tsx at startup via loadCachedProvider
    */
   async autoLoad(): Promise<boolean> {
+    console.log('[SyncService] autoLoad: Starting...');
+
     try {
-      // Try to load file from provider (initialization happens in constructor)
+      console.log('[SyncService] autoLoad: Calling loadDataFile...');
       await this.loadDataFile();
+      console.log('[SyncService] autoLoad: loadDataFile completed successfully');
       return true;
     } catch (error) {
-      // Check if this is an authentication/permission error or popup blocker
-      if (isAuthError(error)) {
-        const state = useAppStore.getState();
-        let providerName = 'your account';
-        try {
-          providerName = StorageFactory.getCurrentProvider().getName();
-        } catch {
-          // Provider not available
-        }
-
-        // Clear cache so user can re-authenticate through welcome dialog
-        await StorageFactory.clearCache();
-
-        // Notify user that they need to reconnect
-        state.showSnackbar(`Session expired. Please reconnect to ${providerName}.`, 'info');
-
-        return false;
-      }
-
-      // For other errors (file not found, network issues), fail silently
-      // User will see Welcome Dialog
-      console.info('Auto-load failed:', error);
+      console.error('[SyncService] autoLoad: Failed to load data file:', error);
       return false;
     }
   }

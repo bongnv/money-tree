@@ -38,6 +38,47 @@ export class StorageFactory {
   private static oneDriveService: OneDriveService | null = null;
 
   /**
+   * Initialize storage provider with authentication handling
+   * This is the main entry point for app initialization
+   *
+   * @param showReconnectDialog - Optional callback for OneDrive reconnection
+   * @returns true if provider loaded successfully
+   */
+  static async initialize(
+    showReconnectDialog?: (providerName: string) => Promise<'reconnect' | 'dismiss'>
+  ): Promise<boolean> {
+    let loaded = await this.loadCachedProvider();
+
+    if (!loaded && showReconnectDialog) {
+      // Check if OneDrive needs reconnection
+      const config = await this.loadProviderConfig();
+      if (config?.type === StorageProviderType.ONEDRIVE) {
+        loaded = await this.reconnectOneDrive(showReconnectDialog);
+      }
+    }
+
+    return loaded;
+  }
+
+  /**
+   * Handle OneDrive reconnection flow
+   */
+  private static async reconnectOneDrive(
+    showReconnectDialog: (name: string) => Promise<'reconnect' | 'dismiss'>
+  ): Promise<boolean> {
+    const action = await showReconnectDialog('OneDrive');
+    if (action === 'dismiss') {
+      await this.clearCache();
+      return false;
+    }
+
+    // Authenticate within user interaction context
+    const service = this.getOneDriveService();
+    await service.authenticate();
+    return await this.loadCachedProvider();
+  }
+
+  /**
    * Get IndexedDB connection for caching file handles
    */
   private static async getDB(): Promise<IDBDatabase> {
@@ -101,10 +142,9 @@ export class StorageFactory {
   }
 
   /**
-   * Get OneDrive service singleton
-   * Used for authentication and file browsing
+   * Get or create the singleton OneDrive service (internal)
    */
-  static getOneDriveService(): OneDriveService {
+  private static getOneDriveService(): OneDriveService {
     if (!this.oneDriveService) {
       this.oneDriveService = new OneDriveService();
     }
@@ -112,21 +152,29 @@ export class StorageFactory {
   }
 
   /**
-   * Initialize provider from storage
-   * Called on app startup to auto-load cached provider configuration
-   * Returns true if provider was successfully initialized, false if no cached config found
+   * Load provider from cached configuration (internal)
+   * For OneDrive, checks if authenticated but does NOT show dialogs
    */
-  static async initializeProvider(): Promise<boolean> {
+  private static async loadCachedProvider(): Promise<boolean> {
     try {
       const config = await this.loadProviderConfig();
       if (!config) {
         return false;
       }
 
+      // For OneDrive, check authentication BEFORE creating provider
+      if (config.type === StorageProviderType.ONEDRIVE) {
+        const service = this.getOneDriveService();
+        if (!(await service.isAuthenticated())) {
+          return false;
+        }
+      }
+
+      // Authentication confirmed (or not needed for Local), create provider
       this.provider = await this.createProvider(config);
+
       return true;
     } catch (error) {
-      console.warn('Failed to initialize provider from storage:', error);
       return false;
     }
   }
@@ -142,10 +190,27 @@ export class StorageFactory {
   }
 
   /**
-   * Load provider configuration from storage
-   * Loads from localStorage and augments with IndexedDB fileHandle if Local provider
+   * Authenticate OneDrive service
+   * Must be called within user interaction context (button click)
    */
-  static async loadProviderConfig(): Promise<ProviderConfig | undefined> {
+  static async authenticateOneDrive(): Promise<void> {
+    const service = this.getOneDriveService();
+    await service.authenticate();
+  }
+
+  /**
+   * List OneDrive folders
+   * @param parentItem Parent folder or null for root
+   */
+  static async listOneDriveFolders(parentItem?: any): Promise<any[]> {
+    const service = this.getOneDriveService();
+    return service.listFolders(parentItem);
+  }
+
+  /**
+   * Load provider configuration from storage (internal)
+   */
+  private static async loadProviderConfig(): Promise<ProviderConfig | undefined> {
     // Load config from localStorage
     const saved = localStorage.getItem(STORAGE_CONFIG_KEY);
     if (!saved) {
@@ -218,7 +283,9 @@ export class StorageFactory {
         if (!fileInfo) {
           throw new Error('No cached file info found. Please select a file first.');
         }
-        return new OneDriveProvider(this.getOneDriveService(), fileInfo);
+        // Service already created and authenticated by loadCachedProvider
+        const service = this.getOneDriveService();
+        return new OneDriveProvider(service, fileInfo);
       }
       case StorageProviderType.GOOGLE_DRIVE:
         throw new Error('Google Drive storage provider not yet implemented');

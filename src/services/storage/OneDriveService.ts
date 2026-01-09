@@ -42,74 +42,52 @@ export class OneDriveService {
   private initPromise: Promise<void> | null = null;
 
   constructor() {
-    // Eagerly start initialization
-    this.initialize();
+    if (isOneDriveConfigured()) {
+      this.msalInstance = new PublicClientApplication(msalConfig);
+      this.initPromise = this.initialize();
+    }
   }
 
   /**
-   * Initialize MSAL instance
+   * Initialize MSAL instance and check for cached account
    * This must be called before any other MSAL operations
    */
   private async initialize(): Promise<void> {
-    // Return existing promise if already initializing
-    if (this.initPromise) {
-      return this.initPromise;
-    }
+    if (!this.msalInstance) return;
 
-    // Skip if not configured
-    if (!isOneDriveConfigured()) {
-      this.initPromise = Promise.resolve();
-      return this.initPromise;
-    }
+    try {
+      await this.msalInstance.initialize();
 
-    this.initPromise = (async () => {
-      try {
-        // Create and initialize MSAL
-        this.msalInstance = new PublicClientApplication(msalConfig);
-        await this.msalInstance.initialize();
-
-        // Check for existing session
-        await this.checkExistingSession();
-      } catch (error) {
-        console.error('Failed to initialize OneDrive service:', error);
-        throw error;
+      // Check for cached account (no popup)
+      const account = this.msalInstance.getActiveAccount() || this.msalInstance.getAllAccounts()[0];
+      if (account) {
+        this.account = account;
+        this.msalInstance.setActiveAccount(account);
       }
-    })();
-
-    return this.initPromise;
+    } catch (error) {
+      console.error('Failed to initialize OneDrive service:', error);
+      throw error;
+    }
   }
 
   /**
-   * Check for existing authenticated session
+   * Check if authenticated (checks MSAL cache)
+   * Async to ensure initialization is complete before checking
    */
-  private async checkExistingSession(): Promise<void> {
-    if (!this.msalInstance || this.account) return;
-
-    // Try to get active account first (more reliable in Safari)
-    let account = this.msalInstance.getActiveAccount();
-
-    // Fallback to getAllAccounts if no active account
-    if (!account) {
-      const accounts = this.msalInstance.getAllAccounts();
-      if (accounts.length > 0) {
-        account = accounts[0];
-        this.msalInstance.setActiveAccount(account);
-      }
-    }
-    if (account) {
-      this.account = account;
-      await this.createGraphClient();
-    }
+  async isAuthenticated(): Promise<boolean> {
+    await this.initPromise;
+    return this.account !== null;
   }
 
   /**
    * Authenticate with Microsoft using popup flow
-   * Idempotent - skips if already authenticated
+   * MUST be called during user interaction (button click) to avoid Safari popup blocker
+   * Idempotent - safe to call multiple times
    */
   async authenticate(): Promise<void> {
-    await this.ensureInitialized();
+    await this.initPromise;
 
-    // Skip if already authenticated
+    // Already authenticated
     if (this.account !== null) {
       return;
     }
@@ -118,10 +96,10 @@ export class OneDriveService {
       throw new Error(errorMessages.configError);
     }
 
+    // Trigger popup authentication (requires user interaction)
     const response = await this.msalInstance.loginPopup(loginRequest);
     this.account = response.account;
     this.msalInstance.setActiveAccount(response.account);
-    await this.createGraphClient();
   }
 
   /**
@@ -130,6 +108,23 @@ export class OneDriveService {
   disconnect(): void {
     this.account = null;
     this.graphClient = null;
+  }
+
+  /**
+   * Get Graph client (creates lazily on first use)
+   */
+  private async getGraphClient(): Promise<Client> {
+    await this.initPromise;
+
+    if (!this.account) {
+      throw new Error(errorMessages.authRequired);
+    }
+
+    if (!this.graphClient) {
+      this.graphClient = await this.createGraphClient();
+    }
+
+    return this.graphClient;
   }
 
   /**
@@ -142,8 +137,7 @@ export class OneDriveService {
       remoteItem?: { id: string; parentReference?: { driveId: string } };
     } | null
   ): Promise<DriveItem[]> {
-    await this.ensureInitialized();
-    this.ensureGraphClient();
+    const client = await this.getGraphClient();
 
     try {
       let items: any[] = [];
@@ -151,8 +145,9 @@ export class OneDriveService {
       if (!parentItem) {
         // Root level - get both personal drive and shared items
         const [personalItems, sharedItems] = await Promise.all([
-          this.graphClient!.api('/me/drive/root/children').get(),
-          this.graphClient!.api('/me/drive/sharedWithMe')
+          client.api('/me/drive/root/children').get(),
+          client
+            .api('/me/drive/sharedWithMe')
             .get()
             .catch(() => ({ value: [] })),
         ]);
@@ -168,12 +163,12 @@ export class OneDriveService {
         }
 
         const endpoint = `/drives/${driveId}/items/${itemId}/children`;
-        const response = await this.graphClient!.api(endpoint).get();
+        const response = await client.api(endpoint).get();
         items = response.value || [];
       } else {
         // Navigating into a personal folder
         const endpoint = `/me/drive/items/${parentItem.id}/children`;
-        const response = await this.graphClient!.api(endpoint).get();
+        const response = await client.api(endpoint).get();
         items = response.value || [];
       }
 
@@ -189,10 +184,8 @@ export class OneDriveService {
    * @param endpoint The Graph API endpoint (e.g., '/me/drive/items/{id}/content')
    */
   async readFile(endpoint: string): Promise<any> {
-    await this.ensureInitialized();
-    this.ensureGraphClient();
-
-    return this.graphClient!.api(endpoint).get();
+    const client = await this.getGraphClient();
+    return client.api(endpoint).get();
   }
 
   /**
@@ -201,39 +194,19 @@ export class OneDriveService {
    * @param content The file content to write (string for JSON, Uint8Array for compressed/binary)
    */
   async writeFile(endpoint: string, content: string | Uint8Array): Promise<any> {
-    await this.ensureInitialized();
-    this.ensureGraphClient();
-
-    return this.graphClient!.api(endpoint).put(content);
-  }
-
-  /**
-   * Ensure initialization is complete
-   * @throws Error if initialization failed
-   */
-  private async ensureInitialized(): Promise<void> {
-    await this.initPromise;
-  }
-
-  /**
-   * Ensure graph client exists
-   * @throws Error if not authenticated
-   */
-  private ensureGraphClient(): void {
-    if (!this.graphClient) {
-      throw new Error(errorMessages.authRequired);
-    }
+    const client = await this.getGraphClient();
+    return client.api(endpoint).put(content);
   }
 
   /**
    * Create Microsoft Graph client with authentication
    */
-  private async createGraphClient(): Promise<void> {
+  private async createGraphClient(): Promise<Client> {
     if (!this.account) {
       throw new Error(errorMessages.authRequired);
     }
 
-    this.graphClient = Client.init({
+    return Client.init({
       authProvider: async (done) => {
         try {
           const token = await this.getAccessToken();

@@ -9,6 +9,7 @@ import { FileLoadErrorDialog } from './components/common/FileLoadErrorDialog';
 import { WelcomeDialog } from './components/common/WelcomeDialog';
 import { NotificationSnackbar } from './components/common/NotificationSnackbar';
 import { MergePreviewDialog, ConflictResolution } from './components/common/MergePreviewDialog';
+import ReconnectDialog from './components/common/ReconnectDialog';
 import { ArchivePrompt } from './components/common/ArchivePrompt';
 import { BackupPromptDialog } from './components/common/BackupPromptDialog';
 import { AppRoutes } from './routes';
@@ -47,6 +48,15 @@ const AppContent: React.FC = () => {
     mergeResult: null,
     resolve: null,
   });
+  const [reconnectDialogState, setReconnectDialogState] = useState<{
+    open: boolean;
+    providerName: string;
+    resolve: ((value: 'reconnect' | 'dismiss') => void) | null;
+  }>({
+    open: false,
+    providerName: '',
+    resolve: null,
+  });
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -61,17 +71,27 @@ const AppContent: React.FC = () => {
         });
       });
 
-      // Initialize provider from cached storage
-      const initialized = await StorageFactory.initializeProvider();
-
-      // Try to auto-load from cached file (only if provider was initialized)
-      const loaded = initialized && (await syncService.autoLoad());
+      // Initialize storage provider
+      const loaded = await StorageFactory.initialize(async (providerName: string) => {
+        return new Promise<'reconnect' | 'dismiss'>((resolve) => {
+          setReconnectDialogState({
+            open: true,
+            providerName,
+            resolve,
+          });
+        });
+      });
 
       if (!loaded) {
-        // Show welcome dialog to select a file
+        setShowWelcomeDialog(true);
+        return;
+      }
+
+      const dataLoaded = await syncService.autoLoad();
+
+      if (!dataLoaded) {
         setShowWelcomeDialog(true);
       } else {
-        // File loaded successfully, check if archive and backup prompts should be shown
         checkArchivePrompt();
         checkBackupPrompt();
       }
@@ -197,23 +217,7 @@ const AppContent: React.FC = () => {
   };
 
   const handleSelectOneDrive = async () => {
-    const service = StorageFactory.getOneDriveService();
-    await service.authenticate();
-
-    // Check if we have cached OneDrive file info
-    const cachedConfig = await StorageFactory.loadProviderConfig();
-    if (cachedConfig?.type === StorageProviderType.ONEDRIVE && cachedConfig.fileInfo) {
-      // Auto-connect to cached file without showing picker
-      await StorageFactory.replaceProvider(cachedConfig);
-      try {
-        await syncService.loadDataFile();
-        setShowWelcomeDialog(false);
-      } catch (loadError) {
-        // Clear cache so user can repick file
-        await StorageFactory.clearCache();
-        throw loadError;
-      }
-    }
+    await StorageFactory.authenticateOneDrive();
   };
 
   const handleConnectOneDrive = async (fileInfo: SelectedFileInfo) => {
@@ -228,8 +232,7 @@ const AppContent: React.FC = () => {
   };
 
   const handleListOneDriveFolders = async (parentItem?: any) => {
-    const service = StorageFactory.getOneDriveService();
-    return service.listFolders(parentItem);
+    return StorageFactory.listOneDriveFolders(parentItem);
   };
 
   const handleCloseError = () => {
@@ -249,7 +252,21 @@ const AppContent: React.FC = () => {
     }
     setMergeDialogState({ open: false, mergeResult: null, resolve: null });
   };
+  const handleReconnect = () => {
+    if (reconnectDialogState.resolve) {
+      reconnectDialogState.resolve('reconnect');
+    }
+    setReconnectDialogState({ open: false, providerName: '', resolve: null });
+  };
 
+  const handleReconnectDismiss = () => {
+    if (reconnectDialogState.resolve) {
+      reconnectDialogState.resolve('dismiss');
+    }
+    setReconnectDialogState({ open: false, providerName: '', resolve: null });
+    // Show welcome dialog when user dismisses reconnect
+    setShowWelcomeDialog(true);
+  };
   const handleArchiveGoToSettings = () => {
     setShowArchivePrompt(false);
     // Navigate to archive settings page using React Router
@@ -288,6 +305,12 @@ const AppContent: React.FC = () => {
         autoMergedCount={mergeDialogState.mergeResult?.autoMergedCount || 0}
         onCancel={handleMergeCancel}
         onApply={handleMergeApply}
+      />
+      <ReconnectDialog
+        open={reconnectDialogState.open}
+        providerName={reconnectDialogState.providerName}
+        onReconnect={handleReconnect}
+        onDismiss={handleReconnectDismiss}
       />
       {archiveYearSummary && archiveYear && (
         <ArchivePrompt

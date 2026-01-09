@@ -25,6 +25,7 @@ describe('SyncService', () => {
       loadDataFile: mockLoadDataFile,
       initialize: jest.fn().mockResolvedValue(undefined),
       getFileName: jest.fn().mockReturnValue('test.json'),
+      getName: jest.fn().mockReturnValue('Test Provider'),
       saveFile: jest.fn().mockResolvedValue(undefined),
     });
 
@@ -416,6 +417,7 @@ describe('SyncService', () => {
         saveDataFile: mockSaveDataFile,
         loadDataFile: mockLoadDataFile.mockResolvedValue(mockDataFile),
         getFileName: jest.fn().mockReturnValue('test.json'),
+        getName: jest.fn().mockReturnValue('Test Provider'),
         saveFile: jest.fn().mockResolvedValue(undefined),
       });
 
@@ -430,6 +432,7 @@ describe('SyncService', () => {
         saveDataFile: mockSaveDataFile,
         loadDataFile: mockLoadDataFile.mockRejectedValue(new Error('Load failed')),
         getFileName: jest.fn().mockReturnValue('test.json'),
+        getName: jest.fn().mockReturnValue('Test Provider'),
         saveFile: jest.fn().mockResolvedValue(undefined),
       });
 

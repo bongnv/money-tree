@@ -37,4 +37,10 @@ export interface IStorageProvider {
    * Get the name of the current file
    */
   getFileName(): string;
+
+  /**
+   * Get a user-friendly name for this storage provider
+   * @returns Display name (e.g., "Local File", "OneDrive", "Google Drive")
+   */
+  getName(): string;
 }

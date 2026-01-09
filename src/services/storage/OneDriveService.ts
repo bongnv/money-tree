@@ -118,23 +118,10 @@ export class OneDriveService {
       throw new Error(errorMessages.configError);
     }
 
-    try {
-      const response = await this.msalInstance.loginPopup(loginRequest);
-      this.account = response.account;
-      this.msalInstance.setActiveAccount(response.account);
-      await this.createGraphClient();
-    } catch (error: any) {
-      console.error('Authentication failed:', error);
-
-      // Check for popup blocking
-      if (error.errorCode === 'popup_window_error') {
-        throw new Error(
-          'Please allow popups for this site to connect to OneDrive. Check your browser settings and try again.'
-        );
-      }
-
-      throw new Error(errorMessages.authFailed);
-    }
+    const response = await this.msalInstance.loginPopup(loginRequest);
+    this.account = response.account;
+    this.msalInstance.setActiveAccount(response.account);
+    await this.createGraphClient();
   }
 
   /**

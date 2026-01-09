@@ -27,6 +27,7 @@ function isAuthError(error: unknown): boolean {
     message.includes('auth') ||
     message.includes('expired') ||
     message.includes('denied') ||
+    message.includes('popup') || // Safari popup blocker
     message.includes('401') ||
     message.includes('403')
   );
@@ -368,32 +369,27 @@ class SyncService {
    * Returns true if successful, false if no cached file or load failed
    */
   async autoLoad(): Promise<boolean> {
-    const state = useAppStore.getState();
-
     try {
       // Try to load file from provider (initialization happens in constructor)
       await this.loadDataFile();
       return true;
     } catch (error) {
-      const providerType = StorageFactory.getProviderType();
-
-      // Check if this is an authentication/permission error
+      // Check if this is an authentication/permission error or popup blocker
       if (isAuthError(error)) {
-        const providerName =
-          providerType === 'onedrive'
-            ? 'OneDrive'
-            : providerType === 'google_drive'
-              ? 'Google Drive'
-              : providerType === 'dropbox'
-                ? 'Dropbox'
-                : 'cloud storage';
+        const state = useAppStore.getState();
+        let providerName = 'your account';
+        try {
+          providerName = StorageFactory.getCurrentProvider().getName();
+        } catch {
+          // Provider not available
+        }
 
-        // Set error message to inform user
-        const errorMessage = `Failed to load file: File permission expired. Please go to Settings → Data & Sync to reconnect your ${providerName} account.`;
-        state.setError(errorMessage);
-        state.showSnackbar(errorMessage, 'error');
+        // Clear cache so user can re-authenticate through welcome dialog
+        await StorageFactory.clearCache();
 
-        console.error('Authentication error during auto-load:', error);
+        // Notify user that they need to reconnect
+        state.showSnackbar(`Session expired. Please reconnect to ${providerName}.`, 'info');
+
         return false;
       }
 

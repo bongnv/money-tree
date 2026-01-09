@@ -1,7 +1,6 @@
 import type { IStorageProvider } from './IStorageProvider';
 import type { DataFile } from '../../types/models';
 import { DataFileSchema } from '../../schemas/models.schema';
-import { errorMessages } from '../../config/onedrive.config';
 import type { OneDriveService } from './OneDriveService';
 
 /**
@@ -31,6 +30,10 @@ export class OneDriveProvider implements IStorageProvider {
    */
   getFileName(): string {
     return this.selectedFileInfo.filePath.split('/').pop() || 'money-tree.json';
+  }
+
+  getName(): string {
+    return 'OneDrive';
   }
 
   /**
@@ -110,20 +113,20 @@ export class OneDriveProvider implements IStorageProvider {
 
       return validatedData;
     } catch (error: any) {
-      // File doesn't exist yet (404)
+      // File doesn't exist yet (404) - this is expected for new files
       if (error.statusCode === 404) {
         return null;
       }
 
-      console.error('Failed to load file from OneDrive:', error);
-
+      // HTTP auth errors - provide user-friendly message
       if (error.statusCode === 401 || error.statusCode === 403) {
         throw new Error(
           'OneDrive permission expired. Please reconnect your account in Settings → Data & Sync.'
         );
       }
 
-      throw new Error(errorMessages.downloadFailed);
+      // Let all other errors (popup, auth, network, etc.) bubble up unchanged
+      throw error;
     }
   }
 
@@ -135,9 +138,8 @@ export class OneDriveProvider implements IStorageProvider {
     DataFileSchema.parse(data);
 
     try {
-      const content = JSON.stringify(data);
-
       // Upload file content
+      const content = JSON.stringify(data);
       const uploadUrl = this.buildUploadUrl(
         this.selectedFileInfo.filePath,
         this.selectedFileInfo.fileId
@@ -149,15 +151,15 @@ export class OneDriveProvider implements IStorageProvider {
         this.selectedFileInfo.fileId = response.id;
       }
     } catch (error: any) {
-      console.error('Failed to save file to OneDrive:', error);
-
+      // HTTP auth errors - provide user-friendly message
       if (error.statusCode === 401 || error.statusCode === 403) {
         throw new Error(
           'OneDrive permission expired. Please reconnect your account in Settings → Data & Sync.'
         );
       }
 
-      throw new Error(errorMessages.uploadFailed);
+      // Let all other errors bubble up unchanged
+      throw error;
     }
   }
 

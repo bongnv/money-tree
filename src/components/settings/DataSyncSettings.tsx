@@ -19,7 +19,7 @@ import BackupIcon from '@mui/icons-material/Backup';
 import { useAppStore } from '../../stores/useAppStore';
 import { syncService } from '../../services/sync.service';
 import { backupService } from '../../services/backup.service';
-import { StorageFactory, StorageProviderType } from '../../services/storage/StorageFactory';
+import { StorageFactory } from '../../services/storage/StorageFactory';
 import { formatDistance } from 'date-fns';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
@@ -34,18 +34,11 @@ export const DataSyncSettings: React.FC = () => {
   const [backupLoading, setBackupLoading] = React.useState(false);
 
   const getStorageLocation = (): string => {
-    const providerType = StorageFactory.getProviderType();
-    switch (providerType) {
-      case StorageProviderType.LOCAL:
-        return 'Local Storage (File System)';
-      case StorageProviderType.ONEDRIVE:
-        return 'OneDrive';
-      case StorageProviderType.GOOGLE_DRIVE:
-        return 'Google Drive';
-      case StorageProviderType.DROPBOX:
-        return 'Dropbox';
-      default:
-        return 'Unknown';
+    try {
+      const provider = StorageFactory.getCurrentProvider();
+      return provider.getName();
+    } catch {
+      return 'Not connected';
     }
   };
 

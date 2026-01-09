@@ -104,6 +104,10 @@ export class LocalStorageProvider implements IStorageProvider {
     return this.fileHandle.name;
   }
 
+  getName(): string {
+    return 'Local File';
+  }
+
   /**
    * Save a file (e.g., backup ZIP, archive JSON)
    * Shows file picker for user to select save location

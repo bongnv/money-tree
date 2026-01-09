@@ -35,7 +35,6 @@ const FILE_HANDLE_KEY = 'cachedFileHandle';
  */
 export class StorageFactory {
   private static provider: IStorageProvider | null = null;
-  private static currentProviderType: StorageProviderType | null = null;
   private static oneDriveService: OneDriveService | null = null;
 
   /**
@@ -125,7 +124,6 @@ export class StorageFactory {
       }
 
       this.provider = await this.createProvider(config);
-      this.currentProviderType = config.type;
       return true;
     } catch (error) {
       console.warn('Failed to initialize provider from storage:', error);
@@ -139,14 +137,8 @@ export class StorageFactory {
    * Automatically clears the old provider's configuration
    */
   static async replaceProvider(config: ProviderConfig): Promise<void> {
-    // Clear old provider's configuration if switching providers
-    if (this.currentProviderType && this.currentProviderType !== config.type) {
-      localStorage.removeItem(STORAGE_CONFIG_KEY);
-    }
-
     await this.saveProviderConfig(config);
     this.provider = await this.createProvider(config);
-    this.currentProviderType = config.type;
   }
 
   /**
@@ -210,13 +202,6 @@ export class StorageFactory {
   }
 
   /**
-   * Get the current provider type
-   */
-  static getProviderType(): StorageProviderType | null {
-    return this.currentProviderType;
-  }
-
-  /**
    * Create a new storage provider instance from config
    */
   private static async createProvider(config: ProviderConfig): Promise<IStorageProvider> {
@@ -250,14 +235,13 @@ export class StorageFactory {
    */
   static async clearCache(): Promise<void> {
     // Disconnect OneDrive service if active
-    if (this.currentProviderType === StorageProviderType.ONEDRIVE && this.oneDriveService) {
+    if (this.provider?.getName() === 'OneDrive' && this.oneDriveService) {
       this.oneDriveService.disconnect();
       this.oneDriveService = null;
     }
 
     // Clear provider instance
     this.provider = null;
-    this.currentProviderType = null;
 
     localStorage.removeItem(STORAGE_CONFIG_KEY);
   }

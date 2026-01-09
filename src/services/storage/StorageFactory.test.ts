@@ -36,12 +36,14 @@ describe('StorageFactory', () => {
     });
   });
 
-  describe('getProviderType', () => {
-    it('should return null when no provider configured', () => {
-      expect(StorageFactory.getProviderType()).toBeNull();
+  describe('provider name', () => {
+    it('should throw when no provider configured', () => {
+      expect(() => StorageFactory.getCurrentProvider().getName()).toThrow(
+        'No storage provider configured'
+      );
     });
 
-    it('should return current provider type after replaceProvider', async () => {
+    it('should return provider name after replaceProvider', async () => {
       const fileInfo = {
         fileId: 'test-id',
         filePath: '/test/path',
@@ -52,7 +54,7 @@ describe('StorageFactory', () => {
         type: StorageProviderType.ONEDRIVE,
         fileInfo,
       });
-      expect(StorageFactory.getProviderType()).toBe(StorageProviderType.ONEDRIVE);
+      expect(StorageFactory.getCurrentProvider().getName()).toBe('OneDrive');
     });
 
     it('should persist provider type in config', async () => {

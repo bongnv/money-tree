@@ -21,8 +21,6 @@ import { MergeResult } from './services/merge.service';
 import { backupService } from './services/backup.service';
 import { identifyArchivableYear, calculateYearEndSummary } from './services/archive.service';
 
-const WELCOME_DISMISSED_KEY = 'moneyTree.welcomeDismissed';
-
 const AppContent: React.FC = () => {
   const navigate = useNavigate();
   const {
@@ -70,11 +68,8 @@ const AppContent: React.FC = () => {
       const loaded = initialized && (await syncService.autoLoad());
 
       if (!loaded) {
-        // Check if user has dismissed the welcome dialog
-        const dismissed = localStorage.getItem(WELCOME_DISMISSED_KEY);
-        if (!dismissed) {
-          setShowWelcomeDialog(true);
-        }
+        // Show welcome dialog to select a file
+        setShowWelcomeDialog(true);
       } else {
         // File loaded successfully, check if archive and backup prompts should be shown
         checkArchivePrompt();
@@ -162,7 +157,11 @@ const AppContent: React.FC = () => {
       }
 
       // Switch to local storage provider with selected file
-      await StorageFactory.replaceProvider(StorageProviderType.LOCAL, { fileHandle });
+      // Old provider config is automatically cleared by replaceProvider
+      await StorageFactory.replaceProvider({
+        type: StorageProviderType.LOCAL,
+        fileHandle,
+      });
 
       // Load data from the selected file
       await syncService.loadDataFile();
@@ -183,7 +182,11 @@ const AppContent: React.FC = () => {
       }
 
       // Switch to local storage provider with new file
-      await StorageFactory.replaceProvider(StorageProviderType.LOCAL, { fileHandle });
+      // Old provider config is automatically cleared by replaceProvider
+      await StorageFactory.replaceProvider({
+        type: StorageProviderType.LOCAL,
+        fileHandle,
+      });
 
       // File will be empty initially, no need to load
       setShowWelcomeDialog(false);
@@ -196,11 +199,29 @@ const AppContent: React.FC = () => {
   const handleSelectOneDrive = async () => {
     const service = StorageFactory.getOneDriveService();
     await service.authenticate();
+
+    // Check if we have cached OneDrive file info
+    const cachedConfig = await StorageFactory.loadProviderConfig();
+    if (cachedConfig?.type === StorageProviderType.ONEDRIVE && cachedConfig.fileInfo) {
+      // Auto-connect to cached file without showing picker
+      await StorageFactory.replaceProvider(cachedConfig);
+      try {
+        await syncService.loadDataFile();
+        setShowWelcomeDialog(false);
+      } catch (loadError) {
+        // Clear cache so user can repick file
+        await StorageFactory.clearCache();
+        throw loadError;
+      }
+    }
   };
 
   const handleConnectOneDrive = async (fileInfo: SelectedFileInfo) => {
     // Finalize connection: switch provider and load file
-    await StorageFactory.replaceProvider(StorageProviderType.ONEDRIVE, { fileInfo });
+    await StorageFactory.replaceProvider({
+      type: StorageProviderType.ONEDRIVE,
+      fileInfo,
+    });
 
     await syncService.loadDataFile();
     setShowWelcomeDialog(false);

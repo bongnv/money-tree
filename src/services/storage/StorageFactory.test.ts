@@ -16,7 +16,6 @@ describe('StorageFactory', () => {
   beforeEach(() => {
     // Reset factory state before each test
     StorageFactory.clearCache();
-    StorageFactory.setProviderType(StorageProviderType.LOCAL);
     // Clear localStorage
     localStorage.clear();
     // Clear mock
@@ -29,42 +28,48 @@ describe('StorageFactory', () => {
       expect(() => StorageFactory.getCurrentProvider()).toThrow('No storage provider configured');
     });
 
-    it('should throw error when no provider configured for ONEDRIVE', () => {
-      StorageFactory.setProviderType(StorageProviderType.ONEDRIVE);
-      expect(() => StorageFactory.getCurrentProvider()).toThrow('No storage provider configured');
-    });
-
-    it('should throw error for Google Drive provider (not yet implemented)', () => {
-      StorageFactory.setProviderType(StorageProviderType.GOOGLE_DRIVE);
-      expect(() => StorageFactory.getCurrentProvider()).toThrow('No storage provider configured');
-    });
-
-    it('should throw error for Dropbox provider (not yet implemented)', () => {
-      StorageFactory.setProviderType(StorageProviderType.DROPBOX);
-      expect(() => StorageFactory.getCurrentProvider()).toThrow('No storage provider configured');
-    });
-  });
-
-  describe('setProviderType', () => {
-    it('should change current provider type', () => {
-      StorageFactory.setProviderType(StorageProviderType.LOCAL);
-      expect(StorageFactory.getProviderType()).toBe(StorageProviderType.LOCAL);
+    it('should throw error when trying to configure ONEDRIVE without fileInfo', async () => {
+      // When replaceProvider is called without required config, it should fail during createProvider
+      await expect(
+        StorageFactory.replaceProvider({ type: StorageProviderType.ONEDRIVE })
+      ).rejects.toThrow('No cached file info found');
     });
   });
 
   describe('getProviderType', () => {
-    it('should return LOCAL by default', () => {
-      expect(StorageFactory.getProviderType()).toBe(StorageProviderType.LOCAL);
+    it('should return null when no provider configured', () => {
+      expect(StorageFactory.getProviderType()).toBeNull();
     });
 
-    it('should return current provider type', () => {
-      StorageFactory.setProviderType(StorageProviderType.LOCAL);
-      expect(StorageFactory.getProviderType()).toBe(StorageProviderType.LOCAL);
+    it('should return current provider type after replaceProvider', async () => {
+      const fileInfo = {
+        fileId: 'test-id',
+        filePath: '/test/path',
+        fileName: 'test.json',
+        isNew: false,
+      };
+      await StorageFactory.replaceProvider({
+        type: StorageProviderType.ONEDRIVE,
+        fileInfo,
+      });
+      expect(StorageFactory.getProviderType()).toBe(StorageProviderType.ONEDRIVE);
     });
 
-    it('should persist provider type to localStorage', () => {
-      StorageFactory.setProviderType(StorageProviderType.ONEDRIVE);
-      expect(localStorage.getItem('moneyTree.storageProvider')).toBe(StorageProviderType.ONEDRIVE);
+    it('should persist provider type in config', async () => {
+      const fileInfo = {
+        fileId: 'test-id',
+        filePath: '/test/path',
+        fileName: 'test.json',
+        isNew: false,
+      };
+      await StorageFactory.replaceProvider({
+        type: StorageProviderType.ONEDRIVE,
+        fileInfo,
+      });
+      const saved = localStorage.getItem('moneyTree.storageProviderConfig');
+      expect(saved).toBeTruthy();
+      const config = JSON.parse(saved!);
+      expect(config.type).toBe(StorageProviderType.ONEDRIVE);
     });
   });
 
@@ -72,7 +77,8 @@ describe('StorageFactory', () => {
     it('should create LOCAL provider with fileHandle', async () => {
       const mockFileHandle = { name: 'test.json' } as FileSystemFileHandle;
 
-      await StorageFactory.replaceProvider(StorageProviderType.LOCAL, {
+      await StorageFactory.replaceProvider({
+        type: StorageProviderType.LOCAL,
         fileHandle: mockFileHandle,
       });
 
@@ -89,11 +95,14 @@ describe('StorageFactory', () => {
         isNew: false,
       };
 
-      await StorageFactory.replaceProvider(StorageProviderType.ONEDRIVE, { fileInfo });
+      await StorageFactory.replaceProvider({
+        type: StorageProviderType.ONEDRIVE,
+        fileInfo,
+      });
 
       const saved = localStorage.getItem('moneyTree.storageProviderConfig');
       expect(saved).toBeTruthy();
-      expect(JSON.parse(saved!)).toEqual({ fileInfo });
+      expect(JSON.parse(saved!)).toEqual({ type: 'onedrive', fileInfo });
     });
   });
 
@@ -109,12 +118,13 @@ describe('StorageFactory', () => {
   describe('clearCache', () => {
     it('should clear cached provider instances', async () => {
       const mockFileHandle = { name: 'test.json' } as FileSystemFileHandle;
-      await StorageFactory.replaceProvider(StorageProviderType.LOCAL, {
+      await StorageFactory.replaceProvider({
+        type: StorageProviderType.LOCAL,
         fileHandle: mockFileHandle,
       });
 
       const provider1 = StorageFactory.getCurrentProvider();
-      StorageFactory.clearCache();
+      await StorageFactory.clearCache();
 
       // After clearing cache, should throw when trying to get provider without cached instance
       expect(() => StorageFactory.getCurrentProvider()).toThrow();

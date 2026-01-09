@@ -17,11 +17,11 @@ export enum StorageProviderType {
  * Provider configuration for initialization
  */
 export interface ProviderConfig {
+  type: StorageProviderType; // Provider type
   fileHandle?: FileSystemFileHandle; // For Local
   fileInfo?: SelectedFileInfo; // For OneDrive
 }
 
-const STORAGE_PROVIDER_KEY = 'moneyTree.storageProvider';
 const STORAGE_CONFIG_KEY = 'moneyTree.storageProviderConfig';
 const DB_NAME = 'MoneyTreeDB';
 const DB_VERSION = 1;
@@ -34,8 +34,8 @@ const FILE_HANDLE_KEY = 'cachedFileHandle';
  * Handles caching for both localStorage (OneDrive fileInfo) and IndexedDB (Local fileHandle)
  */
 export class StorageFactory {
-  private static providers: Map<StorageProviderType, IStorageProvider> = new Map();
-  private static currentProviderType: StorageProviderType = StorageFactory.loadProviderType();
+  private static provider: IStorageProvider | null = null;
+  private static currentProviderType: StorageProviderType | null = null;
   private static oneDriveService: OneDriveService | null = null;
 
   /**
@@ -102,27 +102,6 @@ export class StorageFactory {
   }
 
   /**
-   * Clear file handle from IndexedDB (for Local provider)
-   */
-  static async clearFileHandleCache(): Promise<void> {
-    try {
-      const db = await this.getDB();
-      const transaction = db.transaction(STORE_NAME, 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      store.delete(FILE_HANDLE_KEY);
-
-      await new Promise<void>((resolve, reject) => {
-        transaction.oncomplete = () => resolve();
-        transaction.onerror = () => reject(transaction.error);
-      });
-
-      db.close();
-    } catch (error) {
-      console.warn('Failed to clear cached file handle from IndexedDB:', error);
-    }
-  }
-
-  /**
    * Get OneDrive service singleton
    * Used for authentication and file browsing
    */
@@ -140,12 +119,13 @@ export class StorageFactory {
    */
   static async initializeProvider(): Promise<boolean> {
     try {
-      const config = await this.loadProviderConfig(this.currentProviderType);
+      const config = await this.loadProviderConfig();
       if (!config) {
         return false;
       }
-      const provider = await this.createProvider(this.currentProviderType, config);
-      this.providers.set(this.currentProviderType, provider);
+
+      this.provider = await this.createProvider(config);
+      this.currentProviderType = config.type;
       return true;
     } catch (error) {
       console.warn('Failed to initialize provider from storage:', error);
@@ -156,94 +136,66 @@ export class StorageFactory {
   /**
    * Replace current provider with new configuration
    * Creates a new provider instance and caches it immediately
+   * Automatically clears the old provider's configuration
    */
-  static async replaceProvider(type: StorageProviderType, config?: ProviderConfig): Promise<void> {
-    // Save new provider type
-    this.currentProviderType = type;
-    this.saveProviderType(type);
-
-    await this.saveProviderConfig(type, config);
-    const provider = await this.createProvider(this.currentProviderType, config);
-    this.providers.set(this.currentProviderType, provider);
-  }
-
-  /**
-   * Load saved provider type from localStorage
-   */
-  private static loadProviderType(): StorageProviderType {
-    const saved = localStorage.getItem(STORAGE_PROVIDER_KEY);
-    if (saved && Object.values(StorageProviderType).includes(saved as StorageProviderType)) {
-      return saved as StorageProviderType;
+  static async replaceProvider(config: ProviderConfig): Promise<void> {
+    // Clear old provider's configuration if switching providers
+    if (this.currentProviderType && this.currentProviderType !== config.type) {
+      localStorage.removeItem(STORAGE_CONFIG_KEY);
     }
-    return StorageProviderType.LOCAL;
-  }
 
-  /**
-   * Save provider type to localStorage
-   */
-  private static saveProviderType(type: StorageProviderType): void {
-    localStorage.setItem(STORAGE_PROVIDER_KEY, type);
+    await this.saveProviderConfig(config);
+    this.provider = await this.createProvider(config);
+    this.currentProviderType = config.type;
   }
 
   /**
    * Load provider configuration from storage
-   * Handles provider-specific storage (IndexedDB for Local, localStorage for OneDrive)
+   * Loads from localStorage and augments with IndexedDB fileHandle if Local provider
    */
-  private static async loadProviderConfig(
-    type: StorageProviderType
-  ): Promise<ProviderConfig | undefined> {
-    switch (type) {
-      case StorageProviderType.LOCAL: {
+  static async loadProviderConfig(): Promise<ProviderConfig | undefined> {
+    // Load config from localStorage
+    const saved = localStorage.getItem(STORAGE_CONFIG_KEY);
+    if (!saved) {
+      return undefined;
+    }
+
+    try {
+      const config: ProviderConfig = JSON.parse(saved);
+
+      // If Local provider, augment with fileHandle from IndexedDB
+      if (config.type === StorageProviderType.LOCAL) {
         const fileHandle = await this.loadFileHandleFromCache();
-        return fileHandle ? { fileHandle } : undefined;
-      }
-      case StorageProviderType.ONEDRIVE: {
-        const saved = localStorage.getItem(STORAGE_CONFIG_KEY);
-        if (saved) {
-          try {
-            return JSON.parse(saved);
-          } catch (error) {
-            console.warn('Failed to parse stored provider config:', error);
-          }
+        if (fileHandle) {
+          config.fileHandle = fileHandle;
         }
-        return undefined;
       }
-      default:
-        return undefined;
+
+      return config;
+    } catch (error) {
+      console.warn('Failed to parse stored provider config:', error);
+      return undefined;
     }
   }
 
   /**
    * Save provider configuration to storage
-   * Handles provider-specific storage (IndexedDB for Local, localStorage for OneDrive)
+   * Stores type in localStorage, and fileHandle in IndexedDB for Local provider
    */
-  private static async saveProviderConfig(
-    type: StorageProviderType,
-    config?: ProviderConfig
-  ): Promise<void> {
-    switch (type) {
-      case StorageProviderType.LOCAL: {
-        if (config?.fileHandle) {
-          await this.saveFileHandleToCache(config.fileHandle);
-        } else {
-          await this.clearFileHandleCache();
-        }
-        break;
-      }
-      case StorageProviderType.ONEDRIVE: {
-        if (config?.fileInfo) {
-          const serializableConfig: ProviderConfig = { fileInfo: config.fileInfo };
-          localStorage.setItem(STORAGE_CONFIG_KEY, JSON.stringify(serializableConfig));
-        } else {
-          localStorage.removeItem(STORAGE_CONFIG_KEY);
-        }
-        break;
-      }
-      default:
-        // For other providers, clear config
-        localStorage.removeItem(STORAGE_CONFIG_KEY);
-        break;
+  private static async saveProviderConfig(config: ProviderConfig): Promise<void> {
+    // For Local provider, save fileHandle to IndexedDB separately
+    if (config.type === StorageProviderType.LOCAL && config.fileHandle) {
+      await this.saveFileHandleToCache(config.fileHandle);
     }
+
+    // Save config to localStorage (without fileHandle for Local)
+    const serializableConfig = {
+      type: config.type,
+      ...(config.fileInfo && { fileInfo: config.fileInfo }),
+      // Don't store fileHandle in localStorage for Local provider
+    };
+
+    localStorage.setItem(STORAGE_CONFIG_KEY, JSON.stringify(serializableConfig));
   }
 
   /**
@@ -251,49 +203,33 @@ export class StorageFactory {
    * Throws an error if no provider is configured
    */
   static getCurrentProvider(): IStorageProvider {
-    const provider = this.providers.get(this.currentProviderType);
-    if (!provider) {
+    if (!this.provider) {
       throw new Error('No storage provider configured. Please select a file first.');
     }
-    return provider;
-  }
-
-  /**
-   * Set the current storage provider type
-   */
-  static setProviderType(type: StorageProviderType): void {
-    this.currentProviderType = type;
-    this.saveProviderType(type);
+    return this.provider;
   }
 
   /**
    * Get the current provider type
    */
-  static getProviderType(): StorageProviderType {
+  static getProviderType(): StorageProviderType | null {
     return this.currentProviderType;
   }
 
   /**
-   * Create a new storage provider instance
-   * If config is provided, uses it directly; otherwise loads from storage
+   * Create a new storage provider instance from config
    */
-  private static async createProvider(
-    type: StorageProviderType,
-    config?: ProviderConfig
-  ): Promise<IStorageProvider> {
-    // Load config from storage if not provided
-    const effectiveConfig = config || (await this.loadProviderConfig(type));
-
-    switch (type) {
+  private static async createProvider(config: ProviderConfig): Promise<IStorageProvider> {
+    switch (config.type) {
       case StorageProviderType.LOCAL: {
-        const handle = effectiveConfig?.fileHandle;
+        const handle = config.fileHandle;
         if (!handle) {
           throw new Error('No cached file handle found. Please select a file first.');
         }
         return new LocalStorageProvider(handle);
       }
       case StorageProviderType.ONEDRIVE: {
-        const fileInfo = effectiveConfig?.fileInfo;
+        const fileInfo = config.fileInfo;
         if (!fileInfo) {
           throw new Error('No cached file info found. Please select a file first.');
         }
@@ -304,14 +240,25 @@ export class StorageFactory {
       case StorageProviderType.DROPBOX:
         throw new Error('Dropbox storage provider not yet implemented');
       default:
-        throw new Error(`Unknown storage provider type: ${type}`);
+        throw new Error(`Unknown storage provider type: ${config.type}`);
     }
   }
 
   /**
-   * Clear cached provider instances
+   * Clear cached provider instances and all provider configurations
+   * Used when disconnecting from all providers
    */
-  static clearCache(): void {
-    this.providers.clear();
+  static async clearCache(): Promise<void> {
+    // Disconnect OneDrive service if active
+    if (this.currentProviderType === StorageProviderType.ONEDRIVE && this.oneDriveService) {
+      this.oneDriveService.disconnect();
+      this.oneDriveService = null;
+    }
+
+    // Clear provider instance
+    this.provider = null;
+    this.currentProviderType = null;
+
+    localStorage.removeItem(STORAGE_CONFIG_KEY);
   }
 }

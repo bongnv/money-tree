@@ -5,7 +5,7 @@ import { useTransactionStore } from '../stores/useTransactionStore';
 import { useAssetStore } from '../stores/useAssetStore';
 import { useBudgetStore } from '../stores/useBudgetStore';
 import { useExchangeRateStore } from '../stores/useExchangeRateStore';
-import { StorageFactory, StorageProviderType } from './storage/StorageFactory';
+import { StorageFactory } from './storage/StorageFactory';
 import type { DataFile } from '../types/models';
 import { calculateDataFileHash } from '../utils/hash.utils';
 import { performThreeWayMerge, Conflict, MergeResult } from './merge.service';
@@ -409,22 +409,8 @@ class SyncService {
    * Clears all stores and cached data, user will need to reconnect on next visit
    */
   async resetToWelcome(): Promise<void> {
-    // Disconnect OneDrive service if active
-    const providerType = StorageFactory.getProviderType();
-    if (providerType === StorageProviderType.ONEDRIVE) {
-      const service = StorageFactory.getOneDriveService();
-      service.disconnect();
-    }
-
-    // Clear file handle cache from IndexedDB (managed by StorageFactory)
-    await StorageFactory.clearFileHandleCache();
-
-    // Clear StorageFactory cache and reset to default provider
-    StorageFactory.clearCache();
-    StorageFactory.setProviderType(StorageProviderType.LOCAL);
-
-    // Clear provider config from localStorage
-    localStorage.removeItem('moneyTree.storageProviderConfig');
+    // Clear all provider caches and disconnect services
+    await StorageFactory.clearCache();
 
     // Clear all domain stores
     useAccountStore.getState().setAccounts([]);

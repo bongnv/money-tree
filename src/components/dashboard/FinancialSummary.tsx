@@ -6,7 +6,10 @@ import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useAssetStore } from '../../stores/useAssetStore';
 import { useAppStore } from '../../stores/useAppStore';
 import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
+import { useCategoryStore } from '../../stores/useCategoryStore';
+import { useBudgetStore } from '../../stores/useBudgetStore';
 import { calculationService } from '../../services/calculation.service';
+import { reportService } from '../../services/report.service';
 import type { PeriodOption } from '../common/PeriodSelector';
 
 export interface FinancialSummaryProps {
@@ -25,6 +28,9 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
   const accounts = useAccountStore((state) => state.accounts);
   const transactions = useTransactionStore((state) => state.transactions);
   const manualAssets = useAssetStore((state) => state.manualAssets);
+  const budgets = useBudgetStore((state) => state.budgets);
+  const categories = useCategoryStore((state) => state.categories);
+  const transactionTypes = useCategoryStore((state) => state.transactionTypes);
   const baseCurrency = useAppStore((state) => state.baseCurrency);
   const getRateForMonth = useExchangeRateStore((state) => state.getRateForMonth);
   const fetchRateIfMissing = useExchangeRateStore((state) => state.fetchRateIfMissing);
@@ -103,21 +109,53 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
     }
   }, [accounts, transactions, manualAssets, baseCurrency, getRateForMonth, currentMonth]);
 
-  // Calculate cash flow for current period
+  // Calculate cash flow for current period with currency conversion
   const periodTransactions = transactions.filter(
     (t) => t.date >= period.startDate && t.date <= period.endDate
   );
-  const income = calculationService.calculateTotalIncome(periodTransactions);
-  const expenses = calculationService.calculateTotalExpenses(periodTransactions);
-  const cashFlow = income - expenses;
+  const cashFlowData = reportService.calculateCashFlow(
+    periodTransactions,
+    transactionTypes,
+    categories,
+    period.startDate,
+    period.endDate,
+    accounts,
+    baseCurrency,
+    getRateForMonth
+  );
+  const cashFlow = cashFlowData.netCashFlow;
 
   // Calculate savings rate
-  const savingsRate = calculationService.calculateSavingsRate(income, expenses);
+  const savingsRate = calculationService.calculateSavingsRate(
+    cashFlowData.totalIncome,
+    cashFlowData.totalExpenses
+  );
+
+  // Calculate budget health
+  const budgetPerformance = reportService.calculateBudgetPerformance(
+    budgets,
+    periodTransactions,
+    transactionTypes,
+    categories,
+    period.startDate,
+    period.endDate,
+    accounts,
+    baseCurrency,
+    getRateForMonth
+  );
+  const budgetHealth = budgetPerformance.overallHealthScore;
 
   // Determine savings rate color
   const getSavingsRateColor = (): 'success' | 'warning' | 'error' => {
     if (savingsRate >= 20) return 'success';
     if (savingsRate >= 10) return 'warning';
+    return 'error';
+  };
+
+  // Determine budget health color
+  const getBudgetHealthColor = (): 'success' | 'warning' | 'error' => {
+    if (budgetHealth >= 80) return 'success';
+    if (budgetHealth >= 60) return 'warning';
     return 'error';
   };
 
@@ -129,21 +167,28 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
         </Alert>
       )}
       <Grid container spacing={3}>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6} md={3}>
           <FinancialSummaryCard title="Net Worth" value={formatAmount(netWorth)} />
         </Grid>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6} md={3}>
           <FinancialSummaryCard
             title="Cash Flow"
             value={formatAmount(cashFlow)}
             color={cashFlow >= 0 ? 'success' : 'error'}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6} md={3}>
           <FinancialSummaryCard
             title="Savings Rate"
             value={`${savingsRate.toFixed(1)}%`}
             color={getSavingsRateColor()}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <FinancialSummaryCard
+            title="Budget Health"
+            value={`${budgetHealth.toFixed(0)}%`}
+            color={getBudgetHealthColor()}
           />
         </Grid>
       </Grid>

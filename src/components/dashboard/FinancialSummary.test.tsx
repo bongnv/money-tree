@@ -5,7 +5,9 @@ import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useAssetStore } from '../../stores/useAssetStore';
 import { useAppStore } from '../../stores/useAppStore';
 import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
-import { AccountType } from '../../types/enums';
+import { useCategoryStore } from '../../stores/useCategoryStore';
+import { useBudgetStore } from '../../stores/useBudgetStore';
+import { AccountType, Group, BudgetPeriod } from '../../types/enums';
 import type { PeriodOption } from '../common/PeriodSelector';
 
 // Mock stores
@@ -14,6 +16,8 @@ jest.mock('../../stores/useTransactionStore');
 jest.mock('../../stores/useAssetStore');
 jest.mock('../../stores/useAppStore');
 jest.mock('../../stores/useExchangeRateStore');
+jest.mock('../../stores/useCategoryStore');
+jest.mock('../../stores/useBudgetStore');
 
 const mockUseAccountStore = useAccountStore as jest.MockedFunction<typeof useAccountStore>;
 const mockUseTransactionStore = useTransactionStore as jest.MockedFunction<
@@ -24,6 +28,8 @@ const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>;
 const mockUseExchangeRateStore = useExchangeRateStore as jest.MockedFunction<
   typeof useExchangeRateStore
 >;
+const mockUseCategoryStore = useCategoryStore as jest.MockedFunction<typeof useCategoryStore>;
+const mockUseBudgetStore = useBudgetStore as jest.MockedFunction<typeof useBudgetStore>;
 
 describe('FinancialSummary', () => {
   const mockPeriod: PeriodOption = {
@@ -105,16 +111,88 @@ describe('FinancialSummary', () => {
     mockUseExchangeRateStore.mockImplementation((selector: any) =>
       selector({
         getRateForMonth: jest.fn(() => 1),
+        fetchRateIfMissing: jest.fn(() => Promise.resolve(1)),
+      })
+    );
+
+    mockUseCategoryStore.mockImplementation((selector: any) =>
+      selector({
+        categories: [
+          {
+            id: 'cat-income',
+            name: 'Income',
+            isActive: true,
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+          {
+            id: 'cat-expense',
+            name: 'Expense',
+            isActive: true,
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+        transactionTypes: [
+          {
+            id: 'type-income',
+            name: 'Salary',
+            group: Group.INCOME,
+            categoryId: 'cat-income',
+            isActive: true,
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+          {
+            id: 'type-expense',
+            name: 'Groceries',
+            group: Group.EXPENSE,
+            categoryId: 'cat-expense',
+            isActive: true,
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+      })
+    );
+
+    mockUseBudgetStore.mockImplementation((selector: any) =>
+      selector({
+        budgets: [
+          {
+            id: 'budget-1',
+            transactionTypeId: 'type-income',
+            amount: 5000,
+            period: BudgetPeriod.MONTHLY,
+            currencyCode: 'USD',
+            startDate: '2026-01-01',
+            endDate: '2026-12-31',
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+          {
+            id: 'budget-2',
+            transactionTypeId: 'type-expense',
+            amount: 500,
+            period: BudgetPeriod.MONTHLY,
+            currencyCode: 'USD',
+            startDate: '2026-01-01',
+            endDate: '2026-12-31',
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
       })
     );
   });
 
-  it('renders all three financial summary cards', () => {
+  it('renders all four financial summary cards', () => {
     render(<FinancialSummary period={mockPeriod} />);
 
     expect(screen.getByText('Net Worth')).toBeInTheDocument();
     expect(screen.getByText('Cash Flow')).toBeInTheDocument();
     expect(screen.getByText('Savings Rate')).toBeInTheDocument();
+    expect(screen.getByText('Budget Health')).toBeInTheDocument();
   });
 
   it('calculates and displays net worth correctly', () => {
@@ -236,12 +314,14 @@ describe('FinancialSummary', () => {
     mockUseAccountStore.mockImplementation((selector: any) => selector({ accounts: [] }));
     mockUseTransactionStore.mockImplementation((selector: any) => selector({ transactions: [] }));
     mockUseAssetStore.mockImplementation((selector: any) => selector({ manualAssets: [] }));
+    mockUseBudgetStore.mockImplementation((selector: any) => selector({ budgets: [] }));
 
     render(<FinancialSummary period={mockPeriod} />);
 
-    // Net worth should be $0.00, Cash Flow should be $0.00
+    // Net worth, Cash Flow, and Budget Health should be $0.00 or 0%
     const amounts = screen.getAllByText('$0.00');
     expect(amounts).toHaveLength(2); // Net Worth and Cash Flow
     expect(screen.getByText('0.0%')).toBeInTheDocument(); // Savings rate
+    expect(screen.getByText('100%')).toBeInTheDocument(); // Budget health (100 when no budgets)
   });
 });

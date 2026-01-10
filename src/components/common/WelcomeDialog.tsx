@@ -12,6 +12,8 @@ import {
   CardActions,
   Alert,
   CircularProgress,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   FolderOpen as FolderOpenIcon,
@@ -39,6 +41,8 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
   onOneDriveFileSelected,
   onListOneDriveFolders,
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [isConnecting, setIsConnecting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [showFilePicker, setShowFilePicker] = useState(false);
@@ -96,7 +100,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
 
   return (
     <>
-      <Dialog open={open && !showFilePicker} maxWidth="md" fullWidth>
+      <Dialog open={open && !showFilePicker} maxWidth="md" fullWidth fullScreen={isMobile}>
         <DialogTitle>
           <Typography variant="h5" component="div" fontWeight="bold">
             Welcome to Money Tree

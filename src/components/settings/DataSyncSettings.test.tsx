@@ -97,10 +97,7 @@ describe('DataSyncSettings', () => {
       expect(screen.getByText(/Disconnect from Current File/i)).toBeInTheDocument();
     });
 
-    it('should call resetToWelcome, clear localStorage, and navigate after confirming', async () => {
-      // Mock localStorage
-      const removeItemSpy = jest.spyOn(Storage.prototype, 'removeItem');
-
+    it('should call resetToWelcome and navigate after confirming', async () => {
       renderComponent();
 
       const disconnectButton = screen.getByRole('button', { name: /disconnect/i });
@@ -111,11 +108,8 @@ describe('DataSyncSettings', () => {
 
       await waitFor(() => {
         expect(syncService.resetToWelcome).toHaveBeenCalled();
-        expect(removeItemSpy).toHaveBeenCalledWith('moneyTree.welcomeDismissed');
         expect(mockNavigate).toHaveBeenCalledWith('/');
       });
-
-      removeItemSpy.mockRestore();
     });
 
     it('should disable disconnect button when no file is loaded', () => {

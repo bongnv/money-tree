@@ -108,9 +108,8 @@ export const DataSyncSettings: React.FC = () => {
   const handleDisconnect = async () => {
     setDisconnectDialogOpen(false);
 
-    // Reset all data and clear welcome dismissed flag
+    // Reset all data
     await syncService.resetToWelcome();
-    localStorage.removeItem('moneyTree.welcomeDismissed');
 
     // Redirect to dashboard - user will see Welcome dialog
     navigate('/');

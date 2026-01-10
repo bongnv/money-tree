@@ -158,25 +158,32 @@ export class StorageFactory {
    * For OneDrive, checks if authenticated but does NOT show dialogs
    */
   private static async loadCachedProvider(): Promise<boolean> {
-    const config = await this.loadProviderConfig();
-    if (!config) {
-      return false;
-    }
-
-    // For OneDrive, check authentication BEFORE creating provider
-    if (config.type === StorageProviderType.ONEDRIVE) {
-      const service = this.getOneDriveService();
-      const isAuth = await service.isAuthenticated();
-
-      if (!isAuth) {
+    try {
+      const config = await this.loadProviderConfig();
+      if (!config) {
         return false;
       }
+
+      // For OneDrive, check authentication BEFORE creating provider
+      if (config.type === StorageProviderType.ONEDRIVE) {
+        const service = this.getOneDriveService();
+        const isAuth = await service.isAuthenticated();
+
+        if (!isAuth) {
+          return false;
+        }
+      }
+
+      // Authentication confirmed (or not needed for Local), create provider
+      this.provider = await this.createProvider(config);
+
+      return true;
+    } catch (error) {
+      console.warn('Failed to load cached provider:', error);
+      // Clear invalid cache
+      await this.resetProvider();
+      return false;
     }
-
-    // Authentication confirmed (or not needed for Local), create provider
-    this.provider = await this.createProvider(config);
-
-    return true;
   }
 
   /**

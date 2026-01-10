@@ -4,18 +4,29 @@ import { BudgetOverview } from './BudgetOverview';
 import { useBudgetStore } from '../../stores/useBudgetStore';
 import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
+import { useAccountStore } from '../../stores/useAccountStore';
+import { useAppStore } from '../../stores/useAppStore';
+import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
 import { Group } from '../../types/enums';
 import type { PeriodOption } from '../common/PeriodSelector';
 
 jest.mock('../../stores/useBudgetStore');
 jest.mock('../../stores/useTransactionStore');
 jest.mock('../../stores/useCategoryStore');
+jest.mock('../../stores/useAccountStore');
+jest.mock('../../stores/useAppStore');
+jest.mock('../../stores/useExchangeRateStore');
 
 const mockUseBudgetStore = useBudgetStore as jest.MockedFunction<typeof useBudgetStore>;
 const mockUseTransactionStore = useTransactionStore as jest.MockedFunction<
   typeof useTransactionStore
 >;
 const mockUseCategoryStore = useCategoryStore as jest.MockedFunction<typeof useCategoryStore>;
+const mockUseAccountStore = useAccountStore as jest.MockedFunction<typeof useAccountStore>;
+const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>;
+const mockUseExchangeRateStore = useExchangeRateStore as jest.MockedFunction<
+  typeof useExchangeRateStore
+>;
 
 describe('BudgetOverview', () => {
   const mockPeriod: PeriodOption = {
@@ -26,6 +37,13 @@ describe('BudgetOverview', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Setup default mocks for new stores
+    mockUseAccountStore.mockImplementation((selector: any) => selector({ accounts: [] }));
+    mockUseAppStore.mockImplementation((selector: any) => selector({ baseCurrency: null }));
+    mockUseExchangeRateStore.mockImplementation((selector: any) =>
+      selector({ getRateForMonth: () => null })
+    );
   });
 
   it('shows empty state when no budgets exist', () => {

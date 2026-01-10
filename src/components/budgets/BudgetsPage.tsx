@@ -14,6 +14,9 @@ import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/ico
 import { useBudgetStore } from '../../stores/useBudgetStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import { useTransactionStore } from '../../stores/useTransactionStore';
+import { useAccountStore } from '../../stores/useAccountStore';
+import { useAppStore } from '../../stores/useAppStore';
+import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
 import { BudgetDialog } from './BudgetDialog';
 import { PeriodSelector } from '../common/PeriodSelector';
 import { CategoryFilter } from '../common/CategoryFilter';
@@ -27,6 +30,9 @@ export const BudgetsPage: React.FC = () => {
   const { budgets, addBudget, updateBudget, deleteBudget } = useBudgetStore();
   const { transactionTypes, getCategoryById, categories } = useCategoryStore();
   const { transactions } = useTransactionStore();
+  const { accounts } = useAccountStore();
+  const baseCurrency = useAppStore((state) => state.baseCurrency);
+  const getRateForMonth = useExchangeRateStore((state) => state.getRateForMonth);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | undefined>(undefined);
@@ -136,19 +142,49 @@ export const BudgetsPage: React.FC = () => {
         if (!category) return acc;
 
         // Prorate budget for the selected period using day-based calculation
-        const proratedBudget = calculationService.prorateBudgetForPeriod(
+        let proratedBudget = calculationService.prorateBudgetForPeriod(
           budget,
           selectedPeriod.startDate,
           selectedPeriod.endDate
         );
 
-        // Calculate actual amount for selected period
-        const actualAmount = calculationService.calculateActualAmount(
-          budget.transactionTypeId,
-          transactions,
-          selectedPeriod.startDate,
-          selectedPeriod.endDate
+        // Convert budget to base currency if needed
+        if (baseCurrency && getRateForMonth && budget.currencyCode !== baseCurrency) {
+          const month = selectedPeriod.startDate.slice(0, 7);
+          const rate = getRateForMonth(month, budget.currencyCode, baseCurrency);
+          if (rate !== null) {
+            proratedBudget = proratedBudget * rate;
+          }
+        }
+
+        // Calculate actual amount with currency conversion
+        let actualAmount = 0;
+        const relevantTransactions = transactions.filter(
+          (t) =>
+            t.transactionTypeId === budget.transactionTypeId &&
+            t.date >= selectedPeriod.startDate &&
+            t.date <= selectedPeriod.endDate
         );
+
+        relevantTransactions.forEach((transaction) => {
+          let convertedAmount = transaction.amount;
+
+          // Convert transaction amount to base currency if needed
+          if (baseCurrency && getRateForMonth) {
+            const accountId = transaction.fromAccountId || transaction.toAccountId;
+            const account = accounts.find((a) => a.id === accountId);
+
+            if (account && account.currencyCode !== baseCurrency) {
+              const month = transaction.date.slice(0, 7);
+              const rate = getRateForMonth(month, account.currencyCode, baseCurrency);
+              if (rate !== null) {
+                convertedAmount = transaction.amount * rate;
+              }
+            }
+          }
+
+          actualAmount += convertedAmount;
+        });
 
         const percentage = proratedBudget > 0 ? (actualAmount / proratedBudget) * 100 : 0;
 

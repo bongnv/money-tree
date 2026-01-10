@@ -38,9 +38,11 @@ export const msalConfig = {
     redirectUri: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
   },
   cache: {
-    // Safari ITP blocks localStorage writes during popup flow, use sessionStorage instead
+    // Safari: sessionStorage (survives reload, cleared on tab close - ITP friendly)
+    // Others: localStorage (persists across sessions)
     cacheLocation: isSafari ? 'sessionStorage' : 'localStorage',
-    storeAuthStateInCookie: true, // Required for Safari and browsers with strict privacy settings
+    // No cookies - prevents interaction_in_progress errors from stale cookie state
+    storeAuthStateInCookie: false,
   },
 };
 

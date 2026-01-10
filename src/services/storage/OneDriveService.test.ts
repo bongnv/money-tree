@@ -17,12 +17,4 @@ describe('OneDriveService', () => {
       expect(service).toBeInstanceOf(OneDriveService);
     });
   });
-
-  describe('disconnect', () => {
-    it('should clear authentication state', () => {
-      service.disconnect();
-      // Just verify it doesn't throw - internal state is private
-      expect(service).toBeInstanceOf(OneDriveService);
-    });
-  });
 });

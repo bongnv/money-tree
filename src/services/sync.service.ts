@@ -301,22 +301,15 @@ class SyncService {
    * Load data file for a specific year
    */
   async loadDataFile(): Promise<void> {
-    console.log('[SyncService] loadDataFile: Starting...');
     const state = useAppStore.getState();
     state.setLoading(true);
     state.setError(null);
 
     try {
-      console.log('[SyncService] loadDataFile: Getting storage provider...');
       const storage = StorageFactory.getCurrentProvider();
-      console.log('[SyncService] loadDataFile: Storage provider:', storage?.getName());
-
-      console.log('[SyncService] loadDataFile: Calling storage.loadDataFile()...');
       const dataFile = await storage.loadDataFile();
-      console.log('[SyncService] loadDataFile: Data loaded, dataFile exists:', !!dataFile);
 
       if (dataFile) {
-        console.log('[SyncService] loadDataFile: Processing data file...');
         // Store archived years in app state
         state.setArchivedYears(dataFile.archivedYears || []);
 
@@ -324,14 +317,11 @@ class SyncService {
         state.setLastBackupDate(dataFile.lastBackupDate || null);
 
         // Calculate and store file hash for conflict detection
-        console.log('[SyncService] loadDataFile: Calculating file hash...');
         const fileHash = await calculateDataFileHash(dataFile);
         const loadedAt = new Date().toISOString();
-        console.log('[SyncService] loadDataFile: File hash calculated, storing metadata...');
         state.setFileMetadata(fileHash, loadedAt, structuredClone(dataFile));
 
         // Distribute data to domain stores
-        console.log('[SyncService] loadDataFile: Distributing data to stores...');
         useAccountStore.getState().setAccounts(dataFile.accounts || []);
         useCategoryStore.getState().setCategories(dataFile.categories || []);
         useCategoryStore.getState().setTransactionTypes(dataFile.transactionTypes || []);
@@ -344,21 +334,16 @@ class SyncService {
         state.setBaseCurrency(dataFile.baseCurrency);
 
         // Get the actual filename from storage provider
-        console.log('[SyncService] loadDataFile: Getting filename from provider...');
         const fileName = storage.getFileName();
-        console.log('[SyncService] loadDataFile: Filename:', fileName);
         state.setFileName(fileName);
         state.markAsSaved();
-        console.log('[SyncService] loadDataFile: Data processing complete');
       }
     } catch (error) {
-      console.log('[SyncService] loadDataFile: Error caught:', error);
       const message = error instanceof Error ? error.message : 'Failed to load file';
       state.setError(message);
       throw error;
     } finally {
       state.setLoading(false);
-      console.log('[SyncService] loadDataFile: Finished');
     }
   }
 
@@ -368,12 +353,8 @@ class SyncService {
    * NOTE: Authentication is handled by App.tsx at startup via loadCachedProvider
    */
   async autoLoad(): Promise<boolean> {
-    console.log('[SyncService] autoLoad: Starting...');
-
     try {
-      console.log('[SyncService] autoLoad: Calling loadDataFile...');
       await this.loadDataFile();
-      console.log('[SyncService] autoLoad: loadDataFile completed successfully');
       return true;
     } catch (error) {
       console.error('[SyncService] autoLoad: Failed to load data file:', error);
@@ -387,7 +368,7 @@ class SyncService {
    */
   async resetToWelcome(): Promise<void> {
     // Clear all provider caches and disconnect services
-    await StorageFactory.clearCache();
+    await StorageFactory.resetProvider();
 
     // Clear all domain stores
     useAccountStore.getState().setAccounts([]);

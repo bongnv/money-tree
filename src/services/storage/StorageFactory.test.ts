@@ -15,7 +15,7 @@ jest.mock('./OneDriveService');
 describe('StorageFactory', () => {
   beforeEach(() => {
     // Reset factory state before each test
-    StorageFactory.clearCache();
+    StorageFactory.resetProvider();
     // Clear localStorage
     localStorage.clear();
     // Clear mock
@@ -117,7 +117,7 @@ describe('StorageFactory', () => {
     });
   });
 
-  describe('clearCache', () => {
+  describe('resetProvider', () => {
     it('should clear cached provider instances', async () => {
       const mockFileHandle = { name: 'test.json' } as FileSystemFileHandle;
       await StorageFactory.replaceProvider({
@@ -126,7 +126,7 @@ describe('StorageFactory', () => {
       });
 
       const provider1 = StorageFactory.getCurrentProvider();
-      await StorageFactory.clearCache();
+      await StorageFactory.resetProvider();
 
       // After clearing cache, should throw when trying to get provider without cached instance
       expect(() => StorageFactory.getCurrentProvider()).toThrow();

@@ -67,8 +67,10 @@ export class StorageFactory {
     showReconnectDialog: (name: string) => Promise<'reconnect' | 'dismiss'>
   ): Promise<boolean> {
     const action = await showReconnectDialog('OneDrive');
+
     if (action === 'dismiss') {
-      await this.clearCache();
+      // No need to clear cache - MSAL will manage interaction status in localStorage
+      // Config remains cached for future use
       return false;
     }
 
@@ -156,27 +158,25 @@ export class StorageFactory {
    * For OneDrive, checks if authenticated but does NOT show dialogs
    */
   private static async loadCachedProvider(): Promise<boolean> {
-    try {
-      const config = await this.loadProviderConfig();
-      if (!config) {
-        return false;
-      }
-
-      // For OneDrive, check authentication BEFORE creating provider
-      if (config.type === StorageProviderType.ONEDRIVE) {
-        const service = this.getOneDriveService();
-        if (!(await service.isAuthenticated())) {
-          return false;
-        }
-      }
-
-      // Authentication confirmed (or not needed for Local), create provider
-      this.provider = await this.createProvider(config);
-
-      return true;
-    } catch (error) {
+    const config = await this.loadProviderConfig();
+    if (!config) {
       return false;
     }
+
+    // For OneDrive, check authentication BEFORE creating provider
+    if (config.type === StorageProviderType.ONEDRIVE) {
+      const service = this.getOneDriveService();
+      const isAuth = await service.isAuthenticated();
+
+      if (!isAuth) {
+        return false;
+      }
+    }
+
+    // Authentication confirmed (or not needed for Local), create provider
+    this.provider = await this.createProvider(config);
+
+    return true;
   }
 
   /**
@@ -297,19 +297,18 @@ export class StorageFactory {
   }
 
   /**
-   * Clear cached provider instances and all provider configurations
-   * Used when disconnecting from all providers
+   * Reset provider instances and configuration
+   * Used for "reset to welcome" feature - clears provider and config
+   * MSAL manages its own cache automatically
    */
-  static async clearCache(): Promise<void> {
-    // Disconnect OneDrive service if active
-    if (this.provider?.getName() === 'OneDrive' && this.oneDriveService) {
-      this.oneDriveService.disconnect();
-      this.oneDriveService = null;
-    }
-
+  static async resetProvider(): Promise<void> {
     // Clear provider instance
     this.provider = null;
 
+    // Clear OneDrive service instance - will be recreated on next use
+    this.oneDriveService = null;
+
+    // Remove provider config - MSAL will handle its own cache cleanup
     localStorage.removeItem(STORAGE_CONFIG_KEY);
   }
 }

@@ -55,18 +55,13 @@ export class OneDriveService {
   private async initialize(): Promise<void> {
     if (!this.msalInstance) return;
 
-    try {
-      await this.msalInstance.initialize();
+    await this.msalInstance.initialize();
 
-      // Check for cached account (no popup)
-      const account = this.msalInstance.getActiveAccount() || this.msalInstance.getAllAccounts()[0];
-      if (account) {
-        this.account = account;
-        this.msalInstance.setActiveAccount(account);
-      }
-    } catch (error) {
-      console.error('Failed to initialize OneDrive service:', error);
-      throw error;
+    // Check for cached account (no popup)
+    const account = this.msalInstance.getActiveAccount() || this.msalInstance.getAllAccounts()[0];
+    if (account) {
+      this.account = account;
+      this.msalInstance.setActiveAccount(account);
     }
   }
 
@@ -96,18 +91,9 @@ export class OneDriveService {
       throw new Error(errorMessages.configError);
     }
 
-    // Trigger popup authentication (requires user interaction)
     const response = await this.msalInstance.loginPopup(loginRequest);
     this.account = response.account;
     this.msalInstance.setActiveAccount(response.account);
-  }
-
-  /**
-   * Disconnect from OneDrive (clear app access without global sign out)
-   */
-  disconnect(): void {
-    this.account = null;
-    this.graphClient = null;
   }
 
   /**

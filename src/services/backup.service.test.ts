@@ -18,14 +18,10 @@ jest.mock('fflate', () => ({
 describe('BackupService', () => {
   const mockDataFile: DataFile = {
     version: '1.0.0',
-    years: {
-      '2024': {
-        transactions: [],
-        budgets: [],
-        manualAssets: [],
-        exchangeRates: [],
-      },
-    },
+    transactions: [],
+    budgets: [],
+    manualAssets: [],
+    exchangeRates: [],
     accounts: [],
     categories: [],
     transactionTypes: [],

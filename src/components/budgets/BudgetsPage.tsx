@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -116,30 +116,64 @@ export const BudgetsPage: React.FC = () => {
   };
 
   // Group budget items by category with progress data
-  const groupedBudgets = useMemo(() => {
-    // Filter budgets that are active during the selected period
-    let activeBudgets = budgets.filter((budget) => {
-      // Check if budget overlaps with selected period
-      return (
-        budget.startDate <= selectedPeriod.endDate && budget.endDate >= selectedPeriod.startDate
-      );
-    });
+  const [groupedBudgets, setGroupedBudgets] = useState<
+    Record<
+      string,
+      {
+        category: any;
+        items: {
+          budget: Budget;
+          transactionType: any;
+          proratedBudget: number;
+          actualAmount: number;
+          percentage: number;
+        }[];
+        totalBudget: number;
+        totalActual: number;
+      }
+    >
+  >({});
 
-    // Filter by selected categories if any
-    if (selectedCategories.length > 0) {
-      activeBudgets = activeBudgets.filter((budget) => {
-        const transactionType = transactionTypes.find((tt) => tt.id === budget.transactionTypeId);
-        return transactionType && selectedCategories.includes(transactionType.categoryId);
+  useEffect(() => {
+    const calculateGroupedBudgets = async () => {
+      // Filter budgets that are active during the selected period
+      let activeBudgets = budgets.filter((budget) => {
+        // Check if budget overlaps with selected period
+        return (
+          budget.startDate <= selectedPeriod.endDate && budget.endDate >= selectedPeriod.startDate
+        );
       });
-    }
 
-    return activeBudgets.reduce(
-      (acc, budget) => {
+      // Filter by selected categories if any
+      if (selectedCategories.length > 0) {
+        activeBudgets = activeBudgets.filter((budget) => {
+          const transactionType = transactionTypes.find((tt) => tt.id === budget.transactionTypeId);
+          return transactionType && selectedCategories.includes(transactionType.categoryId);
+        });
+      }
+
+      const grouped: Record<
+        string,
+        {
+          category: any;
+          items: {
+            budget: Budget;
+            transactionType: any;
+            proratedBudget: number;
+            actualAmount: number;
+            percentage: number;
+          }[];
+          totalBudget: number;
+          totalActual: number;
+        }
+      > = {};
+
+      for (const budget of activeBudgets) {
         const transactionType = transactionTypes.find((tt) => tt.id === budget.transactionTypeId);
-        if (!transactionType) return acc;
+        if (!transactionType) continue;
 
         const category = getCategoryById(transactionType.categoryId);
-        if (!category) return acc;
+        if (!category) continue;
 
         // Prorate budget for the selected period using day-based calculation
         let proratedBudget = calculationService.prorateBudgetForPeriod(
@@ -151,7 +185,7 @@ export const BudgetsPage: React.FC = () => {
         // Convert budget to base currency if needed
         if (baseCurrency && getRateForMonth && budget.currencyCode !== baseCurrency) {
           const month = selectedPeriod.startDate.slice(0, 7);
-          const rate = getRateForMonth(month, budget.currencyCode, baseCurrency);
+          const rate = await getRateForMonth(month, budget.currencyCode, baseCurrency);
           if (rate !== null) {
             proratedBudget = proratedBudget * rate;
           }
@@ -166,7 +200,7 @@ export const BudgetsPage: React.FC = () => {
             t.date <= selectedPeriod.endDate
         );
 
-        relevantTransactions.forEach((transaction) => {
+        for (const transaction of relevantTransactions) {
           let convertedAmount = transaction.amount;
 
           // Convert transaction amount to base currency if needed
@@ -176,7 +210,7 @@ export const BudgetsPage: React.FC = () => {
 
             if (account && account.currencyCode !== baseCurrency) {
               const month = transaction.date.slice(0, 7);
-              const rate = getRateForMonth(month, account.currencyCode, baseCurrency);
+              const rate = await getRateForMonth(month, account.currencyCode, baseCurrency);
               if (rate !== null) {
                 convertedAmount = transaction.amount * rate;
               }
@@ -184,12 +218,12 @@ export const BudgetsPage: React.FC = () => {
           }
 
           actualAmount += convertedAmount;
-        });
+        }
 
         const percentage = proratedBudget > 0 ? (actualAmount / proratedBudget) * 100 : 0;
 
-        if (!acc[category.id]) {
-          acc[category.id] = {
+        if (!grouped[category.id]) {
+          grouped[category.id] = {
             category,
             items: [],
             totalBudget: 0,
@@ -197,7 +231,7 @@ export const BudgetsPage: React.FC = () => {
           };
         }
 
-        acc[category.id].items.push({
+        grouped[category.id].items.push({
           budget,
           transactionType,
           proratedBudget,
@@ -205,34 +239,24 @@ export const BudgetsPage: React.FC = () => {
           percentage,
         });
 
-        acc[category.id].totalBudget += proratedBudget;
-        acc[category.id].totalActual += actualAmount;
+        grouped[category.id].totalBudget += proratedBudget;
+        grouped[category.id].totalActual += actualAmount;
+      }
 
-        return acc;
-      },
-      {} as Record<
-        string,
-        {
-          category: any;
-          items: {
-            budget: Budget;
-            transactionType: any;
-            proratedBudget: number;
-            actualAmount: number;
-            percentage: number;
-          }[];
-          totalBudget: number;
-          totalActual: number;
-        }
-      >
-    );
+      setGroupedBudgets(grouped);
+    };
+
+    calculateGroupedBudgets();
   }, [
     budgets,
     transactionTypes,
     transactions,
+    accounts,
     selectedPeriod,
     getCategoryById,
     selectedCategories,
+    baseCurrency,
+    getRateForMonth,
   ]);
 
   const getSectionTitle = (categoryGroup: Group): string => {

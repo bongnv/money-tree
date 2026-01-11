@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import type { BalanceSheetData } from '../../services/report.service';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useAssetStore } from '../../stores/useAssetStore';
 import { useTransactionStore } from '../../stores/useTransactionStore';
@@ -39,7 +40,6 @@ export const BalanceSheet: React.FC = () => {
   const transactions = useTransactionStore((state) => state.transactions);
   const baseCurrency = useAppStore((state) => state.baseCurrency);
   const getRateForMonth = useExchangeRateStore((state) => state.getRateForMonth);
-  const fetchRateIfMissing = useExchangeRateStore((state) => state.fetchRateIfMissing);
 
   // Use today as default date
   const today = new Date().toISOString().split('T')[0];
@@ -98,7 +98,7 @@ export const BalanceSheet: React.FC = () => {
       const fetchPromises: Promise<number | null>[] = [];
       currencies.forEach((currency) => {
         months.forEach((month) => {
-          fetchPromises.push(fetchRateIfMissing(month, currency, conversionCurrency));
+          fetchPromises.push(getRateForMonth(month, currency, conversionCurrency));
         });
       });
 
@@ -110,33 +110,21 @@ export const BalanceSheet: React.FC = () => {
     fetchRates();
     // Only re-fetch when currency or date changes, not when accounts/assets arrays change
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversionCurrency, selectedDate, fetchRateIfMissing]);
+  }, [conversionCurrency, selectedDate]);
+  // getRateForMonth is stable from Zustand store
 
   // Calculate balance sheet for selected date with currency conversion
-  const balanceSheet = useMemo(
-    () =>
-      reportService.calculateBalanceSheet(
-        accounts,
-        manualAssets,
-        transactions,
-        selectedDate,
-        effectiveBaseCurrency,
-        effectiveGetRateForMonth
-      ),
-    [
-      accounts,
-      manualAssets,
-      transactions,
-      selectedDate,
-      effectiveBaseCurrency,
-      effectiveGetRateForMonth,
-    ]
-  );
+  const [balanceSheet, setBalanceSheet] = useState<BalanceSheetData>({
+    assets: [],
+    liabilities: [],
+    netWorth: 0,
+    totalAssets: 0,
+    totalLiabilities: 0,
+  });
 
-  // Calculate comparison data
-  const comparison = useMemo(() => {
-    if (comparisonType === 'month') {
-      return reportService.calculateMonthOverMonthComparison(
+  useEffect(() => {
+    const calculateBalanceSheet = async () => {
+      const data = await reportService.calculateBalanceSheet(
         accounts,
         manualAssets,
         transactions,
@@ -144,71 +132,101 @@ export const BalanceSheet: React.FC = () => {
         effectiveBaseCurrency,
         effectiveGetRateForMonth
       );
-    } else if (comparisonType === 'year') {
-      return reportService.calculateYearOverYearComparison(
-        accounts,
-        manualAssets,
-        transactions,
-        selectedDate,
-        effectiveBaseCurrency,
-        effectiveGetRateForMonth
-      );
-    }
-    return null;
-  }, [
-    accounts,
-    manualAssets,
-    transactions,
-    selectedDate,
-    comparisonType,
-    effectiveBaseCurrency,
-    effectiveGetRateForMonth,
-  ]);
-
-  // Calculate net worth trend for the past year
-  const trendData = useMemo(() => {
-    // Parse date components to avoid timezone issues
-    const [year, month, day] = selectedDate.split('-').map(Number);
-    const endDate = new Date(year, month - 1, day);
-    const startDate = new Date(endDate);
-    startDate.setFullYear(startDate.getFullYear() - 1);
-
-    // Format dates as YYYY-MM-DD in local timezone
-    const formatLocalDate = (date: Date): string => {
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, '0');
-      const d = String(date.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
+      setBalanceSheet(data);
     };
 
-    const trend = reportService.calculateNetWorthTrend(
-      accounts,
-      manualAssets,
-      transactions,
-      formatLocalDate(startDate),
-      selectedDate,
-      30, // Monthly data points
-      effectiveBaseCurrency,
-      effectiveGetRateForMonth
-    );
+    calculateBalanceSheet();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accounts, manualAssets, transactions, selectedDate, effectiveBaseCurrency]);
+  // effectiveGetRateForMonth is stable from Zustand store
 
-    return trend.map((point) => ({
-      name: new Date(point.date).toLocaleDateString('en-US', {
-        month: 'short',
-        year: 'numeric',
-      }),
-      'Net Worth': point.netWorth,
-      Assets: point.assets,
-      Liabilities: point.liabilities,
-    }));
-  }, [
-    accounts,
-    manualAssets,
-    transactions,
-    selectedDate,
-    effectiveBaseCurrency,
-    effectiveGetRateForMonth,
-  ]);
+  // Calculate comparison data
+  const [comparison, setComparison] = useState<{
+    current: BalanceSheetData;
+    previous: BalanceSheetData;
+    change: number;
+    changePercent: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const calculateComparison = async () => {
+      if (comparisonType === 'month') {
+        const data = await reportService.calculateMonthOverMonthComparison(
+          accounts,
+          manualAssets,
+          transactions,
+          selectedDate,
+          effectiveBaseCurrency,
+          effectiveGetRateForMonth
+        );
+        setComparison(data);
+      } else if (comparisonType === 'year') {
+        const data = await reportService.calculateYearOverYearComparison(
+          accounts,
+          manualAssets,
+          transactions,
+          selectedDate,
+          effectiveBaseCurrency,
+          effectiveGetRateForMonth
+        );
+        setComparison(data);
+      } else {
+        setComparison(null);
+      }
+    };
+
+    calculateComparison();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accounts, manualAssets, transactions, selectedDate, comparisonType, effectiveBaseCurrency]);
+  // effectiveGetRateForMonth is stable from Zustand store
+
+  // Calculate net worth trend for the past year
+  const [trendData, setTrendData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const calculateTrend = async () => {
+      // Parse date components to avoid timezone issues
+      const [year, month, day] = selectedDate.split('-').map(Number);
+      const endDate = new Date(year, month - 1, day);
+      const startDate = new Date(endDate);
+      startDate.setFullYear(startDate.getFullYear() - 1);
+
+      // Format dates as YYYY-MM-DD in local timezone
+      const formatLocalDate = (date: Date): string => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      };
+
+      const trend = await reportService.calculateNetWorthTrend(
+        accounts,
+        manualAssets,
+        transactions,
+        formatLocalDate(startDate),
+        selectedDate,
+        30, // Monthly data points
+        effectiveBaseCurrency,
+        effectiveGetRateForMonth
+      );
+
+      setTrendData(
+        trend.map((point) => ({
+          name: new Date(point.date).toLocaleDateString('en-US', {
+            month: 'short',
+            year: 'numeric',
+          }),
+          'Net Worth': point.netWorth,
+          Assets: point.assets,
+          Liabilities: point.liabilities,
+        }))
+      );
+    };
+
+    calculateTrend();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accounts, manualAssets, transactions, selectedDate, effectiveBaseCurrency]);
+  // effectiveGetRateForMonth is stable from Zustand store
 
   const handleComparisonChange = (
     _event: React.MouseEvent<HTMLElement>,

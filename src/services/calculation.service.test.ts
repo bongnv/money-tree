@@ -116,54 +116,6 @@ describe('CalculationService', () => {
     });
   });
 
-  describe('calculateRunningBalance', () => {
-    it('should calculate running balance over time', () => {
-      const balances = calculationService.calculateRunningBalance(mockAccount1, [
-        incomeTransaction,
-        expenseTransaction,
-        transferTransaction,
-      ]);
-
-      expect(balances).toHaveLength(4); // Initial + 3 transactions
-      expect(balances[0]).toEqual({
-        date: mockAccount1.createdAt,
-        balance: 1000,
-      });
-      expect(balances[1]).toEqual({
-        date: incomeTransaction.date,
-        balance: 4000,
-      });
-      expect(balances[2]).toEqual({
-        date: expenseTransaction.date,
-        balance: 3800,
-      });
-      expect(balances[3]).toEqual({
-        date: transferTransaction.date,
-        balance: 3300,
-      });
-    });
-
-    it('should return only initial balance with no transactions', () => {
-      const balances = calculationService.calculateRunningBalance(mockAccount1, []);
-
-      expect(balances).toHaveLength(1);
-      expect(balances[0]).toEqual({
-        date: mockAccount1.createdAt,
-        balance: 1000,
-      });
-    });
-
-    it('should only include transactions for the account', () => {
-      const balances = calculationService.calculateRunningBalance(mockAccount1, [
-        incomeTransaction, // acc-1
-        { ...expenseTransaction, fromAccountId: 'acc-2' }, // acc-2, should be excluded
-      ]);
-
-      expect(balances).toHaveLength(2); // Initial + 1 transaction
-      expect(balances[1].balance).toBe(4000); // Only income counted
-    });
-  });
-
   describe('prorateBudget', () => {
     it('should return same amount when periods are equal', () => {
       expect(calculationService.prorateBudget(100, 'monthly', 'monthly')).toBe(100);
@@ -730,8 +682,8 @@ describe('CalculationService', () => {
     ];
 
     describe('calculateNetWorth', () => {
-      it('should calculate net worth from accounts and assets', () => {
-        const netWorth = calculationService.calculateNetWorth(
+      it('should calculate net worth from accounts and assets', async () => {
+        const netWorth = await calculationService.calculateNetWorth(
           [mockAccount1, mockAccount2],
           [incomeTransaction, expenseTransaction, transferTransaction],
           mockAssets
@@ -743,8 +695,8 @@ describe('CalculationService', () => {
         expect(netWorth).toBe(533800);
       });
 
-      it('should handle empty assets', () => {
-        const netWorth = calculationService.calculateNetWorth(
+      it('should handle empty assets', async () => {
+        const netWorth = await calculationService.calculateNetWorth(
           [mockAccount1],
           [incomeTransaction, expenseTransaction],
           []
@@ -753,54 +705,10 @@ describe('CalculationService', () => {
         expect(netWorth).toBe(3800);
       });
 
-      it('should handle empty accounts', () => {
-        const netWorth = calculationService.calculateNetWorth([], [], mockAssets);
+      it('should handle empty accounts', async () => {
+        const netWorth = await calculationService.calculateNetWorth([], [], mockAssets);
         // assets only: 500000 + 25000 = 525000
         expect(netWorth).toBe(525000);
-      });
-    });
-
-    describe('calculateCashFlow', () => {
-      it('should calculate cash flow for a period', () => {
-        const transactions = [
-          { ...incomeTransaction, date: '2026-01-15' },
-          { ...expenseTransaction, date: '2026-01-20' },
-        ];
-        const cashFlow = calculationService.calculateCashFlow(
-          transactions,
-          '2026-01-01',
-          '2026-01-31'
-        );
-        // income - expenses: 3000 - 200 = 2800
-        expect(cashFlow).toBe(2800);
-      });
-
-      it('should exclude transactions outside period', () => {
-        const transactions = [
-          { ...incomeTransaction, date: '2026-01-15' },
-          { ...expenseTransaction, date: '2026-02-20' },
-        ];
-        const cashFlow = calculationService.calculateCashFlow(
-          transactions,
-          '2026-01-01',
-          '2026-01-31'
-        );
-        // only income in period: 3000 - 0 = 3000
-        expect(cashFlow).toBe(3000);
-      });
-
-      it('should handle negative cash flow', () => {
-        const transactions = [
-          { ...incomeTransaction, date: '2026-01-15', amount: 100 },
-          { ...expenseTransaction, date: '2026-01-20', amount: 500 },
-        ];
-        const cashFlow = calculationService.calculateCashFlow(
-          transactions,
-          '2026-01-01',
-          '2026-01-31'
-        );
-        // income - expenses: 100 - 500 = -400
-        expect(cashFlow).toBe(-400);
       });
     });
 

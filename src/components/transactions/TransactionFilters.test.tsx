@@ -1,8 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import '@testing-library/jest-dom';
 import { TransactionFilters, TransactionFiltersState } from './TransactionFilters';
 import type { Account, Category, TransactionType } from '../../types/models';
-import { Group, AccountType } from '../../types/enums';
+import { Group, AccountType, CurrencyCode } from '../../types/enums';
 
 describe('TransactionFilters', () => {
   const mockAccounts: Account[] = [
@@ -10,7 +11,7 @@ describe('TransactionFilters', () => {
       id: 'acc-1',
       name: 'Checking',
       type: AccountType.BANK_ACCOUNT,
-      currencyCode: 'USD',
+      currencyCode: 'USD' as CurrencyCode,
       initialBalance: 1000,
       isActive: true,
       createdAt: '2024-01-01T00:00:00.000Z',
@@ -20,7 +21,7 @@ describe('TransactionFilters', () => {
       id: 'acc-2',
       name: 'Savings',
       type: AccountType.BANK_ACCOUNT,
-      currencyCode: 'USD',
+      currencyCode: 'USD' as CurrencyCode,
       initialBalance: 5000,
       isActive: true,
       createdAt: '2024-01-01T00:00:00.000Z',

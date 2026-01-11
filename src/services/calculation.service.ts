@@ -43,38 +43,6 @@ class CalculationService {
   }
 
   /**
-   * Calculate running balances for an account over time
-   * @param account Account to calculate for
-   * @param transactions All transactions (should be sorted by date)
-   * @returns Array of { date, balance } objects
-   */
-  calculateRunningBalance(
-    account: Account,
-    transactions: Transaction[]
-  ): Array<{ date: string; balance: number }> {
-    const accountTransactions = transactions
-      .filter((t) => t.fromAccountId === account.id || t.toAccountId === account.id)
-      .sort((a, b) => a.date.localeCompare(b.date));
-
-    let balance = account.initialBalance;
-    const balances: Array<{ date: string; balance: number }> = [
-      { date: account.createdAt, balance },
-    ];
-
-    accountTransactions.forEach((transaction) => {
-      if (transaction.toAccountId === account.id) {
-        balance += transaction.amount;
-      }
-      if (transaction.fromAccountId === account.id) {
-        balance -= transaction.amount;
-      }
-      balances.push({ date: transaction.date, balance });
-    });
-
-    return balances;
-  }
-
-  /**
    * Prorate a budget amount from one period to another
    * @param amount Original budget amount
    * @param fromPeriod Source period ('monthly' | 'quarterly' | 'yearly')
@@ -255,14 +223,14 @@ class CalculationService {
    * @param currentMonth Current month in YYYY-MM format for rate lookup
    * @returns Total net worth (in base currency if provided)
    */
-  calculateNetWorth(
+  async calculateNetWorth(
     accounts: Account[],
     transactions: Transaction[],
     manualAssets: ManualAsset[],
     baseCurrency?: string | null,
-    getRateForMonth?: (month: string, from: string, to: string) => number | null,
+    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>,
     currentMonth?: string
-  ): number {
+  ): Promise<number> {
     const accountBalances = this.calculateAccountBalances(accounts, transactions);
 
     let totalAccountBalance = 0;
@@ -271,7 +239,7 @@ class CalculationService {
 
       if (baseCurrency && getRateForMonth && currentMonth && account.currencyCode) {
         if (account.currencyCode !== baseCurrency) {
-          const rate = getRateForMonth(currentMonth, account.currencyCode, baseCurrency);
+          const rate = await getRateForMonth(currentMonth, account.currencyCode, baseCurrency);
           if (rate === null) {
             throw new Error(
               `Missing exchange rate for ${account.currencyCode} → ${baseCurrency} in ${currentMonth}. Please fetch exchange rates in Settings → Exchange Rates.`
@@ -285,13 +253,12 @@ class CalculationService {
         totalAccountBalance += balance;
       }
     }
-
     let totalAssets = 0;
     for (const asset of manualAssets) {
       const assetValue = getAssetCurrentValue(asset);
       if (baseCurrency && getRateForMonth && currentMonth && asset.currencyCode) {
         if (asset.currencyCode !== baseCurrency) {
-          const rate = getRateForMonth(currentMonth, asset.currencyCode, baseCurrency);
+          const rate = await getRateForMonth(currentMonth, asset.currencyCode, baseCurrency);
           if (rate === null) {
             throw new Error(
               `Missing exchange rate for ${asset.currencyCode.toUpperCase()} → ${baseCurrency.toUpperCase()} in ${currentMonth}. Please fetch exchange rates in Settings → Exchange Rates.`
@@ -310,25 +277,6 @@ class CalculationService {
   }
 
   /**
-   * Calculate cash flow (income - expenses) for a period
-   * Note: This is a simple version. For multi-currency support, use reportService.calculateCashFlow()
-   * @param transactions Transactions within the period
-   * @param startDate Start date (YYYY-MM-DD)
-   * @param endDate End date (YYYY-MM-DD)
-   * @returns Cash flow amount
-   */
-  calculateCashFlow(transactions: Transaction[], startDate: string, endDate: string): number {
-    const periodTransactions = transactions.filter((t) => t.date >= startDate && t.date <= endDate);
-    const income = periodTransactions
-      .filter((t) => t.toAccountId && !t.fromAccountId)
-      .reduce((sum, t) => sum + t.amount, 0);
-    const expenses = periodTransactions
-      .filter((t) => t.fromAccountId && !t.toAccountId)
-      .reduce((sum, t) => sum + t.amount, 0);
-    return income - expenses;
-  }
-
-  /**
    * Calculate savings rate ((income - expenses) / income × 100%)
    * @param income Total income
    * @param expenses Total expenses
@@ -339,6 +287,101 @@ class CalculationService {
       return 0;
     }
     return ((income - expenses) / income) * 100;
+  }
+
+  /**
+   * Convert a transaction amount to base currency
+   * @param transaction Transaction to convert
+   * @param accounts List of accounts to lookup transaction account
+   * @param baseCurrency Target currency code
+   * @param getRateForMonth Function to get exchange rate (from useExchangeRateStore)
+   * @returns Converted amount, or original amount if conversion not needed/possible
+   */
+  async convertTransactionAmount(
+    transaction: Transaction,
+    accounts: Account[],
+    baseCurrency: string,
+    getRateForMonth: (month: string, from: string, to: string) => Promise<number | null>
+  ): Promise<number> {
+    // Find the account for this transaction
+    const accountId = transaction.fromAccountId || transaction.toAccountId;
+    const account = accounts.find((a) => a.id === accountId);
+
+    // No conversion if account not found or same currency
+    if (!account || account.currencyCode === baseCurrency) {
+      return transaction.amount;
+    }
+
+    // Convert using transaction month
+    const month = transaction.date.slice(0, 7); // YYYY-MM
+    const rate = await getRateForMonth(month, account.currencyCode, baseCurrency);
+    if (rate !== null) {
+      return transaction.amount * rate;
+    }
+
+    return transaction.amount;
+  }
+
+  /**
+   * Convert a budget amount to base currency
+   * @param budget Budget to convert
+   * @param month Month for exchange rate (usually period start month)
+   * @param baseCurrency Target currency code
+   * @param getRateForMonth Function to get exchange rate (from useExchangeRateStore)
+   * @returns Converted amount, or original amount if conversion not needed/possible
+   */
+  async convertBudgetAmount(
+    budget: Budget,
+    month: string,
+    baseCurrency?: string,
+    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>
+  ): Promise<number> {
+    // No conversion if no base currency
+    if (!baseCurrency) {
+      return budget.amount;
+    }
+
+    // No conversion if same currency
+    if (budget.currencyCode === baseCurrency) {
+      return budget.amount;
+    }
+
+    // Convert using specified month
+    if (getRateForMonth) {
+      const rate = await getRateForMonth(month, budget.currencyCode, baseCurrency);
+      if (rate !== null) {
+        return budget.amount * rate;
+      }
+    }
+
+    return budget.amount;
+  }
+
+  /**
+   * Sum transaction amounts with currency conversion
+   * @param transactions Transactions to sum
+   * @param accounts List of accounts for currency lookup
+   * @param baseCurrency Target currency code
+   * @param getRateForMonth Function to get exchange rate (from useExchangeRateStore)
+   * @returns Total converted amount
+   */
+  async sumTransactionAmounts(
+    transactions: Transaction[],
+    accounts: Account[],
+    baseCurrency: string,
+    getRateForMonth: (month: string, from: string, to: string) => Promise<number | null>
+  ): Promise<number> {
+    let total = 0;
+    for (const transaction of transactions) {
+      const convertedAmount = await this.convertTransactionAmount(
+        transaction,
+        accounts,
+        baseCurrency,
+        getRateForMonth
+      );
+      total += convertedAmount;
+    }
+    return total;
   }
 }
 

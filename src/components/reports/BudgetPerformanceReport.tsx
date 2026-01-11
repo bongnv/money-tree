@@ -32,7 +32,7 @@ import { useCategoryStore } from '../../stores/useCategoryStore';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useAppStore } from '../../stores/useAppStore';
 import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
-import { reportService } from '../../services/report.service';
+import { reportService, type BudgetPerformanceData } from '../../services/report.service';
 import { LineChart } from '../charts/LineChart';
 import { PeriodSelector } from '../common/PeriodSelector';
 import { CategoryFilter } from '../common/CategoryFilter';
@@ -51,7 +51,6 @@ export const BudgetPerformanceReport: React.FC = () => {
   const accounts = useAccountStore((state) => state.accounts);
   const baseCurrency = useAppStore((state) => state.baseCurrency);
   const getRateForMonth = useExchangeRateStore((state) => state.getRateForMonth);
-  const fetchRateIfMissing = useExchangeRateStore((state) => state.fetchRateIfMissing);
 
   // Date range state - default to Year to Date
   const today = getTodayDate();
@@ -85,9 +84,11 @@ export const BudgetPerformanceReport: React.FC = () => {
       const parts = key.split('-');
       const month = `${parts[0]}-${parts[1]}`;
       const currency = parts.slice(2).join('-');
-      fetchRateIfMissing(month, currency, conversionCurrency);
+      getRateForMonth(month, currency, conversionCurrency);
     });
-  }, [conversionCurrency, startDate, endDate, transactions, accounts, fetchRateIfMissing]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversionCurrency, startDate, endDate]);
+  // getRateForMonth, transactions, and accounts are stable from Zustand stores
 
   const handleDateRangeChange = (range: { startDate: string; endDate: string }) => {
     setStartDate(range.startDate);
@@ -123,9 +124,20 @@ export const BudgetPerformanceReport: React.FC = () => {
   }, [transactions, budgets, transactionTypes, selectedCategories]);
 
   // Calculate budget performance
-  const performance = useMemo(
-    () =>
-      reportService.calculateBudgetPerformance(
+  const [performance, setPerformance] = useState<BudgetPerformanceData>({
+    items: [],
+    totalBudgetedIncome: 0,
+    totalActualIncome: 0,
+    totalRemainingIncome: 0,
+    totalBudgetedExpenses: 0,
+    totalActualExpenses: 0,
+    totalRemainingExpenses: 0,
+    overallHealthScore: 100,
+  });
+
+  useEffect(() => {
+    const calculatePerformance = async () => {
+      const data = await reportService.calculateBudgetPerformance(
         filteredBudgets,
         filteredTransactions,
         transactionTypes,
@@ -135,51 +147,62 @@ export const BudgetPerformanceReport: React.FC = () => {
         accounts,
         conversionCurrency,
         getRateForMonth
-      ),
-    [
-      filteredBudgets,
-      filteredTransactions,
-      transactionTypes,
-      categories,
-      startDate,
-      endDate,
-      accounts,
-      conversionCurrency,
-      getRateForMonth,
-    ]
-  );
+      );
+      setPerformance(data);
+    };
+
+    calculatePerformance();
+  }, [
+    filteredBudgets,
+    filteredTransactions,
+    transactionTypes,
+    categories,
+    startDate,
+    endDate,
+    accounts,
+    conversionCurrency,
+    getRateForMonth,
+  ]);
 
   // Calculate trend data
-  const trendData = useMemo(() => {
-    // Determine interval based on date range duration
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    const intervalDays = daysDiff > 180 ? 30 : daysDiff > 60 ? 7 : 1;
+  const [trendData, setTrendData] = useState<any[]>([]);
 
-    const trend = reportService.calculateBudgetTrend(
-      filteredBudgets,
-      filteredTransactions,
-      transactionTypes,
-      categories,
-      startDate,
-      endDate,
-      intervalDays,
-      accounts,
-      conversionCurrency,
-      getRateForMonth
-    );
+  useEffect(() => {
+    const calculateTrend = async () => {
+      // Determine interval based on date range duration
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      const intervalDays = daysDiff > 180 ? 30 : daysDiff > 60 ? 7 : 1;
 
-    return trend.map((point) => ({
-      name: new Date(point.date).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-      }),
-      'Income Target': point.budgetedIncome,
-      'Income Actual': point.actualIncome,
-      'Expense Budgeted': point.budgeted,
-      'Expense Actual': point.actual,
-    }));
+      const trend = await reportService.calculateBudgetTrend(
+        filteredBudgets,
+        filteredTransactions,
+        transactionTypes,
+        categories,
+        startDate,
+        endDate,
+        intervalDays,
+        accounts,
+        conversionCurrency,
+        getRateForMonth
+      );
+
+      setTrendData(
+        trend.map((point) => ({
+          name: new Date(point.date).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+          }),
+          'Income Target': point.budgetedIncome,
+          'Income Actual': point.actualIncome,
+          'Expense Budgeted': point.budgeted,
+          'Expense Actual': point.actual,
+        }))
+      );
+    };
+
+    calculateTrend();
   }, [
     filteredBudgets,
     filteredTransactions,

@@ -97,7 +97,7 @@ describe('Archive Service', () => {
   });
 
   describe('calculateYearEndSummary', () => {
-    it('should calculate transaction count and estimated size', () => {
+    it('should calculate transaction count and estimated size', async () => {
       (useTransactionStore.getState as jest.Mock).mockReturnValue({
         transactions: [
           {
@@ -150,12 +150,12 @@ describe('Archive Service', () => {
       });
 
       // Mock calculationService.calculateNetWorth
-      const mockCalculateNetWorth = jest.fn().mockReturnValue(75000);
+      const mockCalculateNetWorth = jest.fn().mockResolvedValue(75000);
       const mockCalculateAccountBalance = jest.fn().mockReturnValue(25000);
       (calculationService as any).calculateNetWorth = mockCalculateNetWorth;
       (calculationService as any).calculateAccountBalance = mockCalculateAccountBalance;
 
-      const summary = calculateYearEndSummary(2024, 'USD');
+      const summary = await calculateYearEndSummary(2024, 'USD' as CurrencyCode);
 
       expect(summary.transactionCount).toBe(2);
       expect(summary.closingNetWorth).toBe(75000);
@@ -164,7 +164,7 @@ describe('Archive Service', () => {
   });
 
   describe('createArchiveFile', () => {
-    it('should create archive file with year data', () => {
+    it('should create archive file with year data', async () => {
       const mockTransactions = [
         {
           id: '1',
@@ -293,12 +293,12 @@ describe('Archive Service', () => {
       });
 
       // Mock calculationService
-      const mockCalculateNetWorth = jest.fn().mockReturnValue(10000);
+      const mockCalculateNetWorth = jest.fn().mockResolvedValue(10000);
       const mockCalculateAccountBalance = jest.fn().mockReturnValue(5000);
       (calculationService as any).calculateNetWorth = mockCalculateNetWorth;
       (calculationService as any).calculateAccountBalance = mockCalculateAccountBalance;
 
-      const archiveFile = createArchiveFile(2024, 'USD');
+      const archiveFile = await createArchiveFile(2024, 'USD' as CurrencyCode);
 
       expect(archiveFile.version).toBe('1.0');
       expect(archiveFile.year).toBe(2024);
@@ -316,7 +316,7 @@ describe('Archive Service', () => {
       expect(archiveFile.summary.closingNetWorth).toBe(10000);
     });
 
-    it('should filter manual asset history to year', () => {
+    it('should filter manual asset history to year', async () => {
       const mockManualAssets = [
         {
           id: 'asset1',
@@ -362,12 +362,12 @@ describe('Archive Service', () => {
         getRateForMonth: jest.fn(),
       });
 
-      const mockCalculateNetWorth = jest.fn().mockReturnValue(1200);
+      const mockCalculateNetWorth = jest.fn().mockResolvedValue(1200);
       const mockCalculateAccountBalance = jest.fn().mockReturnValue(0);
       (calculationService as any).calculateNetWorth = mockCalculateNetWorth;
       (calculationService as any).calculateAccountBalance = mockCalculateAccountBalance;
 
-      const archiveFile = createArchiveFile(2024, 'USD');
+      const archiveFile = await createArchiveFile(2024, 'USD' as CurrencyCode);
 
       expect(archiveFile.manualAssets).toHaveLength(1);
       expect(archiveFile.manualAssets[0].valueHistory).toHaveLength(2);
@@ -390,6 +390,7 @@ describe('Archive Service', () => {
 
     it('should save archive file with correct filename', async () => {
       const archiveFile = {
+        version: '1.0',
         year: 2023,
         archivedDate: '2024-01-01T00:00:00Z',
         transactions: [],
@@ -403,6 +404,7 @@ describe('Archive Service', () => {
           transactionCount: 0,
           closingNetWorth: 0,
           closingBalances: {},
+          closingAssetValuations: {},
         },
       };
 
@@ -416,6 +418,7 @@ describe('Archive Service', () => {
 
     it('should create blob with correct content', async () => {
       const archiveFile = {
+        version: '1.0',
         year: 2024,
         archivedDate: '2024-01-01T00:00:00Z',
         transactions: [],
@@ -429,6 +432,7 @@ describe('Archive Service', () => {
           transactionCount: 5,
           closingNetWorth: 1000,
           closingBalances: {},
+          closingAssetValuations: {},
         },
       };
 
@@ -510,7 +514,12 @@ describe('Archive Service', () => {
       const archiveReference = {
         year: 2023,
         archivedDate: '2024-01-01T00:00:00Z',
-        summary: { transactionCount: 1, closingNetWorth: 500, closingBalances: {} },
+        summary: {
+          transactionCount: 1,
+          closingNetWorth: 500,
+          closingBalances: {},
+          closingAssetValuations: {},
+        },
       };
 
       updateMainFileAfterArchive(2023, archiveReference);
@@ -587,7 +596,12 @@ describe('Archive Service', () => {
       const archiveReference = {
         year: 2023,
         archivedDate: '2024-01-01T00:00:00Z',
-        summary: { transactionCount: 1, closingNetWorth: 1000, closingBalances: {} },
+        summary: {
+          transactionCount: 1,
+          closingNetWorth: 1000,
+          closingBalances: {},
+          closingAssetValuations: {},
+        },
       };
 
       updateMainFileAfterArchive(2023, archiveReference);
@@ -637,7 +651,12 @@ describe('Archive Service', () => {
       const archiveReference = {
         year: 2023,
         archivedDate: '2024-01-01T00:00:00Z',
-        summary: { transactionCount: 0, closingNetWorth: 0, closingBalances: {} },
+        summary: {
+          transactionCount: 0,
+          closingNetWorth: 0,
+          closingBalances: {},
+          closingAssetValuations: {},
+        },
       };
 
       updateMainFileAfterArchive(2023, archiveReference);
@@ -652,7 +671,12 @@ describe('Archive Service', () => {
         {
           year: 2022,
           archivedDate: '2023-01-01T00:00:00Z',
-          summary: { transactionCount: 100, closingNetWorth: 5000, closingBalances: {} },
+          summary: {
+            transactionCount: 100,
+            closingNetWorth: 5000,
+            closingBalances: {},
+            closingAssetValuations: {},
+          },
         },
         {
           year: 2023,

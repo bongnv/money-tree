@@ -112,14 +112,14 @@ class ReportService {
    * @param getRateForMonth Optional function to get exchange rate
    * @returns Balance sheet data
    */
-  calculateBalanceSheet(
+  async calculateBalanceSheet(
     accounts: Account[],
     manualAssets: ManualAsset[],
     transactions: Transaction[],
     asOfDate?: string,
     baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => number | null
-  ): BalanceSheetData {
+    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>
+  ): Promise<BalanceSheetData> {
     // Filter transactions up to the date
     const filteredTransactions = asOfDate
       ? transactions.filter((t) => t.date <= asOfDate)
@@ -134,7 +134,7 @@ class ReportService {
       : new Date().toISOString().substring(0, 7);
 
     // Group assets by type
-    const assetGroups = this.groupAssets(
+    const assetGroups = await this.groupAssets(
       accounts,
       filteredManualAssets,
       filteredTransactions,
@@ -142,7 +142,7 @@ class ReportService {
       getRateForMonth,
       rateMonth
     );
-    const liabilityGroups = this.groupLiabilities(
+    const liabilityGroups = await this.groupLiabilities(
       accounts,
       filteredManualAssets,
       filteredTransactions,
@@ -167,93 +167,88 @@ class ReportService {
   /**
    * Group assets by type
    */
-  private groupAssets(
+  private async groupAssets(
     accounts: Account[],
     manualAssets: ManualAsset[],
     transactions: Transaction[],
     baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => number | null,
+    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>,
     rateMonth?: string
-  ): AssetGroup[] {
+  ): Promise<AssetGroup[]> {
     const groups: Map<string, AssetItem[]> = new Map();
 
     // Add account assets (positive balance accounts, excluding credit cards and loans)
-    accounts
-      .filter((a) => a.type !== AccountType.CREDIT_CARD && a.type !== AccountType.LOAN)
-      .forEach((account) => {
-        const balance = calculationService.calculateAccountBalance(account, transactions);
-        if (balance > 0) {
-          const groupName = this.getAccountGroupName(account.type);
-          if (!groups.has(groupName)) {
-            groups.set(groupName, []);
-          }
-
-          let convertedValue = balance;
-          let conversionRate: number | undefined;
-
-          // Apply currency conversion if base currency is specified
-          if (
-            baseCurrency &&
-            getRateForMonth &&
-            rateMonth &&
-            account.currencyCode !== baseCurrency
-          ) {
-            const rate = getRateForMonth(rateMonth, account.currencyCode, baseCurrency);
-            if (rate !== null) {
-              convertedValue = balance * rate;
-              conversionRate = rate;
-            }
-          }
-
-          groups.get(groupName)!.push({
-            id: account.id,
-            name: account.name,
-            value: convertedValue,
-            type: account.type,
-            currencyCode: account.currencyCode,
-            convertedValue:
-              baseCurrency && account.currencyCode !== baseCurrency ? convertedValue : undefined,
-            conversionRate,
-          });
-        }
-      });
-
-    // Add manual assets (positive value)
-    manualAssets
-      .filter((a) => {
-        const value = getAssetCurrentValue(a);
-        return value >= 0 && a.type !== AssetType.LIABILITY;
-      })
-      .forEach((asset) => {
-        const groupName = this.getManualAssetGroupName(asset.type);
+    const assetAccounts = accounts.filter(
+      (a) => a.type !== AccountType.CREDIT_CARD && a.type !== AccountType.LOAN
+    );
+    for (const account of assetAccounts) {
+      const balance = calculationService.calculateAccountBalance(account, transactions);
+      if (balance > 0) {
+        const groupName = this.getAccountGroupName(account.type);
         if (!groups.has(groupName)) {
           groups.set(groupName, []);
         }
 
-        const assetValue = getAssetCurrentValue(asset);
-        let convertedValue = assetValue;
+        let convertedValue = balance;
         let conversionRate: number | undefined;
 
         // Apply currency conversion if base currency is specified
-        if (baseCurrency && getRateForMonth && rateMonth && asset.currencyCode !== baseCurrency) {
-          const rate = getRateForMonth(rateMonth, asset.currencyCode, baseCurrency);
+        if (baseCurrency && getRateForMonth && rateMonth && account.currencyCode !== baseCurrency) {
+          const rate = await getRateForMonth(rateMonth, account.currencyCode, baseCurrency);
           if (rate !== null) {
-            convertedValue = assetValue * rate;
+            convertedValue = balance * rate;
             conversionRate = rate;
           }
         }
 
         groups.get(groupName)!.push({
-          id: asset.id,
-          name: asset.name,
+          id: account.id,
+          name: account.name,
           value: convertedValue,
-          type: asset.type,
-          currencyCode: asset.currencyCode,
+          type: account.type,
+          currencyCode: account.currencyCode,
           convertedValue:
-            baseCurrency && asset.currencyCode !== baseCurrency ? convertedValue : undefined,
+            baseCurrency && account.currencyCode !== baseCurrency ? convertedValue : undefined,
           conversionRate,
         });
+      }
+    }
+
+    // Add manual assets (positive value)
+    const positiveAssets = manualAssets.filter((a) => {
+      const value = getAssetCurrentValue(a);
+      return value >= 0 && a.type !== AssetType.LIABILITY;
+    });
+    for (const asset of positiveAssets) {
+      const groupName = this.getManualAssetGroupName(asset.type);
+      if (!groups.has(groupName)) {
+        groups.set(groupName, []);
+      }
+
+      const assetValue = getAssetCurrentValue(asset);
+      let convertedValue = assetValue;
+      let conversionRate: number | undefined;
+
+      // Apply currency conversion if base currency is specified
+      if (baseCurrency && getRateForMonth && rateMonth && asset.currencyCode !== baseCurrency) {
+        const rate = await getRateForMonth(rateMonth, asset.currencyCode, baseCurrency);
+        if (rate !== null) {
+          convertedValue = assetValue * rate;
+          conversionRate = rate;
+        }
+      }
+
+      groups.get(groupName)!.push({
+        id: asset.id,
+        name: asset.name,
+        value: convertedValue,
+        type: asset.type,
+        currencyCode: asset.currencyCode,
+        convertedValue:
+          baseCurrency && asset.currencyCode !== baseCurrency ? convertedValue : undefined,
+        conversionRate,
       });
+    }
 
     // Convert to AssetGroup array
     return Array.from(groups.entries()).map(([name, items]) => ({
@@ -266,121 +261,36 @@ class ReportService {
   /**
    * Group liabilities by type
    */
-  private groupLiabilities(
+  private async groupLiabilities(
     accounts: Account[],
     manualAssets: ManualAsset[],
     transactions: Transaction[],
     baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => number | null,
+    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>,
     rateMonth?: string
-  ): AssetGroup[] {
+  ): Promise<AssetGroup[]> {
     const groups: Map<string, AssetItem[]> = new Map();
 
     // Add credit cards and loans (always show as liabilities)
-    accounts
-      .filter((a) => a.type === AccountType.CREDIT_CARD || a.type === AccountType.LOAN)
-      .forEach((account) => {
-        const balance = calculationService.calculateAccountBalance(account, transactions);
-        // For credit cards/loans, the liability is the absolute value of negative balances
-        const liability = Math.abs(Math.min(balance, 0));
-        if (liability > 0) {
-          const groupName = this.getAccountGroupName(account.type);
-          if (!groups.has(groupName)) {
-            groups.set(groupName, []);
-          }
-
-          let convertedValue = liability;
-          let conversionRate: number | undefined;
-
-          // Apply currency conversion if base currency is specified
-          if (
-            baseCurrency &&
-            getRateForMonth &&
-            rateMonth &&
-            account.currencyCode !== baseCurrency
-          ) {
-            const rate = getRateForMonth(rateMonth, account.currencyCode, baseCurrency);
-            if (rate !== null) {
-              convertedValue = liability * rate;
-              conversionRate = rate;
-            }
-          }
-
-          groups.get(groupName)!.push({
-            id: account.id,
-            name: account.name,
-            value: convertedValue,
-            type: account.type,
-            currencyCode: account.currencyCode,
-            convertedValue:
-              baseCurrency && account.currencyCode !== baseCurrency ? convertedValue : undefined,
-            conversionRate,
-          });
-        }
-      });
-
-    // Add other accounts with negative balances (e.g., overdrafts)
-    accounts
-      .filter((a) => a.type !== AccountType.CREDIT_CARD && a.type !== AccountType.LOAN)
-      .forEach((account) => {
-        const balance = calculationService.calculateAccountBalance(account, transactions);
-        if (balance < 0) {
-          const groupName = this.getAccountGroupName(account.type);
-          if (!groups.has(groupName)) {
-            groups.set(groupName, []);
-          }
-
-          const liability = Math.abs(balance);
-          let convertedValue = liability;
-          let conversionRate: number | undefined;
-
-          // Apply currency conversion if base currency is specified
-          if (
-            baseCurrency &&
-            getRateForMonth &&
-            rateMonth &&
-            account.currencyCode !== baseCurrency
-          ) {
-            const rate = getRateForMonth(rateMonth, account.currencyCode, baseCurrency);
-            if (rate !== null) {
-              convertedValue = liability * rate;
-              conversionRate = rate;
-            }
-          }
-
-          groups.get(groupName)!.push({
-            id: account.id,
-            name: account.name,
-            value: convertedValue,
-            type: account.type,
-            currencyCode: account.currencyCode,
-            convertedValue:
-              baseCurrency && account.currencyCode !== baseCurrency ? convertedValue : undefined,
-            conversionRate,
-          });
-        }
-      });
-
-    // Add manual liabilities
-    manualAssets
-      .filter((a) => {
-        const value = getAssetCurrentValue(a);
-        return a.type === AssetType.LIABILITY || value < 0;
-      })
-      .forEach((asset) => {
-        const groupName = 'Liabilities';
+    const liabilityAccounts = accounts.filter(
+      (a) => a.type === AccountType.CREDIT_CARD || a.type === AccountType.LOAN
+    );
+    for (const account of liabilityAccounts) {
+      const balance = calculationService.calculateAccountBalance(account, transactions);
+      // For credit cards/loans, the liability is the absolute value of negative balances
+      const liability = Math.abs(Math.min(balance, 0));
+      if (liability > 0) {
+        const groupName = this.getAccountGroupName(account.type);
         if (!groups.has(groupName)) {
           groups.set(groupName, []);
         }
 
-        const assetValue = getAssetCurrentValue(asset);
-        const liability = Math.abs(assetValue);
         let convertedValue = liability;
         let conversionRate: number | undefined;
 
         // Apply currency conversion if base currency is specified
-        if (baseCurrency && getRateForMonth && rateMonth && asset.currencyCode !== baseCurrency) {
-          const rate = getRateForMonth(rateMonth, asset.currencyCode, baseCurrency);
+        if (baseCurrency && getRateForMonth && rateMonth && account.currencyCode !== baseCurrency) {
+          const rate = await getRateForMonth(rateMonth, account.currencyCode, baseCurrency);
           if (rate !== null) {
             convertedValue = liability * rate;
             conversionRate = rate;
@@ -388,16 +298,92 @@ class ReportService {
         }
 
         groups.get(groupName)!.push({
-          id: asset.id,
-          name: asset.name,
+          id: account.id,
+          name: account.name,
           value: convertedValue,
-          type: asset.type,
-          currencyCode: asset.currencyCode,
+          type: account.type,
+          currencyCode: account.currencyCode,
           convertedValue:
-            baseCurrency && asset.currencyCode !== baseCurrency ? convertedValue : undefined,
+            baseCurrency && account.currencyCode !== baseCurrency ? convertedValue : undefined,
           conversionRate,
         });
+      }
+    }
+
+    // Add other accounts with negative balances (e.g., overdrafts)
+    const overdraftAccounts = accounts.filter(
+      (a) => a.type !== AccountType.CREDIT_CARD && a.type !== AccountType.LOAN
+    );
+    for (const account of overdraftAccounts) {
+      const balance = calculationService.calculateAccountBalance(account, transactions);
+      if (balance < 0) {
+        const groupName = this.getAccountGroupName(account.type);
+        if (!groups.has(groupName)) {
+          groups.set(groupName, []);
+        }
+
+        const liability = Math.abs(balance);
+        let convertedValue = liability;
+        let conversionRate: number | undefined;
+
+        // Apply currency conversion if base currency is specified
+        if (baseCurrency && getRateForMonth && rateMonth && account.currencyCode !== baseCurrency) {
+          const rate = await getRateForMonth(rateMonth, account.currencyCode, baseCurrency);
+          if (rate !== null) {
+            convertedValue = liability * rate;
+            conversionRate = rate;
+          }
+        }
+
+        groups.get(groupName)!.push({
+          id: account.id,
+          name: account.name,
+          value: convertedValue,
+          type: account.type,
+          currencyCode: account.currencyCode,
+          convertedValue:
+            baseCurrency && account.currencyCode !== baseCurrency ? convertedValue : undefined,
+          conversionRate,
+        });
+      }
+    }
+
+    // Add manual liabilities
+    const liabilityAssets = manualAssets.filter((a) => {
+      const value = getAssetCurrentValue(a);
+      return a.type === AssetType.LIABILITY || value < 0;
+    });
+    for (const asset of liabilityAssets) {
+      const groupName = 'Liabilities';
+      if (!groups.has(groupName)) {
+        groups.set(groupName, []);
+      }
+
+      const assetValue = getAssetCurrentValue(asset);
+      const liability = Math.abs(assetValue);
+      let convertedValue = liability;
+      let conversionRate: number | undefined;
+
+      // Apply currency conversion if base currency is specified
+      if (baseCurrency && getRateForMonth && rateMonth && asset.currencyCode !== baseCurrency) {
+        const rate = await getRateForMonth(rateMonth, asset.currencyCode, baseCurrency);
+        if (rate !== null) {
+          convertedValue = liability * rate;
+          conversionRate = rate;
+        }
+      }
+
+      groups.get(groupName)!.push({
+        id: asset.id,
+        name: asset.name,
+        value: convertedValue,
+        type: asset.type,
+        currencyCode: asset.currencyCode,
+        convertedValue:
+          baseCurrency && asset.currencyCode !== baseCurrency ? convertedValue : undefined,
+        conversionRate,
       });
+    }
 
     // Convert to AssetGroup array
     return Array.from(groups.entries()).map(([name, items]) => ({
@@ -457,7 +443,7 @@ class ReportService {
    * @param getRateForMonth Optional function to get exchange rate
    * @returns Array of net worth trend points
    */
-  calculateNetWorthTrend(
+  async calculateNetWorthTrend(
     accounts: Account[],
     manualAssets: ManualAsset[],
     transactions: Transaction[],
@@ -465,8 +451,8 @@ class ReportService {
     endDate: string,
     interval: number = 30,
     baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => number | null
-  ): NetWorthTrendPoint[] {
+    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>
+  ): Promise<NetWorthTrendPoint[]> {
     const trend: NetWorthTrendPoint[] = [];
     // Parse dates as local dates to avoid timezone issues
     const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
@@ -478,7 +464,7 @@ class ReportService {
     while (currentDate <= end) {
       // Format date in local timezone
       const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
-      const balanceSheet = this.calculateBalanceSheet(
+      const balanceSheet = await this.calculateBalanceSheet(
         accounts,
         manualAssets,
         transactions,
@@ -500,7 +486,7 @@ class ReportService {
     // Always include the end date as the final data point if not already included
     const lastPoint = trend[trend.length - 1];
     if (lastPoint && lastPoint.date !== endDate) {
-      const balanceSheet = this.calculateBalanceSheet(
+      const balanceSheet = await this.calculateBalanceSheet(
         accounts,
         manualAssets,
         transactions,
@@ -523,20 +509,20 @@ class ReportService {
   /**
    * Calculate month-over-month comparison
    */
-  calculateMonthOverMonthComparison(
+  async calculateMonthOverMonthComparison(
     accounts: Account[],
     manualAssets: ManualAsset[],
     transactions: Transaction[],
     currentDate: string,
     baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => number | null
-  ): {
+    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>
+  ): Promise<{
     current: BalanceSheetData;
     previous: BalanceSheetData;
     change: number;
     changePercent: number;
-  } {
-    const current = this.calculateBalanceSheet(
+  }> {
+    const current = await this.calculateBalanceSheet(
       accounts,
       manualAssets,
       transactions,
@@ -551,7 +537,7 @@ class ReportService {
     currentDateObj.setMonth(currentDateObj.getMonth() - 1);
     const previousDate = `${currentDateObj.getFullYear()}-${String(currentDateObj.getMonth() + 1).padStart(2, '0')}-${String(currentDateObj.getDate()).padStart(2, '0')}`;
 
-    const previous = this.calculateBalanceSheet(
+    const previous = await this.calculateBalanceSheet(
       accounts,
       manualAssets,
       transactions,
@@ -574,20 +560,20 @@ class ReportService {
   /**
    * Calculate year-over-year comparison
    */
-  calculateYearOverYearComparison(
+  async calculateYearOverYearComparison(
     accounts: Account[],
     manualAssets: ManualAsset[],
     transactions: Transaction[],
     currentDate: string,
     baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => number | null
-  ): {
+    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>
+  ): Promise<{
     current: BalanceSheetData;
     previous: BalanceSheetData;
     change: number;
     changePercent: number;
-  } {
-    const current = this.calculateBalanceSheet(
+  }> {
+    const current = await this.calculateBalanceSheet(
       accounts,
       manualAssets,
       transactions,
@@ -602,7 +588,7 @@ class ReportService {
     currentDateObj.setFullYear(currentDateObj.getFullYear() - 1);
     const previousDate = `${currentDateObj.getFullYear()}-${String(currentDateObj.getMonth() + 1).padStart(2, '0')}-${String(currentDateObj.getDate()).padStart(2, '0')}`;
 
-    const previous = this.calculateBalanceSheet(
+    const previous = await this.calculateBalanceSheet(
       accounts,
       manualAssets,
       transactions,
@@ -634,7 +620,7 @@ class ReportService {
    * @param getRateForMonth Optional function to get exchange rate
    * @returns Cash flow data grouped by category
    */
-  calculateCashFlow(
+  async calculateCashFlow(
     transactions: Transaction[],
     transactionTypes: TransactionType[],
     categories: Category[],
@@ -642,8 +628,8 @@ class ReportService {
     endDate: string,
     accounts?: Account[],
     baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => number | null
-  ): CashFlowData {
+    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>
+  ): Promise<CashFlowData> {
     // Filter transactions in date range and exclude transfers
     const filteredTransactions = transactions.filter(
       (t) => t.date >= startDate && t.date <= endDate
@@ -658,12 +644,12 @@ class ReportService {
     const incomeByCategory = new Map<string, { total: number; count: number }>();
     const expensesByCategory = new Map<string, { total: number; count: number }>();
 
-    filteredTransactions.forEach((transaction) => {
+    for (const transaction of filteredTransactions) {
       const transactionType = typeData.get(transaction.transactionTypeId);
-      if (!transactionType) return;
+      if (!transactionType) continue;
 
       const category = categoryData.get(transactionType.categoryId);
-      if (!category) return;
+      if (!category) continue;
 
       // Skip transfers and asset transactions (they're not regular income/expenses)
       if (
@@ -671,7 +657,7 @@ class ReportService {
         transactionType.group === Group.ASSET_PURCHASE ||
         transactionType.group === Group.ASSET_SALE
       )
-        return;
+        continue;
 
       // Determine the account for currency lookup
       const accountId =
@@ -684,7 +670,7 @@ class ReportService {
       let convertedAmount = transaction.amount;
       if (baseCurrency && getRateForMonth && account && account.currencyCode !== baseCurrency) {
         const month = transaction.date.substring(0, 7); // YYYY-MM
-        const rate = getRateForMonth(month, account.currencyCode, baseCurrency);
+        const rate = await getRateForMonth(month, account.currencyCode, baseCurrency);
         if (rate !== null) {
           convertedAmount = transaction.amount * rate;
         }
@@ -697,7 +683,7 @@ class ReportService {
         total: existing.total + convertedAmount,
         count: existing.count + 1,
       });
-    });
+    }
 
     // Convert to arrays
     const income: CategoryTotal[] = Array.from(incomeByCategory.entries()).map(
@@ -744,7 +730,7 @@ class ReportService {
    * @param getRateForMonth Optional function to get exchange rate
    * @returns Array of cash flow trend points
    */
-  calculateCashFlowTrend(
+  async calculateCashFlowTrend(
     transactions: Transaction[],
     transactionTypes: TransactionType[],
     categories: Category[],
@@ -753,8 +739,8 @@ class ReportService {
     intervalDays: number = 30,
     accounts?: Account[],
     baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => number | null
-  ): CashFlowTrendPoint[] {
+    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>
+  ): Promise<CashFlowTrendPoint[]> {
     // Parse dates
     const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
     const [endYear, endMonth, endDay] = endDate.split('-').map(Number);
@@ -776,7 +762,7 @@ class ReportService {
       const periodEndStr = `${periodEnd.getFullYear()}-${String(periodEnd.getMonth() + 1).padStart(2, '0')}-${String(periodEnd.getDate()).padStart(2, '0')}`;
 
       // Calculate cash flow for this period
-      const cashFlow = this.calculateCashFlow(
+      const cashFlow = await this.calculateCashFlow(
         transactions,
         transactionTypes,
         categories,
@@ -814,7 +800,7 @@ class ReportService {
    * @param getRateForMonth Optional function to get exchange rate
    * @returns Budget performance data
    */
-  calculateBudgetPerformance(
+  async calculateBudgetPerformance(
     budgets: Budget[],
     transactions: Transaction[],
     transactionTypes: TransactionType[],
@@ -823,8 +809,8 @@ class ReportService {
     endDate: string,
     accounts?: Account[],
     baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => number | null
-  ): BudgetPerformanceData {
+    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>
+  ): Promise<BudgetPerformanceData> {
     const items: BudgetPerformanceItem[] = [];
     let totalBudgetedIncome = 0;
     let totalActualIncome = 0;
@@ -838,12 +824,12 @@ class ReportService {
     });
 
     // Process each transaction type that has a budget
-    budgetsByType.forEach((budget, transactionTypeId) => {
+    for (const [transactionTypeId, budget] of budgetsByType) {
       const transactionType = transactionTypes.find((tt) => tt.id === transactionTypeId);
-      if (!transactionType) return;
+      if (!transactionType) continue;
 
       const category = categories.find((c) => c.id === transactionType.categoryId);
-      if (!category) return;
+      if (!category) continue;
 
       // Prorate budget for the viewing period
       const budgetedAmount = calculationService.prorateBudgetForPeriod(budget, startDate, endDate);
@@ -852,7 +838,7 @@ class ReportService {
       let convertedBudgetedAmount = budgetedAmount;
       if (baseCurrency && getRateForMonth && budget.currencyCode !== baseCurrency) {
         const month = startDate.slice(0, 7);
-        const rate = getRateForMonth(month, budget.currencyCode, baseCurrency);
+        const rate = await getRateForMonth(month, budget.currencyCode, baseCurrency);
         if (rate !== null) {
           convertedBudgetedAmount = budgetedAmount * rate;
         }
@@ -864,7 +850,7 @@ class ReportService {
         (t) => t.transactionTypeId === transactionTypeId && t.date >= startDate && t.date <= endDate
       );
 
-      relevantTransactions.forEach((transaction) => {
+      for (const transaction of relevantTransactions) {
         let convertedAmount = transaction.amount;
 
         // Convert transaction amount to base currency if needed
@@ -874,7 +860,7 @@ class ReportService {
 
           if (account && account.currencyCode !== baseCurrency) {
             const month = transaction.date.slice(0, 7);
-            const rate = getRateForMonth(month, account.currencyCode, baseCurrency);
+            const rate = await getRateForMonth(month, account.currencyCode, baseCurrency);
             if (rate !== null) {
               convertedAmount = transaction.amount * rate;
             }
@@ -882,7 +868,7 @@ class ReportService {
         }
 
         actualAmount += convertedAmount;
-      });
+      }
 
       const remaining = convertedBudgetedAmount - actualAmount;
       const percentUsed =
@@ -910,7 +896,7 @@ class ReportService {
         totalBudgetedExpenses += convertedBudgetedAmount;
         totalActualExpenses += actualAmount;
       }
-    });
+    }
 
     // Calculate overall health score (0-100)
     // For income: higher actual is better (score = min(actual/budgeted * 100, 100))
@@ -964,7 +950,7 @@ class ReportService {
    * @param getRateForMonth Optional function to get exchange rate
    * @returns Array of budget trend points
    */
-  calculateBudgetTrend(
+  async calculateBudgetTrend(
     budgets: Budget[],
     transactions: Transaction[],
     transactionTypes: TransactionType[],
@@ -974,8 +960,8 @@ class ReportService {
     intervalDays: number = 30,
     accounts?: Account[],
     baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => number | null
-  ): BudgetTrendPoint[] {
+    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>
+  ): Promise<BudgetTrendPoint[]> {
     // Parse dates
     const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
     const [endYear, endMonth, endDay] = endDate.split('-').map(Number);
@@ -1000,7 +986,7 @@ class ReportService {
       const periodEndStr = `${periodEnd.getFullYear()}-${String(periodEnd.getMonth() + 1).padStart(2, '0')}-${String(periodEnd.getDate()).padStart(2, '0')}`;
 
       // Calculate budget performance from START to this point (cumulative)
-      const performance = this.calculateBudgetPerformance(
+      const performance = await this.calculateBudgetPerformance(
         budgets,
         transactions,
         transactionTypes,

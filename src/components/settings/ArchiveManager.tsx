@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -28,6 +28,7 @@ import {
   updateMainFileAfterArchive,
   getArchivedYears,
   calculateYearEndSummary,
+  type YearEndSummary,
 } from '../../services/archive.service';
 import { syncService } from '../../services/sync.service';
 import { useAppStore } from '../../stores/useAppStore';
@@ -42,10 +43,26 @@ export const ArchiveManager: React.FC = () => {
     open: false,
     year: null,
   });
+  const [yearSummaries, setYearSummaries] = useState<Record<number, YearEndSummary>>({});
 
   const archivableYear = identifyArchivableYear();
   const archivableYears = archivableYear !== null ? [archivableYear] : [];
   const archivedYears = getArchivedYears();
+
+  // Calculate summaries for archivable years
+  useEffect(() => {
+    const calculateSummaries = async () => {
+      const summaries: Record<number, YearEndSummary> = {};
+      for (const year of archivableYears) {
+        summaries[year] = await calculateYearEndSummary(year, baseCurrency);
+      }
+      setYearSummaries(summaries);
+    };
+
+    if (archivableYears.length > 0) {
+      calculateSummaries();
+    }
+  }, [archivableYears, baseCurrency]);
 
   const handleExportYear = async (year: number) => {
     // Close confirmation dialog
@@ -56,7 +73,7 @@ export const ArchiveManager: React.FC = () => {
 
     try {
       // Create archive file
-      const archiveFile = createArchiveFile(year, baseCurrency);
+      const archiveFile = await createArchiveFile(year, baseCurrency);
 
       // Save archive file using storage provider
       await saveArchiveFile(archiveFile);
@@ -130,8 +147,18 @@ export const ArchiveManager: React.FC = () => {
               </TableHead>
               <TableBody>
                 {archivableYears.map((year) => {
-                  const summary = calculateYearEndSummary(year, baseCurrency);
+                  const summary = yearSummaries[year];
                   const isCurrentlyExporting = isExporting && exportingYear === year;
+
+                  if (!summary) {
+                    return (
+                      <TableRow key={year}>
+                        <TableCell colSpan={4} align="center">
+                          <CircularProgress size={20} />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  }
 
                   return (
                     <TableRow key={year}>

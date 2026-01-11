@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography, Button, Paper } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { BudgetProgressBar } from './BudgetProgressBar';
@@ -33,83 +33,80 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ period }) => {
   const baseCurrency = useAppStore((state) => state.baseCurrency);
   const getRateForMonth = useExchangeRateStore((state) => state.getRateForMonth);
 
+  const [budgetsWithUsage, setBudgetsWithUsage] = useState<BudgetWithUsage[]>([]);
+
   // Calculate budget usage for the selected period
-  const budgetsWithUsage: BudgetWithUsage[] = budgets
-    .map((budget) => {
-      // Get active budget for this period
-      const activeBudget = calculationService.getActiveBudgetForPeriod(
-        budgets.filter((b) => b.transactionTypeId === budget.transactionTypeId),
-        budget.transactionTypeId,
-        period.startDate
-      );
+  useEffect(() => {
+    const calculateBudgets = async () => {
+      const results: BudgetWithUsage[] = [];
 
-      if (!activeBudget || activeBudget.id !== budget.id) {
-        return null;
-      }
+      for (const budget of budgets) {
+        // Get active budget for this period
+        const activeBudget = calculationService.getActiveBudgetForPeriod(
+          budgets.filter((b) => b.transactionTypeId === budget.transactionTypeId),
+          budget.transactionTypeId,
+          period.startDate
+        );
 
-      // Prorate budget amount for the selected period
-      let proratedAmount = calculationService.prorateBudgetForPeriod(
-        budget,
-        period.startDate,
-        period.endDate
-      );
-
-      // Convert budget to base currency if needed
-      if (baseCurrency && getRateForMonth && budget.currencyCode !== baseCurrency) {
-        const month = period.startDate.slice(0, 7);
-        const rate = getRateForMonth(month, budget.currencyCode, baseCurrency);
-        if (rate !== null) {
-          proratedAmount = proratedAmount * rate;
-        }
-      }
-
-      // Calculate actual spending/income with currency conversion
-      let actualAmount = 0;
-      const relevantTransactions = transactions.filter(
-        (t) =>
-          t.transactionTypeId === budget.transactionTypeId &&
-          t.date >= period.startDate &&
-          t.date <= period.endDate
-      );
-
-      relevantTransactions.forEach((transaction) => {
-        let convertedAmount = transaction.amount;
-
-        // Convert transaction amount to base currency if needed
-        if (baseCurrency && getRateForMonth) {
-          const accountId = transaction.fromAccountId || transaction.toAccountId;
-          const account = accounts.find((a) => a.id === accountId);
-
-          if (account && account.currencyCode !== baseCurrency) {
-            const month = transaction.date.slice(0, 7);
-            const rate = getRateForMonth(month, account.currencyCode, baseCurrency);
-            if (rate !== null) {
-              convertedAmount = transaction.amount * rate;
-            }
-          }
+        if (!activeBudget || activeBudget.id !== budget.id) {
+          continue;
         }
 
-        actualAmount += convertedAmount;
-      });
+        // Prorate budget amount for the selected period
+        const proratedAmount = calculationService.prorateBudgetForPeriod(
+          budget,
+          period.startDate,
+          period.endDate
+        );
 
-      // Get transaction type info
-      const transactionType = transactionTypes.find((t) => t.id === budget.transactionTypeId);
+        // Convert budget to base currency if needed
+        const convertedBudget = await calculationService.convertBudgetAmount(
+          { ...budget, amount: proratedAmount },
+          period.startDate.slice(0, 7),
+          baseCurrency,
+          getRateForMonth
+        );
 
-      const isIncome = transactionType?.group === Group.INCOME;
-      const percentage = proratedAmount === 0 ? 0 : (actualAmount / proratedAmount) * 100;
+        // Calculate actual spending/income with currency conversion
+        const relevantTransactions = transactions.filter(
+          (t) =>
+            t.transactionTypeId === budget.transactionTypeId &&
+            t.date >= period.startDate &&
+            t.date <= period.endDate
+        );
 
-      return {
-        id: budget.id,
-        name: transactionType?.name || 'Unknown',
-        spent: actualAmount,
-        budget: proratedAmount,
-        percentage,
-        isIncome,
-      };
-    })
-    .filter((b): b is BudgetWithUsage => b !== null)
-    .sort((a, b) => b.percentage - a.percentage)
-    .slice(0, 5);
+        const actualAmount = await calculationService.sumTransactionAmounts(
+          relevantTransactions,
+          accounts,
+          baseCurrency,
+          getRateForMonth
+        );
+
+        // Get transaction type info
+        const transactionType = transactionTypes.find((t) => t.id === budget.transactionTypeId);
+
+        const isIncome = transactionType?.group === Group.INCOME;
+        const percentage = convertedBudget === 0 ? 0 : (actualAmount / convertedBudget) * 100;
+
+        results.push({
+          id: budget.id,
+          name: transactionType?.name || 'Unknown',
+          spent: actualAmount,
+          budget: convertedBudget,
+          percentage,
+          isIncome,
+        });
+      }
+
+      // Sort and take top 5
+      const sorted = results.sort((a, b) => b.percentage - a.percentage).slice(0, 5);
+      setBudgetsWithUsage(sorted);
+    };
+
+    calculateBudgets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [period.startDate, period.endDate, baseCurrency]);
+  // budgets, transactions, transactionTypes, accounts, and getRateForMonth are stable from Zustand or captured in closure
 
   if (budgetsWithUsage.length === 0) {
     return (

@@ -1,12 +1,13 @@
 import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
+import '@testing-library/jest-dom';
 import { TransactionsPage } from './TransactionsPage';
 import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import type { Transaction, Account, Category, TransactionType } from '../../types/models';
-import { Group, AccountType } from '../../types/enums';
+import { Group, AccountType, CurrencyCode } from '../../types/enums';
 
 jest.mock('../../stores/useTransactionStore');
 jest.mock('../../stores/useAccountStore');
@@ -28,7 +29,7 @@ describe('TransactionsPage', () => {
       id: 'acc-1',
       name: 'Checking',
       type: AccountType.BANK_ACCOUNT,
-      currencyCode: 'USD',
+      currencyCode: 'USD' as CurrencyCode,
       initialBalance: 1000,
       isActive: true,
       createdAt: '2024-01-01T00:00:00.000Z',

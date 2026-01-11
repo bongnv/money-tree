@@ -22,10 +22,16 @@ import type {
 import { CurrencyCode } from '../types/enums';
 import { getAssetClosingValue } from '../utils/asset.utils';
 
+// Re-export types for consumers
+export type { YearEndSummary };
+
 /**
  * Calculate year-end summary for a specific year
  */
-export function calculateYearEndSummary(year: number, baseCurrency: CurrencyCode): YearEndSummary {
+export async function calculateYearEndSummary(
+  year: number,
+  baseCurrency: CurrencyCode
+): Promise<YearEndSummary> {
   const transactions = useTransactionStore.getState().transactions;
   const accounts = useAccountStore.getState().accounts;
   const manualAssets = useAssetStore.getState().manualAssets;
@@ -41,7 +47,7 @@ export function calculateYearEndSummary(year: number, baseCurrency: CurrencyCode
 
   // Calculate net worth at year end
   const yearEndMonth = `${year}-12`;
-  const closingNetWorth = calculationService.calculateNetWorth(
+  const closingNetWorth = await calculationService.calculateNetWorth(
     accounts,
     transactions,
     manualAssets,
@@ -52,16 +58,17 @@ export function calculateYearEndSummary(year: number, baseCurrency: CurrencyCode
 
   // Calculate closing balances for each account
   const closingBalances: Record<string, number> = {};
-  accounts.forEach((account) => {
+  for (const account of accounts) {
     const balance = calculationService.calculateAccountBalance(account, yearTransactions);
     closingBalances[account.id] = balance;
-  });
+  }
 
   // Calculate closing valuations for each manual asset
   const closingAssetValuations: Record<string, number> = {};
-  manualAssets.forEach((asset) => {
-    closingAssetValuations[asset.id] = getAssetClosingValue(asset, year);
-  });
+  for (const asset of manualAssets) {
+    const value = await getAssetClosingValue(asset, year);
+    closingAssetValuations[asset.id] = value;
+  }
 
   return {
     transactionCount,
@@ -105,7 +112,10 @@ export function identifyArchivableYear(): number | null {
  * Create archive file for a specific year
  * Extracts all data for the year and creates a self-contained archive
  */
-export function createArchiveFile(year: number, baseCurrency: CurrencyCode): ArchiveFile {
+export async function createArchiveFile(
+  year: number,
+  baseCurrency: CurrencyCode
+): Promise<ArchiveFile> {
   const transactions = useTransactionStore.getState().transactions;
   const budgets = useBudgetStore.getState().budgets;
   const manualAssets = useAssetStore.getState().manualAssets;
@@ -142,7 +152,7 @@ export function createArchiveFile(year: number, baseCurrency: CurrencyCode): Arc
   });
 
   // Calculate year-end summary
-  const summary = calculateYearEndSummary(year, baseCurrency);
+  const summary = await calculateYearEndSummary(year, baseCurrency);
 
   // Create archive file structure
   const archiveFile: ArchiveFile = {

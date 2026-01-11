@@ -12,10 +12,8 @@ interface ExchangeRateState {
 interface ExchangeRateActions {
   setRates: (rates: ExchangeRate[]) => void;
   addRate: (rate: ExchangeRate) => void;
-  // Get conversion rate between any two currencies through USD
-  getRateForMonth: (month: string, fromCurrency: string, toCurrency: string) => number | null;
-  // Fetch exchange rate if missing, handles any currency pair through USD
-  fetchRateIfMissing: (
+  // Get exchange rate, checking cache first and fetching if missing
+  getRateForMonth: (
     month: string,
     fromCurrency: string,
     toCurrency: string
@@ -173,40 +171,7 @@ export const useExchangeRateStore = create<ExchangeRateState & ExchangeRateActio
     useAppStore.getState().setUnsavedChanges(true);
   },
 
-  getRateForMonth: (month, fromCurrency, toCurrency) => {
-    const { rates } = get();
-    const from = fromCurrency.toUpperCase();
-    const to = toCurrency.toUpperCase();
-
-    // Same currency, rate is 1
-    if (from === to) {
-      return 1;
-    }
-
-    // If converting to USD, get direct rate
-    if (to === 'USD') {
-      return getToUsdRate(rates, month, from);
-    }
-
-    // If converting from USD, get inverse of target->USD rate
-    if (from === 'USD') {
-      const toUsdRate = getToUsdRate(rates, month, to);
-      return toUsdRate !== null ? 1 / toUsdRate : null;
-    }
-
-    // For X->Y, calculate through USD: X->USD / Y->USD
-    const fromToUsd = getToUsdRate(rates, month, from);
-    const toToUsd = getToUsdRate(rates, month, to);
-
-    if (fromToUsd !== null && toToUsd !== null) {
-      return fromToUsd / toToUsd;
-    }
-
-    return null;
-  },
-
-  fetchRateIfMissing: async (month, fromCurrency, toCurrency) => {
-    const { rates, loading } = get();
+  getRateForMonth: async (month, fromCurrency, toCurrency) => {
     const from = fromCurrency.toUpperCase();
     const to = toCurrency.toUpperCase();
 
@@ -214,6 +179,31 @@ export const useExchangeRateStore = create<ExchangeRateState & ExchangeRateActio
     if (from === to) {
       return 1;
     }
+
+    // Check cache first (inline logic from removed getRateForMonthFromCache)
+    const { rates } = get();
+
+    // If converting to USD, get direct rate
+    if (to === 'USD') {
+      const cachedRate = getToUsdRate(rates, month, from);
+      if (cachedRate !== null) return cachedRate;
+    }
+    // If converting from USD, get inverse of target->USD rate
+    else if (from === 'USD') {
+      const toUsdRate = getToUsdRate(rates, month, to);
+      if (toUsdRate !== null) return 1 / toUsdRate;
+    }
+    // For X->Y, calculate through USD: X->USD / Y->USD
+    else {
+      const fromToUsd = getToUsdRate(rates, month, from);
+      const toToUsd = getToUsdRate(rates, month, to);
+      if (fromToUsd !== null && toToUsd !== null) {
+        return fromToUsd / toToUsd;
+      }
+    }
+
+    // Rate not in cache, fetch it
+    const loading = get().loading;
 
     // For X->Y conversions, we need both X->USD and Y->USD (unless one is USD)
     const fetchPromises: Promise<number | null>[] = [];
@@ -231,8 +221,19 @@ export const useExchangeRateStore = create<ExchangeRateState & ExchangeRateActio
       await Promise.allSettled(fetchPromises);
     }
 
-    // Return the converted rate
-    return get().getRateForMonth(month, from, to);
+    // Return the converted rate (recalculate from cache after fetching)
+    const updatedRates = get().rates;
+
+    if (to === 'USD') {
+      return getToUsdRate(updatedRates, month, from);
+    } else if (from === 'USD') {
+      const toUsdRate = getToUsdRate(updatedRates, month, to);
+      return toUsdRate !== null ? 1 / toUsdRate : null;
+    } else {
+      const fromToUsd = getToUsdRate(updatedRates, month, from);
+      const toToUsd = getToUsdRate(updatedRates, month, to);
+      return fromToUsd !== null && toToUsd !== null ? fromToUsd / toToUsd : null;
+    }
   },
 
   resetRates: () => {

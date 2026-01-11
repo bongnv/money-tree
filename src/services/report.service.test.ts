@@ -94,8 +94,8 @@ describe('ReportService', () => {
   ];
 
   describe('calculateBalanceSheet', () => {
-    it('should calculate balance sheet correctly', () => {
-      const result = reportService.calculateBalanceSheet(
+    it('should calculate balance sheet correctly', async () => {
+      const result = await reportService.calculateBalanceSheet(
         mockAccounts,
         mockManualAssets,
         mockTransactions
@@ -108,8 +108,8 @@ describe('ReportService', () => {
       expect(result.liabilities).toBeInstanceOf(Array);
     });
 
-    it('should filter transactions by date', () => {
-      const result = reportService.calculateBalanceSheet(
+    it('should filter transactions by date', async () => {
+      const result = await reportService.calculateBalanceSheet(
         mockAccounts,
         mockManualAssets,
         mockTransactions,
@@ -120,8 +120,8 @@ describe('ReportService', () => {
       expect(result.totalAssets).toBeDefined();
     });
 
-    it('should handle empty accounts and assets', () => {
-      const result = reportService.calculateBalanceSheet([], [], []);
+    it('should handle empty accounts and assets', async () => {
+      const result = await reportService.calculateBalanceSheet([], [], []);
 
       expect(result.totalAssets).toBe(0);
       expect(result.totalLiabilities).toBe(0);
@@ -130,8 +130,8 @@ describe('ReportService', () => {
       expect(result.liabilities).toHaveLength(0);
     });
 
-    it('should group assets correctly by type', () => {
-      const result = reportService.calculateBalanceSheet(
+    it('should group assets correctly by type', async () => {
+      const result = await reportService.calculateBalanceSheet(
         mockAccounts,
         mockManualAssets,
         mockTransactions
@@ -141,8 +141,8 @@ describe('ReportService', () => {
       expect(result.assets.every((group) => group.items.length > 0)).toBe(true);
     });
 
-    it('should group liabilities correctly', () => {
-      const result = reportService.calculateBalanceSheet(
+    it('should group liabilities correctly', async () => {
+      const result = await reportService.calculateBalanceSheet(
         mockAccounts,
         mockManualAssets,
         mockTransactions
@@ -151,8 +151,8 @@ describe('ReportService', () => {
       expect(result.liabilities.length).toBeGreaterThan(0);
     });
 
-    it('should calculate net worth as assets minus liabilities', () => {
-      const result = reportService.calculateBalanceSheet(
+    it('should calculate net worth as assets minus liabilities', async () => {
+      const result = await reportService.calculateBalanceSheet(
         mockAccounts,
         mockManualAssets,
         mockTransactions
@@ -163,11 +163,11 @@ describe('ReportService', () => {
   });
 
   describe('calculateNetWorthTrend', () => {
-    it('should calculate trend points over time', () => {
+    it('should calculate trend points over time', async () => {
       const startDate = '2024-01-01';
       const endDate = '2024-03-01';
 
-      const trend = reportService.calculateNetWorthTrend(
+      const trend = await reportService.calculateNetWorthTrend(
         mockAccounts,
         mockManualAssets,
         mockTransactions,
@@ -183,11 +183,11 @@ describe('ReportService', () => {
       expect(trend[0]).toHaveProperty('liabilities');
     });
 
-    it('should respect interval parameter', () => {
+    it('should respect interval parameter', async () => {
       const startDate = '2024-01-01';
       const endDate = '2024-01-31';
 
-      const trend = reportService.calculateNetWorthTrend(
+      const trend = await reportService.calculateNetWorthTrend(
         mockAccounts,
         mockManualAssets,
         mockTransactions,
@@ -200,11 +200,11 @@ describe('ReportService', () => {
       expect(trend.length).toBeGreaterThanOrEqual(3);
     });
 
-    it('should return empty array for invalid date range', () => {
+    it('should return empty array for invalid date range', async () => {
       const startDate = '2024-02-01';
       const endDate = '2024-01-01'; // End before start
 
-      const trend = reportService.calculateNetWorthTrend(
+      const trend = await reportService.calculateNetWorthTrend(
         mockAccounts,
         mockManualAssets,
         mockTransactions,
@@ -217,8 +217,8 @@ describe('ReportService', () => {
   });
 
   describe('calculateMonthOverMonthComparison', () => {
-    it('should compare current month to previous month', () => {
-      const result = reportService.calculateMonthOverMonthComparison(
+    it('should compare current month to previous month', async () => {
+      const result = await reportService.calculateMonthOverMonthComparison(
         mockAccounts,
         mockManualAssets,
         mockTransactions,
@@ -231,8 +231,8 @@ describe('ReportService', () => {
       expect(result.changePercent).toBeDefined();
     });
 
-    it('should calculate change correctly', () => {
-      const result = reportService.calculateMonthOverMonthComparison(
+    it('should calculate change correctly', async () => {
+      const result = await reportService.calculateMonthOverMonthComparison(
         mockAccounts,
         mockManualAssets,
         mockTransactions,
@@ -242,8 +242,8 @@ describe('ReportService', () => {
       expect(result.change).toBe(result.current.netWorth - result.previous.netWorth);
     });
 
-    it('should calculate change percent correctly', () => {
-      const result = reportService.calculateMonthOverMonthComparison(
+    it('should calculate change percent correctly', async () => {
+      const result = await reportService.calculateMonthOverMonthComparison(
         mockAccounts,
         mockManualAssets,
         mockTransactions,
@@ -260,8 +260,8 @@ describe('ReportService', () => {
   });
 
   describe('calculateYearOverYearComparison', () => {
-    it('should compare current year to previous year', () => {
-      const result = reportService.calculateYearOverYearComparison(
+    it('should compare current year to previous year', async () => {
+      const result = await reportService.calculateYearOverYearComparison(
         mockAccounts,
         mockManualAssets,
         mockTransactions,
@@ -274,8 +274,8 @@ describe('ReportService', () => {
       expect(result.changePercent).toBeDefined();
     });
 
-    it('should calculate change correctly', () => {
-      const result = reportService.calculateYearOverYearComparison(
+    it('should calculate change correctly', async () => {
+      const result = await reportService.calculateYearOverYearComparison(
         mockAccounts,
         mockManualAssets,
         mockTransactions,
@@ -285,11 +285,11 @@ describe('ReportService', () => {
       expect(result.change).toBe(result.current.netWorth - result.previous.netWorth);
     });
 
-    it('should handle zero previous net worth', () => {
+    it('should handle zero previous net worth', async () => {
       const emptyAccounts: Account[] = [];
       const emptyAssets: ManualAsset[] = [];
 
-      const result = reportService.calculateYearOverYearComparison(
+      const result = await reportService.calculateYearOverYearComparison(
         emptyAccounts,
         emptyAssets,
         [],
@@ -393,8 +393,8 @@ describe('ReportService', () => {
       },
     ];
 
-    it('should calculate cash flow correctly', () => {
-      const result = reportService.calculateCashFlow(
+    it('should calculate cash flow correctly', async () => {
+      const result = await reportService.calculateCashFlow(
         mockCashFlowTransactions,
         mockTypes,
         mockCategories,
@@ -409,8 +409,8 @@ describe('ReportService', () => {
       expect(result.expenses).toHaveLength(1);
     });
 
-    it('should exclude transfers from cash flow', () => {
-      const result = reportService.calculateCashFlow(
+    it('should exclude transfers from cash flow', async () => {
+      const result = await reportService.calculateCashFlow(
         mockCashFlowTransactions,
         mockTypes,
         mockCategories,
@@ -423,8 +423,8 @@ describe('ReportService', () => {
       expect(result.expenses.find((e) => e.categoryId === 'cat3')).toBeUndefined();
     });
 
-    it('should filter by date range', () => {
-      const result = reportService.calculateCashFlow(
+    it('should filter by date range', async () => {
+      const result = await reportService.calculateCashFlow(
         mockCashFlowTransactions,
         mockTypes,
         mockCategories,
@@ -436,8 +436,8 @@ describe('ReportService', () => {
       expect(result.totalExpenses).toBe(500);
     });
 
-    it('should group by category', () => {
-      const result = reportService.calculateCashFlow(
+    it('should group by category', async () => {
+      const result = await reportService.calculateCashFlow(
         mockCashFlowTransactions,
         mockTypes,
         mockCategories,
@@ -453,8 +453,8 @@ describe('ReportService', () => {
       expect(result.expenses[0].transactionCount).toBe(1);
     });
 
-    it('should handle empty transactions', () => {
-      const result = reportService.calculateCashFlow(
+    it('should handle empty transactions', async () => {
+      const result = await reportService.calculateCashFlow(
         [],
         mockTypes,
         mockCategories,
@@ -548,8 +548,8 @@ describe('ReportService', () => {
       },
     ];
 
-    it('should calculate trend points over time', () => {
-      const result = reportService.calculateCashFlowTrend(
+    it('should calculate trend points over time', async () => {
+      const result = await reportService.calculateCashFlowTrend(
         mockTrendTransactions,
         mockTypes,
         mockCategories,
@@ -565,8 +565,8 @@ describe('ReportService', () => {
       expect(result[0]).toHaveProperty('netCashFlow');
     });
 
-    it('should respect interval parameter', () => {
-      const result = reportService.calculateCashFlowTrend(
+    it('should respect interval parameter', async () => {
+      const result = await reportService.calculateCashFlowTrend(
         mockTrendTransactions,
         mockTypes,
         mockCategories,
@@ -579,8 +579,8 @@ describe('ReportService', () => {
       expect(result.length).toBeGreaterThanOrEqual(2);
     });
 
-    it('should return empty array for invalid date range', () => {
-      const result = reportService.calculateCashFlowTrend(
+    it('should return empty array for invalid date range', async () => {
+      const result = await reportService.calculateCashFlowTrend(
         mockTrendTransactions,
         mockTypes,
         mockCategories,
@@ -592,8 +592,8 @@ describe('ReportService', () => {
       expect(result).toHaveLength(0);
     });
 
-    it('should calculate net cash flow correctly in each period', () => {
-      const result = reportService.calculateCashFlowTrend(
+    it('should calculate net cash flow correctly in each period', async () => {
+      const result = await reportService.calculateCashFlowTrend(
         mockTrendTransactions,
         mockTypes,
         mockCategories,
@@ -690,8 +690,8 @@ describe('ReportService', () => {
       },
     ];
 
-    it('should calculate budget performance for single month', () => {
-      const result = reportService.calculateBudgetPerformance(
+    it('should calculate budget performance for single month', async () => {
+      const result = await reportService.calculateBudgetPerformance(
         mockBudgets,
         budgetTransactions,
         mockTypes,
@@ -707,8 +707,8 @@ describe('ReportService', () => {
       expect(result.totalActualIncome).toBe(4500);
     });
 
-    it('should calculate percent used correctly', () => {
-      const result = reportService.calculateBudgetPerformance(
+    it('should calculate percent used correctly', async () => {
+      const result = await reportService.calculateBudgetPerformance(
         mockBudgets,
         budgetTransactions,
         mockTypes,
@@ -724,8 +724,8 @@ describe('ReportService', () => {
       expect(salaryItem?.percentUsed).toBe(90); // 4500/5000 * 100
     });
 
-    it('should calculate remaining correctly', () => {
-      const result = reportService.calculateBudgetPerformance(
+    it('should calculate remaining correctly', async () => {
+      const result = await reportService.calculateBudgetPerformance(
         mockBudgets,
         budgetTransactions,
         mockTypes,
@@ -741,8 +741,8 @@ describe('ReportService', () => {
       expect(salaryItem?.remaining).toBe(500); // 5000 - 4500
     });
 
-    it('should identify income vs expense correctly', () => {
-      const result = reportService.calculateBudgetPerformance(
+    it('should identify income vs expense correctly', async () => {
+      const result = await reportService.calculateBudgetPerformance(
         mockBudgets,
         budgetTransactions,
         mockTypes,
@@ -758,8 +758,8 @@ describe('ReportService', () => {
       expect(salaryItem?.isIncome).toBe(true);
     });
 
-    it('should calculate health score correctly', () => {
-      const result = reportService.calculateBudgetPerformance(
+    it('should calculate health score correctly', async () => {
+      const result = await reportService.calculateBudgetPerformance(
         mockBudgets,
         budgetTransactions,
         mockTypes,
@@ -774,8 +774,8 @@ describe('ReportService', () => {
       expect(result.overallHealthScore).toBeCloseTo(65, 0);
     });
 
-    it('should prorate budget for partial period', () => {
-      const result = reportService.calculateBudgetPerformance(
+    it('should prorate budget for partial period', async () => {
+      const result = await reportService.calculateBudgetPerformance(
         mockBudgets,
         budgetTransactions,
         mockTypes,
@@ -789,8 +789,8 @@ describe('ReportService', () => {
       expect(result.totalBudgetedIncome).toBe(15000); // 5000 * 3
     });
 
-    it('should handle empty budgets', () => {
-      const result = reportService.calculateBudgetPerformance(
+    it('should handle empty budgets', async () => {
+      const result = await reportService.calculateBudgetPerformance(
         [],
         budgetTransactions,
         mockTypes,
@@ -805,8 +805,8 @@ describe('ReportService', () => {
       expect(result.overallHealthScore).toBe(100); // Default when no budgets
     });
 
-    it('should handle empty transactions', () => {
-      const result = reportService.calculateBudgetPerformance(
+    it('should handle empty transactions', async () => {
+      const result = await reportService.calculateBudgetPerformance(
         mockBudgets,
         [],
         mockTypes,
@@ -823,7 +823,7 @@ describe('ReportService', () => {
       expect(result.totalRemainingIncome).toBe(5000);
     });
 
-    it('should convert budget currency when base currency provided', () => {
+    it('should convert budget currency when base currency provided', async () => {
       const eurBudgets = [
         {
           ...mockBudgets[0],
@@ -838,7 +838,7 @@ describe('ReportService', () => {
         return null;
       };
 
-      const result = reportService.calculateBudgetPerformance(
+      const result = await reportService.calculateBudgetPerformance(
         eurBudgets,
         [],
         mockTypes,
@@ -853,7 +853,7 @@ describe('ReportService', () => {
       expect(result.totalBudgetedExpenses).toBe(550); // 500 EUR * 1.1
     });
 
-    it('should convert transaction currency when base currency provided', () => {
+    it('should convert transaction currency when base currency provided', async () => {
       const eurAccounts = [
         {
           ...mockAccounts[0],
@@ -866,7 +866,7 @@ describe('ReportService', () => {
         return null;
       };
 
-      const result = reportService.calculateBudgetPerformance(
+      const result = await reportService.calculateBudgetPerformance(
         mockBudgets,
         budgetTransactions,
         mockTypes,
@@ -939,8 +939,8 @@ describe('ReportService', () => {
       },
     ];
 
-    it('should calculate trend points over time', () => {
-      const result = reportService.calculateBudgetTrend(
+    it('should calculate trend points over time', async () => {
+      const result = await reportService.calculateBudgetTrend(
         mockBudgets,
         trendTransactions,
         mockTypes,
@@ -957,8 +957,8 @@ describe('ReportService', () => {
       expect(result[0]).toHaveProperty('variance');
     });
 
-    it('should calculate variance correctly', () => {
-      const result = reportService.calculateBudgetTrend(
+    it('should calculate variance correctly', async () => {
+      const result = await reportService.calculateBudgetTrend(
         mockBudgets,
         trendTransactions,
         mockTypes,
@@ -974,8 +974,8 @@ describe('ReportService', () => {
       expect(result[0].variance).toBe(-200);
     });
 
-    it('should respect interval parameter', () => {
-      const result = reportService.calculateBudgetTrend(
+    it('should respect interval parameter', async () => {
+      const result = await reportService.calculateBudgetTrend(
         mockBudgets,
         trendTransactions,
         mockTypes,
@@ -989,8 +989,8 @@ describe('ReportService', () => {
       expect(result.length).toBeGreaterThanOrEqual(4);
     });
 
-    it('should return empty array for invalid date range', () => {
-      const result = reportService.calculateBudgetTrend(
+    it('should return empty array for invalid date range', async () => {
+      const result = await reportService.calculateBudgetTrend(
         mockBudgets,
         trendTransactions,
         mockTypes,
@@ -1003,8 +1003,8 @@ describe('ReportService', () => {
       expect(result).toHaveLength(0);
     });
 
-    it('should handle empty budgets', () => {
-      const result = reportService.calculateBudgetTrend(
+    it('should handle empty budgets', async () => {
+      const result = await reportService.calculateBudgetTrend(
         [],
         trendTransactions,
         mockTypes,
@@ -1018,8 +1018,8 @@ describe('ReportService', () => {
       expect(result[0].budgeted).toBe(0);
     });
 
-    it('should handle empty transactions', () => {
-      const result = reportService.calculateBudgetTrend(
+    it('should handle empty transactions', async () => {
+      const result = await reportService.calculateBudgetTrend(
         mockBudgets,
         [],
         mockTypes,

@@ -816,8 +816,7 @@ These features will be implemented after the MVP is validated by users.
 - [x] Update `src/App.tsx`:
   - [x] Add state for `showWelcomeDialog` (initially false)
   - [x] On mount, call `syncService.autoLoad()`
-  - [x] If autoLoad fails, check if user has dismissed welcome dialog
-  - [x] Show WelcomeDialog if no cached file and not dismissed
+  - [x] Show WelcomeDialog if no cached file
   - [x] Handle "Start with Empty Data" by setting flag in localStorage
 - [x] Write automated tests:
   - [x] WelcomeDialog component renders correctly (8 tests)

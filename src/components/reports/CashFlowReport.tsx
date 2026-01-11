@@ -36,6 +36,7 @@ import { formatCurrency } from '../../utils/currency.utils';
 import { getTodayDate } from '../../utils/date.utils';
 import { CHART_COLORS } from '../../theme';
 import type { CurrencyCode } from '../../types/enums';
+import type { CashFlowData } from '../../services/report.service';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
 import { Group } from '../../types/enums';
 
@@ -47,7 +48,6 @@ export const CashFlowReport: React.FC = () => {
   const accounts = useAccountStore((state) => state.accounts);
   const baseCurrency = useAppStore((state) => state.baseCurrency);
   const getRateForMonth = useExchangeRateStore((state) => state.getRateForMonth);
-  const fetchRateIfMissing = useExchangeRateStore((state) => state.fetchRateIfMissing);
 
   // Date range state - default to Year to Date
   const today = getTodayDate();
@@ -88,9 +88,11 @@ export const CashFlowReport: React.FC = () => {
       const parts = key.split('-');
       const month = `${parts[0]}-${parts[1]}`;
       const currency = parts.slice(2).join('-');
-      fetchRateIfMissing(month, currency, conversionCurrency);
+      getRateForMonth(month, currency, conversionCurrency);
     });
-  }, [conversionCurrency, startDate, endDate, transactions, accounts, fetchRateIfMissing]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversionCurrency, startDate, endDate]);
+  // getRateForMonth, transactions, and accounts are stable from Zustand stores
 
   const handleDateRangeChange = (range: { startDate: string; endDate: string }) => {
     setStartDate(range.startDate);
@@ -108,9 +110,17 @@ export const CashFlowReport: React.FC = () => {
     });
   }, [transactions, transactionTypes, selectedCategories]);
 
-  const cashFlow = useMemo(
-    () =>
-      reportService.calculateCashFlow(
+  const [cashFlow, setCashFlow] = useState<CashFlowData>({
+    totalIncome: 0,
+    totalExpenses: 0,
+    netCashFlow: 0,
+    income: [],
+    expenses: [],
+  });
+
+  useEffect(() => {
+    const calculateCashFlow = async () => {
+      const data = await reportService.calculateCashFlow(
         filteredTransactions,
         transactionTypes,
         categories,
@@ -119,40 +129,49 @@ export const CashFlowReport: React.FC = () => {
         accounts,
         effectiveBaseCurrency,
         effectiveGetRateForMonth
-      ),
-    [
-      filteredTransactions,
-      transactionTypes,
-      categories,
-      startDate,
-      endDate,
-      accounts,
-      effectiveBaseCurrency,
-      effectiveGetRateForMonth,
-    ]
-  );
+      );
+      setCashFlow(data);
+    };
+
+    calculateCashFlow();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startDate, endDate, effectiveBaseCurrency, selectedCategories]);
+  // filteredTransactions, transactionTypes, categories, accounts, and effectiveGetRateForMonth are stable or captured in closure
 
   // Calculate trend data
-  const trendData = useMemo(() => {
-    // Determine interval based on date range duration
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    const intervalDays = daysDiff > 180 ? 30 : daysDiff > 60 ? 7 : 1;
+  const [trendData, setTrendData] = useState<any>([]);
 
-    const trend = reportService.calculateCashFlowTrend(
-      filteredTransactions,
-      transactionTypes,
-      categories,
-      startDate,
-      endDate,
-      intervalDays,
-      accounts,
-      effectiveBaseCurrency,
-      effectiveGetRateForMonth
-    );
+  useEffect(() => {
+    const calculateTrend = async () => {
+      // Determine interval based on date range duration
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      const intervalDays = daysDiff > 180 ? 30 : daysDiff > 60 ? 7 : 1;
 
-    return trend.map((point) => ({
+      const trend = await reportService.calculateCashFlowTrend(
+        filteredTransactions,
+        transactionTypes,
+        categories,
+        startDate,
+        endDate,
+        intervalDays,
+        accounts,
+        effectiveBaseCurrency,
+        effectiveGetRateForMonth
+      );
+      setTrendData(trend);
+    };
+
+    calculateTrend();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startDate, endDate, effectiveBaseCurrency, selectedCategories]);
+  // filteredTransactions, transactionTypes, categories, accounts, and effectiveGetRateForMonth are stable or captured in closure
+  // effectiveGetRateForMonth is stable from Zustand store
+
+  // Prepare chart data
+  const chartData = useMemo(() => {
+    return trendData.map((point: any) => ({
       name: new Date(point.date).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
@@ -161,16 +180,7 @@ export const CashFlowReport: React.FC = () => {
       Expenses: point.expenses,
       'Net Cash Flow': point.netCashFlow,
     }));
-  }, [
-    filteredTransactions,
-    transactionTypes,
-    categories,
-    startDate,
-    endDate,
-    accounts,
-    effectiveBaseCurrency,
-    effectiveGetRateForMonth,
-  ]);
+  }, [trendData]);
 
   const handleCurrencyChange = (newCurrency: string) => {
     setConversionCurrency(newCurrency);
@@ -200,13 +210,27 @@ export const CashFlowReport: React.FC = () => {
   };
 
   // Prepare pie chart and table data - group by transaction type if categories are filtered
-  const { incomePieData, expensesPieData, incomeDetailData, expenseDetailData, groupingLabel } =
-    useMemo(() => {
+  const [chartTableData, setChartTableData] = useState<{
+    incomePieData: { name: string; value: number }[];
+    expensesPieData: { name: string; value: number }[];
+    incomeDetailData: any[];
+    expenseDetailData: any[];
+    groupingLabel: string;
+  }>({
+    incomePieData: [],
+    expensesPieData: [],
+    incomeDetailData: [],
+    expenseDetailData: [],
+    groupingLabel: 'Category',
+  });
+
+  useEffect(() => {
+    const calculateChartData = async () => {
       const hasFilter = selectedCategories.length > 0;
 
       if (!hasFilter) {
         // No filter - show by category
-        return {
+        setChartTableData({
           incomePieData: cashFlow.income.map((cat) => ({
             name: cat.categoryName,
             value: cat.total,
@@ -218,33 +242,30 @@ export const CashFlowReport: React.FC = () => {
           incomeDetailData: cashFlow.income.map((cat) => ({ ...cat, isTransactionType: false })),
           expenseDetailData: cashFlow.expenses.map((cat) => ({ ...cat, isTransactionType: false })),
           groupingLabel: 'Category',
-        };
+        });
+        return;
       }
 
       // Filter applied - group by transaction type
       const incomeByType = new Map<string, { name: string; total: number; count: number }>();
       const expenseByType = new Map<string, { name: string; total: number; count: number }>();
 
-      filteredTransactions.forEach((tx) => {
+      for (const tx of filteredTransactions) {
         const txType = transactionTypes.find((tt) => tt.id === tx.transactionTypeId);
-        if (!txType) return;
+        if (!txType) continue;
 
         // Get the appropriate account ID based on transaction type
         const accountId = txType.group === Group.INCOME ? tx.toAccountId : tx.fromAccountId;
-        if (!accountId) return;
+        if (!accountId) continue;
 
         const account = accounts.find((a) => a.id === accountId);
-        if (!account) return;
+        if (!account) continue;
 
         // Convert amount to base currency
         let convertedAmount = tx.amount;
         if (account.currencyCode !== effectiveBaseCurrency) {
           const txMonth = tx.date.substring(0, 7);
-          const rate = effectiveGetRateForMonth(
-            txMonth,
-            account.currencyCode,
-            effectiveBaseCurrency
-          );
+          const rate = await getRateForMonth(txMonth, account.currencyCode, effectiveBaseCurrency);
           if (rate) {
             convertedAmount = tx.amount * rate;
           }
@@ -269,9 +290,9 @@ export const CashFlowReport: React.FC = () => {
           existing.count += 1;
           expenseByType.set(txType.id, existing);
         }
-      });
+      }
 
-      return {
+      setChartTableData({
         incomePieData: Array.from(incomeByType.values()).map((item) => ({
           name: item.name,
           value: item.total,
@@ -295,16 +316,16 @@ export const CashFlowReport: React.FC = () => {
           isTransactionType: true,
         })),
         groupingLabel: 'Transaction Type',
-      };
-    }, [
-      cashFlow,
-      selectedCategories,
-      filteredTransactions,
-      transactionTypes,
-      accounts,
-      effectiveBaseCurrency,
-      effectiveGetRateForMonth,
-    ]);
+      });
+    };
+
+    calculateChartData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategories, effectiveBaseCurrency]);
+  // cashFlow, filteredTransactions, transactionTypes, accounts, and getRateForMonth are stable or captured in closure
+
+  const { incomePieData, expensesPieData, incomeDetailData, expenseDetailData, groupingLabel } =
+    chartTableData;
 
   return (
     <Box sx={{ p: 3 }}>
@@ -419,7 +440,7 @@ export const CashFlowReport: React.FC = () => {
             Cash Flow Trend
           </Typography>
           <LineChart
-            data={trendData}
+            data={chartData}
             lines={[
               { dataKey: 'Income', color: CHART_COLORS.simple.income, name: 'Income' },
               { dataKey: 'Expenses', color: CHART_COLORS.simple.expense, name: 'Expenses' },

@@ -21,16 +21,22 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import { isOneDriveConfigured } from '../../config/onedrive.config';
+import { isGoogleDriveConfigured } from '../../config/googledrive.config';
 import { OneDriveFilePicker } from '../onedrive/OneDriveFilePicker';
-import type { SelectedFileInfo } from '../../services/storage/OneDriveProvider';
+import { GooglePickerService } from '../../services/storage/GooglePickerService';
+import { StorageFactory } from '../../services/storage/StorageFactory';
+import type { SelectedFileInfo as OneDriveFileInfo } from '../../services/storage/OneDriveProvider';
+import type { SelectedFileInfo as GoogleDriveFileInfo } from '../../services/storage/GoogleDriveProvider';
 
 interface WelcomeDialogProps {
   open: boolean;
   onOpenLocalFile: () => void;
   onCreateNewLocalFile: () => void;
   onSelectOneDrive: () => Promise<void>;
-  onOneDriveFileSelected: (fileInfo: SelectedFileInfo) => Promise<void>;
+  onOneDriveFileSelected: (fileInfo: OneDriveFileInfo) => Promise<void>;
   onListOneDriveFolders: (parentItem?: any) => Promise<any[]>;
+  onSelectGoogleDrive: () => Promise<void>;
+  onGoogleDriveFileSelected: (fileInfo: GoogleDriveFileInfo) => Promise<void>;
 }
 
 export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
@@ -40,12 +46,15 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
   onSelectOneDrive,
   onOneDriveFileSelected,
   onListOneDriveFolders,
+  onSelectGoogleDrive,
+  onGoogleDriveFileSelected,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [isConnecting, setIsConnecting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [showFilePicker, setShowFilePicker] = useState(false);
+  const [showOneDriveFilePicker, setShowOneDriveFilePicker] = useState(false);
+  const [showGooglePicker, setShowGooglePicker] = useState(false);
 
   const handleConnectOneDrive = async () => {
     setIsConnecting(true);
@@ -53,7 +62,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
 
     try {
       await onSelectOneDrive();
-      setShowFilePicker(true);
+      setShowOneDriveFilePicker(true);
     } catch (error: any) {
       console.error('OneDrive connection failed:', error);
       setAuthError(error.message || 'Failed to connect to OneDrive');
@@ -61,8 +70,53 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
     }
   };
 
-  const handleFileSelect = async (fileInfo: SelectedFileInfo) => {
-    setShowFilePicker(false);
+  const handleConnectGoogleDrive = async () => {
+    setIsConnecting(true);
+    setAuthError(null);
+
+    try {
+      // Authenticate with Google Drive
+      await onSelectGoogleDrive();
+
+      // Get access token for Picker
+      const accessToken = StorageFactory.getGoogleDriveAccessToken();
+      if (!accessToken) {
+        throw new Error('No access token available');
+      }
+
+      // Hide dialog to show Picker (Picker has lower z-index than MUI Dialog)
+      setShowGooglePicker(true);
+
+      // Show Google Picker
+      const pickerResult = await GooglePickerService.showPicker(accessToken, true);
+
+      // Restore dialog
+      setShowGooglePicker(false);
+
+      if (pickerResult) {
+        // Check if user selected a folder or a file
+        const isFolder = pickerResult.mimeType === 'application/vnd.google-apps.folder';
+
+        // Convert picker result to SelectedFileInfo format
+        const fileInfo: GoogleDriveFileInfo = {
+          fileId: isFolder ? null : pickerResult.id, // No fileId if folder (means create new)
+          fileName: isFolder ? 'MoneyTree.json' : pickerResult.name,
+          parentId: isFolder ? pickerResult.id : (pickerResult.parentId ?? undefined), // If folder selected, use it as parent
+        };
+
+        await onGoogleDriveFileSelected(fileInfo);
+      }
+    } catch (error: any) {
+      console.error('Google Drive connection failed:', error);
+      setAuthError(error.message || 'Failed to connect to Google Drive');
+      setShowGooglePicker(false);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleOneDriveFileSelect = async (fileInfo: OneDriveFileInfo) => {
+    setShowOneDriveFilePicker(false);
     try {
       await onOneDriveFileSelected(fileInfo);
     } catch (error) {
@@ -73,8 +127,8 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
     }
   };
 
-  const handleFilePickerCancel = () => {
-    setShowFilePicker(false);
+  const handleOneDriveFilePickerCancel = () => {
+    setShowOneDriveFilePicker(false);
     setIsConnecting(false);
   };
 
@@ -100,7 +154,13 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
 
   return (
     <>
-      <Dialog open={open && !showFilePicker} maxWidth="md" fullWidth fullScreen={isMobile}>
+      <Dialog
+        open={open && !showOneDriveFilePicker && !showGooglePicker}
+        maxWidth="md"
+        fullWidth
+        fullScreen={isMobile}
+        sx={{ zIndex: 1000 }}
+      >
         <DialogTitle>
           <Typography variant="h5" component="div" fontWeight="bold">
             Welcome to Money Tree
@@ -193,6 +253,47 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
                 </Button>
               </CardActions>
             </Card>
+
+            {/* Connect to Google Drive */}
+            <Card variant="outlined">
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                  <CloudIcon
+                    color={isGoogleDriveConfigured() ? 'primary' : 'disabled'}
+                    fontSize="large"
+                  />
+                  <Box>
+                    <Typography
+                      variant="h6"
+                      component="div"
+                      color={isGoogleDriveConfigured() ? 'inherit' : 'text.disabled'}
+                    >
+                      Connect to Google Drive
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {isGoogleDriveConfigured()
+                        ? 'Sync your data with Google Drive'
+                        : 'Not configured - Google Cloud Console setup required'}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+              <CardActions>
+                <Button
+                  variant="contained"
+                  startIcon={isConnecting ? <CircularProgress size={20} /> : <CloudIcon />}
+                  onClick={handleConnectGoogleDrive}
+                  disabled={!isGoogleDriveConfigured() || isConnecting}
+                  fullWidth
+                >
+                  {isConnecting
+                    ? 'Connecting...'
+                    : isGoogleDriveConfigured()
+                      ? 'Connect Google Drive'
+                      : 'Not Configured'}
+                </Button>
+              </CardActions>
+            </Card>
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
@@ -204,9 +305,9 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
 
       {/* OneDrive File Picker */}
       <OneDriveFilePicker
-        open={showFilePicker}
-        onSelect={handleFileSelect}
-        onCancel={handleFilePickerCancel}
+        open={showOneDriveFilePicker}
+        onSelect={handleOneDriveFileSelect}
+        onCancel={handleOneDriveFilePickerCancel}
         onListFolders={onListOneDriveFolders}
       />
     </>

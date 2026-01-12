@@ -132,15 +132,16 @@ class SyncService {
    * Sync data immediately
    * Saves current state to storage provider
    * @param background - If true, won't show blocking loading screen (used for auto-save)
+   * @param force - If true, save even if there are no unsaved changes (used for creating new files)
    */
-  async syncNow(background: boolean = false): Promise<void> {
+  async syncNow(background: boolean = false, force: boolean = false): Promise<void> {
     if (this.isSaving) {
       return;
     }
 
     const state = useAppStore.getState();
 
-    if (!state.hasUnsavedChanges) {
+    if (!force && !state.hasUnsavedChanges) {
       return;
     }
 

@@ -62,6 +62,12 @@ module.exports = (env, argv) => {
         'process.env.ONEDRIVE_CLIENT_ID': JSON.stringify(
           process.env.ONEDRIVE_CLIENT_ID || ''
         ),
+        'process.env.GOOGLE_DRIVE_CLIENT_ID': JSON.stringify(
+          process.env.GOOGLE_DRIVE_CLIENT_ID || ''
+        ),
+        'process.env.GOOGLE_DRIVE_API_KEY': JSON.stringify(
+          process.env.GOOGLE_DRIVE_API_KEY || ''
+        ),
       }),
       new HtmlWebpackPlugin({
         template: './public/index.html',

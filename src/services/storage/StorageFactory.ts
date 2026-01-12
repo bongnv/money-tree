@@ -1,7 +1,12 @@
 import { IStorageProvider } from './IStorageProvider';
 import { LocalStorageProvider } from './LocalStorageProvider';
-import { OneDriveProvider, SelectedFileInfo } from './OneDriveProvider';
+import { OneDriveProvider, SelectedFileInfo as OneDriveFileInfo } from './OneDriveProvider';
 import { OneDriveService } from './OneDriveService';
+import {
+  GoogleDriveProvider,
+  SelectedFileInfo as GoogleDriveFileInfo,
+} from './GoogleDriveProvider';
+import { GoogleDriveService } from './GoogleDriveService';
 
 /**
  * Storage provider type
@@ -19,7 +24,7 @@ export enum StorageProviderType {
 export interface ProviderConfig {
   type: StorageProviderType; // Provider type
   fileHandle?: FileSystemFileHandle; // For Local
-  fileInfo?: SelectedFileInfo; // For OneDrive
+  fileInfo?: OneDriveFileInfo | GoogleDriveFileInfo; // For OneDrive or Google Drive
 }
 
 const STORAGE_CONFIG_KEY = 'moneyTree.storageProviderConfig';
@@ -36,12 +41,13 @@ const FILE_HANDLE_KEY = 'cachedFileHandle';
 export class StorageFactory {
   private static provider: IStorageProvider | null = null;
   private static oneDriveService: OneDriveService | null = null;
+  private static googleDriveService: GoogleDriveService | null = null;
 
   /**
    * Initialize storage provider with authentication handling
    * This is the main entry point for app initialization
    *
-   * @param showReconnectDialog - Optional callback for OneDrive reconnection
+   * @param showReconnectDialog - Optional callback for OneDrive/Google Drive reconnection
    * @returns true if provider loaded successfully
    */
   static async initialize(
@@ -50,10 +56,12 @@ export class StorageFactory {
     let loaded = await this.loadCachedProvider();
 
     if (!loaded && showReconnectDialog) {
-      // Check if OneDrive needs reconnection
+      // Check if OneDrive or Google Drive needs reconnection
       const config = await this.loadProviderConfig();
       if (config?.type === StorageProviderType.ONEDRIVE) {
         loaded = await this.reconnectOneDrive(showReconnectDialog);
+      } else if (config?.type === StorageProviderType.GOOGLE_DRIVE) {
+        loaded = await this.reconnectGoogleDrive(showReconnectDialog);
       }
     }
 
@@ -76,6 +84,25 @@ export class StorageFactory {
 
     // Authenticate within user interaction context
     const service = this.getOneDriveService();
+    await service.authenticate();
+    return await this.loadCachedProvider();
+  }
+
+  /**
+   * Handle Google Drive reconnection flow
+   */
+  private static async reconnectGoogleDrive(
+    showReconnectDialog: (name: string) => Promise<'reconnect' | 'dismiss'>
+  ): Promise<boolean> {
+    const action = await showReconnectDialog('Google Drive');
+
+    if (action === 'dismiss') {
+      // Config remains cached for future use
+      return false;
+    }
+
+    // Authenticate within user interaction context
+    const service = this.getGoogleDriveService();
     await service.authenticate();
     return await this.loadCachedProvider();
   }
@@ -154,8 +181,25 @@ export class StorageFactory {
   }
 
   /**
+   * Get or create the singleton Google Drive service (internal)
+   */
+  private static getGoogleDriveService(): GoogleDriveService {
+    if (!this.googleDriveService) {
+      this.googleDriveService = new GoogleDriveService();
+    }
+    return this.googleDriveService;
+  }
+
+  /**
+   * Get Google Drive access token (for external use like Google Picker)
+   */
+  static getGoogleDriveAccessToken(): string | null {
+    return this.getGoogleDriveService().getAccessToken();
+  }
+
+  /**
    * Load provider from cached configuration (internal)
-   * For OneDrive, checks if authenticated but does NOT show dialogs
+   * For OneDrive/Google Drive, checks if authenticated but does NOT show dialogs
    */
   private static async loadCachedProvider(): Promise<boolean> {
     try {
@@ -167,6 +211,16 @@ export class StorageFactory {
       // For OneDrive, check authentication BEFORE creating provider
       if (config.type === StorageProviderType.ONEDRIVE) {
         const service = this.getOneDriveService();
+        const isAuth = await service.isAuthenticated();
+
+        if (!isAuth) {
+          return false;
+        }
+      }
+
+      // For Google Drive, check authentication BEFORE creating provider
+      if (config.type === StorageProviderType.GOOGLE_DRIVE) {
+        const service = this.getGoogleDriveService();
         const isAuth = await service.isAuthenticated();
 
         if (!isAuth) {
@@ -206,12 +260,30 @@ export class StorageFactory {
   }
 
   /**
+   * Authenticate Google Drive service
+   * Must be called within user interaction context (button click)
+   */
+  static async authenticateGoogleDrive(): Promise<void> {
+    const service = this.getGoogleDriveService();
+    await service.authenticate();
+  }
+
+  /**
    * List OneDrive folders
    * @param parentItem Parent folder or null for root
    */
   static async listOneDriveFolders(parentItem?: any): Promise<any[]> {
     const service = this.getOneDriveService();
     return service.listFolders(parentItem);
+  }
+
+  /**
+   * List Google Drive files
+   * @param parentId Parent folder ID or undefined for root
+   */
+  static async listGoogleDriveFiles(parentId?: string): Promise<any[]> {
+    const service = this.getGoogleDriveService();
+    return service.listFiles(parentId);
   }
 
   /**
@@ -286,7 +358,7 @@ export class StorageFactory {
         return new LocalStorageProvider(handle);
       }
       case StorageProviderType.ONEDRIVE: {
-        const fileInfo = config.fileInfo;
+        const fileInfo = config.fileInfo as OneDriveFileInfo;
         if (!fileInfo) {
           throw new Error('No cached file info found. Please select a file first.');
         }
@@ -294,8 +366,15 @@ export class StorageFactory {
         const service = this.getOneDriveService();
         return new OneDriveProvider(service, fileInfo);
       }
-      case StorageProviderType.GOOGLE_DRIVE:
-        throw new Error('Google Drive storage provider not yet implemented');
+      case StorageProviderType.GOOGLE_DRIVE: {
+        const fileInfo = config.fileInfo as GoogleDriveFileInfo;
+        if (!fileInfo) {
+          throw new Error('No cached file info found. Please select a file first.');
+        }
+        // Service already created and authenticated by loadCachedProvider
+        const service = this.getGoogleDriveService();
+        return new GoogleDriveProvider(service, fileInfo);
+      }
       case StorageProviderType.DROPBOX:
         throw new Error('Dropbox storage provider not yet implemented');
       default:
@@ -314,6 +393,9 @@ export class StorageFactory {
 
     // Clear OneDrive service instance - will be recreated on next use
     this.oneDriveService = null;
+
+    // Clear Google Drive service instance - will be recreated on next use
+    this.googleDriveService = null;
 
     // Remove provider config - MSAL will handle its own cache cleanup
     localStorage.removeItem(STORAGE_CONFIG_KEY);

@@ -16,7 +16,8 @@ import { useAppStore } from './stores/useAppStore';
 import { syncService } from './services/sync.service';
 import { FilePickerService } from './services/storage/FilePickerService';
 import { StorageFactory, StorageProviderType } from './services/storage/StorageFactory';
-import { SelectedFileInfo } from './services/storage/OneDriveProvider';
+import { SelectedFileInfo as OneDriveFileInfo } from './services/storage/OneDriveProvider';
+import { SelectedFileInfo as GoogleDriveFileInfo } from './services/storage/GoogleDriveProvider';
 import { MergeResult } from './services/merge.service';
 import { backupService } from './services/backup.service';
 import { identifyArchivableYear, calculateYearEndSummary } from './services/archive.service';
@@ -211,14 +212,41 @@ const AppContent: React.FC = () => {
     await StorageFactory.authenticateOneDrive();
   };
 
-  const handleConnectOneDrive = async (fileInfo: SelectedFileInfo) => {
-    // Finalize connection: switch provider and load file
+  const handleConnectOneDrive = async (fileInfo: OneDriveFileInfo) => {
+    // Finalize connection: switch provider and load/create file
     await StorageFactory.replaceProvider({
       type: StorageProviderType.ONEDRIVE,
       fileInfo,
     });
 
-    await syncService.loadDataFile();
+    if (fileInfo.fileId) {
+      // Existing file: load it
+      await syncService.loadDataFile();
+    } else {
+      // New file: create empty file immediately (force=true to bypass unsaved changes check)
+      await syncService.syncNow(false, true);
+    }
+    setShowWelcomeDialog(false);
+  };
+
+  const handleSelectGoogleDrive = async () => {
+    await StorageFactory.authenticateGoogleDrive();
+  };
+
+  const handleConnectGoogleDrive = async (fileInfo: GoogleDriveFileInfo) => {
+    // Finalize connection: switch provider and load/create file
+    await StorageFactory.replaceProvider({
+      type: StorageProviderType.GOOGLE_DRIVE,
+      fileInfo,
+    });
+
+    if (fileInfo.fileId) {
+      // Existing file: load it
+      await syncService.loadDataFile();
+    } else {
+      // New file: create empty file immediately (force=true to bypass unsaved changes check)
+      await syncService.syncNow(false, true);
+    }
     setShowWelcomeDialog(false);
   };
 
@@ -278,6 +306,8 @@ const AppContent: React.FC = () => {
         onSelectOneDrive={handleSelectOneDrive}
         onOneDriveFileSelected={handleConnectOneDrive}
         onListOneDriveFolders={handleListOneDriveFolders}
+        onSelectGoogleDrive={handleSelectGoogleDrive}
+        onGoogleDriveFileSelected={handleConnectGoogleDrive}
       />
       <NotificationSnackbar
         open={snackbar.open}

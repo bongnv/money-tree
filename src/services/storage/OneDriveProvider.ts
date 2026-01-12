@@ -99,7 +99,9 @@ export class OneDriveProvider implements IStorageProvider {
    */
   async loadDataFile(): Promise<DataFile | null> {
     if (!this.selectedFileInfo.fileId) {
-      throw new Error('Cannot load file: fileId is not set');
+      throw new Error(
+        'Cannot load file: fileId is not set. Use saveDataFile() to create a new file.'
+      );
     }
 
     try {

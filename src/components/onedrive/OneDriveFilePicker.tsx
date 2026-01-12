@@ -1,33 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Breadcrumbs,
-  Link,
-  Typography,
-  Box,
-  CircularProgress,
-  Alert,
-  TextField,
-  Divider,
-} from '@mui/material';
-import {
-  Folder as FolderIcon,
-  InsertDriveFile as FileIcon,
-  NavigateNext as NavigateNextIcon,
-  CloudQueue as CloudIcon,
-  People as PeopleIcon,
-} from '@mui/icons-material';
+import React, { useRef } from 'react';
+import { People as PeopleIcon } from '@mui/icons-material';
 import type { SelectedFileInfo } from '../../services/storage/OneDriveProvider';
 import type { DriveItem } from '../../services/storage/OneDriveService';
+import { CloudFilePicker, CloudItem } from '../common/CloudFilePicker';
 
 interface OneDriveFilePickerProps {
   open: boolean;
@@ -44,285 +19,103 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
   onListFolders,
   defaultFileName = 'money-tree.json',
 }) => {
-  const [currentFolder, setCurrentFolder] = useState<DriveItem | null>(null);
-  const [items, setItems] = useState<DriveItem[]>([]);
-  const [breadcrumbs, setBreadcrumbs] = useState<DriveItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<DriveItem | null>(null);
-  const [showFileNameDialog, setShowFileNameDialog] = useState(false);
-  const [newFileName, setNewFileName] = useState(defaultFileName);
+  // Store current folder context for create operations
+  const currentFolderRef = useRef<DriveItem | null>(null);
+  const itemsMapRef = useRef<Map<string, DriveItem>>(new Map());
 
-  // Load root folder on open
-  useEffect(() => {
-    if (open) {
-      loadFolder();
+  const handleListItems = async (parentId?: string | null): Promise<CloudItem[]> => {
+    // Convert parentId back to DriveItem - OneDrive expects undefined for root, not null
+    const parentItem = parentId ? itemsMapRef.current.get(parentId) : undefined;
+    const driveItems = await onListFolders(parentItem);
+
+    // Update current folder reference
+    if (parentId === null) {
+      currentFolderRef.current = { id: 'root', name: 'OneDrive', folder: { childCount: 0 } };
+    } else {
+      currentFolderRef.current = parentItem || null;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
 
-  const loadFolder = async (folderItem?: DriveItem | null) => {
-    setLoading(true);
-    setError(null);
-    setSelectedFile(null);
+    // Clear and rebuild items map
+    itemsMapRef.current.clear();
+    driveItems.forEach((item) => {
+      itemsMapRef.current.set(item.id, item);
+    });
 
-    try {
-      const folderItems = await onListFolders(folderItem);
-      setItems(folderItems);
-
-      // Update breadcrumbs
-      if (!folderItem) {
-        // Root folder
-        setBreadcrumbs([{ id: 'root', name: 'OneDrive', folder: { childCount: 0 } }]);
-        setCurrentFolder({ id: 'root', name: 'OneDrive', folder: { childCount: 0 } });
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load folder contents');
-    } finally {
-      setLoading(false);
-    }
+    // Convert to generic CloudItem format
+    return driveItems.map((item) => ({
+      id: item.id,
+      name: item.name,
+      isFolder: !!item.folder,
+      additionalInfo: item.remoteItem ? (
+        <PeopleIcon fontSize="small" color="action" titleAccess="Shared" />
+      ) : undefined,
+    }));
   };
 
-  const handleFolderClick = async (folder: DriveItem) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const folderItems = await onListFolders(folder);
-      setItems(folderItems);
-      setCurrentFolder(folder);
-      setBreadcrumbs([...breadcrumbs, folder]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load folder contents');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleBreadcrumbClick = async (index: number) => {
-    const targetFolder = breadcrumbs[index];
-    const newBreadcrumbs = breadcrumbs.slice(0, index + 1);
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const folderItem = targetFolder.id === 'root' ? null : targetFolder;
-      const folderItems = await onListFolders(folderItem);
-      setItems(folderItems);
-      setCurrentFolder(targetFolder);
-      setBreadcrumbs(newBreadcrumbs);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load folder contents');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFileClick = (file: DriveItem) => {
-    setSelectedFile(file);
-  };
-
-  const handleSelectFile = () => {
-    if (selectedFile) {
+  const mapToFileInfo = (
+    fileId: string | null,
+    fileName: string,
+    _currentFolderId?: string | null,
+    breadcrumbs?: Array<{ id: string; name: string }>
+  ): SelectedFileInfo => {
+    if (fileId) {
       // Existing file selected
-      const filePath = selectedFile.parentReference?.path
-        ? `${selectedFile.parentReference.path}/${selectedFile.name}`
-        : `/${selectedFile.name}`;
+      const driveItem = itemsMapRef.current.get(fileId);
+      const filePath = driveItem?.parentReference?.path
+        ? `${driveItem.parentReference.path}/${fileName}`
+        : `/${fileName}`;
 
       // Determine if we're in a shared folder
-      const isSharedFolder = currentFolder?.remoteItem !== undefined;
+      const isSharedFolder = currentFolderRef.current?.remoteItem !== undefined;
       const driveId = isSharedFolder
-        ? currentFolder?.remoteItem?.parentReference?.driveId
+        ? currentFolderRef.current?.remoteItem?.parentReference?.driveId
         : undefined;
 
-      onSelect({
-        fileId: selectedFile.id,
+      return {
+        fileId,
         filePath,
-        // For shared files, preserve drive info from current folder context
         driveId,
-        parentItemId: selectedFile.parentReference?.id,
-      });
-    }
-  };
-
-  const handleCreateHere = () => {
-    if (currentFolder) {
-      // Create new file in current folder
-      // Skip the root 'OneDrive' breadcrumb (index 0) when building the path
+        parentItemId: driveItem?.parentReference?.id,
+      };
+    } else {
+      // Create new file
+      // Skip the root 'My Drive' breadcrumb (index 0) when building the path
       const folderPath = breadcrumbs
-        .slice(1)
-        .map((b) => b.name)
-        .join('/');
-      const filePath = folderPath ? `${folderPath}/${newFileName}` : newFileName;
+        ? breadcrumbs
+            .slice(1)
+            .map((b) => b.name)
+            .join('/')
+        : '';
+      const filePath = folderPath ? `${folderPath}/${fileName}` : fileName;
 
       // Determine if we're in a shared folder
-      const isSharedFolder = currentFolder.remoteItem !== undefined;
+      const isSharedFolder = currentFolderRef.current?.remoteItem !== undefined;
       const driveId = isSharedFolder
-        ? currentFolder.remoteItem?.parentReference?.driveId
+        ? currentFolderRef.current?.remoteItem?.parentReference?.driveId
         : undefined;
       const parentItemId = isSharedFolder
-        ? currentFolder.remoteItem?.id || currentFolder.id
+        ? currentFolderRef.current?.remoteItem?.id || currentFolderRef.current?.id
         : undefined;
 
-      onSelect({
+      return {
         fileId: null,
         filePath,
         driveId,
         parentItemId,
-      });
-      setShowFileNameDialog(false);
+      };
     }
   };
 
-  const handleCreateClick = () => {
-    setNewFileName(defaultFileName);
-    setShowFileNameDialog(true);
-  };
-
-  const handleFileNameDialogClose = () => {
-    setShowFileNameDialog(false);
-    setNewFileName(defaultFileName);
-  };
-
-  const jsonFiles = items.filter((item) => item.file && item.name.endsWith('.json'));
-  const folders = items.filter((item) => item.folder);
-
   return (
-    <Dialog open={open} onClose={onCancel} maxWidth="md" fullWidth>
-      <DialogTitle>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <CloudIcon color="primary" />
-          <Typography variant="h6">Select OneDrive File Location</Typography>
-        </Box>
-      </DialogTitle>
-      <DialogContent>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        {/* Breadcrumbs */}
-        <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 2 }}>
-          {breadcrumbs.map((crumb, index) => (
-            <Link
-              key={crumb.id}
-              component="button"
-              variant="body2"
-              onClick={() => handleBreadcrumbClick(index)}
-              sx={{
-                cursor: 'pointer',
-                fontWeight: index === breadcrumbs.length - 1 ? 'bold' : 'normal',
-              }}
-            >
-              {crumb.name}
-            </Link>
-          ))}
-        </Breadcrumbs>
-
-        <Divider sx={{ mb: 2 }} />
-
-        {/* Folder/File List */}
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <List sx={{ maxHeight: 400, overflow: 'auto' }}>
-            {/* Folders */}
-            {folders.map((folder) => (
-              <ListItem key={folder.id} disablePadding>
-                <ListItemButton onClick={() => handleFolderClick(folder)}>
-                  <ListItemIcon>
-                    <FolderIcon color="primary" />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <span>{folder.name}</span>
-                        {folder.remoteItem && (
-                          <PeopleIcon fontSize="small" color="action" titleAccess="Shared folder" />
-                        )}
-                      </Box>
-                    }
-                    secondary={`${folder.folder?.childCount || 0} items`}
-                  />
-                </ListItemButton>
-              </ListItem>
-            ))}
-
-            {/* JSON Files */}
-            {jsonFiles.map((file) => (
-              <ListItem key={file.id} disablePadding>
-                <ListItemButton
-                  onClick={() => handleFileClick(file)}
-                  selected={selectedFile?.id === file.id}
-                >
-                  <ListItemIcon>
-                    <FileIcon color="action" />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <span>{file.name}</span>
-                        {file.remoteItem && (
-                          <PeopleIcon fontSize="small" color="action" titleAccess="Shared file" />
-                        )}
-                      </Box>
-                    }
-                  />
-                </ListItemButton>
-              </ListItem>
-            ))}
-
-            {/* Empty state */}
-            {folders.length === 0 && jsonFiles.length === 0 && (
-              <Box sx={{ py: 4, textAlign: 'center' }}>
-                <Typography variant="body2" color="text.secondary">
-                  This folder is empty
-                </Typography>
-              </Box>
-            )}
-          </List>
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onCancel}>Cancel</Button>
-        <Button onClick={handleCreateClick} disabled={loading}>
-          Create File
-        </Button>
-        <Button variant="contained" onClick={handleSelectFile} disabled={!selectedFile || loading}>
-          Select File
-        </Button>
-      </DialogActions>
-
-      {/* File Name Dialog */}
-      <Dialog open={showFileNameDialog} onClose={handleFileNameDialogClose} maxWidth="sm" fullWidth>
-        <DialogTitle>Create New File</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            fullWidth
-            label="File name"
-            value={newFileName}
-            onChange={(e) => setNewFileName(e.target.value)}
-            helperText="File must have .json extension"
-            error={!newFileName.endsWith('.json')}
-            sx={{ mt: 2 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleFileNameDialogClose}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleCreateHere}
-            disabled={!newFileName.trim() || !newFileName.endsWith('.json')}
-          >
-            Create
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Dialog>
+    <CloudFilePicker
+      open={open}
+      title="Select OneDrive File Location"
+      rootName="OneDrive"
+      onSelect={onSelect}
+      onCancel={onCancel}
+      onListItems={handleListItems}
+      defaultFileName={defaultFileName}
+      mapToFileInfo={mapToFileInfo}
+    />
   );
 };

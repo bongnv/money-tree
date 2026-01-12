@@ -35,7 +35,6 @@ export async function calculateYearEndSummary(
   const transactions = useTransactionStore.getState().transactions;
   const accounts = useAccountStore.getState().accounts;
   const manualAssets = useAssetStore.getState().manualAssets;
-  const { getRateForMonth } = useExchangeRateStore.getState();
 
   // Count transactions for the year
   const yearTransactions = transactions.filter((transaction) => {
@@ -52,7 +51,6 @@ export async function calculateYearEndSummary(
     transactions,
     manualAssets,
     baseCurrency,
-    getRateForMonth,
     yearEndMonth
   );
 

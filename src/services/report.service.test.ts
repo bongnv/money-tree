@@ -1,6 +1,6 @@
 import { reportService } from './report.service';
 import type { Account, ManualAsset, Transaction, TransactionType, Category } from '../types/models';
-import { AccountType, AssetType, Group } from '../types/enums';
+import { AccountType, AssetType, Group, CurrencyCode } from '../types/enums';
 
 describe('ReportService', () => {
   // Mock data
@@ -9,7 +9,7 @@ describe('ReportService', () => {
       id: 'acc1',
       name: 'Checking Account',
       type: AccountType.BANK_ACCOUNT,
-      currencyCode: 'USD',
+      currencyCode: CurrencyCode.USD,
       initialBalance: 1000,
       isActive: true,
       createdAt: '2024-01-01T00:00:00.000Z',
@@ -19,7 +19,7 @@ describe('ReportService', () => {
       id: 'acc2',
       name: 'Credit Card',
       type: AccountType.CREDIT_CARD,
-      currencyCode: 'USD',
+      currencyCode: CurrencyCode.USD,
       initialBalance: 0,
       isActive: true,
       createdAt: '2024-01-01T00:00:00.000Z',
@@ -29,7 +29,7 @@ describe('ReportService', () => {
       id: 'acc3',
       name: 'Savings Account',
       type: AccountType.BANK_ACCOUNT,
-      currencyCode: 'USD',
+      currencyCode: CurrencyCode.USD,
       initialBalance: 5000,
       isActive: true,
       createdAt: '2024-01-01T00:00:00.000Z',
@@ -43,7 +43,7 @@ describe('ReportService', () => {
       name: 'House',
       type: AssetType.REAL_ESTATE,
       value: 500000,
-      currencyCode: 'USD',
+      currencyCode: CurrencyCode.USD,
       date: '2024-01-01',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
@@ -53,7 +53,7 @@ describe('ReportService', () => {
       name: 'Mortgage',
       type: AssetType.LIABILITY,
       value: -300000,
-      currencyCode: 'USD',
+      currencyCode: CurrencyCode.USD,
       date: '2024-01-01',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
@@ -98,7 +98,9 @@ describe('ReportService', () => {
       const result = await reportService.calculateBalanceSheet(
         mockAccounts,
         mockManualAssets,
-        mockTransactions
+        mockTransactions,
+        '',
+        CurrencyCode.USD
       );
 
       expect(result.totalAssets).toBeGreaterThan(0);
@@ -113,7 +115,8 @@ describe('ReportService', () => {
         mockAccounts,
         mockManualAssets,
         mockTransactions,
-        '2024-01-16'
+        '2024-01-16',
+        CurrencyCode.USD
       );
 
       // Should only include transactions up to 2024-01-16 (first transaction)
@@ -121,7 +124,7 @@ describe('ReportService', () => {
     });
 
     it('should handle empty accounts and assets', async () => {
-      const result = await reportService.calculateBalanceSheet([], [], []);
+      const result = await reportService.calculateBalanceSheet([], [], [], '', CurrencyCode.USD);
 
       expect(result.totalAssets).toBe(0);
       expect(result.totalLiabilities).toBe(0);
@@ -134,7 +137,9 @@ describe('ReportService', () => {
       const result = await reportService.calculateBalanceSheet(
         mockAccounts,
         mockManualAssets,
-        mockTransactions
+        mockTransactions,
+        '',
+        CurrencyCode.USD
       );
 
       expect(result.assets.length).toBeGreaterThan(0);
@@ -145,7 +150,9 @@ describe('ReportService', () => {
       const result = await reportService.calculateBalanceSheet(
         mockAccounts,
         mockManualAssets,
-        mockTransactions
+        mockTransactions,
+        '',
+        CurrencyCode.USD
       );
 
       expect(result.liabilities.length).toBeGreaterThan(0);
@@ -155,7 +162,9 @@ describe('ReportService', () => {
       const result = await reportService.calculateBalanceSheet(
         mockAccounts,
         mockManualAssets,
-        mockTransactions
+        mockTransactions,
+        '',
+        CurrencyCode.USD
       );
 
       expect(result.netWorth).toBe(result.totalAssets - result.totalLiabilities);
@@ -173,7 +182,8 @@ describe('ReportService', () => {
         mockTransactions,
         startDate,
         endDate,
-        30
+        30,
+        CurrencyCode.USD
       );
 
       expect(trend.length).toBeGreaterThan(0);
@@ -193,7 +203,8 @@ describe('ReportService', () => {
         mockTransactions,
         startDate,
         endDate,
-        10
+        10,
+        CurrencyCode.USD
       );
 
       // With 10-day intervals, should have about 3-4 points in a month
@@ -209,7 +220,9 @@ describe('ReportService', () => {
         mockManualAssets,
         mockTransactions,
         startDate,
-        endDate
+        endDate,
+        30,
+        CurrencyCode.USD
       );
 
       expect(trend).toHaveLength(0);
@@ -222,7 +235,8 @@ describe('ReportService', () => {
         mockAccounts,
         mockManualAssets,
         mockTransactions,
-        '2024-02-15'
+        '2024-02-15',
+        CurrencyCode.USD
       );
 
       expect(result.current).toBeDefined();
@@ -236,7 +250,8 @@ describe('ReportService', () => {
         mockAccounts,
         mockManualAssets,
         mockTransactions,
-        '2024-02-15'
+        '2024-02-15',
+        CurrencyCode.USD
       );
 
       expect(result.change).toBe(result.current.netWorth - result.previous.netWorth);
@@ -247,7 +262,8 @@ describe('ReportService', () => {
         mockAccounts,
         mockManualAssets,
         mockTransactions,
-        '2024-02-15'
+        '2024-02-15',
+        CurrencyCode.USD
       );
 
       if (result.previous.netWorth !== 0) {
@@ -265,7 +281,8 @@ describe('ReportService', () => {
         mockAccounts,
         mockManualAssets,
         mockTransactions,
-        '2025-01-15'
+        '2025-01-15',
+        'USD'
       );
 
       expect(result.current).toBeDefined();
@@ -279,7 +296,8 @@ describe('ReportService', () => {
         mockAccounts,
         mockManualAssets,
         mockTransactions,
-        '2025-01-15'
+        '2025-01-15',
+        'USD'
       );
 
       expect(result.change).toBe(result.current.netWorth - result.previous.netWorth);
@@ -697,7 +715,9 @@ describe('ReportService', () => {
         mockTypes,
         mockCategories,
         '2024-01-01',
-        '2024-01-31'
+        '2024-01-31',
+        [],
+        'USD'
       );
 
       expect(result.items).toHaveLength(2);
@@ -714,7 +734,9 @@ describe('ReportService', () => {
         mockTypes,
         mockCategories,
         '2024-01-01',
-        '2024-01-31'
+        '2024-01-31',
+        [],
+        'USD'
       );
 
       const groceryItem = result.items.find((item) => item.transactionTypeId === 'type1');
@@ -731,7 +753,9 @@ describe('ReportService', () => {
         mockTypes,
         mockCategories,
         '2024-01-01',
-        '2024-01-31'
+        '2024-01-31',
+        [],
+        'USD'
       );
 
       const groceryItem = result.items.find((item) => item.transactionTypeId === 'type1');
@@ -748,7 +772,9 @@ describe('ReportService', () => {
         mockTypes,
         mockCategories,
         '2024-01-01',
-        '2024-01-31'
+        '2024-01-31',
+        [],
+        'USD'
       );
 
       const groceryItem = result.items.find((item) => item.transactionTypeId === 'type1');
@@ -765,7 +791,9 @@ describe('ReportService', () => {
         mockTypes,
         mockCategories,
         '2024-01-01',
-        '2024-01-31'
+        '2024-01-31',
+        [],
+        'USD'
       );
 
       // Expense score: (500-300)/500 * 100 = 40
@@ -781,7 +809,9 @@ describe('ReportService', () => {
         mockTypes,
         mockCategories,
         '2024-01-01',
-        '2024-03-31' // 3 months
+        '2024-03-31', // 3 months
+        [],
+        'USD'
       );
 
       // Monthly budget * 3 months
@@ -812,7 +842,9 @@ describe('ReportService', () => {
         mockTypes,
         mockCategories,
         '2024-01-01',
-        '2024-01-31'
+        '2024-01-31',
+        [],
+        'USD'
       );
 
       expect(result.items).toHaveLength(2);
@@ -824,6 +856,8 @@ describe('ReportService', () => {
     });
 
     it('should convert budget currency when base currency provided', async () => {
+      const { useExchangeRateStore } = await import('../stores/useExchangeRateStore');
+
       const eurBudgets = [
         {
           ...mockBudgets[0],
@@ -833,10 +867,23 @@ describe('ReportService', () => {
         },
       ];
 
-      const getRateForMonth = (month: string, from: string, to: string) => {
-        if (from === 'EUR' && to === 'USD') return 1.1;
-        return null;
-      };
+      // Mock exchange rate store
+      useExchangeRateStore.setState({
+        rates: [
+          {
+            id: 'rate1',
+            month: '2024-01',
+            fromCurrency: 'EUR',
+            toCurrency: 'USD',
+            rate: 1.1,
+            createdAt: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+        addRate: jest.fn(),
+        updateRate: jest.fn(),
+        deleteRate: jest.fn(),
+        setRates: jest.fn(),
+      });
 
       const result = await reportService.calculateBudgetPerformance(
         eurBudgets,
@@ -846,14 +893,15 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         mockAccounts,
-        'USD',
-        getRateForMonth
+        'USD'
       );
 
       expect(result.totalBudgetedExpenses).toBe(550); // 500 EUR * 1.1
     });
 
     it('should convert transaction currency when base currency provided', async () => {
+      const { useExchangeRateStore } = await import('../stores/useExchangeRateStore');
+
       const eurAccounts = [
         {
           ...mockAccounts[0],
@@ -861,10 +909,23 @@ describe('ReportService', () => {
         },
       ];
 
-      const getRateForMonth = (month: string, from: string, to: string) => {
-        if (from === 'EUR' && to === 'USD') return 1.1;
-        return null;
-      };
+      // Mock exchange rate store
+      useExchangeRateStore.setState({
+        rates: [
+          {
+            id: 'rate1',
+            month: '2024-01',
+            fromCurrency: 'EUR',
+            toCurrency: 'USD',
+            rate: 1.1,
+            createdAt: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+        addRate: jest.fn(),
+        updateRate: jest.fn(),
+        deleteRate: jest.fn(),
+        setRates: jest.fn(),
+      });
 
       const result = await reportService.calculateBudgetPerformance(
         mockBudgets,
@@ -874,8 +935,7 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         eurAccounts,
-        'USD',
-        getRateForMonth
+        'USD'
       );
 
       // Transaction amount 300 EUR * 1.1 = 330 USD
@@ -947,7 +1007,9 @@ describe('ReportService', () => {
         mockCategories,
         '2024-01-01',
         '2024-02-29',
-        30
+        30,
+        [],
+        'USD'
       );
 
       expect(result.length).toBeGreaterThan(0);
@@ -965,7 +1027,9 @@ describe('ReportService', () => {
         mockCategories,
         '2024-01-01',
         '2024-01-31',
-        30
+        30,
+        [],
+        'USD'
       );
 
       // First period: budgeted 500, actual 300, variance = -200 (under budget)
@@ -982,7 +1046,9 @@ describe('ReportService', () => {
         mockCategories,
         '2024-01-01',
         '2024-02-29',
-        15
+        15,
+        [],
+        'USD'
       );
 
       // Should have approximately 4 data points for 60-day period with 15-day intervals
@@ -1026,7 +1092,9 @@ describe('ReportService', () => {
         mockCategories,
         '2024-01-01',
         '2024-01-31',
-        30
+        30,
+        [],
+        'USD'
       );
 
       expect(result.length).toBeGreaterThan(0);

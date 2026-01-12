@@ -16,7 +16,6 @@ import { useCategoryStore } from '../../stores/useCategoryStore';
 import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useAppStore } from '../../stores/useAppStore';
-import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
 import { BudgetDialog } from './BudgetDialog';
 import { PeriodSelector } from '../common/PeriodSelector';
 import { CategoryFilter } from '../common/CategoryFilter';
@@ -32,7 +31,6 @@ export const BudgetsPage: React.FC = () => {
   const { transactions } = useTransactionStore();
   const { accounts } = useAccountStore();
   const baseCurrency = useAppStore((state) => state.baseCurrency);
-  const getRateForMonth = useExchangeRateStore((state) => state.getRateForMonth);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | undefined>(undefined);
@@ -152,96 +150,15 @@ export const BudgetsPage: React.FC = () => {
         });
       }
 
-      const grouped: Record<
-        string,
-        {
-          category: any;
-          items: {
-            budget: Budget;
-            transactionType: any;
-            proratedBudget: number;
-            actualAmount: number;
-            percentage: number;
-          }[];
-          totalBudget: number;
-          totalActual: number;
-        }
-      > = {};
-
-      for (const budget of activeBudgets) {
-        const transactionType = transactionTypes.find((tt) => tt.id === budget.transactionTypeId);
-        if (!transactionType) continue;
-
-        const category = getCategoryById(transactionType.categoryId);
-        if (!category) continue;
-
-        // Prorate budget for the selected period using day-based calculation
-        let proratedBudget = calculationService.prorateBudgetForPeriod(
-          budget,
-          selectedPeriod.startDate,
-          selectedPeriod.endDate
-        );
-
-        // Convert budget to base currency if needed
-        if (baseCurrency && getRateForMonth && budget.currencyCode !== baseCurrency) {
-          const month = selectedPeriod.startDate.slice(0, 7);
-          const rate = await getRateForMonth(month, budget.currencyCode, baseCurrency);
-          if (rate !== null) {
-            proratedBudget = proratedBudget * rate;
-          }
-        }
-
-        // Calculate actual amount with currency conversion
-        let actualAmount = 0;
-        const relevantTransactions = transactions.filter(
-          (t) =>
-            t.transactionTypeId === budget.transactionTypeId &&
-            t.date >= selectedPeriod.startDate &&
-            t.date <= selectedPeriod.endDate
-        );
-
-        for (const transaction of relevantTransactions) {
-          let convertedAmount = transaction.amount;
-
-          // Convert transaction amount to base currency if needed
-          if (baseCurrency && getRateForMonth) {
-            const accountId = transaction.fromAccountId || transaction.toAccountId;
-            const account = accounts.find((a) => a.id === accountId);
-
-            if (account && account.currencyCode !== baseCurrency) {
-              const month = transaction.date.slice(0, 7);
-              const rate = await getRateForMonth(month, account.currencyCode, baseCurrency);
-              if (rate !== null) {
-                convertedAmount = transaction.amount * rate;
-              }
-            }
-          }
-
-          actualAmount += convertedAmount;
-        }
-
-        const percentage = proratedBudget > 0 ? (actualAmount / proratedBudget) * 100 : 0;
-
-        if (!grouped[category.id]) {
-          grouped[category.id] = {
-            category,
-            items: [],
-            totalBudget: 0,
-            totalActual: 0,
-          };
-        }
-
-        grouped[category.id].items.push({
-          budget,
-          transactionType,
-          proratedBudget,
-          actualAmount,
-          percentage,
-        });
-
-        grouped[category.id].totalBudget += proratedBudget;
-        grouped[category.id].totalActual += actualAmount;
-      }
+      const grouped = await calculationService.calculateBudgetGrouping(
+        activeBudgets,
+        transactions,
+        transactionTypes,
+        accounts,
+        selectedPeriod,
+        baseCurrency,
+        getCategoryById
+      );
 
       setGroupedBudgets(grouped);
     };
@@ -256,7 +173,6 @@ export const BudgetsPage: React.FC = () => {
     getCategoryById,
     selectedCategories,
     baseCurrency,
-    getRateForMonth,
   ]);
 
   const getSectionTitle = (categoryGroup: Group): string => {

@@ -13,9 +13,7 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  CircularProgress,
   Alert,
-  Chip,
 } from '@mui/material';
 import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
 import { useAppStore } from '../../stores/useAppStore';
@@ -23,21 +21,9 @@ import { useAppStore } from '../../stores/useAppStore';
 export const ExchangeRatesSettings: React.FC = () => {
   const baseCurrency = useAppStore((state) => state.baseCurrency);
   const rates = useExchangeRateStore((state) => state.rates);
-  const loading = useExchangeRateStore((state) => state.loading);
-  const errors = useExchangeRateStore((state) => state.errors);
 
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
-
-  // Count loading rates
-  const loadingCount = useMemo(() => {
-    return Object.values(loading).filter((isLoading) => isLoading).length;
-  }, [loading]);
-
-  // Count actual errors (non-empty error messages)
-  const errorCount = useMemo(() => {
-    return Object.values(errors).filter((error) => error && error.length > 0).length;
-  }, [errors]);
 
   // Filter rates for selected year
   const yearRates = useMemo(() => {
@@ -94,22 +80,7 @@ export const ExchangeRatesSettings: React.FC = () => {
               ))}
             </Select>
           </FormControl>
-
-          {loadingCount > 0 && (
-            <Chip
-              label={`Fetching ${loadingCount} rate${loadingCount > 1 ? 's' : ''}...`}
-              size="small"
-              color="primary"
-              icon={<CircularProgress size={16} sx={{ color: 'inherit' }} />}
-            />
-          )}
         </Box>
-
-        {errorCount > 0 && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            Some rates failed to fetch. Check console for details.
-          </Alert>
-        )}
 
         {ratesByPairAndMonth.size === 0 ? (
           <Alert severity="info">
@@ -142,17 +113,10 @@ export const ExchangeRatesSettings: React.FC = () => {
                       {months.map((_, index) => {
                         const monthStr = `${selectedYear}-${String(index + 1).padStart(2, '0')}`;
                         const rate = monthRates.get(monthStr);
-                        const loadingKey = `${monthStr}-${fromCurr}-${toCurr}`;
-                        const isLoading = loading[loadingKey];
-                        const error = errors[loadingKey];
 
                         return (
                           <TableCell key={monthStr} align="right">
-                            {isLoading ? (
-                              <CircularProgress size={16} />
-                            ) : error ? (
-                              <Chip label="Error" size="small" color="error" />
-                            ) : rate !== undefined ? (
+                            {rate !== undefined ? (
                               <Typography variant="body2">{rate.toFixed(4)}</Typography>
                             ) : (
                               <Typography variant="body2" color="text.disabled">

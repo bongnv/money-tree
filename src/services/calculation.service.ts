@@ -1,5 +1,7 @@
-import type { Transaction, Account, Budget, ManualAsset } from '../types/models';
+import type { Transaction, Account, Budget, ManualAsset, TransactionType } from '../types/models';
 import { getAssetCurrentValue } from '../utils/asset.utils';
+import { getRateForMonth } from './exchangeRate.service';
+import { CurrencyCode, Group } from '../types/enums';
 
 /**
  * Calculation service for account balances and transaction totals
@@ -219,7 +221,6 @@ class CalculationService {
    * @param transactions All transactions
    * @param manualAssets All manual assets
    * @param baseCurrency Optional base currency for conversion (if null, no conversion)
-   * @param getRateForMonth Optional function to get exchange rate for a month
    * @param currentMonth Current month in YYYY-MM format for rate lookup
    * @returns Total net worth (in base currency if provided)
    */
@@ -227,9 +228,8 @@ class CalculationService {
     accounts: Account[],
     transactions: Transaction[],
     manualAssets: ManualAsset[],
-    baseCurrency?: string | null,
-    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>,
-    currentMonth?: string
+    baseCurrency: CurrencyCode,
+    currentMonth: string
   ): Promise<number> {
     const accountBalances = this.calculateAccountBalances(accounts, transactions);
 
@@ -237,18 +237,14 @@ class CalculationService {
     for (const account of accounts) {
       const balance = accountBalances.get(account.id) || 0;
 
-      if (baseCurrency && getRateForMonth && currentMonth && account.currencyCode) {
-        if (account.currencyCode !== baseCurrency) {
-          const rate = await getRateForMonth(currentMonth, account.currencyCode, baseCurrency);
-          if (rate === null) {
-            throw new Error(
-              `Missing exchange rate for ${account.currencyCode} → ${baseCurrency} in ${currentMonth}. Please fetch exchange rates in Settings → Exchange Rates.`
-            );
-          }
-          totalAccountBalance += balance * rate;
-        } else {
-          totalAccountBalance += balance;
+      if (account.currencyCode !== baseCurrency) {
+        const rate = await getRateForMonth(currentMonth, account.currencyCode, baseCurrency);
+        if (rate === null) {
+          throw new Error(
+            `Missing exchange rate for ${account.currencyCode} → ${baseCurrency} in ${currentMonth}. Please fetch exchange rates in Settings → Exchange Rates.`
+          );
         }
+        totalAccountBalance += balance * rate;
       } else {
         totalAccountBalance += balance;
       }
@@ -256,18 +252,14 @@ class CalculationService {
     let totalAssets = 0;
     for (const asset of manualAssets) {
       const assetValue = getAssetCurrentValue(asset);
-      if (baseCurrency && getRateForMonth && currentMonth && asset.currencyCode) {
-        if (asset.currencyCode !== baseCurrency) {
-          const rate = await getRateForMonth(currentMonth, asset.currencyCode, baseCurrency);
-          if (rate === null) {
-            throw new Error(
-              `Missing exchange rate for ${asset.currencyCode.toUpperCase()} → ${baseCurrency.toUpperCase()} in ${currentMonth}. Please fetch exchange rates in Settings → Exchange Rates.`
-            );
-          }
-          totalAssets += assetValue * rate;
-        } else {
-          totalAssets += assetValue;
+      if (asset.currencyCode !== baseCurrency) {
+        const rate = await getRateForMonth(currentMonth, asset.currencyCode, baseCurrency);
+        if (rate === null) {
+          throw new Error(
+            `Missing exchange rate for ${asset.currencyCode.toUpperCase()} → ${baseCurrency.toUpperCase()} in ${currentMonth}. Please fetch exchange rates in Settings → Exchange Rates.`
+          );
         }
+        totalAssets += assetValue * rate;
       } else {
         totalAssets += assetValue;
       }
@@ -294,14 +286,12 @@ class CalculationService {
    * @param transaction Transaction to convert
    * @param accounts List of accounts to lookup transaction account
    * @param baseCurrency Target currency code
-   * @param getRateForMonth Function to get exchange rate (from useExchangeRateStore)
    * @returns Converted amount, or original amount if conversion not needed/possible
    */
   async convertTransactionAmount(
     transaction: Transaction,
     accounts: Account[],
-    baseCurrency: string,
-    getRateForMonth: (month: string, from: string, to: string) => Promise<number | null>
+    baseCurrency: CurrencyCode
   ): Promise<number> {
     // Find the account for this transaction
     const accountId = transaction.fromAccountId || transaction.toAccountId;
@@ -327,34 +317,27 @@ class CalculationService {
    * @param budget Budget to convert
    * @param month Month for exchange rate (usually period start month)
    * @param baseCurrency Target currency code
-   * @param getRateForMonth Function to get exchange rate (from useExchangeRateStore)
    * @returns Converted amount, or original amount if conversion not needed/possible
    */
   async convertBudgetAmount(
     budget: Budget,
     month: string,
-    baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>
+    baseCurrency: CurrencyCode
   ): Promise<number> {
-    // No conversion if no base currency
-    if (!baseCurrency) {
-      return budget.amount;
-    }
-
     // No conversion if same currency
     if (budget.currencyCode === baseCurrency) {
       return budget.amount;
     }
 
     // Convert using specified month
-    if (getRateForMonth) {
-      const rate = await getRateForMonth(month, budget.currencyCode, baseCurrency);
-      if (rate !== null) {
-        return budget.amount * rate;
-      }
+    const rate = await getRateForMonth(month, budget.currencyCode, baseCurrency);
+    if (rate !== null) {
+      return budget.amount * rate;
+    } else {
+      throw new Error(
+        `Missing exchange rate for ${budget.currencyCode} → ${baseCurrency} in ${month}. Please fetch exchange rates in Settings → Exchange Rates.`
+      );
     }
-
-    return budget.amount;
   }
 
   /**
@@ -362,26 +345,213 @@ class CalculationService {
    * @param transactions Transactions to sum
    * @param accounts List of accounts for currency lookup
    * @param baseCurrency Target currency code
-   * @param getRateForMonth Function to get exchange rate (from useExchangeRateStore)
    * @returns Total converted amount
    */
   async sumTransactionAmounts(
     transactions: Transaction[],
     accounts: Account[],
-    baseCurrency: string,
-    getRateForMonth: (month: string, from: string, to: string) => Promise<number | null>
+    baseCurrency: CurrencyCode
   ): Promise<number> {
     let total = 0;
     for (const transaction of transactions) {
       const convertedAmount = await this.convertTransactionAmount(
         transaction,
         accounts,
-        baseCurrency,
-        getRateForMonth
+        baseCurrency
       );
       total += convertedAmount;
     }
     return total;
+  }
+
+  /**
+   * Calculate transaction grouping by transaction type with currency conversion
+   * This is useful for cash flow reports where we need to group transactions by type
+   * @param filteredTransactions Transactions to group
+   * @param transactionTypes All transaction types
+   * @param accounts All accounts for currency lookup
+   * @param conversionCurrency Target currency code
+   * @returns Maps of income and expense grouped by transaction type ID
+   */
+  async calculateTransactionTypeGrouping(
+    filteredTransactions: Transaction[],
+    transactionTypes: TransactionType[],
+    accounts: Account[],
+    conversionCurrency: string
+  ): Promise<{
+    incomeByType: Map<string, { name: string; total: number; count: number }>;
+    expenseByType: Map<string, { name: string; total: number; count: number }>;
+  }> {
+    const incomeByType = new Map<string, { name: string; total: number; count: number }>();
+    const expenseByType = new Map<string, { name: string; total: number; count: number }>();
+
+    for (const tx of filteredTransactions) {
+      const txType = transactionTypes.find((tt) => tt.id === tx.transactionTypeId);
+      if (!txType) continue;
+
+      // Get the appropriate account ID based on transaction type
+      const accountId = txType.group === Group.INCOME ? tx.toAccountId : tx.fromAccountId;
+      if (!accountId) continue;
+
+      const account = accounts.find((a) => a.id === accountId);
+      if (!account) continue;
+
+      // Convert amount to base currency
+      let convertedAmount = tx.amount;
+      if (account.currencyCode !== conversionCurrency) {
+        const txMonth = tx.date.substring(0, 7);
+        const rate = await getRateForMonth(txMonth, account.currencyCode, conversionCurrency);
+        convertedAmount = tx.amount * rate;
+      }
+
+      if (txType.group === Group.INCOME) {
+        const existing = incomeByType.get(txType.id) || {
+          name: txType.name,
+          total: 0,
+          count: 0,
+        };
+        existing.total += convertedAmount;
+        existing.count += 1;
+        incomeByType.set(txType.id, existing);
+      } else if (txType.group === Group.EXPENSE) {
+        const existing = expenseByType.get(txType.id) || {
+          name: txType.name,
+          total: 0,
+          count: 0,
+        };
+        existing.total += convertedAmount;
+        existing.count += 1;
+        expenseByType.set(txType.id, existing);
+      }
+    }
+
+    return { incomeByType, expenseByType };
+  }
+
+  /**
+   * Calculate budget grouping with currency conversion and actual amounts
+   * This is useful for budget pages where we need to calculate actual vs budgeted amounts
+   * @param budgets Active budgets
+   * @param transactions All transactions
+   * @param transactionTypes All transaction types
+   * @param accounts All accounts for currency lookup
+   * @param selectedPeriod Period to calculate for
+   * @param baseCurrency Target currency code
+   * @returns Grouped budget data by category
+   */
+  async calculateBudgetGrouping(
+    budgets: Budget[],
+    transactions: Transaction[],
+    transactionTypes: TransactionType[],
+    accounts: Account[],
+    selectedPeriod: { startDate: string; endDate: string },
+    baseCurrency: CurrencyCode,
+    getCategoryById: (id: string) => any
+  ): Promise<
+    Record<
+      string,
+      {
+        category: any;
+        items: {
+          budget: Budget;
+          transactionType: any;
+          proratedBudget: number;
+          actualAmount: number;
+          percentage: number;
+        }[];
+        totalBudget: number;
+        totalActual: number;
+      }
+    >
+  > {
+    const grouped: Record<
+      string,
+      {
+        category: any;
+        items: {
+          budget: Budget;
+          transactionType: any;
+          proratedBudget: number;
+          actualAmount: number;
+          percentage: number;
+        }[];
+        totalBudget: number;
+        totalActual: number;
+      }
+    > = {};
+
+    for (const budget of budgets) {
+      const transactionType = transactionTypes.find((tt) => tt.id === budget.transactionTypeId);
+      if (!transactionType) continue;
+
+      const category = getCategoryById(transactionType.categoryId);
+      if (!category) continue;
+
+      // Prorate budget for the selected period using day-based calculation
+      let proratedBudget = this.prorateBudgetForPeriod(
+        budget,
+        selectedPeriod.startDate,
+        selectedPeriod.endDate
+      );
+
+      // Convert budget to base currency if needed
+      if (baseCurrency && budget.currencyCode !== baseCurrency) {
+        const month = selectedPeriod.startDate.slice(0, 7);
+        const rate = await getRateForMonth(month, budget.currencyCode, baseCurrency);
+        proratedBudget = proratedBudget * rate;
+      }
+
+      // Calculate actual amount with currency conversion
+      let actualAmount = 0;
+      const relevantTransactions = transactions.filter(
+        (t) =>
+          t.transactionTypeId === budget.transactionTypeId &&
+          t.date >= selectedPeriod.startDate &&
+          t.date <= selectedPeriod.endDate
+      );
+
+      for (const transaction of relevantTransactions) {
+        let convertedAmount = transaction.amount;
+
+        // Convert transaction amount to base currency if needed
+        if (baseCurrency) {
+          const accountId = transaction.fromAccountId || transaction.toAccountId;
+          const account = accounts.find((a) => a.id === accountId);
+
+          if (account && account.currencyCode !== baseCurrency) {
+            const month = transaction.date.slice(0, 7);
+            const rate = await getRateForMonth(month, account.currencyCode, baseCurrency);
+            convertedAmount = transaction.amount * rate;
+          }
+        }
+
+        actualAmount += convertedAmount;
+      }
+
+      const percentage = proratedBudget > 0 ? (actualAmount / proratedBudget) * 100 : 0;
+
+      if (!grouped[category.id]) {
+        grouped[category.id] = {
+          category,
+          items: [],
+          totalBudget: 0,
+          totalActual: 0,
+        };
+      }
+
+      grouped[category.id].items.push({
+        budget,
+        transactionType,
+        proratedBudget,
+        actualAmount,
+        percentage,
+      });
+
+      grouped[category.id].totalBudget += proratedBudget;
+      grouped[category.id].totalActual += actualAmount;
+    }
+
+    return grouped;
   }
 }
 

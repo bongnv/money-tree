@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { ManualAsset } from '../types/models';
 import { useAppStore } from './useAppStore';
-import { updateAssetValue as updateAssetValueService } from '../services/history.service';
+import { updateAssetValue as updateAssetValueUtil } from '../utils/asset.utils';
 
 interface AssetState {
   manualAssets: ManualAsset[];
@@ -57,7 +57,7 @@ export const useAssetStore = create<AssetState & AssetActions>((set, get) => ({
     set((state) => ({
       manualAssets: state.manualAssets.map((asset) => {
         if (asset.id === id) {
-          return updateAssetValueService(asset, newValue, newDate, notes, linkedTransactionId);
+          return updateAssetValueUtil(asset, newValue, newDate, notes, linkedTransactionId);
         }
         return asset;
       }),

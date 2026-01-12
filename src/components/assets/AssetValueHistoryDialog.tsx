@@ -25,7 +25,7 @@ import { formatCurrency } from '../../utils/currency.utils';
 import { formatDate } from '../../utils/date.utils';
 import { getAssetCurrentValue } from '../../utils/asset.utils';
 import { LineChart } from '../charts/LineChart';
-import { getCompleteValueHistory, calculateAssetValueGrowth } from '../../services/history.service';
+import { getCompleteValueHistory, calculateAssetValueGrowth } from '../../utils/asset.utils';
 
 export interface AssetValueHistoryDialogProps {
   open: boolean;

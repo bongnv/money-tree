@@ -14,7 +14,6 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  CircularProgress,
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
@@ -23,7 +22,6 @@ import { useAccountStore } from '../../stores/useAccountStore';
 import { useAssetStore } from '../../stores/useAssetStore';
 import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useAppStore } from '../../stores/useAppStore';
-import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
 import { reportService } from '../../services/report.service';
 import { ManualAssetSection } from './ManualAssetSection';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
@@ -39,79 +37,13 @@ export const BalanceSheet: React.FC = () => {
   const manualAssets = useAssetStore((state) => state.manualAssets);
   const transactions = useTransactionStore((state) => state.transactions);
   const baseCurrency = useAppStore((state) => state.baseCurrency);
-  const getRateForMonth = useExchangeRateStore((state) => state.getRateForMonth);
 
   // Use today as default date
   const today = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState<string>(today);
   const [comparisonType, setComparisonType] = useState<ComparisonType>('none');
   const [historyDialogAssetId, setHistoryDialogAssetId] = useState<string | null>(null);
-  const [conversionCurrency, setConversionCurrency] = useState<string>(baseCurrency);
-  const [loadingRates, setLoadingRates] = useState<boolean>(false);
-
-  // Use the selected currency for display
-  const currencyCode = conversionCurrency as CurrencyCode;
-
-  // Always apply currency conversion
-  const effectiveBaseCurrency = conversionCurrency;
-  const effectiveGetRateForMonth = getRateForMonth;
-
-  // Automatically fetch missing exchange rates in background for all historical months
-  useEffect(() => {
-    const fetchRates = async () => {
-      setLoadingRates(true);
-
-      // Get unique currencies from accounts and manual assets
-      const currencies = new Set<string>();
-      accounts.forEach((account) => {
-        if (account.currencyCode && account.currencyCode !== conversionCurrency) {
-          currencies.add(account.currencyCode);
-        }
-      });
-      manualAssets.forEach((asset) => {
-        if (asset.currencyCode && asset.currencyCode !== conversionCurrency) {
-          currencies.add(asset.currencyCode);
-        }
-      });
-
-      if (currencies.size === 0) {
-        setLoadingRates(false);
-        return;
-      }
-
-      // Get months for trend data (past 12 months + selected month)
-      const months = new Set<string>();
-      const [year, month, day] = selectedDate.split('-').map(Number);
-      const currentDate = new Date(year, month - 1, day);
-      const oneYearAgo = new Date(currentDate);
-      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-
-      // Add all months in the trend
-      const tempDate = new Date(oneYearAgo);
-      while (tempDate <= currentDate) {
-        const monthStr = `${tempDate.getFullYear()}-${String(tempDate.getMonth() + 1).padStart(2, '0')}`;
-        months.add(monthStr);
-        tempDate.setMonth(tempDate.getMonth() + 1);
-      }
-
-      // Fetch rates for all currency-month combinations
-      const fetchPromises: Promise<number | null>[] = [];
-      currencies.forEach((currency) => {
-        months.forEach((month) => {
-          fetchPromises.push(getRateForMonth(month, currency, conversionCurrency));
-        });
-      });
-
-      // Wait for all rates to be fetched or attempted
-      await Promise.allSettled(fetchPromises);
-      setLoadingRates(false);
-    };
-
-    fetchRates();
-    // Only re-fetch when currency or date changes, not when accounts/assets arrays change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversionCurrency, selectedDate]);
-  // getRateForMonth is stable from Zustand store
+  const [conversionCurrency, setConversionCurrency] = useState<CurrencyCode>(baseCurrency);
 
   // Calculate balance sheet for selected date with currency conversion
   const [balanceSheet, setBalanceSheet] = useState<BalanceSheetData>({
@@ -129,15 +61,14 @@ export const BalanceSheet: React.FC = () => {
         manualAssets,
         transactions,
         selectedDate,
-        effectiveBaseCurrency,
-        effectiveGetRateForMonth
+        conversionCurrency
       );
       setBalanceSheet(data);
     };
 
     calculateBalanceSheet();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accounts, manualAssets, transactions, selectedDate, effectiveBaseCurrency]);
+     
+  }, [accounts, manualAssets, transactions, selectedDate, conversionCurrency]);
   // effectiveGetRateForMonth is stable from Zustand store
 
   // Calculate comparison data
@@ -156,8 +87,7 @@ export const BalanceSheet: React.FC = () => {
           manualAssets,
           transactions,
           selectedDate,
-          effectiveBaseCurrency,
-          effectiveGetRateForMonth
+          conversionCurrency
         );
         setComparison(data);
       } else if (comparisonType === 'year') {
@@ -166,8 +96,7 @@ export const BalanceSheet: React.FC = () => {
           manualAssets,
           transactions,
           selectedDate,
-          effectiveBaseCurrency,
-          effectiveGetRateForMonth
+          conversionCurrency
         );
         setComparison(data);
       } else {
@@ -176,8 +105,8 @@ export const BalanceSheet: React.FC = () => {
     };
 
     calculateComparison();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accounts, manualAssets, transactions, selectedDate, comparisonType, effectiveBaseCurrency]);
+     
+  }, [accounts, manualAssets, transactions, selectedDate, comparisonType, conversionCurrency]);
   // effectiveGetRateForMonth is stable from Zustand store
 
   // Calculate net worth trend for the past year
@@ -206,8 +135,7 @@ export const BalanceSheet: React.FC = () => {
         formatLocalDate(startDate),
         selectedDate,
         30, // Monthly data points
-        effectiveBaseCurrency,
-        effectiveGetRateForMonth
+        conversionCurrency
       );
 
       setTrendData(
@@ -224,9 +152,8 @@ export const BalanceSheet: React.FC = () => {
     };
 
     calculateTrend();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accounts, manualAssets, transactions, selectedDate, effectiveBaseCurrency]);
-  // effectiveGetRateForMonth is stable from Zustand store
+     
+  }, [accounts, manualAssets, transactions, selectedDate, conversionCurrency]);
 
   const handleComparisonChange = (
     _event: React.MouseEvent<HTMLElement>,
@@ -237,7 +164,7 @@ export const BalanceSheet: React.FC = () => {
     }
   };
 
-  const handleCurrencyChange = (newCurrency: string) => {
+  const handleCurrencyChange = (newCurrency: CurrencyCode) => {
     setConversionCurrency(newCurrency);
   };
 
@@ -297,7 +224,7 @@ export const BalanceSheet: React.FC = () => {
               <Select
                 value={conversionCurrency}
                 label="Display Currency"
-                onChange={(e) => handleCurrencyChange(e.target.value)}
+                onChange={(e) => handleCurrencyChange(e.target.value as CurrencyCode)}
               >
                 {DEFAULT_CURRENCIES.map((curr) => (
                   <MenuItem key={curr.code} value={curr.code}>
@@ -313,18 +240,8 @@ export const BalanceSheet: React.FC = () => {
         </Grid>
       </Paper>
 
-      {/* Loading indicator for exchange rates */}
-      {loadingRates && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 3, mb: 3 }}>
-          <CircularProgress size={24} sx={{ mr: 2 }} />
-          <Typography variant="body2" color="text.secondary">
-            Loading exchange rates...
-          </Typography>
-        </Box>
-      )}
-
       {/* Summary Cards */}
-      {!loadingRates && (
+      {
         <>
           <Grid container spacing={3} sx={{ mb: 3 }}>
             <Grid item xs={12} md={4}>
@@ -334,7 +251,7 @@ export const BalanceSheet: React.FC = () => {
                     Total Assets
                   </Typography>
                   <Typography variant="h4" component="div">
-                    {formatCurrency(balanceSheet.totalAssets, currencyCode)}
+                    {formatCurrency(balanceSheet.totalAssets, conversionCurrency)}
                   </Typography>
                   {comparison && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
@@ -346,7 +263,7 @@ export const BalanceSheet: React.FC = () => {
                       <Typography variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
                         {formatCurrency(
                           comparison.current.totalAssets - comparison.previous.totalAssets,
-                          currencyCode
+                          conversionCurrency
                         )}
                       </Typography>
                     </Box>
@@ -361,7 +278,7 @@ export const BalanceSheet: React.FC = () => {
                     Total Liabilities
                   </Typography>
                   <Typography variant="h4" component="div">
-                    {formatCurrency(balanceSheet.totalLiabilities, currencyCode)}
+                    {formatCurrency(balanceSheet.totalLiabilities, conversionCurrency)}
                   </Typography>
                   {comparison && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
@@ -375,7 +292,7 @@ export const BalanceSheet: React.FC = () => {
                         {formatCurrency(
                           comparison.current.totalLiabilities -
                             comparison.previous.totalLiabilities,
-                          currencyCode
+                          conversionCurrency
                         )}
                       </Typography>
                     </Box>
@@ -388,7 +305,7 @@ export const BalanceSheet: React.FC = () => {
                 <CardContent>
                   <Typography gutterBottom>Net Worth</Typography>
                   <Typography variant="h4" component="div">
-                    {formatCurrency(balanceSheet.netWorth, currencyCode)}
+                    {formatCurrency(balanceSheet.netWorth, conversionCurrency)}
                   </Typography>
                   {comparison && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
@@ -398,7 +315,7 @@ export const BalanceSheet: React.FC = () => {
                         <TrendingDownIcon fontSize="small" />
                       )}
                       <Typography variant="body2" sx={{ ml: 0.5 }}>
-                        {formatCurrency(comparison.change, currencyCode)} (
+                        {formatCurrency(comparison.change, conversionCurrency)} (
                         {comparison.changePercent.toFixed(1)}%)
                       </Typography>
                     </Box>
@@ -422,7 +339,7 @@ export const BalanceSheet: React.FC = () => {
                   { dataKey: 'Liabilities', name: 'Liabilities', color: '#d32f2f' },
                 ]}
                 height={400}
-                formatValue={(value) => formatCurrency(value, currencyCode)}
+                formatValue={(value) => formatCurrency(value, conversionCurrency)}
               />
             </Paper>
           )}
@@ -431,7 +348,7 @@ export const BalanceSheet: React.FC = () => {
           <ManualAssetSection
             title="Assets"
             groups={balanceSheet.assets}
-            currencyCode={currencyCode}
+            currencyCode={conversionCurrency}
             onManageHistory={handleManageHistory}
           />
 
@@ -441,7 +358,7 @@ export const BalanceSheet: React.FC = () => {
           <ManualAssetSection
             title="Liabilities"
             groups={balanceSheet.liabilities}
-            currencyCode={currencyCode}
+            currencyCode={conversionCurrency}
             onManageHistory={handleManageHistory}
           />
 
@@ -456,13 +373,13 @@ export const BalanceSheet: React.FC = () => {
               </Grid>
               <Grid item>
                 <Typography variant="h3">
-                  {formatCurrency(balanceSheet.netWorth, currencyCode)}
+                  {formatCurrency(balanceSheet.netWorth, conversionCurrency)}
                 </Typography>
               </Grid>
             </Grid>
           </Paper>
         </>
-      )}
+      }
 
       {/* Asset Value History Dialog */}
       <AssetValueHistoryDialog

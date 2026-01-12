@@ -1,4 +1,4 @@
-import { fetchCurrentRate, findFallbackRate } from './exchangeRate.service';
+import { fetchCurrentRate } from './exchangeRate.service';
 
 // Mock fetch for API tests
 global.fetch = jest.fn();
@@ -132,45 +132,6 @@ describe('exchangeRate.service', () => {
 
       const rate = await fetchCurrentRate('GBP', 'EUR');
       expect(rate).toBeNull();
-    });
-  });
-
-  describe('findFallbackRate', () => {
-    const mockRates = [
-      { month: '2026-01', fromCurrency: 'EUR', toCurrency: 'USD', rate: 1.18 },
-      { month: '2026-02', fromCurrency: 'EUR', toCurrency: 'USD', rate: 1.19 },
-      { month: '2025-12', fromCurrency: 'EUR', toCurrency: 'USD', rate: 1.17 },
-      { month: '2025-11', fromCurrency: 'GBP', toCurrency: 'USD', rate: 1.25 },
-    ];
-
-    it('should return 1 for same currency', () => {
-      const rate = findFallbackRate(mockRates, '2026-03', 'USD', 'USD');
-      expect(rate).toBe(1);
-    });
-
-    it('should find rate from previous month', () => {
-      const rate = findFallbackRate(mockRates, '2026-03', 'EUR', 'USD');
-      expect(rate).toBe(1.19); // February 2026
-    });
-
-    it('should find rate from multiple months back', () => {
-      const rate = findFallbackRate(mockRates, '2026-05', 'EUR', 'USD');
-      expect(rate).toBe(1.19); // February 2026 (3 months back)
-    });
-
-    it('should return null if no rate found within 12 months', () => {
-      const rate = findFallbackRate(mockRates, '2027-03', 'EUR', 'USD');
-      expect(rate).toBeNull();
-    });
-
-    it('should return null if currency pair not found', () => {
-      const rate = findFallbackRate(mockRates, '2026-03', 'JPY', 'USD');
-      expect(rate).toBeNull();
-    });
-
-    it('should handle year boundaries correctly', () => {
-      const rate = findFallbackRate(mockRates, '2026-01', 'EUR', 'USD');
-      expect(rate).toBe(1.17); // December 2025
     });
   });
 });

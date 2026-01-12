@@ -31,7 +31,6 @@ import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useAppStore } from '../../stores/useAppStore';
-import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
 import { reportService, type BudgetPerformanceData } from '../../services/report.service';
 import { LineChart } from '../charts/LineChart';
 import { PeriodSelector } from '../common/PeriodSelector';
@@ -50,45 +49,14 @@ export const BudgetPerformanceReport: React.FC = () => {
   const categories = useCategoryStore((state) => state.categories);
   const accounts = useAccountStore((state) => state.accounts);
   const baseCurrency = useAppStore((state) => state.baseCurrency);
-  const getRateForMonth = useExchangeRateStore((state) => state.getRateForMonth);
 
   // Date range state - default to Year to Date
   const today = getTodayDate();
   const yearStart = `${today.slice(0, 4)}-01-01`;
   const [startDate, setStartDate] = useState<string>(yearStart);
   const [endDate, setEndDate] = useState<string>(today);
-  const [conversionCurrency, setConversionCurrency] = useState<string>(baseCurrency);
+  const [conversionCurrency, setConversionCurrency] = useState<CurrencyCode>(baseCurrency);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-
-  const currencyCode = conversionCurrency as CurrencyCode;
-
-  // Automatically fetch missing exchange rates in background
-  useEffect(() => {
-    const rateRequests = new Set<string>();
-    const filteredTxns = transactions.filter((t) => t.date >= startDate && t.date <= endDate);
-
-    filteredTxns.forEach((transaction) => {
-      const accountIds = [transaction.fromAccountId, transaction.toAccountId].filter(Boolean);
-
-      accountIds.forEach((accountId) => {
-        const account = accounts.find((a) => a.id === accountId);
-        if (account?.currencyCode && account.currencyCode !== conversionCurrency) {
-          const month = transaction.date.slice(0, 7);
-          const key = `${month}-${account.currencyCode}`;
-          rateRequests.add(key);
-        }
-      });
-    });
-
-    rateRequests.forEach((key) => {
-      const parts = key.split('-');
-      const month = `${parts[0]}-${parts[1]}`;
-      const currency = parts.slice(2).join('-');
-      getRateForMonth(month, currency, conversionCurrency);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversionCurrency, startDate, endDate]);
-  // getRateForMonth, transactions, and accounts are stable from Zustand stores
 
   const handleDateRangeChange = (range: { startDate: string; endDate: string }) => {
     setStartDate(range.startDate);
@@ -145,8 +113,7 @@ export const BudgetPerformanceReport: React.FC = () => {
         startDate,
         endDate,
         accounts,
-        conversionCurrency,
-        getRateForMonth
+        conversionCurrency
       );
       setPerformance(data);
     };
@@ -161,7 +128,6 @@ export const BudgetPerformanceReport: React.FC = () => {
     endDate,
     accounts,
     conversionCurrency,
-    getRateForMonth,
   ]);
 
   // Calculate trend data
@@ -184,8 +150,7 @@ export const BudgetPerformanceReport: React.FC = () => {
         endDate,
         intervalDays,
         accounts,
-        conversionCurrency,
-        getRateForMonth
+        conversionCurrency
       );
 
       setTrendData(
@@ -212,7 +177,6 @@ export const BudgetPerformanceReport: React.FC = () => {
     endDate,
     accounts,
     conversionCurrency,
-    getRateForMonth,
   ]);
 
   // Determine health score color
@@ -349,7 +313,7 @@ export const BudgetPerformanceReport: React.FC = () => {
               <Select
                 value={conversionCurrency}
                 label="Currency"
-                onChange={(e) => setConversionCurrency(e.target.value)}
+                onChange={(e) => setConversionCurrency(e.target.value as CurrencyCode)}
               >
                 {DEFAULT_CURRENCIES.map((curr) => (
                   <MenuItem key={curr.code} value={curr.code}>
@@ -391,7 +355,7 @@ export const BudgetPerformanceReport: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <TrendingDownIcon color="primary" />
                 <Typography variant="h5">
-                  {formatCurrency(performance.totalBudgetedExpenses, currencyCode)}
+                  {formatCurrency(performance.totalBudgetedExpenses, conversionCurrency)}
                 </Typography>
               </Box>
               {performance.totalBudgetedIncome > 0 && (
@@ -402,7 +366,7 @@ export const BudgetPerformanceReport: React.FC = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <TrendingUpIcon color="success" />
                     <Typography variant="body1">
-                      {formatCurrency(performance.totalBudgetedIncome, currencyCode)}
+                      {formatCurrency(performance.totalBudgetedIncome, conversionCurrency)}
                     </Typography>
                   </Box>
                 </Box>
@@ -425,7 +389,7 @@ export const BudgetPerformanceReport: React.FC = () => {
                   }
                 />
                 <Typography variant="h5">
-                  {formatCurrency(performance.totalActualExpenses, currencyCode)}
+                  {formatCurrency(performance.totalActualExpenses, conversionCurrency)}
                 </Typography>
               </Box>
               {performance.totalActualIncome > 0 && (
@@ -442,7 +406,7 @@ export const BudgetPerformanceReport: React.FC = () => {
                       }
                     />
                     <Typography variant="body1">
-                      {formatCurrency(performance.totalActualIncome, currencyCode)}
+                      {formatCurrency(performance.totalActualIncome, conversionCurrency)}
                     </Typography>
                   </Box>
                 </Box>
@@ -507,7 +471,7 @@ export const BudgetPerformanceReport: React.FC = () => {
               },
             ]}
             height={300}
-            formatValue={(value: number) => formatCurrency(value, currencyCode)}
+            formatValue={(value: number) => formatCurrency(value, conversionCurrency)}
           />
         </Paper>
       )}
@@ -571,10 +535,10 @@ export const BudgetPerformanceReport: React.FC = () => {
                         </Box>
                       </TableCell>
                       <TableCell align="right">
-                        {formatCurrency(item.budgetedAmount, currencyCode)}
+                        {formatCurrency(item.budgetedAmount, conversionCurrency)}
                       </TableCell>
                       <TableCell align="right">
-                        {formatCurrency(item.actualAmount, currencyCode)}
+                        {formatCurrency(item.actualAmount, conversionCurrency)}
                       </TableCell>
                       <TableCell align="right">
                         <Typography
@@ -588,7 +552,7 @@ export const BudgetPerformanceReport: React.FC = () => {
                                 : 'error.main'
                           }
                         >
-                          {formatCurrency(Math.abs(item.remaining), currencyCode)}
+                          {formatCurrency(Math.abs(item.remaining), conversionCurrency)}
                         </Typography>
                       </TableCell>
                       <TableCell align="right">{item.percentUsed.toFixed(1)}%</TableCell>

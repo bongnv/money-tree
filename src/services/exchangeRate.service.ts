@@ -115,6 +115,9 @@ async function fetchDirectRate(fromCurrency: string, toCurrency: string): Promis
   }
 }
 
+import { useExchangeRateStore } from '../stores/useExchangeRateStore';
+import type { ExchangeRate } from '../types/models';
+
 /**
  * Find fallback rate by searching previous months (up to 12 months back)
  * @param exchangeRates Array of existing exchange rates
@@ -123,8 +126,8 @@ async function fetchDirectRate(fromCurrency: string, toCurrency: string): Promis
  * @param toCurrency Target currency code
  * @returns Exchange rate or null if not found
  */
-export function findFallbackRate(
-  exchangeRates: Array<{ month: string; fromCurrency: string; toCurrency: string; rate: number }>,
+function findFallbackRate(
+  exchangeRates: ExchangeRate[],
   month: string,
   fromCurrency: string,
   toCurrency: string
@@ -162,20 +165,193 @@ export function findFallbackRate(
       return 1 / inverseRate.rate;
     }
 
-    // Try calculating through USD
+    // Try through USD as intermediate
     if (fromCurrency !== 'USD' && toCurrency !== 'USD') {
-      const fromToUsd = exchangeRates.find(
+      const fromToUSD = exchangeRates.find(
         (r) => r.month === checkMonth && r.fromCurrency === fromCurrency && r.toCurrency === 'USD'
       );
-      const toToUsd = exchangeRates.find(
-        (r) => r.month === checkMonth && r.fromCurrency === toCurrency && r.toCurrency === 'USD'
+      const usdToTo = exchangeRates.find(
+        (r) => r.month === checkMonth && r.fromCurrency === 'USD' && r.toCurrency === toCurrency
       );
 
-      if (fromToUsd && toToUsd) {
-        return fromToUsd.rate / toToUsd.rate;
+      if (fromToUSD && usdToTo) {
+        return fromToUSD.rate * usdToTo.rate;
       }
     }
   }
 
   return null;
+}
+
+/**
+ * Get exact X->USD rate for a specific month (no fallback)
+ * @returns rate value, 1 for USD, or null if not found
+ */
+function getToUsdRate(rates: ExchangeRate[], month: string, currency: string): number | null {
+  const curr = currency.toUpperCase();
+
+  if (curr === 'USD') {
+    return 1;
+  }
+
+  const exactRate = rates.find(
+    (r) => r.month === month && r.fromCurrency === curr && r.toCurrency === 'USD'
+  );
+
+  return exactRate ? exactRate.rate : null;
+}
+
+/**
+ * Fetch and store rate for a currency if missing (checks exact, fallback, then API)
+ * @param month Month in YYYY-MM format
+ * @param currency Currency code to fetch rate for
+ * @returns Promise resolving to rate value or null
+ */
+async function ensureCurrencyRate(month: string, currency: string): Promise<number | null> {
+  if (currency === 'USD') {
+    return 1;
+  }
+
+  const store = useExchangeRateStore.getState();
+  const rates = store.rates;
+
+  // Check if exact rate exists
+  const exactRate = getToUsdRate(rates, month, currency);
+  if (exactRate !== null) {
+    return exactRate;
+  }
+
+  // Try fallback to previous months
+  const fallbackRate = findFallbackRate(rates, month, currency, 'USD');
+  if (fallbackRate !== null) {
+    // Store the fallback rate for this month to avoid repeated lookups
+    const fallbackRateRecord: ExchangeRate = {
+      id: `rate-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      month,
+      fromCurrency: currency,
+      toCurrency: 'USD',
+      rate: fallbackRate,
+      createdAt: new Date().toISOString(),
+    };
+    store.addRate(fallbackRateRecord);
+    return fallbackRate;
+  }
+
+  // Fetch from API
+  try {
+    const rate = await fetchCurrentRate(currency, 'USD');
+
+    if (rate !== null) {
+      const newRate: ExchangeRate = {
+        id: `rate-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        month,
+        fromCurrency: currency,
+        toCurrency: 'USD',
+        rate,
+        createdAt: new Date().toISOString(),
+      };
+      store.addRate(newRate);
+      return rate;
+    }
+
+    return null;
+  } catch (error) {
+    console.error(`Failed to fetch rate for ${currency}/USD in ${month}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Get exchange rate for a specific month and currency pair
+ * Checks cache first, then fallback, then fetches from API if needed
+ * This is the main entry point for components to get exchange rates
+ *
+ * @param month Month in YYYY-MM format
+ * @param fromCurrency Source currency code
+ * @param toCurrency Target currency code
+ * @returns Promise resolving to exchange rate
+ * @throws Error if exchange rate cannot be found
+ */
+export async function getRateForMonth(
+  month: string,
+  fromCurrency: string,
+  toCurrency: string
+): Promise<number> {
+  const from = fromCurrency.toUpperCase();
+  const to = toCurrency.toUpperCase();
+
+  // Same currency doesn't need fetching
+  if (from === to) {
+    return 1;
+  }
+
+  // Check cache first
+  const store = useExchangeRateStore.getState();
+  const rates = store.rates;
+
+  // If converting to USD, get direct rate
+  if (to === 'USD') {
+    const cachedRate = getToUsdRate(rates, month, from);
+    if (cachedRate !== null) return cachedRate;
+  }
+  // If converting from USD, get inverse of target->USD rate
+  else if (from === 'USD') {
+    const toUsdRate = getToUsdRate(rates, month, to);
+    if (toUsdRate !== null) return 1 / toUsdRate;
+  }
+  // For X->Y, calculate through USD: X->USD / Y->USD
+  else {
+    const fromToUsd = getToUsdRate(rates, month, from);
+    const toToUsd = getToUsdRate(rates, month, to);
+    if (fromToUsd !== null && toToUsd !== null) {
+      return fromToUsd / toToUsd;
+    }
+  }
+
+  // Rate not in cache, fetch it
+  // For X->Y conversions, we need both X->USD and Y->USD (unless one is USD)
+  const fetchPromises: Promise<number | null>[] = [];
+
+  // Fetch rates for both currencies if needed
+  if (from !== 'USD') {
+    fetchPromises.push(ensureCurrencyRate(month, from));
+  }
+  if (to !== 'USD') {
+    fetchPromises.push(ensureCurrencyRate(month, to));
+  }
+
+  // Wait for all fetches to complete
+  if (fetchPromises.length > 0) {
+    await Promise.allSettled(fetchPromises);
+  }
+
+  // Return the converted rate (recalculate from cache after fetching)
+  const updatedRates = useExchangeRateStore.getState().rates;
+
+  if (to === 'USD') {
+    const rate = getToUsdRate(updatedRates, month, from);
+    if (rate === null) {
+      throw new Error(
+        `Missing exchange rate for ${from} → ${to} in ${month}. Please fetch exchange rates in Settings → Exchange Rates.`
+      );
+    }
+    return rate;
+  } else if (from === 'USD') {
+    const toUsdRate = getToUsdRate(updatedRates, month, to);
+    if (toUsdRate === null) {
+      throw new Error(
+        `Missing exchange rate for ${from} → ${to} in ${month}. Please fetch exchange rates in Settings → Exchange Rates.`
+      );
+    }
+    return 1 / toUsdRate;
+  } else {
+    const fromToUsd = getToUsdRate(updatedRates, month, from);
+    const toToUsd = getToUsdRate(updatedRates, month, to);
+    if (fromToUsd === null || toToUsd === null) {
+      throw new Error(
+        `Missing exchange rate for ${from} → ${to} in ${month}. Please fetch exchange rates in Settings → Exchange Rates.`
+      );
+    }
+    return fromToUsd / toToUsd;
+  }
 }

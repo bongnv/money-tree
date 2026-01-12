@@ -1,6 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
 import { useAppStore } from './useAppStore';
-import { storageService } from '../services/storage.service';
 
 describe('useAppStore', () => {
   beforeEach(() => {

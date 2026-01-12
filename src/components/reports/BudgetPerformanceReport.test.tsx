@@ -9,8 +9,8 @@ import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useAppStore } from '../../stores/useAppStore';
-import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
 import { reportService } from '../../services/report.service';
+import * as exchangeRateService from '../../services/exchangeRate.service';
 import { Group, AccountType } from '../../types/enums';
 import type { Budget, Transaction, TransactionType, Category, Account } from '../../types/models';
 
@@ -20,10 +20,10 @@ jest.mock('../../stores/useTransactionStore');
 jest.mock('../../stores/useCategoryStore');
 jest.mock('../../stores/useAccountStore');
 jest.mock('../../stores/useAppStore');
-jest.mock('../../stores/useExchangeRateStore');
 
-// Mock report service
+// Mock services
 jest.mock('../../services/report.service');
+jest.mock('../../services/exchangeRate.service');
 
 // Mock chart components
 jest.mock('../charts/LineChart', () => ({
@@ -242,10 +242,13 @@ describe('BudgetPerformanceReport', () => {
     { date: '2026-01-08', budgeted: 700, actual: 350, budgetedIncome: 0, actualIncome: 0 },
   ];
 
-  const mockGetRateForMonth = jest.fn().mockReturnValue(1);
+  const mockGetRateForMonth = jest.fn().mockResolvedValue(1);
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Mock the service function
+    jest.spyOn(exchangeRateService, 'getRateForMonth').mockImplementation(mockGetRateForMonth);
 
     (useBudgetStore as unknown as jest.Mock).mockImplementation((selector) =>
       selector({ budgets: mockBudgets })
@@ -264,9 +267,6 @@ describe('BudgetPerformanceReport', () => {
     );
     (useAppStore as unknown as jest.Mock).mockImplementation((selector) =>
       selector({ baseCurrency: 'USD' })
-    );
-    (useExchangeRateStore as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({ getRateForMonth: mockGetRateForMonth })
     );
 
     (reportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue(mockPerformanceData);
@@ -430,8 +430,7 @@ describe('BudgetPerformanceReport', () => {
         expect.any(String),
         expect.any(String),
         expect.any(Array),
-        'USD',
-        expect.any(Function)
+        'USD'
       );
     });
   });

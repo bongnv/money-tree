@@ -25,6 +25,7 @@ jest.mock('../../services/report.service');
 describe('FinancialSummary', () => {
   const mockPeriod: PeriodOption = {
     label: 'This Month',
+    value: 'thisMonth',
     startDate: '2026-01-01',
     endDate: '2026-01-31',
   };
@@ -34,8 +35,6 @@ describe('FinancialSummary', () => {
 
     // Mock calculation service
     (calculationService.calculateNetWorth as jest.Mock) = jest.fn().mockResolvedValue(504000);
-    (calculationService.calculateTotalIncome as jest.Mock) = jest.fn().mockResolvedValue(3000);
-    (calculationService.calculateTotalExpenses as jest.Mock) = jest.fn().mockResolvedValue(500);
     (calculationService.calculateSavingsRate as jest.Mock) = jest.fn().mockReturnValue(83.3);
 
     // Mock report service
@@ -52,41 +51,41 @@ describe('FinancialSummary', () => {
     });
 
     // Default mock implementations
-    (useAccountStore as jest.Mock).mockImplementation((selector) =>
+    (useAccountStore as unknown as jest.Mock).mockImplementation((selector) =>
       selector({
         accounts: [
           {
-            id: 'acc-1',
-            name: 'Checking',
+            id: 'acc1',
+            name: 'Checking Account',
             type: AccountType.BANK_ACCOUNT,
             currencyCode: 'USD',
             initialBalance: 1000,
             isActive: true,
-            createdAt: '2026-01-01T00:00:00.000Z',
-            updatedAt: '2026-01-01T00:00:00.000Z',
+            createdAt: '2024-01-01T00:00:00.000Z',
+            updatedAt: '2024-01-01T00:00:00.000Z',
           },
         ],
       })
     );
 
-    (useTransactionStore as jest.Mock).mockImplementation((selector) =>
+    (useTransactionStore as unknown as jest.Mock).mockImplementation((selector) =>
       selector({
         transactions: [
           {
-            id: 'txn-1',
-            date: '2026-01-15',
-            description: 'Salary',
+            id: 'tx1',
+            date: '2024-01-15',
+            description: 'Income',
             amount: 3000,
-            transactionTypeId: 'type-income',
-            toAccountId: 'acc-1',
-            createdAt: '2026-01-15T00:00:00.000Z',
-            updatedAt: '2026-01-15T00:00:00.000Z',
+            transactionTypeId: 'type1',
+            toAccountId: 'acc1',
+            createdAt: '2024-01-15T00:00:00.000Z',
+            updatedAt: '2024-01-15T00:00:00.000Z',
           },
         ],
       })
     );
 
-    (useAssetStore as jest.Mock).mockImplementation((selector) =>
+    (useAssetStore as unknown as jest.Mock).mockImplementation((selector) =>
       selector({
         manualAssets: [
           {
@@ -102,13 +101,15 @@ describe('FinancialSummary', () => {
       })
     );
 
-    (useAppStore as jest.Mock).mockImplementation((selector) => selector({ baseCurrency: 'USD' }));
+    (useAppStore as unknown as jest.Mock).mockImplementation((selector) =>
+      selector({ baseCurrency: 'USD' })
+    );
 
-    (useExchangeRateStore as jest.Mock).mockImplementation((selector) =>
+    (useExchangeRateStore as unknown as jest.Mock).mockImplementation((selector) =>
       selector({ getRateForMonth: jest.fn(async () => 1) })
     );
 
-    (useCategoryStore as jest.Mock).mockImplementation((selector) =>
+    (useCategoryStore as unknown as jest.Mock).mockImplementation((selector) =>
       selector({
         categories: [
           {
@@ -131,7 +132,7 @@ describe('FinancialSummary', () => {
       })
     );
 
-    (useBudgetStore as jest.Mock).mockImplementation((selector) =>
+    (useBudgetStore as unknown as jest.Mock).mockImplementation((selector) =>
       selector({
         budgets: [
           {

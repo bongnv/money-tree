@@ -6,9 +6,10 @@ import type {
   Category,
   Budget,
 } from '../types/models';
-import { AccountType, AssetType, Group } from '../types/enums';
+import { AccountType, AssetType, CurrencyCode, Group } from '../types/enums';
 import { calculationService } from './calculation.service';
 import { getAssetCurrentValue } from '../utils/asset.utils';
+import { getRateForMonth } from './exchangeRate.service';
 
 export interface BalanceSheetData {
   assets: AssetGroup[];
@@ -109,16 +110,14 @@ class ReportService {
    * @param transactions All transactions up to the date
    * @param asOfDate Date to calculate balance sheet for (ISO string)
    * @param baseCurrency Optional base currency for conversion
-   * @param getRateForMonth Optional function to get exchange rate
    * @returns Balance sheet data
    */
   async calculateBalanceSheet(
     accounts: Account[],
     manualAssets: ManualAsset[],
     transactions: Transaction[],
-    asOfDate?: string,
-    baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>
+    asOfDate: string,
+    baseCurrency: CurrencyCode
   ): Promise<BalanceSheetData> {
     // Filter transactions up to the date
     const filteredTransactions = asOfDate
@@ -129,9 +128,7 @@ class ReportService {
     const filteredManualAssets = manualAssets;
 
     // Get month for rate lookup (YYYY-MM format)
-    const rateMonth = asOfDate
-      ? asOfDate.substring(0, 7)
-      : new Date().toISOString().substring(0, 7);
+    const rateMonth = asOfDate.substring(0, 7);
 
     // Group assets by type
     const assetGroups = await this.groupAssets(
@@ -139,7 +136,6 @@ class ReportService {
       filteredManualAssets,
       filteredTransactions,
       baseCurrency,
-      getRateForMonth,
       rateMonth
     );
     const liabilityGroups = await this.groupLiabilities(
@@ -147,7 +143,6 @@ class ReportService {
       filteredManualAssets,
       filteredTransactions,
       baseCurrency,
-      getRateForMonth,
       rateMonth
     );
 
@@ -171,9 +166,8 @@ class ReportService {
     accounts: Account[],
     manualAssets: ManualAsset[],
     transactions: Transaction[],
-    baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>,
-    rateMonth?: string
+    baseCurrency: CurrencyCode,
+    rateMonth: string
   ): Promise<AssetGroup[]> {
     const groups: Map<string, AssetItem[]> = new Map();
 
@@ -193,12 +187,10 @@ class ReportService {
         let conversionRate: number | undefined;
 
         // Apply currency conversion if base currency is specified
-        if (baseCurrency && getRateForMonth && rateMonth && account.currencyCode !== baseCurrency) {
+        if (account.currencyCode !== baseCurrency) {
           const rate = await getRateForMonth(rateMonth, account.currencyCode, baseCurrency);
-          if (rate !== null) {
-            convertedValue = balance * rate;
-            conversionRate = rate;
-          }
+          convertedValue = balance * rate;
+          conversionRate = rate;
         }
 
         groups.get(groupName)!.push({
@@ -230,12 +222,10 @@ class ReportService {
       let conversionRate: number | undefined;
 
       // Apply currency conversion if base currency is specified
-      if (baseCurrency && getRateForMonth && rateMonth && asset.currencyCode !== baseCurrency) {
+      if (asset.currencyCode !== baseCurrency) {
         const rate = await getRateForMonth(rateMonth, asset.currencyCode, baseCurrency);
-        if (rate !== null) {
-          convertedValue = assetValue * rate;
-          conversionRate = rate;
-        }
+        convertedValue = assetValue * rate;
+        conversionRate = rate;
       }
 
       groups.get(groupName)!.push({
@@ -265,9 +255,8 @@ class ReportService {
     accounts: Account[],
     manualAssets: ManualAsset[],
     transactions: Transaction[],
-    baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>,
-    rateMonth?: string
+    baseCurrency: CurrencyCode,
+    rateMonth: string
   ): Promise<AssetGroup[]> {
     const groups: Map<string, AssetItem[]> = new Map();
 
@@ -289,12 +278,10 @@ class ReportService {
         let conversionRate: number | undefined;
 
         // Apply currency conversion if base currency is specified
-        if (baseCurrency && getRateForMonth && rateMonth && account.currencyCode !== baseCurrency) {
+        if (account.currencyCode !== baseCurrency) {
           const rate = await getRateForMonth(rateMonth, account.currencyCode, baseCurrency);
-          if (rate !== null) {
-            convertedValue = liability * rate;
-            conversionRate = rate;
-          }
+          convertedValue = liability * rate;
+          conversionRate = rate;
         }
 
         groups.get(groupName)!.push({
@@ -327,12 +314,10 @@ class ReportService {
         let conversionRate: number | undefined;
 
         // Apply currency conversion if base currency is specified
-        if (baseCurrency && getRateForMonth && rateMonth && account.currencyCode !== baseCurrency) {
+        if (account.currencyCode !== baseCurrency) {
           const rate = await getRateForMonth(rateMonth, account.currencyCode, baseCurrency);
-          if (rate !== null) {
-            convertedValue = liability * rate;
-            conversionRate = rate;
-          }
+          convertedValue = liability * rate;
+          conversionRate = rate;
         }
 
         groups.get(groupName)!.push({
@@ -365,7 +350,7 @@ class ReportService {
       let conversionRate: number | undefined;
 
       // Apply currency conversion if base currency is specified
-      if (baseCurrency && getRateForMonth && rateMonth && asset.currencyCode !== baseCurrency) {
+      if (asset.currencyCode !== baseCurrency) {
         const rate = await getRateForMonth(rateMonth, asset.currencyCode, baseCurrency);
         if (rate !== null) {
           convertedValue = liability * rate;
@@ -379,8 +364,7 @@ class ReportService {
         value: convertedValue,
         type: asset.type,
         currencyCode: asset.currencyCode,
-        convertedValue:
-          baseCurrency && asset.currencyCode !== baseCurrency ? convertedValue : undefined,
+        convertedValue: asset.currencyCode !== baseCurrency ? convertedValue : undefined,
         conversionRate,
       });
     }
@@ -440,7 +424,6 @@ class ReportService {
    * @param endDate End date for trend (ISO string)
    * @param interval Number of days between data points (default: 30)
    * @param baseCurrency Optional base currency for conversion
-   * @param getRateForMonth Optional function to get exchange rate
    * @returns Array of net worth trend points
    */
   async calculateNetWorthTrend(
@@ -450,8 +433,7 @@ class ReportService {
     startDate: string,
     endDate: string,
     interval: number = 30,
-    baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>
+    baseCurrency: CurrencyCode
   ): Promise<NetWorthTrendPoint[]> {
     const trend: NetWorthTrendPoint[] = [];
     // Parse dates as local dates to avoid timezone issues
@@ -469,8 +451,7 @@ class ReportService {
         manualAssets,
         transactions,
         dateStr,
-        baseCurrency,
-        getRateForMonth
+        baseCurrency
       );
 
       trend.push({
@@ -491,8 +472,7 @@ class ReportService {
         manualAssets,
         transactions,
         endDate,
-        baseCurrency,
-        getRateForMonth
+        baseCurrency
       );
 
       trend.push({
@@ -514,8 +494,7 @@ class ReportService {
     manualAssets: ManualAsset[],
     transactions: Transaction[],
     currentDate: string,
-    baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>
+    baseCurrency: CurrencyCode
   ): Promise<{
     current: BalanceSheetData;
     previous: BalanceSheetData;
@@ -527,8 +506,7 @@ class ReportService {
       manualAssets,
       transactions,
       currentDate,
-      baseCurrency,
-      getRateForMonth
+      baseCurrency
     );
 
     // Calculate previous month date (parse as local date to avoid timezone issues)
@@ -542,8 +520,7 @@ class ReportService {
       manualAssets,
       transactions,
       previousDate,
-      baseCurrency,
-      getRateForMonth
+      baseCurrency
     );
 
     const change = current.netWorth - previous.netWorth;
@@ -565,8 +542,7 @@ class ReportService {
     manualAssets: ManualAsset[],
     transactions: Transaction[],
     currentDate: string,
-    baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>
+    baseCurrency: CurrencyCode
   ): Promise<{
     current: BalanceSheetData;
     previous: BalanceSheetData;
@@ -578,8 +554,7 @@ class ReportService {
       manualAssets,
       transactions,
       currentDate,
-      baseCurrency,
-      getRateForMonth
+      baseCurrency
     );
 
     // Calculate previous year date (parse as local date to avoid timezone issues)
@@ -593,8 +568,7 @@ class ReportService {
       manualAssets,
       transactions,
       previousDate,
-      baseCurrency,
-      getRateForMonth
+      baseCurrency
     );
 
     const change = current.netWorth - previous.netWorth;
@@ -617,7 +591,6 @@ class ReportService {
    * @param endDate End date (YYYY-MM-DD)
    * @param accounts All accounts (needed for currency lookup)
    * @param baseCurrency Optional base currency for conversion
-   * @param getRateForMonth Optional function to get exchange rate
    * @returns Cash flow data grouped by category
    */
   async calculateCashFlow(
@@ -626,9 +599,8 @@ class ReportService {
     categories: Category[],
     startDate: string,
     endDate: string,
-    accounts?: Account[],
-    baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>
+    accounts: Account[] = [],
+    baseCurrency: CurrencyCode
   ): Promise<CashFlowData> {
     // Filter transactions in date range and exclude transfers
     const filteredTransactions = transactions.filter(
@@ -668,7 +640,7 @@ class ReportService {
 
       // Convert amount if needed
       let convertedAmount = transaction.amount;
-      if (baseCurrency && getRateForMonth && account && account.currencyCode !== baseCurrency) {
+      if (account && account.currencyCode !== baseCurrency) {
         const month = transaction.date.substring(0, 7); // YYYY-MM
         const rate = await getRateForMonth(month, account.currencyCode, baseCurrency);
         if (rate !== null) {
@@ -727,7 +699,6 @@ class ReportService {
    * @param intervalDays Interval between data points in days
    * @param accounts All accounts (needed for currency lookup)
    * @param baseCurrency Optional base currency for conversion
-   * @param getRateForMonth Optional function to get exchange rate
    * @returns Array of cash flow trend points
    */
   async calculateCashFlowTrend(
@@ -737,9 +708,8 @@ class ReportService {
     startDate: string,
     endDate: string,
     intervalDays: number = 30,
-    accounts?: Account[],
-    baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>
+    accounts: Account[] = [],
+    baseCurrency: CurrencyCode
   ): Promise<CashFlowTrendPoint[]> {
     // Parse dates
     const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
@@ -769,8 +739,7 @@ class ReportService {
         periodStartStr,
         periodEndStr,
         accounts,
-        baseCurrency,
-        getRateForMonth
+        baseCurrency
       );
 
       trendPoints.push({
@@ -797,7 +766,6 @@ class ReportService {
    * @param endDate End date (YYYY-MM-DD)
    * @param accounts All accounts (needed for currency lookup)
    * @param baseCurrency Optional base currency for conversion
-   * @param getRateForMonth Optional function to get exchange rate
    * @returns Budget performance data
    */
   async calculateBudgetPerformance(
@@ -807,9 +775,8 @@ class ReportService {
     categories: Category[],
     startDate: string,
     endDate: string,
-    accounts?: Account[],
-    baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>
+    accounts: Account[] = [],
+    baseCurrency: CurrencyCode
   ): Promise<BudgetPerformanceData> {
     const items: BudgetPerformanceItem[] = [];
     let totalBudgetedIncome = 0;
@@ -836,7 +803,7 @@ class ReportService {
 
       // Convert budget to base currency if needed
       let convertedBudgetedAmount = budgetedAmount;
-      if (baseCurrency && getRateForMonth && budget.currencyCode !== baseCurrency) {
+      if (budget.currencyCode !== baseCurrency) {
         const month = startDate.slice(0, 7);
         const rate = await getRateForMonth(month, budget.currencyCode, baseCurrency);
         if (rate !== null) {
@@ -854,16 +821,14 @@ class ReportService {
         let convertedAmount = transaction.amount;
 
         // Convert transaction amount to base currency if needed
-        if (baseCurrency && getRateForMonth && accounts) {
-          const accountId = transaction.fromAccountId || transaction.toAccountId;
-          const account = accounts.find((a) => a.id === accountId);
+        const accountId = transaction.fromAccountId || transaction.toAccountId;
+        const account = accounts.find((a) => a.id === accountId);
 
-          if (account && account.currencyCode !== baseCurrency) {
-            const month = transaction.date.slice(0, 7);
-            const rate = await getRateForMonth(month, account.currencyCode, baseCurrency);
-            if (rate !== null) {
-              convertedAmount = transaction.amount * rate;
-            }
+        if (account && account.currencyCode !== baseCurrency) {
+          const month = transaction.date.slice(0, 7);
+          const rate = await getRateForMonth(month, account.currencyCode, baseCurrency);
+          if (rate !== null) {
+            convertedAmount = transaction.amount * rate;
           }
         }
 
@@ -947,7 +912,6 @@ class ReportService {
    * @param intervalDays Interval between data points in days
    * @param accounts All accounts (needed for currency lookup)
    * @param baseCurrency Optional base currency for conversion
-   * @param getRateForMonth Optional function to get exchange rate
    * @returns Array of budget trend points
    */
   async calculateBudgetTrend(
@@ -958,9 +922,8 @@ class ReportService {
     startDate: string,
     endDate: string,
     intervalDays: number = 30,
-    accounts?: Account[],
-    baseCurrency?: string,
-    getRateForMonth?: (month: string, from: string, to: string) => Promise<number | null>
+    accounts: Account[] = [],
+    baseCurrency: CurrencyCode
   ): Promise<BudgetTrendPoint[]> {
     // Parse dates
     const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
@@ -994,8 +957,7 @@ class ReportService {
         startDate, // Always from the start
         periodEndStr, // To this period end
         accounts,
-        baseCurrency,
-        getRateForMonth
+        baseCurrency
       );
 
       // Use cumulative totals for expenses and income

@@ -686,7 +686,9 @@ describe('CalculationService', () => {
         const netWorth = await calculationService.calculateNetWorth(
           [mockAccount1, mockAccount2],
           [incomeTransaction, expenseTransaction, transferTransaction],
-          mockAssets
+          mockAssets,
+          'USD',
+          '2026-01'
         );
         // acc-1: 1000 + 3000 - 200 - 500 = 3300
         // acc-2: 5000 + 500 = 5500
@@ -699,14 +701,22 @@ describe('CalculationService', () => {
         const netWorth = await calculationService.calculateNetWorth(
           [mockAccount1],
           [incomeTransaction, expenseTransaction],
-          []
+          [],
+          'USD',
+          '2026-01'
         );
         // acc-1: 1000 + 3000 - 200 = 3800
         expect(netWorth).toBe(3800);
       });
 
       it('should handle empty accounts', async () => {
-        const netWorth = await calculationService.calculateNetWorth([], [], mockAssets);
+        const netWorth = await calculationService.calculateNetWorth(
+          [],
+          [],
+          mockAssets,
+          'USD',
+          '2026-01'
+        );
         // assets only: 500000 + 25000 = 525000
         expect(netWorth).toBe(525000);
       });

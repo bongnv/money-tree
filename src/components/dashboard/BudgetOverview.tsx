@@ -7,7 +7,6 @@ import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useAppStore } from '../../stores/useAppStore';
-import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
 import { calculationService } from '../../services/calculation.service';
 import type { PeriodOption } from '../common/PeriodSelector';
 import { Group } from '../../types/enums';
@@ -31,7 +30,6 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ period }) => {
   const transactionTypes = useCategoryStore((state) => state.transactionTypes);
   const accounts = useAccountStore((state) => state.accounts);
   const baseCurrency = useAppStore((state) => state.baseCurrency);
-  const getRateForMonth = useExchangeRateStore((state) => state.getRateForMonth);
 
   const [budgetsWithUsage, setBudgetsWithUsage] = useState<BudgetWithUsage[]>([]);
 
@@ -63,8 +61,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ period }) => {
         const convertedBudget = await calculationService.convertBudgetAmount(
           { ...budget, amount: proratedAmount },
           period.startDate.slice(0, 7),
-          baseCurrency,
-          getRateForMonth
+          baseCurrency
         );
 
         // Calculate actual spending/income with currency conversion
@@ -78,8 +75,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ period }) => {
         const actualAmount = await calculationService.sumTransactionAmounts(
           relevantTransactions,
           accounts,
-          baseCurrency,
-          getRateForMonth
+          baseCurrency
         );
 
         // Get transaction type info

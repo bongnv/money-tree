@@ -25,7 +25,7 @@ import { AssetGroup } from '../../services/report.service';
 import { formatCurrency } from '../../utils/currency.utils';
 import { LineChart } from '../charts/LineChart';
 import { useAssetStore } from '../../stores/useAssetStore';
-import { getCompleteValueHistory, calculateAssetValueGrowth } from '../../services/history.service';
+import { getCompleteValueHistory, calculateAssetValueGrowth } from '../../utils/asset.utils';
 import type { CurrencyCode } from '../../types/enums';
 
 export interface ManualAssetSectionProps {

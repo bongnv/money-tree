@@ -20,6 +20,7 @@ jest.mock('../../stores/useExchangeRateStore');
 describe('BudgetOverview', () => {
   const mockPeriod: PeriodOption = {
     label: 'This Month',
+    value: 'thisMonth',
     startDate: '2026-01-01',
     endDate: '2026-01-31',
   };
@@ -28,19 +29,25 @@ describe('BudgetOverview', () => {
     jest.clearAllMocks();
 
     // Default mocks
-    (useAccountStore as jest.Mock).mockImplementation((selector) => selector({ accounts: [] }));
-    (useAppStore as jest.Mock).mockImplementation((selector) => selector({ baseCurrency: 'USD' }));
-    (useExchangeRateStore as jest.Mock).mockImplementation((selector) =>
+    (useAccountStore as unknown as jest.Mock).mockImplementation((selector) =>
+      selector({ accounts: [] })
+    );
+    (useAppStore as unknown as jest.Mock).mockImplementation((selector) =>
+      selector({ baseCurrency: 'USD' })
+    );
+    (useExchangeRateStore as unknown as jest.Mock).mockImplementation((selector) =>
       selector({ getRateForMonth: jest.fn(async () => 1) })
     );
   });
 
   it('shows empty state when no budgets exist', () => {
-    (useBudgetStore as jest.Mock).mockImplementation((selector) => selector({ budgets: [] }));
-    (useTransactionStore as jest.Mock).mockImplementation((selector) =>
+    (useBudgetStore as unknown as jest.Mock).mockImplementation((selector) =>
+      selector({ budgets: [] })
+    );
+    (useTransactionStore as unknown as jest.Mock).mockImplementation((selector) =>
       selector({ transactions: [] })
     );
-    (useCategoryStore as jest.Mock).mockImplementation((selector) =>
+    (useCategoryStore as unknown as jest.Mock).mockImplementation((selector) =>
       selector({ transactionTypes: [], categories: [] })
     );
 
@@ -55,7 +62,7 @@ describe('BudgetOverview', () => {
   });
 
   it('displays budget progress bars', async () => {
-    (useBudgetStore as jest.Mock).mockImplementation((selector) =>
+    (useBudgetStore as unknown as jest.Mock).mockImplementation((selector) =>
       selector({
         budgets: [
           {
@@ -73,7 +80,7 @@ describe('BudgetOverview', () => {
       })
     );
 
-    (useTransactionStore as jest.Mock).mockImplementation((selector) =>
+    (useTransactionStore as unknown as jest.Mock).mockImplementation((selector) =>
       selector({
         transactions: [
           {
@@ -90,7 +97,7 @@ describe('BudgetOverview', () => {
       })
     );
 
-    (useCategoryStore as jest.Mock).mockImplementation((selector) =>
+    (useCategoryStore as unknown as jest.Mock).mockImplementation((selector) =>
       selector({
         transactionTypes: [
           {
@@ -113,7 +120,7 @@ describe('BudgetOverview', () => {
       })
     );
 
-    (useAccountStore as jest.Mock).mockImplementation((selector) =>
+    (useAccountStore as unknown as jest.Mock).mockImplementation((selector) =>
       selector({
         accounts: [
           {
@@ -142,12 +149,17 @@ describe('BudgetOverview', () => {
   });
 
   it('renders the view all link', () => {
-    (useBudgetStore as jest.Mock).mockImplementation((selector) => selector({ budgets: [] }));
-    (useTransactionStore as jest.Mock).mockImplementation((selector) =>
+    (useBudgetStore as unknown as jest.Mock).mockImplementation((selector) =>
+      selector({ budgets: [] })
+    );
+    (useTransactionStore as unknown as jest.Mock).mockImplementation((selector) =>
       selector({ transactions: [] })
     );
-    (useCategoryStore as jest.Mock).mockImplementation((selector) =>
-      selector({ transactionTypes: [], categories: [] })
+    (useCategoryStore as unknown as jest.Mock).mockImplementation((selector) =>
+      selector({
+        transactionTypes: [],
+        categories: [],
+      })
     );
 
     render(
@@ -160,7 +172,7 @@ describe('BudgetOverview', () => {
   });
 
   it('handles budgets with different periods', async () => {
-    (useBudgetStore as jest.Mock).mockImplementation((selector) =>
+    (useBudgetStore as unknown as jest.Mock).mockImplementation((selector) =>
       selector({
         budgets: [
           {
@@ -189,11 +201,11 @@ describe('BudgetOverview', () => {
       })
     );
 
-    (useTransactionStore as jest.Mock).mockImplementation((selector) =>
+    (useTransactionStore as unknown as jest.Mock).mockImplementation((selector) =>
       selector({ transactions: [] })
     );
 
-    (useCategoryStore as jest.Mock).mockImplementation((selector) =>
+    (useCategoryStore as unknown as jest.Mock).mockImplementation((selector) =>
       selector({
         transactionTypes: [
           {

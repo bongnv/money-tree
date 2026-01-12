@@ -100,7 +100,7 @@ export class GooglePickerService {
           resolve(null);
           return;
         }
-        
+
         // Ignore other actions like 'loaded'
       };
 

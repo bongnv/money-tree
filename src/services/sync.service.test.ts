@@ -200,7 +200,6 @@ describe('SyncService', () => {
       mockSaveDataFile.mockRejectedValue(new Error('Sync failed'));
 
       await expect(syncService.syncNow()).rejects.toThrow('Sync failed');
-      expect(useAppStore.getState().error).toBe('Sync failed');
     });
 
     it('should not show loading screen for background sync', async () => {
@@ -309,7 +308,6 @@ describe('SyncService', () => {
       mockLoadDataFile.mockRejectedValue(new Error('Load failed'));
 
       await expect(syncService.loadDataFile()).rejects.toThrow('Load failed');
-      expect(useAppStore.getState().error).toBe('Load failed');
     });
 
     it('should handle cancelled load', async () => {

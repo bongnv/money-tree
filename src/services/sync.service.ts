@@ -249,12 +249,10 @@ class SyncService {
       // Get the actual filename from storage provider
       const fileName = storage.getFileName();
       state.setFileName(fileName);
-      state.setError(null);
       state.showSnackbar('Data saved successfully', 'success');
     } catch (error) {
       console.error('[SyncService] syncNow: Error during save:', error);
       const message = error instanceof Error ? error.message : 'Failed to sync';
-      state.setError(message);
       state.showSnackbar(`Failed to save: ${message}`, 'error');
       throw error;
     } finally {
@@ -303,7 +301,6 @@ class SyncService {
   async loadDataFile(): Promise<void> {
     const state = useAppStore.getState();
     state.setLoading(true);
-    state.setError(null);
 
     try {
       const storage = StorageFactory.getCurrentProvider();
@@ -338,10 +335,6 @@ class SyncService {
         state.setFileName(fileName);
         state.markAsSaved();
       }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to load file';
-      state.setError(message);
-      throw error;
     } finally {
       state.setLoading(false);
     }
@@ -357,7 +350,10 @@ class SyncService {
       await this.loadDataFile();
       return true;
     } catch (error) {
+      const state = useAppStore.getState();
       console.error('[SyncService] autoLoad: Failed to load data file:', error);
+      const message = error instanceof Error ? error.message : 'Failed to load file';
+      state.showSnackbar(message, 'error');
       return false;
     }
   }

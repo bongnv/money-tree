@@ -14,7 +14,6 @@ interface AppState {
   lastSaved: string | null;
   hasUnsavedChanges: boolean;
   isLoading: boolean;
-  error: string | null;
   snackbar: SnackbarState;
   baseCurrency: CurrencyCode; // Currency for reporting
   archivedYears: ArchivedYearReference[]; // References to archived years
@@ -31,7 +30,6 @@ interface AppActions {
   setLastSaved: (timestamp: string) => void;
   setUnsavedChanges: (hasChanges: boolean) => void;
   setLoading: (isLoading: boolean) => void;
-  setError: (error: string | null) => void;
   markAsSaved: () => void;
   resetState: () => void;
   showSnackbar: (message: string, severity?: AlertColor) => void;
@@ -51,7 +49,6 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
   lastSaved: null,
   hasUnsavedChanges: false,
   isLoading: false,
-  error: null,
   snackbar: {
     open: false,
     message: '',
@@ -80,10 +77,6 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
     set({ isLoading });
   },
 
-  setError: (error) => {
-    set({ error });
-  },
-
   markAsSaved: () => {
     const now = new Date().toISOString();
     set({ lastSaved: now, hasUnsavedChanges: false });
@@ -96,7 +89,6 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
       lastSaved: null,
       hasUnsavedChanges: false,
       isLoading: false,
-      error: null,
       snackbar: {
         open: false,
         message: '',

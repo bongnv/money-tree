@@ -5,7 +5,6 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { Backdrop, CircularProgress } from '@mui/material';
 import theme from './theme';
 import { MainLayout } from './components/layout/MainLayout';
-import { FileLoadErrorDialog } from './components/common/FileLoadErrorDialog';
 import { WelcomeDialog } from './components/common/WelcomeDialog';
 import { NotificationSnackbar } from './components/common/NotificationSnackbar';
 import { MergePreviewDialog, ConflictResolution } from './components/common/MergePreviewDialog';
@@ -24,16 +23,8 @@ import { identifyArchivableYear, calculateYearEndSummary } from './services/arch
 
 const AppContent: React.FC = () => {
   const navigate = useNavigate();
-  const {
-    error,
-    setError,
-    hasUnsavedChanges,
-    snackbar,
-    hideSnackbar,
-    baseCurrency,
-    lastBackupDate,
-    isLoading,
-  } = useAppStore();
+  const { hasUnsavedChanges, snackbar, hideSnackbar, baseCurrency, lastBackupDate, isLoading } =
+    useAppStore();
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
   const [showArchivePrompt, setShowArchivePrompt] = useState(false);
   const [showBackupPrompt, setShowBackupPrompt] = useState(false);
@@ -235,10 +226,6 @@ const AppContent: React.FC = () => {
     return StorageFactory.listOneDriveFolders(parentItem);
   };
 
-  const handleCloseError = () => {
-    setError(null);
-  };
-
   const handleMergeCancel = () => {
     if (mergeDialogState.resolve) {
       mergeDialogState.resolve(null);
@@ -292,7 +279,6 @@ const AppContent: React.FC = () => {
         onOneDriveFileSelected={handleConnectOneDrive}
         onListOneDriveFolders={handleListOneDriveFolders}
       />
-      <FileLoadErrorDialog open={!!error} error={error} onClose={handleCloseError} />
       <NotificationSnackbar
         open={snackbar.open}
         message={snackbar.message}

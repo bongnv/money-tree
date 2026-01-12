@@ -17,7 +17,6 @@ describe('useAppStore', () => {
     expect(result.current.lastSaved).toBeNull();
     expect(result.current.hasUnsavedChanges).toBe(false);
     expect(result.current.isLoading).toBe(false);
-    expect(result.current.error).toBeNull();
   });
 
   it('should mark changes as unsaved', () => {
@@ -83,23 +82,6 @@ describe('useAppStore', () => {
     expect(result.current.isLoading).toBe(false);
   });
 
-  it('should set error message', () => {
-    const { result } = renderHook(() => useAppStore());
-    const errorMessage = 'Test error';
-
-    act(() => {
-      result.current.setError(errorMessage);
-    });
-
-    expect(result.current.error).toBe(errorMessage);
-
-    act(() => {
-      result.current.setError(null);
-    });
-
-    expect(result.current.error).toBeNull();
-  });
-
   it('should mark as saved with timestamp', () => {
     const { result } = renderHook(() => useAppStore());
 
@@ -119,7 +101,6 @@ describe('useAppStore', () => {
       result.current.setFileName('test.json');
       result.current.setUnsavedChanges(true);
       result.current.setLoading(true);
-      result.current.setError('error');
       result.current.resetState();
     });
 
@@ -127,6 +108,5 @@ describe('useAppStore', () => {
     expect(result.current.lastSaved).toBeNull();
     expect(result.current.hasUnsavedChanges).toBe(false);
     expect(result.current.isLoading).toBe(false);
-    expect(result.current.error).toBeNull();
   });
 });

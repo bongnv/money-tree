@@ -40,35 +40,4 @@ describe('App', () => {
     unmount();
     expect(stopAutoSaveSpy).toHaveBeenCalled();
   });
-
-  it('should show error dialog when error exists', async () => {
-    useAppStore.getState().setError('Test error message');
-    render(<App />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Failed to Load File')).toBeInTheDocument();
-    });
-
-    // Note: The error message may be replaced by autoLoad attempting to load
-    // Just verify the error dialog is showing
-    await waitFor(() => {
-      const errorDialog = screen.getByRole('dialog');
-      expect(errorDialog).toBeInTheDocument();
-    });
-  });
-
-  it('should not show error dialog when no error', () => {
-    render(<App />);
-    expect(screen.queryByText('Failed to Load File')).not.toBeInTheDocument();
-  });
-
-  it('should clear error when dialog is closed', () => {
-    useAppStore.getState().setError('Test error message');
-    render(<App />);
-
-    const okButton = screen.getByText('OK');
-    okButton.click();
-
-    expect(useAppStore.getState().error).toBeNull();
-  });
 });

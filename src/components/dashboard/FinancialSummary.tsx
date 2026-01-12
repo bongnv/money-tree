@@ -62,7 +62,6 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
     };
 
     calculateNetWorth();
-     
   }, [accounts, transactions, manualAssets, baseCurrency, currentMonth]);
 
   // Calculate cash flow and budget performance
@@ -105,7 +104,6 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
     };
 
     calculateMetrics();
-     
   }, [transactions, period, transactionTypes, categories, accounts, baseCurrency, budgets]);
 
   // Determine savings rate color

@@ -67,7 +67,6 @@ export const BalanceSheet: React.FC = () => {
     };
 
     calculateBalanceSheet();
-     
   }, [accounts, manualAssets, transactions, selectedDate, conversionCurrency]);
   // effectiveGetRateForMonth is stable from Zustand store
 
@@ -105,7 +104,6 @@ export const BalanceSheet: React.FC = () => {
     };
 
     calculateComparison();
-     
   }, [accounts, manualAssets, transactions, selectedDate, comparisonType, conversionCurrency]);
   // effectiveGetRateForMonth is stable from Zustand store
 
@@ -152,7 +150,6 @@ export const BalanceSheet: React.FC = () => {
     };
 
     calculateTrend();
-     
   }, [accounts, manualAssets, transactions, selectedDate, conversionCurrency]);
 
   const handleComparisonChange = (

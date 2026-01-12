@@ -377,7 +377,7 @@ class CalculationService {
     filteredTransactions: Transaction[],
     transactionTypes: TransactionType[],
     accounts: Account[],
-    conversionCurrency: string
+    conversionCurrency: CurrencyCode
   ): Promise<{
     incomeByType: Map<string, { name: string; total: number; count: number }>;
     expenseByType: Map<string, { name: string; total: number; count: number }>;

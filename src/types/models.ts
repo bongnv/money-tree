@@ -97,8 +97,8 @@ export interface Budget {
 export interface ExchangeRate {
   id: string;
   month: string; // YYYY-MM format
-  fromCurrency: string; // Currency code (e.g., 'EUR')
-  toCurrency: string; // Currency code (e.g., 'USD')
+  fromCurrency: CurrencyCode; // Currency code (e.g., 'EUR')
+  toCurrency: CurrencyCode; // Currency code (e.g., 'USD')
   rate: number; // Exchange rate (e.g., 1.18)
   createdAt: string; // ISO date string
 }

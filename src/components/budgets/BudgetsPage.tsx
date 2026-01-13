@@ -22,7 +22,7 @@ import { CategoryFilter } from '../common/CategoryFilter';
 import { getBudgetPresets } from './periodPresets';
 import type { Budget } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
-import { calculationService } from '../../services/calculation.service';
+import { useCalculationService } from '../../contexts/ServiceProviders';
 import { Group, CurrencyCode } from '../../types/enums';
 
 export const BudgetsPage: React.FC = () => {
@@ -31,6 +31,7 @@ export const BudgetsPage: React.FC = () => {
   const { transactions } = useTransactionStore();
   const { accounts } = useAccountStore();
   const baseCurrency = useAppStore((state) => state.baseCurrency);
+  const calculationService = useCalculationService();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | undefined>(undefined);

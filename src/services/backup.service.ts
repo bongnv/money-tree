@@ -6,8 +6,13 @@ import { StorageFactory } from './storage/StorageFactory';
  * Backup Service
  * Handles data backup operations including compression and storage
  */
-class BackupService {
+export class BackupService {
   private readonly BACKUP_THRESHOLD_DAYS = 30;
+  private storageFactory: StorageFactory;
+
+  constructor(storageFactory: StorageFactory) {
+    this.storageFactory = storageFactory;
+  }
 
   /**
    * Check if backup is needed based on last backup date
@@ -59,7 +64,7 @@ class BackupService {
     const filename = this.generateBackupFilename();
 
     // Get storage provider and save
-    const provider = StorageFactory.getCurrentProvider();
+    const provider = this.storageFactory.getCurrentProvider();
 
     try {
       // Save using storage provider (file picker for local, next to main file for OneDrive)
@@ -97,5 +102,3 @@ class BackupService {
     return `money-tree-backup-${year}-${month}-${day}-${hours}${minutes}${seconds}.gz`;
   }
 }
-
-export const backupService = new BackupService();

@@ -26,8 +26,7 @@ import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useAppStore } from '../../stores/useAppStore';
-import { reportService } from '../../services/report.service';
-import { calculationService } from '../../services/calculation.service';
+import { useReportService, useCalculationService } from '../../contexts/ServiceProviders';
 import { LineChart } from '../charts/LineChart';
 import { PieChart } from '../charts/PieChart';
 import { PeriodSelector } from '../common/PeriodSelector';
@@ -46,6 +45,8 @@ export const CashFlowReport: React.FC = () => {
   const categories = useCategoryStore((state) => state.categories);
   const accounts = useAccountStore((state) => state.accounts);
   const baseCurrency = useAppStore((state) => state.baseCurrency);
+  const reportService = useReportService();
+  const calculationService = useCalculationService();
 
   // Date range state - default to Year to Date
   const today = getTodayDate();

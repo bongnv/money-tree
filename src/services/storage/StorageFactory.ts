@@ -34,14 +34,16 @@ const STORE_NAME = 'fileHandles';
 const FILE_HANDLE_KEY = 'cachedFileHandle';
 
 /**
- * Storage factory
+ * Storage factory (Singleton)
  * Creates and manages storage provider instances
  * Handles caching for both localStorage (OneDrive fileInfo) and IndexedDB (Local fileHandle)
  */
 export class StorageFactory {
-  private static provider: IStorageProvider | null = null;
-  private static oneDriveService: OneDriveService | null = null;
-  private static googleDriveService: GoogleDriveService | null = null;
+  private provider: IStorageProvider | null = null;
+  private oneDriveService: OneDriveService | null = null;
+  private googleDriveService: GoogleDriveService | null = null;
+
+  constructor() {}
 
   /**
    * Initialize storage provider with authentication handling
@@ -50,7 +52,7 @@ export class StorageFactory {
    * @param showReconnectDialog - Optional callback for OneDrive/Google Drive reconnection
    * @returns true if provider loaded successfully
    */
-  static async initialize(
+  async initialize(
     showReconnectDialog?: (providerName: string) => Promise<'reconnect' | 'dismiss'>
   ): Promise<boolean> {
     let loaded = await this.loadCachedProvider();
@@ -71,7 +73,7 @@ export class StorageFactory {
   /**
    * Handle OneDrive reconnection flow
    */
-  private static async reconnectOneDrive(
+  private async reconnectOneDrive(
     showReconnectDialog: (name: string) => Promise<'reconnect' | 'dismiss'>
   ): Promise<boolean> {
     const action = await showReconnectDialog('OneDrive');
@@ -91,7 +93,7 @@ export class StorageFactory {
   /**
    * Handle Google Drive reconnection flow
    */
-  private static async reconnectGoogleDrive(
+  private async reconnectGoogleDrive(
     showReconnectDialog: (name: string) => Promise<'reconnect' | 'dismiss'>
   ): Promise<boolean> {
     const action = await showReconnectDialog('Google Drive');
@@ -110,7 +112,7 @@ export class StorageFactory {
   /**
    * Get IndexedDB connection for caching file handles
    */
-  private static async getDB(): Promise<IDBDatabase> {
+  private async getDB(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
@@ -129,7 +131,7 @@ export class StorageFactory {
   /**
    * Save file handle to IndexedDB (for Local provider)
    */
-  private static async saveFileHandleToCache(handle: FileSystemFileHandle): Promise<void> {
+  private async saveFileHandleToCache(handle: FileSystemFileHandle): Promise<void> {
     try {
       const db = await this.getDB();
       const transaction = db.transaction(STORE_NAME, 'readwrite');
@@ -150,7 +152,7 @@ export class StorageFactory {
   /**
    * Load file handle from IndexedDB (for Local provider)
    */
-  private static async loadFileHandleFromCache(): Promise<FileSystemFileHandle | null> {
+  private async loadFileHandleFromCache(): Promise<FileSystemFileHandle | null> {
     try {
       const db = await this.getDB();
       const transaction = db.transaction(STORE_NAME, 'readonly');
@@ -173,7 +175,7 @@ export class StorageFactory {
   /**
    * Get or create the singleton OneDrive service (internal)
    */
-  private static getOneDriveService(): OneDriveService {
+  private getOneDriveService(): OneDriveService {
     if (!this.oneDriveService) {
       this.oneDriveService = new OneDriveService();
     }
@@ -183,7 +185,7 @@ export class StorageFactory {
   /**
    * Get or create the singleton Google Drive service (internal)
    */
-  private static getGoogleDriveService(): GoogleDriveService {
+  private getGoogleDriveService(): GoogleDriveService {
     if (!this.googleDriveService) {
       this.googleDriveService = new GoogleDriveService();
     }
@@ -193,7 +195,7 @@ export class StorageFactory {
   /**
    * Show Google Drive file picker
    */
-  static async showGoogleDriveFilePicker(allowCreate: boolean = true) {
+  async showGoogleDriveFilePicker(allowCreate: boolean = true) {
     return this.getGoogleDriveService().showFilePicker(allowCreate);
   }
 
@@ -201,7 +203,7 @@ export class StorageFactory {
    * Load provider from cached configuration (internal)
    * For OneDrive/Google Drive, checks if authenticated but does NOT show dialogs
    */
-  private static async loadCachedProvider(): Promise<boolean> {
+  private async loadCachedProvider(): Promise<boolean> {
     try {
       const config = await this.loadProviderConfig();
       if (!config) {
@@ -245,7 +247,7 @@ export class StorageFactory {
    * Creates a new provider instance and caches it immediately
    * Automatically clears the old provider's configuration
    */
-  static async replaceProvider(config: ProviderConfig): Promise<void> {
+  async replaceProvider(config: ProviderConfig): Promise<void> {
     await this.saveProviderConfig(config);
     this.provider = await this.createProvider(config);
   }
@@ -254,7 +256,7 @@ export class StorageFactory {
    * Authenticate OneDrive service
    * Must be called within user interaction context (button click)
    */
-  static async authenticateOneDrive(): Promise<void> {
+  async authenticateOneDrive(): Promise<void> {
     const service = this.getOneDriveService();
     await service.authenticate();
   }
@@ -263,7 +265,7 @@ export class StorageFactory {
    * Authenticate Google Drive service
    * Must be called within user interaction context (button click)
    */
-  static async authenticateGoogleDrive(): Promise<void> {
+  async authenticateGoogleDrive(): Promise<void> {
     const service = this.getGoogleDriveService();
     await service.authenticate();
   }
@@ -272,7 +274,7 @@ export class StorageFactory {
    * List OneDrive folders
    * @param parentItem Parent folder or null for root
    */
-  static async listOneDriveFolders(parentItem?: any): Promise<any[]> {
+  async listOneDriveFolders(parentItem?: any): Promise<any[]> {
     const service = this.getOneDriveService();
     return service.listFolders(parentItem);
   }
@@ -281,7 +283,7 @@ export class StorageFactory {
    * List Google Drive files
    * @param parentId Parent folder ID or undefined for root
    */
-  static async listGoogleDriveFiles(parentId?: string): Promise<any[]> {
+  async listGoogleDriveFiles(parentId?: string): Promise<any[]> {
     const service = this.getGoogleDriveService();
     return service.listFiles(parentId);
   }
@@ -289,7 +291,7 @@ export class StorageFactory {
   /**
    * Load provider configuration from storage (internal)
    */
-  private static async loadProviderConfig(): Promise<ProviderConfig | undefined> {
+  private async loadProviderConfig(): Promise<ProviderConfig | undefined> {
     // Load config from localStorage
     const saved = localStorage.getItem(STORAGE_CONFIG_KEY);
     if (!saved) {
@@ -318,7 +320,7 @@ export class StorageFactory {
    * Save provider configuration to storage
    * Stores type in localStorage, and fileHandle in IndexedDB for Local provider
    */
-  private static async saveProviderConfig(config: ProviderConfig): Promise<void> {
+  private async saveProviderConfig(config: ProviderConfig): Promise<void> {
     // For Local provider, save fileHandle to IndexedDB separately
     if (config.type === StorageProviderType.LOCAL && config.fileHandle) {
       await this.saveFileHandleToCache(config.fileHandle);
@@ -338,7 +340,7 @@ export class StorageFactory {
    * Get the current storage provider
    * Throws an error if no provider is configured
    */
-  static getCurrentProvider(): IStorageProvider {
+  getCurrentProvider(): IStorageProvider {
     if (!this.provider) {
       throw new Error('No storage provider configured. Please select a file first.');
     }
@@ -348,7 +350,7 @@ export class StorageFactory {
   /**
    * Create a new storage provider instance from config
    */
-  private static async createProvider(config: ProviderConfig): Promise<IStorageProvider> {
+  private async createProvider(config: ProviderConfig): Promise<IStorageProvider> {
     switch (config.type) {
       case StorageProviderType.LOCAL: {
         const handle = config.fileHandle;
@@ -387,7 +389,7 @@ export class StorageFactory {
    * Used for "reset to welcome" feature - clears provider and config
    * MSAL manages its own cache automatically
    */
-  static async resetProvider(): Promise<void> {
+  async resetProvider(): Promise<void> {
     // Clear provider instance
     this.provider = null;
 

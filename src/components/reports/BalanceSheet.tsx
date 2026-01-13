@@ -22,7 +22,7 @@ import { useAccountStore } from '../../stores/useAccountStore';
 import { useAssetStore } from '../../stores/useAssetStore';
 import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useAppStore } from '../../stores/useAppStore';
-import { reportService } from '../../services/report.service';
+import { useReportService } from '../../contexts/ServiceProviders';
 import { ManualAssetSection } from './ManualAssetSection';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
 import { AssetValueHistoryDialog } from '../assets/AssetValueHistoryDialog';
@@ -37,6 +37,7 @@ export const BalanceSheet: React.FC = () => {
   const manualAssets = useAssetStore((state) => state.manualAssets);
   const transactions = useTransactionStore((state) => state.transactions);
   const baseCurrency = useAppStore((state) => state.baseCurrency);
+  const reportService = useReportService();
 
   // Use today as default date
   const today = new Date().toISOString().split('T')[0];

@@ -2,13 +2,28 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { DataSyncSettings } from './DataSyncSettings';
 import { useAppStore } from '../../stores/useAppStore';
-import { syncService } from '../../services/sync.service';
 
-// Mock the sync service
-jest.mock('../../services/sync.service', () => ({
-  syncService: {
-    resetToWelcome: jest.fn(),
-  },
+// Mock services
+const mockSyncService = {
+  resetToWelcome: jest.fn(),
+};
+
+const mockStorageFactory = {
+  getCurrentProvider: jest.fn(() => ({
+    getName: () => 'Local',
+  })),
+};
+
+const mockBackupService = {
+  shouldPromptBackup: jest.fn(() => false),
+  saveBackupToStorage: jest.fn(),
+};
+
+// Mock the hooks
+jest.mock('../../contexts/ServiceProviders', () => ({
+  useSyncService: () => mockSyncService,
+  useStorageFactory: () => mockStorageFactory,
+  useBackupService: () => mockBackupService,
 }));
 
 // Mock react-router-dom
@@ -107,7 +122,7 @@ describe('DataSyncSettings', () => {
       fireEvent.click(confirmButton);
 
       await waitFor(() => {
-        expect(syncService.resetToWelcome).toHaveBeenCalled();
+        expect(mockSyncService.resetToWelcome).toHaveBeenCalled();
         expect(mockNavigate).toHaveBeenCalledWith('/');
       });
     });

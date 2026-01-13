@@ -6,7 +6,72 @@ import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useAppStore } from '../../stores/useAppStore';
 import type { Budget, Transaction } from '../../types/models';
-import { Group } from '../../types/enums';
+import { Group, CurrencyCode } from '../../types/enums';
+
+// Mock services
+const mockCalculationService = {
+  calculateAccountBalance: jest.fn().mockReturnValue(1000),
+  getActiveBudgetForPeriod: jest.fn((budgets) => budgets[0] || null), // Return first budget if available
+  prorateBudgetForPeriod: jest.fn((budget) => budget.amount), // Return same amount
+  calculateBudgetUsage: jest.fn().mockReturnValue(0), // Default 0 usage
+  convertBudgetAmount: jest.fn(async (budget) => budget.amount), // Return same amount
+  calculateBudgetGrouping: jest.fn(
+    async (
+      budgets,
+      transactions,
+      transactionTypes,
+      accounts,
+      selectedPeriod,
+      baseCurrency,
+      getCategoryById
+    ) => {
+      const grouped: any = {};
+
+      for (const budget of budgets) {
+        const transactionType = transactionTypes.find(
+          (tt: any) => tt.id === budget.transactionTypeId
+        );
+        if (!transactionType) continue;
+
+        const category = getCategoryById(transactionType.categoryId);
+        if (!category) continue;
+
+        const categoryId = category.id;
+        if (!grouped[categoryId]) {
+          grouped[categoryId] = {
+            category,
+            items: [],
+            totalBudget: 0,
+            totalActual: 0,
+          };
+        }
+
+        const proratedBudget = budget.amount;
+        const actualAmount = transactions
+          .filter((t: any) => t.transactionTypeId === budget.transactionTypeId)
+          .reduce((sum: number, t: any) => sum + t.amount, 0);
+        const percentage = proratedBudget > 0 ? (actualAmount / proratedBudget) * 100 : 0;
+
+        grouped[categoryId].items.push({
+          budget,
+          transactionType,
+          proratedBudget,
+          actualAmount,
+          percentage,
+        });
+
+        grouped[categoryId].totalBudget += proratedBudget;
+        grouped[categoryId].totalActual += actualAmount;
+      }
+
+      return grouped;
+    }
+  ),
+};
+
+jest.mock('../../contexts/ServiceProviders', () => ({
+  useCalculationService: () => mockCalculationService,
+}));
 
 // Mock the stores
 jest.mock('../../stores/useBudgetStore');
@@ -75,7 +140,7 @@ const mockTransactions: Transaction[] = [
 const mockBudget: Budget = {
   id: '1',
   transactionTypeId: 'tt1',
-  currencyCode: 'USD',
+  currencyCode: CurrencyCode.USD,
   amount: 1500,
   period: 'monthly',
   startDate: '2026-01-01',

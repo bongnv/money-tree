@@ -5,6 +5,15 @@ import { useAccountStore } from '../../stores/useAccountStore';
 import { AccountType } from '../../types/enums';
 import type { Account } from '../../types/models';
 
+// Mock services
+const mockCalculationService = {
+  calculateAccountBalance: jest.fn().mockReturnValue(1000),
+};
+
+jest.mock('../../contexts/ServiceProviders', () => ({
+  useCalculationService: () => mockCalculationService,
+}));
+
 jest.mock('../../stores/useAccountStore');
 
 describe('AccountsPage', () => {

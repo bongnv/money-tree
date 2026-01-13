@@ -3,7 +3,7 @@ import { Card, CardContent, CardActions, Typography, IconButton, Box, Chip } fro
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import type { Account } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
-import { calculationService } from '../../services/calculation.service';
+import { useCalculationService } from '../../contexts/ServiceProviders';
 import { useTransactionStore } from '../../stores/useTransactionStore';
 
 interface AccountCardProps {
@@ -14,6 +14,7 @@ interface AccountCardProps {
 
 export const AccountCard: React.FC<AccountCardProps> = ({ account, onEdit, onDelete }) => {
   const { transactions } = useTransactionStore();
+  const calculationService = useCalculationService();
   const currentBalance = calculationService.calculateAccountBalance(account, transactions);
 
   const handleEdit = () => {

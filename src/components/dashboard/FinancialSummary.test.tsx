@@ -7,10 +7,24 @@ import { useAppStore } from '../../stores/useAppStore';
 import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import { useBudgetStore } from '../../stores/useBudgetStore';
-import { calculationService } from '../../services/calculation.service';
-import { reportService } from '../../services/report.service';
 import { AccountType, Group } from '../../types/enums';
 import type { PeriodOption } from '../common/PeriodSelector';
+
+// Mock services
+const mockCalculationService = {
+  calculateNetWorth: jest.fn(),
+  calculateSavingsRate: jest.fn(),
+};
+
+const mockReportService = {
+  calculateCashFlow: jest.fn(),
+  calculateBudgetPerformance: jest.fn(),
+};
+
+jest.mock('../../contexts/ServiceProviders', () => ({
+  useCalculationService: () => mockCalculationService,
+  useReportService: () => mockReportService,
+}));
 
 jest.mock('../../stores/useAccountStore');
 jest.mock('../../stores/useTransactionStore');
@@ -19,8 +33,6 @@ jest.mock('../../stores/useAppStore');
 jest.mock('../../stores/useExchangeRateStore');
 jest.mock('../../stores/useCategoryStore');
 jest.mock('../../stores/useBudgetStore');
-jest.mock('../../services/calculation.service');
-jest.mock('../../services/report.service');
 
 describe('FinancialSummary', () => {
   const mockPeriod: PeriodOption = {
@@ -34,18 +46,18 @@ describe('FinancialSummary', () => {
     jest.clearAllMocks();
 
     // Mock calculation service
-    (calculationService.calculateNetWorth as jest.Mock) = jest.fn().mockResolvedValue(504000);
-    (calculationService.calculateSavingsRate as jest.Mock) = jest.fn().mockReturnValue(83.3);
+    mockCalculationService.calculateNetWorth.mockResolvedValue(504000);
+    mockCalculationService.calculateSavingsRate.mockReturnValue(83.3);
 
     // Mock report service
-    (reportService.calculateCashFlow as jest.Mock) = jest.fn().mockResolvedValue({
+    mockReportService.calculateCashFlow.mockResolvedValue({
       totalIncome: 3000,
       totalExpenses: 500,
       netCashFlow: 2500,
       income: [],
       expenses: [],
     });
-    (reportService.calculateBudgetPerformance as jest.Mock) = jest.fn().mockResolvedValue({
+    mockReportService.calculateBudgetPerformance.mockResolvedValue({
       overallHealthScore: 85,
       budgets: [],
     });
@@ -166,7 +178,7 @@ describe('FinancialSummary', () => {
     render(<FinancialSummary period={mockPeriod} />);
 
     await waitFor(() => {
-      expect(calculationService.calculateNetWorth).toHaveBeenCalled();
+      expect(mockCalculationService.calculateNetWorth).toHaveBeenCalled();
       expect(screen.getByText('Net Worth')).toBeInTheDocument();
     });
   });
@@ -175,7 +187,7 @@ describe('FinancialSummary', () => {
     render(<FinancialSummary period={mockPeriod} />);
 
     await waitFor(() => {
-      expect(reportService.calculateCashFlow).toHaveBeenCalled();
+      expect(mockReportService.calculateCashFlow).toHaveBeenCalled();
       expect(screen.getByText('Cash Flow')).toBeInTheDocument();
     });
   });
@@ -190,7 +202,7 @@ describe('FinancialSummary', () => {
   });
 
   it('handles zero cash flow gracefully', async () => {
-    (reportService.calculateCashFlow as jest.Mock).mockResolvedValue({
+    (mockReportService.calculateCashFlow as jest.Mock).mockResolvedValue({
       totalIncome: 0,
       totalExpenses: 0,
       netCashFlow: 0,
@@ -206,7 +218,7 @@ describe('FinancialSummary', () => {
   });
 
   it('handles negative net worth', async () => {
-    (calculationService.calculateNetWorth as jest.Mock).mockResolvedValue(-5000);
+    (mockCalculationService.calculateNetWorth as jest.Mock).mockResolvedValue(-5000);
 
     render(<FinancialSummary period={mockPeriod} />);
 
@@ -225,7 +237,7 @@ describe('FinancialSummary', () => {
     render(<FinancialSummary period={customPeriod} />);
 
     await waitFor(() => {
-      expect(reportService.calculateCashFlow).toHaveBeenCalled();
+      expect(mockReportService.calculateCashFlow).toHaveBeenCalled();
     });
   });
 });

@@ -1,16 +1,29 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { WelcomeDialog } from './WelcomeDialog';
 import { FilePickerService } from '../../services/storage/FilePickerService';
-import { StorageFactory, StorageProviderType } from '../../services/storage/StorageFactory';
+import { StorageProviderType } from '../../services/storage/StorageFactory';
 
 // Mock dependencies
 jest.mock('../../services/storage/FilePickerService');
-jest.mock('../../services/storage/StorageFactory');
 jest.mock('../../config/onedrive.config', () => ({
   isOneDriveConfigured: jest.fn(() => true),
 }));
 jest.mock('../../config/googledrive.config', () => ({
   isGoogleDriveConfigured: jest.fn(() => true),
+}));
+
+// Create mock instance
+const mockStorageFactory = {
+  replaceProvider: jest.fn(),
+  authenticateOneDrive: jest.fn(),
+  authenticateGoogleDrive: jest.fn(),
+  showGoogleDriveFilePicker: jest.fn(),
+  listOneDriveFolders: jest.fn(),
+};
+
+// Mock the ServiceProvider context
+jest.mock('../../contexts/ServiceProviders', () => ({
+  useStorageFactory: () => mockStorageFactory,
 }));
 
 describe('WelcomeDialog', () => {
@@ -50,7 +63,7 @@ describe('WelcomeDialog', () => {
   it('should call onExistingFileSelected when Open Existing File button clicked', async () => {
     const mockFileHandle = {} as FileSystemFileHandle;
     (FilePickerService.showOpenFilePicker as jest.Mock).mockResolvedValue(mockFileHandle);
-    (StorageFactory.replaceProvider as jest.Mock).mockResolvedValue(undefined);
+    mockStorageFactory.replaceProvider.mockResolvedValue(undefined);
 
     render(
       <WelcomeDialog
@@ -65,7 +78,7 @@ describe('WelcomeDialog', () => {
 
     await waitFor(() => {
       expect(FilePickerService.showOpenFilePicker).toHaveBeenCalledTimes(1);
-      expect(StorageFactory.replaceProvider).toHaveBeenCalledWith({
+      expect(mockStorageFactory.replaceProvider).toHaveBeenCalledWith({
         type: StorageProviderType.LOCAL,
         fileHandle: mockFileHandle,
       });
@@ -76,7 +89,7 @@ describe('WelcomeDialog', () => {
   it('should call onNewFileCreated when Create New File clicked', async () => {
     const mockFileHandle = {} as FileSystemFileHandle;
     (FilePickerService.showSaveFilePicker as jest.Mock).mockResolvedValue(mockFileHandle);
-    (StorageFactory.replaceProvider as jest.Mock).mockResolvedValue(undefined);
+    mockStorageFactory.replaceProvider.mockResolvedValue(undefined);
 
     render(
       <WelcomeDialog
@@ -91,7 +104,7 @@ describe('WelcomeDialog', () => {
 
     await waitFor(() => {
       expect(FilePickerService.showSaveFilePicker).toHaveBeenCalledWith('money-tree.json');
-      expect(StorageFactory.replaceProvider).toHaveBeenCalledWith({
+      expect(mockStorageFactory.replaceProvider).toHaveBeenCalledWith({
         type: StorageProviderType.LOCAL,
         fileHandle: mockFileHandle,
       });

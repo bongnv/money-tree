@@ -6,7 +6,7 @@ import { CurrencyCode, Group } from '../types/enums';
 /**
  * Calculation service for account balances and transaction totals
  */
-class CalculationService {
+export class CalculationService {
   /**
    * Calculate current balance for an account
    * @param account Account to calculate balance for
@@ -554,5 +554,3 @@ class CalculationService {
     return grouped;
   }
 }
-
-export const calculationService = new CalculationService();

@@ -15,10 +15,15 @@ const AUTO_SAVE_INTERVAL = 1 * 60 * 1000; // 1 minute in milliseconds
 
 type MergeHandler = (mergeResult: MergeResult) => Promise<ConflictResolution[] | null>;
 
-class SyncService {
+export class SyncService {
   private autoSaveTimerId: NodeJS.Timeout | null = null;
   private isSaving = false;
   private mergeHandler: MergeHandler | null = null;
+  private storageFactory: StorageFactory;
+
+  constructor(storageFactory: StorageFactory) {
+    this.storageFactory = storageFactory;
+  }
 
   /**
    * Check if there are unsaved changes and prompt user if needed
@@ -152,7 +157,7 @@ class SyncService {
     }
 
     try {
-      const storage = StorageFactory.getCurrentProvider();
+      const storage = this.storageFactory.getCurrentProvider();
 
       // Gather data from all domain stores to create app version
       const accountStore = useAccountStore.getState();
@@ -304,7 +309,7 @@ class SyncService {
     state.setLoading(true);
 
     try {
-      const storage = StorageFactory.getCurrentProvider();
+      const storage = this.storageFactory.getCurrentProvider();
       const dataFile = await storage.loadDataFile();
 
       if (dataFile) {
@@ -365,7 +370,7 @@ class SyncService {
    */
   async resetToWelcome(): Promise<void> {
     // Clear all provider caches and disconnect services
-    await StorageFactory.resetProvider();
+    await this.storageFactory.resetProvider();
 
     // Clear all domain stores
     useAccountStore.getState().setAccounts([]);
@@ -390,5 +395,3 @@ class SyncService {
     state.setUnsavedChanges(true);
   }
 }
-
-export const syncService = new SyncService();

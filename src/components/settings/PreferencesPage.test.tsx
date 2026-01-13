@@ -5,6 +5,27 @@ import { PreferencesPage } from './PreferencesPage';
 import { useAppStore } from '../../stores/useAppStore';
 import { CurrencyCode } from '../../types/enums';
 
+// Mock services
+const mockSyncService = {
+  resetToWelcome: jest.fn(),
+};
+const mockStorageFactory = {
+  getCurrentProvider: jest.fn(() => ({
+    getName: () => 'Local',
+  })),
+};
+const mockBackupService = {
+  shouldPromptBackup: jest.fn(() => false),
+  saveBackupToStorage: jest.fn(),
+};
+
+// Mock the hooks
+jest.mock('../../contexts/ServiceProviders', () => ({
+  useSyncService: () => mockSyncService,
+  useStorageFactory: () => mockStorageFactory,
+  useBackupService: () => mockBackupService,
+}));
+
 // Mock the store
 jest.mock('../../stores/useAppStore');
 

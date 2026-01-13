@@ -23,9 +23,10 @@ import {
 import { isOneDriveConfigured } from '../../config/onedrive.config';
 import { isGoogleDriveConfigured } from '../../config/googledrive.config';
 import { OneDriveFilePicker } from '../onedrive/OneDriveFilePicker';
-import { StorageFactory, StorageProviderType } from '../../services/storage/StorageFactory';
+import { StorageProviderType } from '../../services/storage/StorageFactory';
 import { FilePickerService } from '../../services/storage/FilePickerService';
 import type { SelectedFileInfo as OneDriveFileInfo } from '../../services/storage/OneDriveProvider';
+import { useStorageFactory } from '../../contexts/ServiceProviders';
 
 interface WelcomeDialogProps {
   open: boolean;
@@ -40,6 +41,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const storageFactory = useStorageFactory();
   const [isConnecting, setIsConnecting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [showOneDriveFilePicker, setShowOneDriveFilePicker] = useState(false);
@@ -49,7 +51,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
     setAuthError(null);
 
     try {
-      await StorageFactory.authenticateOneDrive();
+      await storageFactory.authenticateOneDrive();
       setShowOneDriveFilePicker(true);
     } catch (error: any) {
       console.error('OneDrive connection failed:', error);
@@ -64,13 +66,13 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
 
     try {
       // Authenticate with Google Drive
-      await StorageFactory.authenticateGoogleDrive();
+      await storageFactory.authenticateGoogleDrive();
 
       // Show Google Picker (uses access token internally)
-      const pickerResult = await StorageFactory.showGoogleDriveFilePicker(true);
+      const pickerResult = await storageFactory.showGoogleDriveFilePicker(true);
 
       if (pickerResult) {
-        await StorageFactory.replaceProvider({
+        await storageFactory.replaceProvider({
           type: StorageProviderType.GOOGLE_DRIVE,
           fileInfo: pickerResult,
         });
@@ -92,7 +94,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
   const handleOneDriveFileSelect = async (fileInfo: OneDriveFileInfo) => {
     setShowOneDriveFilePicker(false);
     try {
-      await StorageFactory.replaceProvider({
+      await storageFactory.replaceProvider({
         type: StorageProviderType.ONEDRIVE,
         fileInfo,
       });
@@ -120,7 +122,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
     try {
       const fileHandle = await FilePickerService.showOpenFilePicker();
       if (fileHandle) {
-        await StorageFactory.replaceProvider({
+        await storageFactory.replaceProvider({
           type: StorageProviderType.LOCAL,
           fileHandle,
         });
@@ -137,7 +139,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
     try {
       const fileHandle = await FilePickerService.showSaveFilePicker('money-tree.json');
       if (fileHandle) {
-        await StorageFactory.replaceProvider({
+        await storageFactory.replaceProvider({
           type: StorageProviderType.LOCAL,
           fileHandle,
         });
@@ -305,7 +307,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
         open={showOneDriveFilePicker}
         onSelect={handleOneDriveFileSelect}
         onCancel={handleOneDriveFilePickerCancel}
-        onListFolders={StorageFactory.listOneDriveFolders}
+        onListFolders={storageFactory.listOneDriveFolders}
       />
     </>
   );

@@ -13,9 +13,11 @@ jest.mock('./OneDriveService');
  * Tests for StorageFactory
  */
 describe('StorageFactory', () => {
+  let factory: StorageFactory;
+
   beforeEach(() => {
-    // Reset factory state before each test
-    StorageFactory.resetProvider();
+    // Create new instance for each test
+    factory = new StorageFactory();
     // Clear localStorage
     localStorage.clear();
     // Clear mock
@@ -25,20 +27,20 @@ describe('StorageFactory', () => {
   describe('getCurrentProvider', () => {
     it('should throw error when no provider configured for LOCAL', () => {
       // Test expects error when trying to get Local provider without cached file
-      expect(() => StorageFactory.getCurrentProvider()).toThrow('No storage provider configured');
+      expect(() => factory.getCurrentProvider()).toThrow('No storage provider configured');
     });
 
     it('should throw error when trying to configure ONEDRIVE without fileInfo', async () => {
       // When replaceProvider is called without required config, it should fail during createProvider
-      await expect(
-        StorageFactory.replaceProvider({ type: StorageProviderType.ONEDRIVE })
-      ).rejects.toThrow('No cached file info found');
+      await expect(factory.replaceProvider({ type: StorageProviderType.ONEDRIVE })).rejects.toThrow(
+        'No cached file info found'
+      );
     });
   });
 
   describe('provider name', () => {
     it('should throw when no provider configured', () => {
-      expect(() => StorageFactory.getCurrentProvider().getName()).toThrow(
+      expect(() => factory.getCurrentProvider().getName()).toThrow(
         'No storage provider configured'
       );
     });
@@ -50,11 +52,11 @@ describe('StorageFactory', () => {
         fileName: 'test.json',
         isNew: false,
       };
-      await StorageFactory.replaceProvider({
+      await factory.replaceProvider({
         type: StorageProviderType.ONEDRIVE,
         fileInfo,
       });
-      expect(StorageFactory.getCurrentProvider().getName()).toBe('OneDrive');
+      expect(factory.getCurrentProvider().getName()).toBe('OneDrive');
     });
 
     it('should persist provider type in config', async () => {
@@ -64,7 +66,7 @@ describe('StorageFactory', () => {
         fileName: 'test.json',
         isNew: false,
       };
-      await StorageFactory.replaceProvider({
+      await factory.replaceProvider({
         type: StorageProviderType.ONEDRIVE,
         fileInfo,
       });
@@ -79,12 +81,12 @@ describe('StorageFactory', () => {
     it('should create LOCAL provider with fileHandle', async () => {
       const mockFileHandle = { name: 'test.json' } as FileSystemFileHandle;
 
-      await StorageFactory.replaceProvider({
+      await factory.replaceProvider({
         type: StorageProviderType.LOCAL,
         fileHandle: mockFileHandle,
       });
 
-      const provider = StorageFactory.getCurrentProvider();
+      const provider = factory.getCurrentProvider();
       expect(provider).toBeInstanceOf(LocalStorageProvider);
       expect(provider.getFileName()).toBe('test.json');
     });
@@ -97,7 +99,7 @@ describe('StorageFactory', () => {
         isNew: false,
       };
 
-      await StorageFactory.replaceProvider({
+      await factory.replaceProvider({
         type: StorageProviderType.ONEDRIVE,
         fileInfo,
       });
@@ -108,28 +110,19 @@ describe('StorageFactory', () => {
     });
   });
 
-  describe('getOneDriveService', () => {
-    it('should return OneDriveService singleton', () => {
-      const service1 = StorageFactory.getOneDriveService();
-      const service2 = StorageFactory.getOneDriveService();
-      expect(service1).toBe(service2);
-      expect(service1).toBeInstanceOf(OneDriveService);
-    });
-  });
-
   describe('resetProvider', () => {
     it('should clear cached provider instances', async () => {
       const mockFileHandle = { name: 'test.json' } as FileSystemFileHandle;
-      await StorageFactory.replaceProvider({
+      await factory.replaceProvider({
         type: StorageProviderType.LOCAL,
         fileHandle: mockFileHandle,
       });
 
-      const provider1 = StorageFactory.getCurrentProvider();
-      await StorageFactory.resetProvider();
+      const provider1 = factory.getCurrentProvider();
+      await factory.resetProvider();
 
       // After clearing cache, should throw when trying to get provider without cached instance
-      expect(() => StorageFactory.getCurrentProvider()).toThrow();
+      expect(() => factory.getCurrentProvider()).toThrow();
     });
   });
 });

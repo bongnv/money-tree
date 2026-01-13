@@ -2,14 +2,7 @@
  * Archive Service Tests
  */
 
-import {
-  calculateYearEndSummary,
-  identifyArchivableYear,
-  createArchiveFile,
-  saveArchiveFile,
-  updateMainFileAfterArchive,
-  getArchivedYears,
-} from './archive.service';
+import { ArchiveService } from './archive.service';
 import { useTransactionStore } from '../stores/useTransactionStore';
 import { useAccountStore } from '../stores/useAccountStore';
 import { useBudgetStore } from '../stores/useBudgetStore';
@@ -17,7 +10,7 @@ import { useAssetStore } from '../stores/useAssetStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
 import { useExchangeRateStore } from '../stores/useExchangeRateStore';
 import { useAppStore } from '../stores/useAppStore';
-import { calculationService } from './calculation.service';
+import { CalculationService } from './calculation.service';
 import { StorageFactory } from './storage/StorageFactory';
 import { CurrencyCode } from '../types/enums';
 
@@ -29,11 +22,24 @@ jest.mock('../stores/useAssetStore');
 jest.mock('../stores/useCategoryStore');
 jest.mock('../stores/useExchangeRateStore');
 jest.mock('../stores/useAppStore');
-jest.mock('./storage/StorageFactory');
+
+// Create mock storage factory
+const mockStorageFactory = {
+  getCurrentProvider: jest.fn(),
+} as unknown as StorageFactory;
+
+// Create mock calculation service
+const mockCalculationService = {
+  calculateAccountBalance: jest.fn(),
+  calculateNetWorth: jest.fn(),
+} as unknown as CalculationService;
 
 describe('Archive Service', () => {
+  let archiveService: ArchiveService;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    archiveService = new ArchiveService(mockStorageFactory, mockCalculationService);
   });
 
   describe('identifyArchivableYear', () => {
@@ -77,7 +83,7 @@ describe('Archive Service', () => {
         ],
       });
 
-      const year = identifyArchivableYear();
+      const year = archiveService.identifyArchivableYear();
       // Should return only the oldest eligible year (2023)
       // 2024 is cutoff year, so only 2023 and below are eligible
       // 2024 and 2025 are too recent (not at least 2 years old)
@@ -91,7 +97,7 @@ describe('Archive Service', () => {
         transactions: [],
       });
 
-      const year = identifyArchivableYear();
+      const year = archiveService.identifyArchivableYear();
       expect(year).toBeNull();
     });
   });
@@ -152,10 +158,10 @@ describe('Archive Service', () => {
       // Mock calculationService.calculateNetWorth
       const mockCalculateNetWorth = jest.fn().mockResolvedValue(75000);
       const mockCalculateAccountBalance = jest.fn().mockReturnValue(25000);
-      (calculationService as any).calculateNetWorth = mockCalculateNetWorth;
-      (calculationService as any).calculateAccountBalance = mockCalculateAccountBalance;
+      (mockCalculationService as any).calculateNetWorth = mockCalculateNetWorth;
+      (mockCalculationService as any).calculateAccountBalance = mockCalculateAccountBalance;
 
-      const summary = await calculateYearEndSummary(2024, 'USD' as CurrencyCode);
+      const summary = await archiveService.calculateYearEndSummary(2024, 'USD' as CurrencyCode);
 
       expect(summary.transactionCount).toBe(2);
       expect(summary.closingNetWorth).toBe(75000);
@@ -295,10 +301,10 @@ describe('Archive Service', () => {
       // Mock calculationService
       const mockCalculateNetWorth = jest.fn().mockResolvedValue(10000);
       const mockCalculateAccountBalance = jest.fn().mockReturnValue(5000);
-      (calculationService as any).calculateNetWorth = mockCalculateNetWorth;
-      (calculationService as any).calculateAccountBalance = mockCalculateAccountBalance;
+      (mockCalculationService as any).calculateNetWorth = mockCalculateNetWorth;
+      (mockCalculationService as any).calculateAccountBalance = mockCalculateAccountBalance;
 
-      const archiveFile = await createArchiveFile(2024, 'USD' as CurrencyCode);
+      const archiveFile = await archiveService.createArchiveFile(2024, 'USD' as CurrencyCode);
 
       expect(archiveFile.version).toBe('1.0');
       expect(archiveFile.year).toBe(2024);
@@ -364,10 +370,10 @@ describe('Archive Service', () => {
 
       const mockCalculateNetWorth = jest.fn().mockResolvedValue(1200);
       const mockCalculateAccountBalance = jest.fn().mockReturnValue(0);
-      (calculationService as any).calculateNetWorth = mockCalculateNetWorth;
-      (calculationService as any).calculateAccountBalance = mockCalculateAccountBalance;
+      (mockCalculationService as any).calculateNetWorth = mockCalculateNetWorth;
+      (mockCalculationService as any).calculateAccountBalance = mockCalculateAccountBalance;
 
-      const archiveFile = await createArchiveFile(2024, 'USD' as CurrencyCode);
+      const archiveFile = await archiveService.createArchiveFile(2024, 'USD' as CurrencyCode);
 
       expect(archiveFile.manualAssets).toHaveLength(1);
       expect(archiveFile.manualAssets[0].valueHistory).toHaveLength(2);
@@ -385,7 +391,7 @@ describe('Archive Service', () => {
     };
 
     beforeEach(() => {
-      (StorageFactory.getCurrentProvider as jest.Mock).mockReturnValue(mockProvider);
+      (mockStorageFactory.getCurrentProvider as jest.Mock).mockReturnValue(mockProvider);
     });
 
     it('should save archive file with correct filename', async () => {
@@ -408,7 +414,7 @@ describe('Archive Service', () => {
         },
       };
 
-      await saveArchiveFile(archiveFile);
+      await archiveService.saveArchiveFile(archiveFile);
 
       expect(mockProvider.saveFile).toHaveBeenCalledWith(
         expect.any(String),
@@ -436,7 +442,7 @@ describe('Archive Service', () => {
         },
       };
 
-      await saveArchiveFile(archiveFile);
+      await archiveService.saveArchiveFile(archiveFile);
 
       const stringArg = mockProvider.saveFile.mock.calls[0][0];
       expect(typeof stringArg).toBe('string');
@@ -509,7 +515,7 @@ describe('Archive Service', () => {
         addArchivedYear: jest.fn(),
       });
 
-      jest.spyOn(calculationService, 'calculateAccountBalance').mockReturnValue(500);
+      (mockCalculationService.calculateAccountBalance as jest.Mock).mockReturnValue(500);
 
       const archiveReference = {
         year: 2023,
@@ -522,7 +528,7 @@ describe('Archive Service', () => {
         },
       };
 
-      updateMainFileAfterArchive(2023, archiveReference);
+      archiveService.updateMainFileAfterArchive(2023, archiveReference);
 
       expect(mockSetTransactions).toHaveBeenCalledWith([
         {
@@ -591,7 +597,7 @@ describe('Archive Service', () => {
         addArchivedYear: jest.fn(),
       });
 
-      jest.spyOn(calculationService, 'calculateAccountBalance').mockReturnValue(1000);
+      (mockCalculationService.calculateAccountBalance as jest.Mock).mockReturnValue(1000);
 
       const archiveReference = {
         year: 2023,
@@ -604,7 +610,7 @@ describe('Archive Service', () => {
         },
       };
 
-      updateMainFileAfterArchive(2023, archiveReference);
+      archiveService.updateMainFileAfterArchive(2023, archiveReference);
 
       expect(mockSetAccounts).toHaveBeenCalledWith([
         expect.objectContaining({
@@ -646,7 +652,7 @@ describe('Archive Service', () => {
         addArchivedYear: mockAddArchivedYear,
       });
 
-      jest.spyOn(calculationService, 'calculateAccountBalance').mockReturnValue(0);
+      (mockCalculationService.calculateAccountBalance as jest.Mock).mockReturnValue(0);
 
       const archiveReference = {
         year: 2023,
@@ -659,7 +665,7 @@ describe('Archive Service', () => {
         },
       };
 
-      updateMainFileAfterArchive(2023, archiveReference);
+      archiveService.updateMainFileAfterArchive(2023, archiveReference);
 
       expect(mockAddArchivedYear).toHaveBeenCalledWith(archiveReference);
     });
@@ -689,7 +695,7 @@ describe('Archive Service', () => {
         archivedYears,
       });
 
-      const result = getArchivedYears();
+      const result = archiveService.getArchivedYears();
 
       expect(result).toEqual(archivedYears);
       expect(result).toHaveLength(2);

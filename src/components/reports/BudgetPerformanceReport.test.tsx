@@ -9,10 +9,19 @@ import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useAppStore } from '../../stores/useAppStore';
-import { reportService } from '../../services/report.service';
 import * as exchangeRateService from '../../services/exchangeRate.service';
 import { Group, AccountType } from '../../types/enums';
 import type { Budget, Transaction, TransactionType, Category, Account } from '../../types/models';
+
+// Mock services
+const mockReportService = {
+  calculateBudgetPerformance: jest.fn(),
+  calculateBudgetTrend: jest.fn(),
+};
+
+jest.mock('../../contexts/ServiceProviders', () => ({
+  useReportService: () => mockReportService,
+}));
 
 // Mock stores
 jest.mock('../../stores/useBudgetStore');
@@ -22,7 +31,6 @@ jest.mock('../../stores/useAccountStore');
 jest.mock('../../stores/useAppStore');
 
 // Mock services
-jest.mock('../../services/report.service');
 jest.mock('../../services/exchangeRate.service');
 
 // Mock chart components
@@ -269,8 +277,10 @@ describe('BudgetPerformanceReport', () => {
       selector({ baseCurrency: 'USD' })
     );
 
-    (reportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue(mockPerformanceData);
-    (reportService.calculateBudgetTrend as jest.Mock).mockResolvedValue(mockTrendData);
+    (mockReportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue(
+      mockPerformanceData
+    );
+    (mockReportService.calculateBudgetTrend as jest.Mock).mockResolvedValue(mockTrendData);
   });
 
   const renderComponent = () => {
@@ -286,7 +296,7 @@ describe('BudgetPerformanceReport', () => {
       renderComponent();
       expect(screen.getByText('Budget Performance Report')).toBeInTheDocument();
       await waitFor(() => {
-        expect(reportService.calculateBudgetPerformance).toHaveBeenCalled();
+        expect(mockReportService.calculateBudgetPerformance).toHaveBeenCalled();
       });
     });
 
@@ -294,14 +304,14 @@ describe('BudgetPerformanceReport', () => {
       renderComponent();
       expect(screen.getByTestId('period-selector')).toBeInTheDocument();
       await waitFor(() => {
-        expect(reportService.calculateBudgetPerformance).toHaveBeenCalled();
+        expect(mockReportService.calculateBudgetPerformance).toHaveBeenCalled();
       });
     });
 
     it('should render currency selector', async () => {
       renderComponent();
       await waitFor(() => {
-        expect(reportService.calculateBudgetPerformance).toHaveBeenCalled();
+        expect(mockReportService.calculateBudgetPerformance).toHaveBeenCalled();
       });
       // Currency selector should be present (there are multiple comboboxes)
       const comboboxes = screen.getAllByRole('combobox');
@@ -312,7 +322,7 @@ describe('BudgetPerformanceReport', () => {
       renderComponent();
       expect(screen.getByTestId('category-filter')).toBeInTheDocument();
       await waitFor(() => {
-        expect(reportService.calculateBudgetPerformance).toHaveBeenCalled();
+        expect(mockReportService.calculateBudgetPerformance).toHaveBeenCalled();
       });
     });
 
@@ -322,7 +332,7 @@ describe('BudgetPerformanceReport', () => {
       expect(clearButton).toBeInTheDocument();
       expect(clearButton).toBeDisabled(); // Initially disabled with no filters
       await waitFor(() => {
-        expect(reportService.calculateBudgetPerformance).toHaveBeenCalled();
+        expect(mockReportService.calculateBudgetPerformance).toHaveBeenCalled();
       });
     });
 
@@ -378,7 +388,7 @@ describe('BudgetPerformanceReport', () => {
       const periodSelect = screen.getByTestId('period-preset-select') as HTMLSelectElement;
       expect(periodSelect.value).toBe('ytd');
       await waitFor(() => {
-        expect(reportService.calculateBudgetPerformance).toHaveBeenCalled();
+        expect(mockReportService.calculateBudgetPerformance).toHaveBeenCalled();
       });
     });
 
@@ -404,7 +414,7 @@ describe('BudgetPerformanceReport', () => {
       await user.type(endDateInput, '2026-06-30');
 
       await waitFor(() => {
-        expect(reportService.calculateBudgetPerformance).toHaveBeenCalled();
+        expect(mockReportService.calculateBudgetPerformance).toHaveBeenCalled();
       });
     });
   });
@@ -414,7 +424,7 @@ describe('BudgetPerformanceReport', () => {
       renderComponent();
 
       await waitFor(() => {
-        expect(reportService.calculateBudgetPerformance).toHaveBeenCalled();
+        expect(mockReportService.calculateBudgetPerformance).toHaveBeenCalled();
       });
 
       // Verify that currency selector exists (multiple comboboxes on the page)
@@ -422,7 +432,7 @@ describe('BudgetPerformanceReport', () => {
       expect(comboboxes.length).toBeGreaterThanOrEqual(2);
 
       // Verify component renders with default USD currency
-      expect(reportService.calculateBudgetPerformance).toHaveBeenCalledWith(
+      expect(mockReportService.calculateBudgetPerformance).toHaveBeenCalledWith(
         expect.any(Array),
         expect.any(Array),
         expect.any(Array),
@@ -492,7 +502,7 @@ describe('BudgetPerformanceReport', () => {
     it('should display transaction type names when category filter is applied', async () => {
       const user = userEvent.setup();
 
-      (reportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue({
+      (mockReportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue({
         ...mockPerformanceData,
         items: [mockPerformanceData.items[0]], // Only Food category items
       });
@@ -590,7 +600,7 @@ describe('BudgetPerformanceReport', () => {
         selector({ budgets: [...mockBudgets, incomeBudget] })
       );
 
-      (reportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue({
+      (mockReportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue({
         ...mockPerformanceData,
         items: [
           ...mockPerformanceData.items,
@@ -619,7 +629,7 @@ describe('BudgetPerformanceReport', () => {
     });
 
     it('should show income target and actual in summary cards when income budgets exist', async () => {
-      (reportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue({
+      (mockReportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue({
         ...mockPerformanceData,
         totalBudgetedIncome: 5000,
         totalActualIncome: 4800,
@@ -636,7 +646,7 @@ describe('BudgetPerformanceReport', () => {
 
   describe('Health Score', () => {
     it('should display health score with success color when score >= 80', async () => {
-      (reportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue({
+      (mockReportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue({
         ...mockPerformanceData,
         overallHealthScore: 85,
       });
@@ -650,7 +660,7 @@ describe('BudgetPerformanceReport', () => {
     });
 
     it('should display health score with warning color when 60 <= score < 80', async () => {
-      (reportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue({
+      (mockReportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue({
         ...mockPerformanceData,
         overallHealthScore: 65,
       });
@@ -664,7 +674,7 @@ describe('BudgetPerformanceReport', () => {
     });
 
     it('should display health score with error color when score < 60', async () => {
-      (reportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue({
+      (mockReportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue({
         ...mockPerformanceData,
         overallHealthScore: 45,
       });
@@ -684,7 +694,7 @@ describe('BudgetPerformanceReport', () => {
         selector({ budgets: [] })
       );
 
-      (reportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue({
+      (mockReportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue({
         items: [],
         totalBudgetedIncome: 0,
         totalActualIncome: 0,
@@ -703,7 +713,7 @@ describe('BudgetPerformanceReport', () => {
     });
 
     it('should not render trend chart when no data', async () => {
-      (reportService.calculateBudgetTrend as jest.Mock).mockResolvedValue([]);
+      (mockReportService.calculateBudgetTrend as jest.Mock).mockResolvedValue([]);
 
       renderComponent();
 
@@ -743,7 +753,7 @@ describe('BudgetPerformanceReport', () => {
       );
 
       await waitFor(() => {
-        expect(reportService.calculateBudgetPerformance).toHaveBeenCalled();
+        expect(mockReportService.calculateBudgetPerformance).toHaveBeenCalled();
       });
     });
 
@@ -774,7 +784,7 @@ describe('BudgetPerformanceReport', () => {
       );
 
       await waitFor(() => {
-        expect(reportService.calculateBudgetPerformance).toHaveBeenCalled();
+        expect(mockReportService.calculateBudgetPerformance).toHaveBeenCalled();
       });
     });
   });
@@ -821,7 +831,7 @@ describe('BudgetPerformanceReport', () => {
       // Wait for performance calculation which triggers rate fetching
       await waitFor(
         () => {
-          expect(reportService.calculateBudgetPerformance).toHaveBeenCalled();
+          expect(mockReportService.calculateBudgetPerformance).toHaveBeenCalled();
         },
         { timeout: 3000 }
       );
@@ -844,7 +854,7 @@ describe('BudgetPerformanceReport', () => {
     });
 
     it('should show warning color for expenses when 80 < percentUsed <= 100', async () => {
-      (reportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue({
+      (mockReportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue({
         ...mockPerformanceData,
         items: [
           {
@@ -864,7 +874,7 @@ describe('BudgetPerformanceReport', () => {
     });
 
     it('should show error color for expenses when percentUsed > 100', async () => {
-      (reportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue({
+      (mockReportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue({
         ...mockPerformanceData,
         items: [
           {

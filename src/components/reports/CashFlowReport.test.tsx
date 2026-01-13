@@ -6,7 +6,21 @@ import { useCategoryStore } from '../../stores/useCategoryStore';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useAppStore } from '../../stores/useAppStore';
 import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
-import { reportService } from '../../services/report.service';
+
+// Mock services
+const mockReportService = {
+  calculateCashFlow: jest.fn(),
+  calculateCashFlowTrend: jest.fn(),
+};
+
+const mockCalculationService = {
+  calculateAccountBalance: jest.fn(),
+};
+
+jest.mock('../../contexts/ServiceProviders', () => ({
+  useReportService: () => mockReportService,
+  useCalculationService: () => mockCalculationService,
+}));
 
 // Mock stores
 jest.mock('../../stores/useTransactionStore');
@@ -14,7 +28,6 @@ jest.mock('../../stores/useCategoryStore');
 jest.mock('../../stores/useAccountStore');
 jest.mock('../../stores/useAppStore');
 jest.mock('../../stores/useExchangeRateStore');
-jest.mock('../../services/report.service');
 
 // Mock date utils
 jest.mock('../../utils/date.utils', () => ({
@@ -58,7 +71,7 @@ describe('CashFlowReport', () => {
     );
 
     // Mock report service
-    (reportService.calculateCashFlow as jest.Mock) = jest.fn().mockResolvedValue({
+    (mockReportService.calculateCashFlow as jest.Mock) = jest.fn().mockResolvedValue({
       totalIncome: 3000,
       totalExpenses: 500,
       netCashFlow: 2500,
@@ -68,7 +81,7 @@ describe('CashFlowReport', () => {
       ],
     });
 
-    (reportService.calculateCashFlowTrend as jest.Mock) = jest
+    (mockReportService.calculateCashFlowTrend as jest.Mock) = jest
       .fn()
       .mockResolvedValue([{ date: '2026-01-01', income: 3000, expenses: 500, netCashFlow: 2500 }]);
   });
@@ -118,13 +131,13 @@ describe('CashFlowReport', () => {
     );
 
     await waitFor(() => {
-      expect(reportService.calculateCashFlow).toHaveBeenCalled();
-      expect(reportService.calculateCashFlowTrend).toHaveBeenCalled();
+      expect(mockReportService.calculateCashFlow).toHaveBeenCalled();
+      expect(mockReportService.calculateCashFlowTrend).toHaveBeenCalled();
     });
   });
 
   it('displays empty state when no data', async () => {
-    (reportService.calculateCashFlow as jest.Mock).mockResolvedValue({
+    (mockReportService.calculateCashFlow as jest.Mock).mockResolvedValue({
       totalIncome: 0,
       totalExpenses: 0,
       netCashFlow: 0,

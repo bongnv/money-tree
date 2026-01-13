@@ -13,14 +13,21 @@ import { ArchivePrompt } from './components/common/ArchivePrompt';
 import { BackupPromptDialog } from './components/common/BackupPromptDialog';
 import { AppRoutes } from './routes';
 import { useAppStore } from './stores/useAppStore';
-import { syncService } from './services/sync.service';
-import { StorageFactory } from './services/storage/StorageFactory';
+import {
+  ServiceProvider,
+  useSyncService,
+  useStorageFactory,
+  useBackupService,
+  useArchiveService,
+} from './contexts/ServiceProviders';
 import { MergeResult } from './services/merge.service';
-import { backupService } from './services/backup.service';
-import { identifyArchivableYear, calculateYearEndSummary } from './services/archive.service';
 
 const AppContent: React.FC = () => {
   const navigate = useNavigate();
+  const storageFactory = useStorageFactory();
+  const syncService = useSyncService();
+  const backupService = useBackupService();
+  const archiveService = useArchiveService();
   const { hasUnsavedChanges, snackbar, hideSnackbar, baseCurrency, lastBackupDate, isLoading } =
     useAppStore();
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
@@ -61,7 +68,7 @@ const AppContent: React.FC = () => {
       });
 
       // Initialize storage provider
-      const loaded = await StorageFactory.initialize(async (providerName: string) => {
+      const loaded = await storageFactory.initialize(async (providerName: string) => {
         return new Promise<'reconnect' | 'dismiss'>((resolve) => {
           setReconnectDialogState({
             open: true,
@@ -97,9 +104,9 @@ const AppContent: React.FC = () => {
   }, []); // Only run once on mount
 
   const checkArchivePrompt = () => {
-    const archivableYear = identifyArchivableYear();
+    const archivableYear = archiveService.identifyArchivableYear();
     if (archivableYear !== null) {
-      const summary = calculateYearEndSummary(archivableYear, baseCurrency);
+      const summary = archiveService.calculateYearEndSummary(archivableYear, baseCurrency);
       setArchiveYear(archivableYear);
       setArchiveYearSummary(summary);
       setShowArchivePrompt(true);
@@ -273,9 +280,11 @@ const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
+      <ServiceProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </ServiceProvider>
     </ThemeProvider>
   );
 };

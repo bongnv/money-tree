@@ -1,13 +1,18 @@
-import { syncService } from './sync.service';
+import { SyncService } from './sync.service';
 import { useAppStore } from '../stores/useAppStore';
 import { useAccountStore } from '../stores/useAccountStore';
 import { StorageFactory } from './storage/StorageFactory';
 import type { DataFile } from '../types/models';
 import { AccountType } from '../types/enums';
 
-jest.mock('./storage/StorageFactory');
+// Create mock storage factory
+const mockStorageFactory = {
+  getCurrentProvider: jest.fn(),
+  resetProvider: jest.fn(),
+} as unknown as StorageFactory;
 
 describe('SyncService', () => {
+  let syncService: SyncService;
   let mockSaveDataFile: jest.Mock;
   let mockLoadDataFile: jest.Mock;
 
@@ -17,10 +22,13 @@ describe('SyncService', () => {
     // Reset account store by setting accounts to empty
     useAccountStore.setState({ accounts: [] });
 
+    // Create new SyncService instance with mock storageFactory
+    syncService = new SyncService(mockStorageFactory);
+
     mockSaveDataFile = jest.fn();
     mockLoadDataFile = jest.fn();
 
-    (StorageFactory.getCurrentProvider as jest.Mock).mockReturnValue({
+    (mockStorageFactory.getCurrentProvider as jest.Mock).mockReturnValue({
       saveDataFile: mockSaveDataFile,
       loadDataFile: mockLoadDataFile,
       initialize: jest.fn().mockResolvedValue(undefined),
@@ -411,7 +419,7 @@ describe('SyncService', () => {
         lastModified: new Date().toISOString(),
       };
 
-      (StorageFactory.getCurrentProvider as jest.Mock).mockReturnValue({
+      mockStorageFactory.getCurrentProvider.mockReturnValue({
         saveDataFile: mockSaveDataFile,
         loadDataFile: mockLoadDataFile.mockResolvedValue(mockDataFile),
         getFileName: jest.fn().mockReturnValue('test.json'),
@@ -426,7 +434,7 @@ describe('SyncService', () => {
     });
 
     it('should return false when load fails', async () => {
-      (StorageFactory.getCurrentProvider as jest.Mock).mockReturnValue({
+      mockStorageFactory.getCurrentProvider.mockReturnValue({
         saveDataFile: mockSaveDataFile,
         loadDataFile: mockLoadDataFile.mockRejectedValue(new Error('Load failed')),
         getFileName: jest.fn().mockReturnValue('test.json'),

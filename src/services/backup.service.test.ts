@@ -2,20 +2,25 @@
  * BackupService Tests
  */
 
-import { backupService } from './backup.service';
+import { BackupService } from './backup.service';
 import { useAppStore } from '../stores/useAppStore';
 import { StorageFactory } from './storage/StorageFactory';
 import type { DataFile } from '../types/models';
 import { CurrencyCode } from '../types/enums';
 
+// Create mock storage factory
+const mockStorageFactory = {
+  getCurrentProvider: jest.fn(),
+} as unknown as StorageFactory;
+
 // Mock dependencies
-jest.mock('./storage/StorageFactory');
 jest.mock('fflate', () => ({
   strToU8: jest.fn((str: string) => new Uint8Array(Buffer.from(str))),
   gzipSync: jest.fn(() => new Uint8Array([31, 139, 8, 0])), // Mock gzip signature
 }));
 
 describe('BackupService', () => {
+  let backupService: BackupService;
   const mockDataFile: DataFile = {
     version: '1.0.0',
     transactions: [],
@@ -31,6 +36,9 @@ describe('BackupService', () => {
   };
 
   beforeEach(() => {
+    // Create new BackupService instance with mock storageFactory
+    backupService = new BackupService(mockStorageFactory);
+
     // Reset store
     useAppStore.setState({
       baseVersion: mockDataFile,
@@ -102,7 +110,7 @@ describe('BackupService', () => {
     };
 
     beforeEach(() => {
-      (StorageFactory.getCurrentProvider as jest.Mock).mockReturnValue(mockProvider);
+      (mockStorageFactory.getCurrentProvider as jest.Mock).mockReturnValue(mockProvider);
       jest.spyOn(useAppStore.getState(), 'setLastBackupDate');
       jest.spyOn(useAppStore.getState(), 'setUnsavedChanges');
     });

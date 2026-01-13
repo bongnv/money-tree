@@ -3,6 +3,20 @@ import { AccountList } from './AccountList';
 import { AccountType } from '../../types/enums';
 import type { Account } from '../../types/models';
 
+// Mock services (needed because AccountCard uses them)
+const mockCalculationService = {
+  calculateAccountBalance: jest.fn().mockReturnValue(1000),
+};
+
+jest.mock('../../contexts/ServiceProviders', () => ({
+  useCalculationService: () => mockCalculationService,
+}));
+
+// Mock stores
+jest.mock('../../stores/useTransactionStore', () => ({
+  useTransactionStore: () => ({ transactions: [] }),
+}));
+
 describe('AccountList', () => {
   const mockAccounts: Account[] = [
     {

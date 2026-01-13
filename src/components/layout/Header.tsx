@@ -28,7 +28,7 @@ import {
   Menu as MenuIcon,
 } from '@mui/icons-material';
 import { useAppStore } from '../../stores/useAppStore';
-import { syncService } from '../../services/sync.service';
+import { useSyncService } from '../../contexts/ServiceProviders';
 import { formatDistance } from 'date-fns';
 
 export const Header: React.FC = () => {
@@ -36,6 +36,7 @@ export const Header: React.FC = () => {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const syncService = useSyncService();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { fileName, lastSaved, hasUnsavedChanges, isLoading } = useAppStore();
 

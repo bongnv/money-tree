@@ -1,6 +1,8 @@
-import { calculationService } from './calculation.service';
+import { CalculationService } from './calculation.service';
 import type { Transaction, Account, ManualAsset } from '../types/models';
 import { AccountType, AssetType, CurrencyCode } from '../types/enums';
+
+const calculationService = new CalculationService();
 
 const mockAccount1: Account = {
   id: 'acc-1',

@@ -1,21 +1,67 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import App from './App';
 import { useAppStore } from './stores/useAppStore';
-import { syncService } from './services/sync.service';
+
+// Mock services
+const mockSyncService = {
+  startAutoSave: jest.fn(),
+  stopAutoSave: jest.fn(),
+  setMergeHandler: jest.fn(),
+  autoLoad: jest.fn().mockResolvedValue(true),
+};
+
+const mockStorageFactory = {
+  initialize: jest.fn().mockResolvedValue(true),
+};
+
+const mockBackupService = {
+  shouldPromptBackup: jest.fn().mockReturnValue(false),
+};
+
+const mockArchiveService = {
+  identifyArchivableYear: jest.fn().mockReturnValue(null),
+  calculateYearEndSummary: jest.fn(),
+};
+
+const mockCalculationService = {
+  calculateAccountBalance: jest.fn(),
+  calculateNetWorth: jest.fn().mockResolvedValue(0),
+  getActiveBudgetForPeriod: jest.fn(),
+  calculateSavingsRate: jest.fn().mockReturnValue(0),
+};
+
+const mockReportService = {
+  calculateBalanceSheet: jest.fn(),
+  calculateCashFlow: jest.fn().mockResolvedValue({
+    totalIncome: 0,
+    totalExpenses: 0,
+    netCashFlow: 0,
+    incomeByCategory: [],
+    expensesByCategory: [],
+  }),
+  calculateBudgetPerformance: jest.fn().mockResolvedValue({
+    overallHealthScore: 0,
+    totalBudget: 0,
+    totalSpent: 0,
+    categories: [],
+  }),
+};
+
+// Mock ServiceProvider
+jest.mock('./contexts/ServiceProviders', () => ({
+  ServiceProvider: ({ children }: any) => children,
+  useSyncService: () => mockSyncService,
+  useStorageFactory: () => mockStorageFactory,
+  useBackupService: () => mockBackupService,
+  useArchiveService: () => mockArchiveService,
+  useCalculationService: () => mockCalculationService,
+  useReportService: () => mockReportService,
+}));
 
 describe('App', () => {
-  let startAutoSaveSpy: jest.SpyInstance;
-  let stopAutoSaveSpy: jest.SpyInstance;
-
   beforeEach(() => {
     useAppStore.getState().resetState();
-    startAutoSaveSpy = jest.spyOn(syncService, 'startAutoSave').mockImplementation();
-    stopAutoSaveSpy = jest.spyOn(syncService, 'stopAutoSave').mockImplementation();
-  });
-
-  afterEach(() => {
-    startAutoSaveSpy.mockRestore();
-    stopAutoSaveSpy.mockRestore();
+    jest.clearAllMocks();
   });
 
   it('should render the app with Header and Dashboard', () => {
@@ -30,14 +76,19 @@ describe('App', () => {
     expect(dashboardElements.length).toBeGreaterThan(0);
   });
 
-  it('should start auto-save on mount', () => {
+  it('should start auto-save on mount', async () => {
     render(<App />);
-    expect(startAutoSaveSpy).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(mockSyncService.autoLoad).toHaveBeenCalled();
+    });
   });
 
-  it('should stop auto-save on unmount', () => {
+  it('should stop auto-save on unmount', async () => {
     const { unmount } = render(<App />);
+    await waitFor(() => {
+      expect(mockSyncService.startAutoSave).toHaveBeenCalled();
+    });
     unmount();
-    expect(stopAutoSaveSpy).toHaveBeenCalled();
+    expect(mockSyncService.stopAutoSave).toHaveBeenCalled();
   });
 });

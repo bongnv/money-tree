@@ -10,6 +10,23 @@ import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
 import { Group } from '../../types/enums';
 import type { PeriodOption } from '../common/PeriodSelector';
 
+// Mock services
+const mockCalculationService = {
+  calculateAccountBalance: jest.fn().mockReturnValue(1000),
+  getActiveBudgetForPeriod: jest.fn((budgets) => budgets[0] || null), // Return first budget if available
+  calculateNetWorth: jest.fn().mockResolvedValue(5000),
+  prorateBudgetForPeriod: jest.fn((budget) => budget.amount), // Return same amount for simplicity
+  calculateBudgetUsage: jest.fn().mockReturnValue(0), // Default 0 usage
+  convertBudgetAmount: jest.fn(async (budget) => budget.amount), // Return same amount
+  sumTransactionAmounts: jest.fn(async (transactions) => {
+    return transactions.reduce((sum: number, t: any) => sum + t.amount, 0);
+  }),
+};
+
+jest.mock('../../contexts/ServiceProviders', () => ({
+  useCalculationService: () => mockCalculationService,
+}));
+
 jest.mock('../../stores/useBudgetStore');
 jest.mock('../../stores/useTransactionStore');
 jest.mock('../../stores/useCategoryStore');

@@ -2,6 +2,17 @@ import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { MainLayout } from './MainLayout';
 
+// Mock syncService for Header component
+const mockSyncService = {
+  promptSaveIfNeeded: jest.fn(),
+  loadDataFile: jest.fn(),
+  syncNow: jest.fn(),
+};
+
+jest.mock('../../contexts/ServiceProviders', () => ({
+  useSyncService: () => mockSyncService,
+}));
+
 describe('MainLayout', () => {
   it('should render children', () => {
     render(

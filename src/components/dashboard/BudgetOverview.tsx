@@ -7,7 +7,7 @@ import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useAppStore } from '../../stores/useAppStore';
-import { calculationService } from '../../services/calculation.service';
+import { useCalculationService } from '../../contexts/ServiceProviders';
 import type { PeriodOption } from '../common/PeriodSelector';
 import { Group } from '../../types/enums';
 
@@ -30,6 +30,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ period }) => {
   const transactionTypes = useCategoryStore((state) => state.transactionTypes);
   const accounts = useAccountStore((state) => state.accounts);
   const baseCurrency = useAppStore((state) => state.baseCurrency);
+  const calculationService = useCalculationService();
 
   const [budgetsWithUsage, setBudgetsWithUsage] = useState<BudgetWithUsage[]>([]);
 

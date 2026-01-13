@@ -17,9 +17,11 @@ import { useNavigate } from 'react-router-dom';
 import LogoutIcon from '@mui/icons-material/Logout';
 import BackupIcon from '@mui/icons-material/Backup';
 import { useAppStore } from '../../stores/useAppStore';
-import { syncService } from '../../services/sync.service';
-import { backupService } from '../../services/backup.service';
-import { StorageFactory } from '../../services/storage/StorageFactory';
+import {
+  useSyncService,
+  useBackupService,
+  useStorageFactory,
+} from '../../contexts/ServiceProviders';
 import { formatDistance } from 'date-fns';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
@@ -29,13 +31,16 @@ import { useBudgetStore } from '../../stores/useBudgetStore';
 
 export const DataSyncSettings: React.FC = () => {
   const navigate = useNavigate();
+  const storageFactory = useStorageFactory();
+  const syncService = useSyncService();
+  const backupService = useBackupService();
   const { fileName, lastSaved, hasUnsavedChanges, lastBackupDate, showSnackbar } = useAppStore();
   const [disconnectDialogOpen, setDisconnectDialogOpen] = React.useState(false);
   const [backupLoading, setBackupLoading] = React.useState(false);
 
   const getStorageLocation = (): string => {
     try {
-      const provider = StorageFactory.getCurrentProvider();
+      const provider = storageFactory.getCurrentProvider();
       return provider.getName();
     } catch {
       return 'Not connected';

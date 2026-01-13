@@ -21,20 +21,14 @@ import {
 } from '@mui/material';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import WarningIcon from '@mui/icons-material/Warning';
-import {
-  identifyArchivableYear,
-  createArchiveFile,
-  saveArchiveFile,
-  updateMainFileAfterArchive,
-  getArchivedYears,
-  calculateYearEndSummary,
-  type YearEndSummary,
-} from '../../services/archive.service';
-import { syncService } from '../../services/sync.service';
+import { useSyncService, useArchiveService } from '../../contexts/ServiceProviders';
 import { useAppStore } from '../../stores/useAppStore';
 import { formatCurrency } from '../../utils/currency.utils';
+import type { YearEndSummary } from '../../services/archive.service';
 
 export const ArchiveManager: React.FC = () => {
+  const syncService = useSyncService();
+  const archiveService = useArchiveService();
   const baseCurrency = useAppStore((state) => state.baseCurrency);
   const showSnackbar = useAppStore((state) => state.showSnackbar);
   const [isExporting, setIsExporting] = useState(false);
@@ -45,16 +39,16 @@ export const ArchiveManager: React.FC = () => {
   });
   const [yearSummaries, setYearSummaries] = useState<Record<number, YearEndSummary>>({});
 
-  const archivableYear = identifyArchivableYear();
+  const archivableYear = archiveService.identifyArchivableYear();
   const archivableYears = archivableYear !== null ? [archivableYear] : [];
-  const archivedYears = getArchivedYears();
+  const archivedYears = archiveService.getArchivedYears();
 
   // Calculate summaries for archivable years
   useEffect(() => {
     const calculateSummaries = async () => {
       const summaries: Record<number, YearEndSummary> = {};
       for (const year of archivableYears) {
-        summaries[year] = await calculateYearEndSummary(year, baseCurrency);
+        summaries[year] = await archiveService.calculateYearEndSummary(year, baseCurrency);
       }
       setYearSummaries(summaries);
     };
@@ -73,10 +67,10 @@ export const ArchiveManager: React.FC = () => {
 
     try {
       // Create archive file
-      const archiveFile = await createArchiveFile(year, baseCurrency);
+      const archiveFile = await archiveService.createArchiveFile(year, baseCurrency);
 
       // Save archive file using storage provider
-      await saveArchiveFile(archiveFile);
+      await archiveService.saveArchiveFile(archiveFile);
 
       // Create archive reference
       const archiveReference = {
@@ -86,7 +80,7 @@ export const ArchiveManager: React.FC = () => {
       };
 
       // Update main file - remove archived data
-      updateMainFileAfterArchive(year, archiveReference);
+      archiveService.updateMainFileAfterArchive(year, archiveReference);
 
       // Sync changes to storage
       await syncService.syncNow();

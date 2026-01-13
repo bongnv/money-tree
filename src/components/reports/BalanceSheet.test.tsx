@@ -9,9 +9,20 @@ import { useAssetStore } from '../../stores/useAssetStore';
 import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useAppStore } from '../../stores/useAppStore';
 import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
-import { reportService } from '../../services/report.service';
 import { AccountType, AssetType } from '../../types/enums';
 import type { Account, ManualAsset, Transaction } from '../../types/models';
+
+// Mock services
+const mockReportService = {
+  calculateBalanceSheet: jest.fn(),
+  calculateNetWorthTrend: jest.fn(),
+  calculateMonthOverMonthComparison: jest.fn(),
+  calculateYearOverYearComparison: jest.fn(),
+};
+
+jest.mock('../../contexts/ServiceProviders', () => ({
+  useReportService: () => mockReportService,
+}));
 
 // Mock stores
 jest.mock('../../stores/useAccountStore');
@@ -19,9 +30,6 @@ jest.mock('../../stores/useAssetStore');
 jest.mock('../../stores/useTransactionStore');
 jest.mock('../../stores/useAppStore');
 jest.mock('../../stores/useExchangeRateStore');
-
-// Mock report service
-jest.mock('../../services/report.service');
 
 // Mock chart components
 jest.mock('../charts/LineChart', () => ({
@@ -178,12 +186,12 @@ describe('BalanceSheet', () => {
       selector({ getRateForMonth: mockGetRateForMonth })
     );
 
-    (reportService.calculateBalanceSheet as jest.Mock).mockResolvedValue(mockBalanceSheetData);
-    (reportService.calculateNetWorthTrend as jest.Mock).mockResolvedValue(mockTrendData);
-    (reportService.calculateMonthOverMonthComparison as jest.Mock).mockResolvedValue(
+    (mockReportService.calculateBalanceSheet as jest.Mock).mockResolvedValue(mockBalanceSheetData);
+    (mockReportService.calculateNetWorthTrend as jest.Mock).mockResolvedValue(mockTrendData);
+    (mockReportService.calculateMonthOverMonthComparison as jest.Mock).mockResolvedValue(
       mockComparisonData
     );
-    (reportService.calculateYearOverYearComparison as jest.Mock).mockResolvedValue(
+    (mockReportService.calculateYearOverYearComparison as jest.Mock).mockResolvedValue(
       mockComparisonData
     );
   });
@@ -201,7 +209,7 @@ describe('BalanceSheet', () => {
       renderComponent();
       expect(screen.getByText('Balance Sheet')).toBeInTheDocument();
       await waitFor(() => {
-        expect(reportService.calculateBalanceSheet).toHaveBeenCalled();
+        expect(mockReportService.calculateBalanceSheet).toHaveBeenCalled();
       });
     });
 
@@ -213,7 +221,7 @@ describe('BalanceSheet', () => {
       // Should have a default value (today's date)
       expect(dateInput.value).toBeTruthy();
       await waitFor(() => {
-        expect(reportService.calculateBalanceSheet).toHaveBeenCalled();
+        expect(mockReportService.calculateBalanceSheet).toHaveBeenCalled();
       });
     });
 
@@ -223,14 +231,14 @@ describe('BalanceSheet', () => {
       expect(screen.getByRole('button', { name: /month over month/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /year over year/i })).toBeInTheDocument();
       await waitFor(() => {
-        expect(reportService.calculateBalanceSheet).toHaveBeenCalled();
+        expect(mockReportService.calculateBalanceSheet).toHaveBeenCalled();
       });
     });
 
     it('should render display currency selector', async () => {
       renderComponent();
       await waitFor(() => {
-        expect(reportService.calculateBalanceSheet).toHaveBeenCalled();
+        expect(mockReportService.calculateBalanceSheet).toHaveBeenCalled();
       });
       // Currency selector should be present
       const currencySelects = screen.getAllByRole('combobox');
@@ -297,7 +305,7 @@ describe('BalanceSheet', () => {
       await user.type(dateInput, '2024-06-15');
 
       await waitFor(() => {
-        const calls = (reportService.calculateBalanceSheet as jest.Mock).mock.calls;
+        const calls = (mockReportService.calculateBalanceSheet as jest.Mock).mock.calls;
         const lastCall = calls[calls.length - 1];
         expect(lastCall[3]).toBe('2024-06-15'); // Check the date parameter in last call
       });
@@ -310,7 +318,7 @@ describe('BalanceSheet', () => {
       const noneButton = screen.getByRole('button', { name: /no comparison/i });
       expect(noneButton).toHaveAttribute('aria-pressed', 'true');
       await waitFor(() => {
-        expect(reportService.calculateBalanceSheet).toHaveBeenCalled();
+        expect(mockReportService.calculateBalanceSheet).toHaveBeenCalled();
       });
     });
 
@@ -322,7 +330,7 @@ describe('BalanceSheet', () => {
       await user.click(mmButton);
 
       await waitFor(() => {
-        expect(reportService.calculateMonthOverMonthComparison).toHaveBeenCalled();
+        expect(mockReportService.calculateMonthOverMonthComparison).toHaveBeenCalled();
       });
     });
 
@@ -334,7 +342,7 @@ describe('BalanceSheet', () => {
       await user.click(yyButton);
 
       await waitFor(() => {
-        expect(reportService.calculateYearOverYearComparison).toHaveBeenCalled();
+        expect(mockReportService.calculateYearOverYearComparison).toHaveBeenCalled();
       });
     });
 
@@ -347,7 +355,7 @@ describe('BalanceSheet', () => {
 
       await waitFor(
         () => {
-          expect(reportService.calculateMonthOverMonthComparison).toHaveBeenCalled();
+          expect(mockReportService.calculateMonthOverMonthComparison).toHaveBeenCalled();
         },
         { timeout: 3000 }
       );
@@ -362,7 +370,7 @@ describe('BalanceSheet', () => {
       renderComponent();
 
       await waitFor(() => {
-        expect(reportService.calculateBalanceSheet).toHaveBeenCalled();
+        expect(mockReportService.calculateBalanceSheet).toHaveBeenCalled();
       });
 
       // Verify currency selector exists
@@ -388,7 +396,7 @@ describe('BalanceSheet', () => {
 
       // Check if loading indicator appears (it may be brief)
       await waitFor(() => {
-        expect(reportService.calculateBalanceSheet).toHaveBeenCalled();
+        expect(mockReportService.calculateBalanceSheet).toHaveBeenCalled();
       });
     });
 
@@ -398,7 +406,7 @@ describe('BalanceSheet', () => {
       // Wait for component to mount and trigger rate fetching
       await waitFor(
         () => {
-          expect(reportService.calculateBalanceSheet).toHaveBeenCalled();
+          expect(mockReportService.calculateBalanceSheet).toHaveBeenCalled();
         },
         { timeout: 3000 }
       );
@@ -482,7 +490,7 @@ describe('BalanceSheet', () => {
     });
 
     it('should not render trend chart when insufficient data', async () => {
-      (reportService.calculateNetWorthTrend as jest.Mock).mockResolvedValue([]);
+      (mockReportService.calculateNetWorthTrend as jest.Mock).mockResolvedValue([]);
 
       renderComponent();
 
@@ -521,7 +529,7 @@ describe('BalanceSheet', () => {
       );
 
       await waitFor(() => {
-        const calls = (reportService.calculateBalanceSheet as jest.Mock).mock.calls;
+        const calls = (mockReportService.calculateBalanceSheet as jest.Mock).mock.calls;
         const lastCall = calls[calls.length - 1];
         expect(lastCall[0]).toEqual(newAccounts); // Check accounts in last call
       });

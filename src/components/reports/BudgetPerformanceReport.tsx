@@ -31,7 +31,8 @@ import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useAppStore } from '../../stores/useAppStore';
-import { reportService, type BudgetPerformanceData } from '../../services/report.service';
+import { useReportService } from '../../contexts/ServiceProviders';
+import type { BudgetPerformanceData } from '../../services/report.service';
 import { LineChart } from '../charts/LineChart';
 import { PeriodSelector } from '../common/PeriodSelector';
 import { CategoryFilter } from '../common/CategoryFilter';
@@ -49,6 +50,7 @@ export const BudgetPerformanceReport: React.FC = () => {
   const categories = useCategoryStore((state) => state.categories);
   const accounts = useAccountStore((state) => state.accounts);
   const baseCurrency = useAppStore((state) => state.baseCurrency);
+  const reportService = useReportService();
 
   // Date range state - default to Year to Date
   const today = getTodayDate();

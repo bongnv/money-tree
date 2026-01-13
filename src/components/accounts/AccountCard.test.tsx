@@ -1,9 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AccountCard } from './AccountCard';
-import { AccountType } from '../../types/enums';
+import { AccountType, CurrencyCode } from '../../types/enums';
 import type { Account, Transaction } from '../../types/models';
 import { useTransactionStore } from '../../stores/useTransactionStore';
+
+// Mock services
+const mockCalculationService = {
+  calculateAccountBalance: jest.fn().mockReturnValue(1000),
+};
+
+jest.mock('../../contexts/ServiceProviders', () => ({
+  useCalculationService: () => mockCalculationService,
+}));
 
 jest.mock('../../stores/useTransactionStore');
 
@@ -16,7 +25,7 @@ describe('AccountCard', () => {
     id: 'acc-1',
     name: 'Checking Account',
     type: AccountType.BANK_ACCOUNT,
-    currencyCode: 'USD',
+    currencyCode: CurrencyCode.USD,
     initialBalance: 1000,
     description: 'My main checking account',
     isActive: true,
@@ -127,6 +136,9 @@ describe('AccountCard', () => {
       getTransactionsByType: jest.fn(),
       getTransactionsByDateRange: jest.fn(),
     });
+
+    // Mock the calculated balance: $1000 + $200 (in) - $50 (out) = $1150
+    mockCalculationService.calculateAccountBalance.mockReturnValue(1150);
 
     render(<AccountCard account={mockAccount} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 

@@ -3,7 +3,18 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import { Header } from './Header';
 import { useAppStore } from '../../stores/useAppStore';
-import { syncService } from '../../services/sync.service';
+
+// Mock syncService
+const mockSyncService = {
+  promptSaveIfNeeded: jest.fn(),
+  loadDataFile: jest.fn(),
+  syncNow: jest.fn(),
+};
+
+// Mock the context
+jest.mock('../../contexts/ServiceProviders', () => ({
+  useSyncService: () => mockSyncService,
+}));
 
 const renderWithRouter = (component: React.ReactElement, initialRoute = '/') => {
   return render(
@@ -16,21 +27,9 @@ const renderWithRouter = (component: React.ReactElement, initialRoute = '/') => 
 };
 
 describe('Header', () => {
-  let promptSaveIfNeededSpy: jest.SpyInstance;
-  let loadDataFileSpy: jest.SpyInstance;
-  let syncNowSpy: jest.SpyInstance;
-
   beforeEach(() => {
     useAppStore.getState().resetState();
-    promptSaveIfNeededSpy = jest.spyOn(syncService, 'promptSaveIfNeeded');
-    loadDataFileSpy = jest.spyOn(syncService, 'loadDataFile');
-    syncNowSpy = jest.spyOn(syncService, 'syncNow');
-  });
-
-  afterEach(() => {
-    promptSaveIfNeededSpy.mockRestore();
-    loadDataFileSpy.mockRestore();
-    syncNowSpy.mockRestore();
+    jest.clearAllMocks();
   });
 
   it('should render header with title', () => {
@@ -56,7 +55,7 @@ describe('Header', () => {
 
   it('should call syncService.syncNow when Sync button is clicked', async () => {
     useAppStore.getState().setUnsavedChanges(true);
-    syncNowSpy.mockResolvedValue(undefined);
+    mockSyncService.syncNow.mockResolvedValue(undefined);
 
     renderWithRouter(<Header />);
 
@@ -64,7 +63,7 @@ describe('Header', () => {
     fireEvent.click(syncButton);
 
     await waitFor(() => {
-      expect(syncNowSpy).toHaveBeenCalled();
+      expect(mockSyncService.syncNow).toHaveBeenCalled();
     });
   });
 

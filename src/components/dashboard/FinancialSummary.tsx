@@ -7,8 +7,7 @@ import { useAssetStore } from '../../stores/useAssetStore';
 import { useAppStore } from '../../stores/useAppStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import { useBudgetStore } from '../../stores/useBudgetStore';
-import { calculationService } from '../../services/calculation.service';
-import { reportService } from '../../services/report.service';
+import { useCalculationService, useReportService } from '../../contexts/ServiceProviders';
 import type { PeriodOption } from '../common/PeriodSelector';
 
 export interface FinancialSummaryProps {
@@ -31,6 +30,8 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
   const categories = useCategoryStore((state) => state.categories);
   const transactionTypes = useCategoryStore((state) => state.transactionTypes);
   const baseCurrency = useAppStore((state) => state.baseCurrency);
+  const calculationService = useCalculationService();
+  const reportService = useReportService();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [netWorth, setNetWorth] = useState<number>(0);
   const [cashFlow, setCashFlow] = useState<number>(0);
@@ -62,7 +63,7 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
     };
 
     calculateNetWorth();
-  }, [accounts, transactions, manualAssets, baseCurrency, currentMonth]);
+  }, [accounts, transactions, manualAssets, baseCurrency, currentMonth, calculationService]);
 
   // Calculate cash flow and budget performance
   useEffect(() => {
@@ -104,7 +105,17 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
     };
 
     calculateMetrics();
-  }, [transactions, period, transactionTypes, categories, accounts, baseCurrency, budgets]);
+  }, [
+    transactions,
+    period,
+    transactionTypes,
+    categories,
+    accounts,
+    baseCurrency,
+    budgets,
+    calculationService,
+    reportService,
+  ]);
 
   // Determine savings rate color
   const getSavingsRateColor = (): 'success' | 'warning' | 'error' => {

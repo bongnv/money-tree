@@ -7,7 +7,7 @@ import type {
   Budget,
 } from '../types/models';
 import { AccountType, AssetType, CurrencyCode, Group } from '../types/enums';
-import { calculationService } from './calculation.service';
+import { CalculationService } from './calculation.service';
 import { getAssetCurrentValue } from '../utils/asset.utils';
 import { getRateForMonth } from './exchangeRate.service';
 
@@ -102,7 +102,13 @@ export type PeriodType = 'monthly' | 'quarterly' | 'yearly' | 'custom';
 /**
  * Report service for generating financial reports
  */
-class ReportService {
+export class ReportService {
+  private calculationService: CalculationService;
+
+  constructor(calculationService: CalculationService) {
+    this.calculationService = calculationService;
+  }
+
   /**
    * Calculate balance sheet for a given date
    * @param accounts All accounts
@@ -176,7 +182,7 @@ class ReportService {
       (a) => a.type !== AccountType.CREDIT_CARD && a.type !== AccountType.LOAN
     );
     for (const account of assetAccounts) {
-      const balance = calculationService.calculateAccountBalance(account, transactions);
+      const balance = this.calculationService.calculateAccountBalance(account, transactions);
       if (balance > 0) {
         const groupName = this.getAccountGroupName(account.type);
         if (!groups.has(groupName)) {
@@ -265,7 +271,7 @@ class ReportService {
       (a) => a.type === AccountType.CREDIT_CARD || a.type === AccountType.LOAN
     );
     for (const account of liabilityAccounts) {
-      const balance = calculationService.calculateAccountBalance(account, transactions);
+      const balance = this.calculationService.calculateAccountBalance(account, transactions);
       // For credit cards/loans, the liability is the absolute value of negative balances
       const liability = Math.abs(Math.min(balance, 0));
       if (liability > 0) {
@@ -302,7 +308,7 @@ class ReportService {
       (a) => a.type !== AccountType.CREDIT_CARD && a.type !== AccountType.LOAN
     );
     for (const account of overdraftAccounts) {
-      const balance = calculationService.calculateAccountBalance(account, transactions);
+      const balance = this.calculationService.calculateAccountBalance(account, transactions);
       if (balance < 0) {
         const groupName = this.getAccountGroupName(account.type);
         if (!groups.has(groupName)) {
@@ -799,7 +805,11 @@ class ReportService {
       if (!category) continue;
 
       // Prorate budget for the viewing period
-      const budgetedAmount = calculationService.prorateBudgetForPeriod(budget, startDate, endDate);
+      const budgetedAmount = this.calculationService.prorateBudgetForPeriod(
+        budget,
+        startDate,
+        endDate
+      );
 
       // Convert budget to base currency if needed
       let convertedBudgetedAmount = budgetedAmount;
@@ -981,5 +991,3 @@ class ReportService {
     return trendPoints;
   }
 }
-
-export const reportService = new ReportService();

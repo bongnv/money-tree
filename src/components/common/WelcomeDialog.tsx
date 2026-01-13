@@ -54,7 +54,6 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
   const [isConnecting, setIsConnecting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [showOneDriveFilePicker, setShowOneDriveFilePicker] = useState(false);
-  const [showGooglePicker, setShowGooglePicker] = useState(false);
 
   const handleConnectOneDrive = async () => {
     setIsConnecting(true);
@@ -84,14 +83,8 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
         throw new Error('No access token available');
       }
 
-      // Hide dialog to show Picker (Picker has lower z-index than MUI Dialog)
-      setShowGooglePicker(true);
-
       // Show Google Picker
       const pickerResult = await GooglePickerService.showPicker(accessToken, true);
-
-      // Restore dialog
-      setShowGooglePicker(false);
 
       if (pickerResult) {
         // Check if user selected a folder or a file
@@ -109,7 +102,6 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
     } catch (error: any) {
       console.error('Google Drive connection failed:', error);
       setAuthError(error.message || 'Failed to connect to Google Drive');
-      setShowGooglePicker(false);
     } finally {
       setIsConnecting(false);
     }
@@ -155,7 +147,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
   return (
     <>
       <Dialog
-        open={open && !showOneDriveFilePicker && !showGooglePicker}
+        open={open && !showOneDriveFilePicker}
         maxWidth="md"
         fullWidth
         fullScreen={isMobile}

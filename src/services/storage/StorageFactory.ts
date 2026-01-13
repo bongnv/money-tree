@@ -191,10 +191,10 @@ export class StorageFactory {
   }
 
   /**
-   * Get Google Drive access token (for external use like Google Picker)
+   * Show Google Drive file picker
    */
-  static getGoogleDriveAccessToken(): string | null {
-    return this.getGoogleDriveService().getAccessToken();
+  static async showGoogleDriveFilePicker(allowCreate: boolean = true) {
+    return this.getGoogleDriveService().showFilePicker(allowCreate);
   }
 
   /**

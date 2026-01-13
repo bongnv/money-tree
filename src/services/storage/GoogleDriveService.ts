@@ -4,6 +4,7 @@ import {
   errorMessages,
   isGoogleDriveConfigured,
 } from '../../config/googledrive.config';
+import type { SelectedFileInfo } from './GoogleDriveProvider';
 
 /**
  * Google Drive file metadata
@@ -37,6 +38,8 @@ export class GoogleDriveService {
   private tokenClient: google.accounts.oauth2.TokenClient | null = null;
   private cachedToken: CachedToken | null = null;
   private initPromise: Promise<void> | null = null;
+  private pickerApiLoaded = false;
+  private pickerApiLoadPromise: Promise<void> | null = null;
 
   constructor() {
     if (isGoogleDriveConfigured()) {
@@ -168,7 +171,7 @@ export class GoogleDriveService {
   /**
    * Get valid access token (from cache or request new one)
    */
-  private async getAccessTokenInternal(): Promise<string> {
+  private async getAccessToken(): Promise<string> {
     await this.initPromise;
 
     if (!this.cachedToken || this.cachedToken.expiresAt <= Date.now()) {
@@ -179,23 +182,12 @@ export class GoogleDriveService {
   }
 
   /**
-   * Get cached access token for external use (e.g., Google Picker)
-   * Returns null if not authenticated or token expired
-   */
-  getAccessToken(): string | null {
-    if (!this.cachedToken || this.cachedToken.expiresAt <= Date.now()) {
-      return null;
-    }
-    return this.cachedToken.accessToken;
-  }
-
-  /**
    * List files and folders in Google Drive
    * @param parentId Parent folder ID, or undefined for root
    * @param query Optional search query
    */
   async listFiles(parentId?: string, query?: string): Promise<DriveFile[]> {
-    const token = await this.getAccessTokenInternal();
+    const token = await this.getAccessToken();
 
     // Build query
     let q = 'trashed = false';
@@ -232,7 +224,7 @@ export class GoogleDriveService {
    * @param fileId The Google Drive file ID
    */
   async readFile(fileId: string): Promise<string> {
-    const token = await this.getAccessTokenInternal();
+    const token = await this.getAccessToken();
 
     const url = `${driveApiConfig.apiBaseUrl}/files/${fileId}?alt=media`;
 
@@ -260,7 +252,7 @@ export class GoogleDriveService {
     content: string | Uint8Array,
     parentId?: string
   ): Promise<DriveFile> {
-    const token = await this.getAccessTokenInternal();
+    const token = await this.getAccessToken();
 
     const metadata = {
       name,
@@ -306,7 +298,7 @@ export class GoogleDriveService {
    * @param content New file content
    */
   async updateFile(fileId: string, content: string | Uint8Array): Promise<DriveFile> {
-    const token = await this.getAccessTokenInternal();
+    const token = await this.getAccessToken();
 
     const response = await fetch(
       `${driveApiConfig.uploadUrl}/${fileId}?uploadType=media&fields=id,name,mimeType,parents`,
@@ -361,5 +353,119 @@ export class GoogleDriveService {
       this.cachedToken = null;
       localStorage.removeItem(TOKEN_STORAGE_KEY);
     }
+  }
+
+  /**
+   * Load Google Picker API
+   */
+  private async loadPickerApi(): Promise<void> {
+    if (this.pickerApiLoaded) {
+      return;
+    }
+
+    if (this.pickerApiLoadPromise) {
+      return this.pickerApiLoadPromise;
+    }
+
+    this.pickerApiLoadPromise = new Promise((resolve, reject) => {
+      // Check if gapi script is already loaded
+      if (typeof window.gapi !== 'undefined') {
+        window.gapi.load('picker', {
+          callback: () => {
+            this.pickerApiLoaded = true;
+            resolve();
+          },
+          onerror: () => {
+            reject(new Error('Failed to load Google Picker API'));
+          },
+        });
+        return;
+      }
+
+      // Load gapi script
+      const script = document.createElement('script');
+      script.src = 'https://apis.google.com/js/api.js';
+      script.async = true;
+      script.defer = true;
+
+      script.onload = () => {
+        window.gapi.load('picker', {
+          callback: () => {
+            this.pickerApiLoaded = true;
+            resolve();
+          },
+          onerror: () => {
+            reject(new Error('Failed to load Google Picker API'));
+          },
+        });
+      };
+
+      script.onerror = () => {
+        reject(new Error('Failed to load Google API library'));
+      };
+
+      document.head.appendChild(script);
+    });
+
+    return this.pickerApiLoadPromise;
+  }
+
+  /**
+   * Show Google Picker to select or create a file
+   * @param allowCreate Whether to show "Create" option
+   * @returns Selected file info or null if cancelled
+   */
+  async showFilePicker(allowCreate: boolean = true): Promise<SelectedFileInfo | null> {
+    await this.loadPickerApi();
+
+    const accessToken = await this.getAccessToken();
+
+    return new Promise((resolve) => {
+      const pickerCallback = (data: google.picker.ResponseObject) => {
+        if (data.action === google.picker.Action.PICKED) {
+          const doc = data.docs?.[0];
+          if (doc) {
+            // Check if user selected a folder or a file
+            const isFolder = doc.mimeType === 'application/vnd.google-apps.folder';
+
+            // Convert to SelectedFileInfo format
+            resolve({
+              fileId: isFolder ? null : doc.id,
+              fileName: isFolder ? 'money-tree.json' : doc.name,
+              parentId: isFolder ? doc.id : (doc.parentId ?? undefined),
+            });
+            return;
+          }
+        } else if (data.action === google.picker.Action.CANCEL) {
+          // User explicitly cancelled
+          resolve(null);
+          return;
+        }
+
+        // Ignore other actions like 'loaded'
+      };
+
+      // Create DocsView that shows folders and JSON files
+      const docsView = new google.picker.DocsView()
+        .setIncludeFolders(true)
+        .setSelectFolderEnabled(true)
+        .setMimeTypes('application/json,application/vnd.google-apps.folder');
+
+      const pickerBuilder = new google.picker.PickerBuilder()
+        .addView(docsView)
+        .addView(google.picker.ViewId.FOLDERS)
+        .setOAuthToken(accessToken)
+        .setDeveloperKey(googleDriveConfig.apiKey)
+        .setCallback(pickerCallback)
+        .setTitle('Select Money Tree file location');
+
+      // Enable multiselect if creating (so user can pick folder)
+      if (allowCreate) {
+        pickerBuilder.enableFeature(google.picker.Feature.MULTISELECT_ENABLED);
+      }
+
+      const picker = pickerBuilder.build();
+      picker.setVisible(true);
+    });
   }
 }

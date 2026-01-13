@@ -23,31 +23,20 @@ import {
 import { isOneDriveConfigured } from '../../config/onedrive.config';
 import { isGoogleDriveConfigured } from '../../config/googledrive.config';
 import { OneDriveFilePicker } from '../onedrive/OneDriveFilePicker';
-import { GooglePickerService } from '../../services/storage/GooglePickerService';
-import { StorageFactory } from '../../services/storage/StorageFactory';
+import { StorageFactory, StorageProviderType } from '../../services/storage/StorageFactory';
+import { FilePickerService } from '../../services/storage/FilePickerService';
 import type { SelectedFileInfo as OneDriveFileInfo } from '../../services/storage/OneDriveProvider';
-import type { SelectedFileInfo as GoogleDriveFileInfo } from '../../services/storage/GoogleDriveProvider';
 
 interface WelcomeDialogProps {
   open: boolean;
-  onOpenLocalFile: () => void;
-  onCreateNewLocalFile: () => void;
-  onSelectOneDrive: () => Promise<void>;
-  onOneDriveFileSelected: (fileInfo: OneDriveFileInfo) => Promise<void>;
-  onListOneDriveFolders: (parentItem?: any) => Promise<any[]>;
-  onSelectGoogleDrive: () => Promise<void>;
-  onGoogleDriveFileSelected: (fileInfo: GoogleDriveFileInfo) => Promise<void>;
+  onNewFileCreated: () => Promise<void>;
+  onExistingFileSelected: () => Promise<void>;
 }
 
 export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
   open,
-  onOpenLocalFile,
-  onCreateNewLocalFile,
-  onSelectOneDrive,
-  onOneDriveFileSelected,
-  onListOneDriveFolders,
-  onSelectGoogleDrive,
-  onGoogleDriveFileSelected,
+  onNewFileCreated,
+  onExistingFileSelected,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -60,7 +49,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
     setAuthError(null);
 
     try {
-      await onSelectOneDrive();
+      await StorageFactory.authenticateOneDrive();
       setShowOneDriveFilePicker(true);
     } catch (error: any) {
       console.error('OneDrive connection failed:', error);
@@ -75,29 +64,22 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
 
     try {
       // Authenticate with Google Drive
-      await onSelectGoogleDrive();
+      await StorageFactory.authenticateGoogleDrive();
 
-      // Get access token for Picker
-      const accessToken = StorageFactory.getGoogleDriveAccessToken();
-      if (!accessToken) {
-        throw new Error('No access token available');
-      }
-
-      // Show Google Picker
-      const pickerResult = await GooglePickerService.showPicker(accessToken, true);
+      // Show Google Picker (uses access token internally)
+      const pickerResult = await StorageFactory.showGoogleDriveFilePicker(true);
 
       if (pickerResult) {
-        // Check if user selected a folder or a file
-        const isFolder = pickerResult.mimeType === 'application/vnd.google-apps.folder';
+        await StorageFactory.replaceProvider({
+          type: StorageProviderType.GOOGLE_DRIVE,
+          fileInfo: pickerResult,
+        });
 
-        // Convert picker result to SelectedFileInfo format
-        const fileInfo: GoogleDriveFileInfo = {
-          fileId: isFolder ? null : pickerResult.id, // No fileId if folder (means create new)
-          fileName: isFolder ? 'MoneyTree.json' : pickerResult.name,
-          parentId: isFolder ? pickerResult.id : (pickerResult.parentId ?? undefined), // If folder selected, use it as parent
-        };
-
-        await onGoogleDriveFileSelected(fileInfo);
+        if (pickerResult.fileId) {
+          await onExistingFileSelected();
+        } else {
+          await onNewFileCreated();
+        }
       }
     } catch (error: any) {
       console.error('Google Drive connection failed:', error);
@@ -110,7 +92,16 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
   const handleOneDriveFileSelect = async (fileInfo: OneDriveFileInfo) => {
     setShowOneDriveFilePicker(false);
     try {
-      await onOneDriveFileSelected(fileInfo);
+      await StorageFactory.replaceProvider({
+        type: StorageProviderType.ONEDRIVE,
+        fileInfo,
+      });
+
+      if (fileInfo.fileId) {
+        await onExistingFileSelected();
+      } else {
+        await onNewFileCreated();
+      }
     } catch (error) {
       console.error('OneDrive file selection failed:', error);
       setAuthError(error instanceof Error ? error.message : 'Failed to connect to OneDrive');
@@ -127,7 +118,14 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
   const handleOpenLocalFile = async () => {
     setAuthError(null);
     try {
-      await onOpenLocalFile();
+      const fileHandle = await FilePickerService.showOpenFilePicker();
+      if (fileHandle) {
+        await StorageFactory.replaceProvider({
+          type: StorageProviderType.LOCAL,
+          fileHandle,
+        });
+        await onExistingFileSelected();
+      }
     } catch (error) {
       console.error('Failed to open local file:', error);
       setAuthError(error instanceof Error ? error.message : 'Failed to open file');
@@ -137,7 +135,14 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
   const handleCreateNewLocalFile = async () => {
     setAuthError(null);
     try {
-      await onCreateNewLocalFile();
+      const fileHandle = await FilePickerService.showSaveFilePicker('money-tree.json');
+      if (fileHandle) {
+        await StorageFactory.replaceProvider({
+          type: StorageProviderType.LOCAL,
+          fileHandle,
+        });
+        await onNewFileCreated();
+      }
     } catch (error) {
       console.error('Failed to create new file:', error);
       setAuthError(error instanceof Error ? error.message : 'Failed to create new file');
@@ -300,7 +305,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
         open={showOneDriveFilePicker}
         onSelect={handleOneDriveFileSelect}
         onCancel={handleOneDriveFilePickerCancel}
-        onListFolders={onListOneDriveFolders}
+        onListFolders={StorageFactory.listOneDriveFolders}
       />
     </>
   );

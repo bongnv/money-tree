@@ -14,10 +14,7 @@ import { BackupPromptDialog } from './components/common/BackupPromptDialog';
 import { AppRoutes } from './routes';
 import { useAppStore } from './stores/useAppStore';
 import { syncService } from './services/sync.service';
-import { FilePickerService } from './services/storage/FilePickerService';
-import { StorageFactory, StorageProviderType } from './services/storage/StorageFactory';
-import { SelectedFileInfo as OneDriveFileInfo } from './services/storage/OneDriveProvider';
-import { SelectedFileInfo as GoogleDriveFileInfo } from './services/storage/GoogleDriveProvider';
+import { StorageFactory } from './services/storage/StorageFactory';
 import { MergeResult } from './services/merge.service';
 import { backupService } from './services/backup.service';
 import { identifyArchivableYear, calculateYearEndSummary } from './services/archive.service';
@@ -159,99 +156,25 @@ const AppContent: React.FC = () => {
     };
   }, []); // Register once on mount
 
-  const handleOpenLocalFile = async () => {
+  const handleNewFileCreated = async () => {
     try {
-      // Show file picker to select a local file
-      const fileHandle = await FilePickerService.showOpenFilePicker();
-      if (!fileHandle) {
-        // User cancelled
-        return;
-      }
-
-      // Switch to local storage provider with selected file
-      // Old provider config is automatically cleared by replaceProvider
-      await StorageFactory.replaceProvider({
-        type: StorageProviderType.LOCAL,
-        fileHandle,
-      });
-
-      // Load data from the selected file
-      await syncService.loadDataFile();
-      setShowWelcomeDialog(false);
-    } catch (error) {
-      console.error('Failed to open file:', error);
-      throw error; // Re-throw so WelcomeDialog can show error
-    }
-  };
-
-  const handleCreateNewLocalFile = async () => {
-    try {
-      // Show save file picker to create a new file
-      const fileHandle = await FilePickerService.showSaveFilePicker('money-tree.json');
-      if (!fileHandle) {
-        // User cancelled
-        return;
-      }
-
-      // Switch to local storage provider with new file
-      // Old provider config is automatically cleared by replaceProvider
-      await StorageFactory.replaceProvider({
-        type: StorageProviderType.LOCAL,
-        fileHandle,
-      });
-
-      // File will be empty initially, no need to load
+      // Write initial empty data structure to the new file
+      await syncService.syncNow(false, true);
       setShowWelcomeDialog(false);
     } catch (error) {
       console.error('Failed to create new file:', error);
-      throw error; // Re-throw so WelcomeDialog can show error
+      throw error;
     }
   };
 
-  const handleSelectOneDrive = async () => {
-    await StorageFactory.authenticateOneDrive();
-  };
-
-  const handleConnectOneDrive = async (fileInfo: OneDriveFileInfo) => {
-    // Finalize connection: switch provider and load/create file
-    await StorageFactory.replaceProvider({
-      type: StorageProviderType.ONEDRIVE,
-      fileInfo,
-    });
-
-    if (fileInfo.fileId) {
-      // Existing file: load it
+  const handleExistingFileSelected = async () => {
+    try {
       await syncService.loadDataFile();
-    } else {
-      // New file: create empty file immediately (force=true to bypass unsaved changes check)
-      await syncService.syncNow(false, true);
+      setShowWelcomeDialog(false);
+    } catch (error) {
+      console.error('Failed to load file:', error);
+      throw error;
     }
-    setShowWelcomeDialog(false);
-  };
-
-  const handleSelectGoogleDrive = async () => {
-    await StorageFactory.authenticateGoogleDrive();
-  };
-
-  const handleConnectGoogleDrive = async (fileInfo: GoogleDriveFileInfo) => {
-    // Finalize connection: switch provider and load/create file
-    await StorageFactory.replaceProvider({
-      type: StorageProviderType.GOOGLE_DRIVE,
-      fileInfo,
-    });
-
-    if (fileInfo.fileId) {
-      // Existing file: load it
-      await syncService.loadDataFile();
-    } else {
-      // New file: create empty file immediately (force=true to bypass unsaved changes check)
-      await syncService.syncNow(false, true);
-    }
-    setShowWelcomeDialog(false);
-  };
-
-  const handleListOneDriveFolders = async (parentItem?: any) => {
-    return StorageFactory.listOneDriveFolders(parentItem);
   };
 
   const handleMergeCancel = () => {
@@ -301,13 +224,8 @@ const AppContent: React.FC = () => {
       </MainLayout>
       <WelcomeDialog
         open={showWelcomeDialog}
-        onOpenLocalFile={handleOpenLocalFile}
-        onCreateNewLocalFile={handleCreateNewLocalFile}
-        onSelectOneDrive={handleSelectOneDrive}
-        onOneDriveFileSelected={handleConnectOneDrive}
-        onListOneDriveFolders={handleListOneDriveFolders}
-        onSelectGoogleDrive={handleSelectGoogleDrive}
-        onGoogleDriveFileSelected={handleConnectGoogleDrive}
+        onNewFileCreated={handleNewFileCreated}
+        onExistingFileSelected={handleExistingFileSelected}
       />
       <NotificationSnackbar
         open={snackbar.open}

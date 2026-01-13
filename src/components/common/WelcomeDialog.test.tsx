@@ -1,10 +1,21 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { WelcomeDialog } from './WelcomeDialog';
+import { FilePickerService } from '../../services/storage/FilePickerService';
+import { StorageFactory, StorageProviderType } from '../../services/storage/StorageFactory';
+
+// Mock dependencies
+jest.mock('../../services/storage/FilePickerService');
+jest.mock('../../services/storage/StorageFactory');
+jest.mock('../../config/onedrive.config', () => ({
+  isOneDriveConfigured: jest.fn(() => true),
+}));
+jest.mock('../../config/googledrive.config', () => ({
+  isGoogleDriveConfigured: jest.fn(() => true),
+}));
 
 describe('WelcomeDialog', () => {
-  const mockOnOpenLocalFile = jest.fn();
-  const mockOnCreateNewLocalFile = jest.fn();
-  const mockOnConnectOneDrive = jest.fn();
+  const mockOnNewFileCreated = jest.fn();
+  const mockOnExistingFileSelected = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -14,10 +25,8 @@ describe('WelcomeDialog', () => {
     render(
       <WelcomeDialog
         open={true}
-        onOpenLocalFile={mockOnOpenLocalFile}
-        onCreateNewLocalFile={mockOnCreateNewLocalFile}
-        onConnectOneDrive={mockOnConnectOneDrive}
-        onAuthenticateOneDrive={jest.fn()}
+        onNewFileCreated={mockOnNewFileCreated}
+        onExistingFileSelected={mockOnExistingFileSelected}
       />
     );
 
@@ -30,58 +39,72 @@ describe('WelcomeDialog', () => {
     render(
       <WelcomeDialog
         open={false}
-        onOpenLocalFile={mockOnOpenLocalFile}
-        onCreateNewLocalFile={mockOnCreateNewLocalFile}
-        onConnectOneDrive={mockOnConnectOneDrive}
-        onAuthenticateOneDrive={jest.fn()}
+        onNewFileCreated={mockOnNewFileCreated}
+        onExistingFileSelected={mockOnExistingFileSelected}
       />
     );
 
     expect(screen.queryByText('Welcome to Money Tree')).not.toBeInTheDocument();
   });
 
-  it('should call onOpenLocalFile when Open Existing File button clicked', () => {
+  it('should call onExistingFileSelected when Open Existing File button clicked', async () => {
+    const mockFileHandle = {} as FileSystemFileHandle;
+    (FilePickerService.showOpenFilePicker as jest.Mock).mockResolvedValue(mockFileHandle);
+    (StorageFactory.replaceProvider as jest.Mock).mockResolvedValue(undefined);
+
     render(
       <WelcomeDialog
         open={true}
-        onOpenLocalFile={mockOnOpenLocalFile}
-        onCreateNewLocalFile={mockOnCreateNewLocalFile}
-        onConnectOneDrive={mockOnConnectOneDrive}
-        onAuthenticateOneDrive={jest.fn()}
+        onNewFileCreated={mockOnNewFileCreated}
+        onExistingFileSelected={mockOnExistingFileSelected}
       />
     );
 
     const openFileButton = screen.getByRole('button', { name: /open existing/i });
     fireEvent.click(openFileButton);
 
-    expect(mockOnOpenLocalFile).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(FilePickerService.showOpenFilePicker).toHaveBeenCalledTimes(1);
+      expect(StorageFactory.replaceProvider).toHaveBeenCalledWith({
+        type: StorageProviderType.LOCAL,
+        fileHandle: mockFileHandle,
+      });
+      expect(mockOnExistingFileSelected).toHaveBeenCalledTimes(1);
+    });
   });
 
-  it('should call onCreateNewLocalFile when Create New File clicked', () => {
+  it('should call onNewFileCreated when Create New File clicked', async () => {
+    const mockFileHandle = {} as FileSystemFileHandle;
+    (FilePickerService.showSaveFilePicker as jest.Mock).mockResolvedValue(mockFileHandle);
+    (StorageFactory.replaceProvider as jest.Mock).mockResolvedValue(undefined);
+
     render(
       <WelcomeDialog
         open={true}
-        onOpenLocalFile={mockOnOpenLocalFile}
-        onCreateNewLocalFile={mockOnCreateNewLocalFile}
-        onConnectOneDrive={mockOnConnectOneDrive}
-        onAuthenticateOneDrive={jest.fn()}
+        onNewFileCreated={mockOnNewFileCreated}
+        onExistingFileSelected={mockOnExistingFileSelected}
       />
     );
 
     const createFileButton = screen.getByRole('button', { name: /create new/i });
     fireEvent.click(createFileButton);
 
-    expect(mockOnCreateNewLocalFile).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(FilePickerService.showSaveFilePicker).toHaveBeenCalledWith('money-tree.json');
+      expect(StorageFactory.replaceProvider).toHaveBeenCalledWith({
+        type: StorageProviderType.LOCAL,
+        fileHandle: mockFileHandle,
+      });
+      expect(mockOnNewFileCreated).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('should show helper text about changing location later', () => {
     render(
       <WelcomeDialog
         open={true}
-        onOpenLocalFile={mockOnOpenLocalFile}
-        onCreateNewLocalFile={mockOnCreateNewLocalFile}
-        onConnectOneDrive={mockOnConnectOneDrive}
-        onAuthenticateOneDrive={jest.fn()}
+        onNewFileCreated={mockOnNewFileCreated}
+        onExistingFileSelected={mockOnExistingFileSelected}
       />
     );
 

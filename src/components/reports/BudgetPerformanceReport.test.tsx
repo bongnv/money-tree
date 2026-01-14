@@ -34,7 +34,7 @@ jest.mock('../../stores/useAppStore');
 jest.mock('../../services/exchangeRate.service');
 
 // Mock chart components
-jest.mock('../charts/LineChart', () => ({
+jest.mock('../common/charts/LineChart', () => ({
   LineChart: ({ data, lines }: any) => (
     <div data-testid="line-chart">
       <div data-testid="chart-data">{JSON.stringify(data)}</div>

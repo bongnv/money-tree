@@ -33,7 +33,7 @@ import { useAccountStore } from '../../stores/useAccountStore';
 import { useAppStore } from '../../stores/useAppStore';
 import { useReportService } from '../../contexts/ServiceProviders';
 import type { BudgetPerformanceData } from '../../services/report.service';
-import { LineChart } from '../charts/LineChart';
+import { LineChart } from '../common/charts/LineChart';
 import { PeriodSelector } from '../common/PeriodSelector';
 import { CategoryFilter } from '../common/CategoryFilter';
 import { formatCurrency } from '../../utils/currency.utils';

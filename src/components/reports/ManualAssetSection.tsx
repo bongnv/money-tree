@@ -23,7 +23,7 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import { AssetGroup } from '../../services/report.service';
 import { formatCurrency } from '../../utils/currency.utils';
-import { LineChart } from '../charts/LineChart';
+import { LineChart } from '../common/charts/LineChart';
 import { useAssetStore } from '../../stores/useAssetStore';
 import { getCompleteValueHistory, calculateAssetValueGrowth } from '../../utils/asset.utils';
 import type { CurrencyCode } from '../../types/enums';

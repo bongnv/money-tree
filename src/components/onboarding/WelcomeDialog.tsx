@@ -26,22 +26,18 @@ import { OneDriveFilePicker } from '../onedrive/OneDriveFilePicker';
 import { StorageProviderType } from '../../services/storage/StorageFactory';
 import { FilePickerService } from '../../services/storage/FilePickerService';
 import type { SelectedFileInfo as OneDriveFileInfo } from '../../services/storage/OneDriveProvider';
-import { useStorageFactory } from '../../contexts/ServiceProviders';
+import { useStorageFactory, useSyncService } from '../../contexts/ServiceProviders';
 
 interface WelcomeDialogProps {
   open: boolean;
-  onNewFileCreated: () => Promise<void>;
-  onExistingFileSelected: () => Promise<void>;
+  onClose: () => void;
 }
 
-export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
-  open,
-  onNewFileCreated,
-  onExistingFileSelected,
-}) => {
+export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const storageFactory = useStorageFactory();
+  const syncService = useSyncService();
   const [isConnecting, setIsConnecting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [showOneDriveFilePicker, setShowOneDriveFilePicker] = useState(false);
@@ -78,10 +74,13 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
         });
 
         if (pickerResult.fileId) {
-          await onExistingFileSelected();
+          // Load existing file
+          await syncService.loadDataFile();
         } else {
-          await onNewFileCreated();
+          // Create new file
+          await syncService.syncNow(false, true);
         }
+        onClose();
       }
     } catch (error: any) {
       console.error('Google Drive connection failed:', error);
@@ -100,10 +99,13 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
       });
 
       if (fileInfo.fileId) {
-        await onExistingFileSelected();
+        // Load existing file
+        await syncService.loadDataFile();
       } else {
-        await onNewFileCreated();
+        // Create new file
+        await syncService.syncNow(false, true);
       }
+      onClose();
     } catch (error) {
       console.error('OneDrive file selection failed:', error);
       setAuthError(error instanceof Error ? error.message : 'Failed to connect to OneDrive');
@@ -126,7 +128,8 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
           type: StorageProviderType.LOCAL,
           fileHandle,
         });
-        await onExistingFileSelected();
+        await syncService.loadDataFile();
+        onClose();
       }
     } catch (error) {
       console.error('Failed to open local file:', error);
@@ -143,7 +146,8 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
           type: StorageProviderType.LOCAL,
           fileHandle,
         });
-        await onNewFileCreated();
+        await syncService.syncNow(false, true);
+        onClose();
       }
     } catch (error) {
       console.error('Failed to create new file:', error);

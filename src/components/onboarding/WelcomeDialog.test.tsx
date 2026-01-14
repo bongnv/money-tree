@@ -12,7 +12,7 @@ jest.mock('../../config/googledrive.config', () => ({
   isGoogleDriveConfigured: jest.fn(() => true),
 }));
 
-// Create mock instance
+// Create mock instances
 const mockStorageFactory = {
   replaceProvider: jest.fn(),
   authenticateOneDrive: jest.fn(),
@@ -21,27 +21,26 @@ const mockStorageFactory = {
   listOneDriveFolders: jest.fn(),
 };
 
+const mockSyncService = {
+  loadDataFile: jest.fn(),
+  syncNow: jest.fn(),
+};
+
 // Mock the ServiceProvider context
 jest.mock('../../contexts/ServiceProviders', () => ({
   useStorageFactory: () => mockStorageFactory,
+  useSyncService: () => mockSyncService,
 }));
 
 describe('WelcomeDialog', () => {
-  const mockOnNewFileCreated = jest.fn();
-  const mockOnExistingFileSelected = jest.fn();
+  const mockOnClose = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('should render when open', () => {
-    render(
-      <WelcomeDialog
-        open={true}
-        onNewFileCreated={mockOnNewFileCreated}
-        onExistingFileSelected={mockOnExistingFileSelected}
-      />
-    );
+    render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
     expect(screen.getByText('Welcome to Money Tree')).toBeInTheDocument();
     expect(screen.getByText('Local File Storage')).toBeInTheDocument();
@@ -49,29 +48,18 @@ describe('WelcomeDialog', () => {
   });
 
   it('should not render when closed', () => {
-    render(
-      <WelcomeDialog
-        open={false}
-        onNewFileCreated={mockOnNewFileCreated}
-        onExistingFileSelected={mockOnExistingFileSelected}
-      />
-    );
+    render(<WelcomeDialog open={false} onClose={mockOnClose} />);
 
     expect(screen.queryByText('Welcome to Money Tree')).not.toBeInTheDocument();
   });
 
-  it('should call onExistingFileSelected when Open Existing File button clicked', async () => {
+  it('should load existing file and close dialog when Open Existing File button clicked', async () => {
     const mockFileHandle = {} as FileSystemFileHandle;
     (FilePickerService.showOpenFilePicker as jest.Mock).mockResolvedValue(mockFileHandle);
     mockStorageFactory.replaceProvider.mockResolvedValue(undefined);
+    mockSyncService.loadDataFile.mockResolvedValue(undefined);
 
-    render(
-      <WelcomeDialog
-        open={true}
-        onNewFileCreated={mockOnNewFileCreated}
-        onExistingFileSelected={mockOnExistingFileSelected}
-      />
-    );
+    render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
     const openFileButton = screen.getByRole('button', { name: /open existing/i });
     fireEvent.click(openFileButton);
@@ -82,22 +70,18 @@ describe('WelcomeDialog', () => {
         type: StorageProviderType.LOCAL,
         fileHandle: mockFileHandle,
       });
-      expect(mockOnExistingFileSelected).toHaveBeenCalledTimes(1);
+      expect(mockSyncService.loadDataFile).toHaveBeenCalledTimes(1);
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
   });
 
-  it('should call onNewFileCreated when Create New File clicked', async () => {
+  it('should create new file and close dialog when Create New File clicked', async () => {
     const mockFileHandle = {} as FileSystemFileHandle;
     (FilePickerService.showSaveFilePicker as jest.Mock).mockResolvedValue(mockFileHandle);
     mockStorageFactory.replaceProvider.mockResolvedValue(undefined);
+    mockSyncService.syncNow.mockResolvedValue(undefined);
 
-    render(
-      <WelcomeDialog
-        open={true}
-        onNewFileCreated={mockOnNewFileCreated}
-        onExistingFileSelected={mockOnExistingFileSelected}
-      />
-    );
+    render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
     const createFileButton = screen.getByRole('button', { name: /create new/i });
     fireEvent.click(createFileButton);
@@ -108,18 +92,13 @@ describe('WelcomeDialog', () => {
         type: StorageProviderType.LOCAL,
         fileHandle: mockFileHandle,
       });
-      expect(mockOnNewFileCreated).toHaveBeenCalledTimes(1);
+      expect(mockSyncService.syncNow).toHaveBeenCalledWith(false, true);
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
   });
 
   it('should show helper text about changing location later', () => {
-    render(
-      <WelcomeDialog
-        open={true}
-        onNewFileCreated={mockOnNewFileCreated}
-        onExistingFileSelected={mockOnExistingFileSelected}
-      />
-    );
+    render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
     expect(
       screen.getByText(/you can change your data storage location later in settings/i)

@@ -26,7 +26,7 @@ import { useReportService } from '../../contexts/ServiceProviders';
 import { ManualAssetSection } from './ManualAssetSection';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
 import { AssetValueHistoryDialog } from '../assets/AssetValueHistoryDialog';
-import { LineChart } from '../charts/LineChart';
+import { LineChart } from '../common/charts/LineChart';
 import { formatCurrency } from '../../utils/currency.utils';
 import type { CurrencyCode } from '../../types/enums';
 

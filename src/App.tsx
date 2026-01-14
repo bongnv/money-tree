@@ -5,7 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { Backdrop, CircularProgress } from '@mui/material';
 import theme from './theme';
 import { MainLayout } from './components/layout/MainLayout';
-import { WelcomeDialog } from './components/common/WelcomeDialog';
+import { WelcomeDialog } from './components/onboarding/WelcomeDialog';
 import { NotificationSnackbar } from './components/common/NotificationSnackbar';
 import { MergePreviewDialog, ConflictResolution } from './components/common/MergePreviewDialog';
 import ReconnectDialog from './components/common/ReconnectDialog';
@@ -163,27 +163,6 @@ const AppContent: React.FC = () => {
     };
   }, []); // Register once on mount
 
-  const handleNewFileCreated = async () => {
-    try {
-      // Write initial empty data structure to the new file
-      await syncService.syncNow(false, true);
-      setShowWelcomeDialog(false);
-    } catch (error) {
-      console.error('Failed to create new file:', error);
-      throw error;
-    }
-  };
-
-  const handleExistingFileSelected = async () => {
-    try {
-      await syncService.loadDataFile();
-      setShowWelcomeDialog(false);
-    } catch (error) {
-      console.error('Failed to load file:', error);
-      throw error;
-    }
-  };
-
   const handleMergeCancel = () => {
     if (mergeDialogState.resolve) {
       mergeDialogState.resolve(null);
@@ -229,11 +208,7 @@ const AppContent: React.FC = () => {
       <MainLayout>
         <AppRoutes />
       </MainLayout>
-      <WelcomeDialog
-        open={showWelcomeDialog}
-        onNewFileCreated={handleNewFileCreated}
-        onExistingFileSelected={handleExistingFileSelected}
-      />
+      <WelcomeDialog open={showWelcomeDialog} onClose={() => setShowWelcomeDialog(false)} />
       <NotificationSnackbar
         open={snackbar.open}
         message={snackbar.message}

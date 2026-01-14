@@ -43,32 +43,7 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       sourcemap: mode === 'development',
-      chunkSizeWarningLimit: 800,
-      rollupOptions: {
-        output: {
-          manualChunks: (id) => {
-            if (id.includes('node_modules')) {
-              // Large UI library - split from core React
-              if (id.includes('/@mui/')) {
-                return 'mui';
-              }
-
-              // React and its dependencies
-              if (id.includes('/react') || id.includes('/@emotion/')) {
-                return 'react-vendor';
-              }
-
-              // Charts
-              if (id.includes('/recharts/')) {
-                return 'recharts';
-              }
-
-              // Everything else from node_modules
-              return 'vendor';
-            }
-          },
-        },
-      },
+      chunkSizeWarningLimit: 1000,
     },
     server: {
       port: 3000,

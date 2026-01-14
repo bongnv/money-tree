@@ -6,6 +6,16 @@ import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import prettierConfig from 'eslint-config-prettier';
 import globals from 'globals';
 
+/**
+ * ESLint Configuration
+ *
+ * Key Rules:
+ * - @typescript-eslint/unbound-method: Prevents 'this' context issues when class methods
+ *   are passed as callbacks without proper binding. Ensures developers use arrow function
+ *   properties for methods that might be used as callbacks (e.g., in OAuth flows).
+ *   Disabled for test files and Zustand stores (function-based, not class-based).
+ */
+
 export default [
   {
     files: ['src/**/*.{ts,tsx}'],
@@ -47,6 +57,13 @@ export default [
         'warn',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+      // Prevent 'this' context issues - warns when class methods are passed without binding
+      '@typescript-eslint/unbound-method': [
+        'error',
+        {
+          ignoreStatic: true,
+        },
+      ],
 
       // React specific rules
       'react/react-in-jsx-scope': 'off',
@@ -62,6 +79,13 @@ export default [
       react: {
         version: 'detect',
       },
+    },
+  },
+  // Disable unbound-method for Zustand stores and tests (they use functions, not classes)
+  {
+    files: ['src/stores/**/*.ts', 'src/**/*.test.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/unbound-method': 'off',
     },
   },
   prettierConfig,

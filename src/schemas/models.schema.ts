@@ -65,7 +65,8 @@ export const TransactionSchema = z.object({
   transactionTypeId: z.string().min(1, 'Transaction type ID is required'),
   fromAccountId: z.string().optional(),
   toAccountId: z.string().optional(),
-  notes: z.string().optional(),
+  fromAssetId: z.string().optional(),
+  toAssetId: z.string().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });

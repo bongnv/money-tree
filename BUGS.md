@@ -12,3 +12,4 @@
 - [x] BUG-12: Fix archiving files for shared folder
 - [x] BUG-13: Backup prompt doesn't show when file is loaded for the first time and has never been backed up (lastBackupDate is null but baseVersion exists)
 - [x] BUG-14: Dashboard cashflow calculation doesn't handle multi-currency properly - sums transaction amounts without converting to base currency
+- [x] BUG-15: Transaction schema missing fromAssetId and toAssetId fields - caused asset-linked transactions to lose their asset references when saved and reloaded from file

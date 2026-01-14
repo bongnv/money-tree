@@ -11,8 +11,30 @@ jest.mock('./components/transactions/TransactionsPage', () => ({
   TransactionsPage: () => <div data-testid="transactions-page">Transactions Page</div>,
 }));
 
-jest.mock('./components/reports/ReportsPage', () => ({
-  ReportsPage: () => <div data-testid="reports-page">Reports Page</div>,
+jest.mock('./components/reports/ReportsPage', () => {
+  const { Outlet } = jest.requireActual('react-router-dom');
+  return {
+    ReportsPage: () => (
+      <div data-testid="reports-page">
+        Reports Page
+        <Outlet />
+      </div>
+    ),
+  };
+});
+
+jest.mock('./components/reports/BalanceSheet', () => ({
+  BalanceSheet: () => <div data-testid="balance-sheet">Balance Sheet</div>,
+}));
+
+jest.mock('./components/reports/CashFlowReport', () => ({
+  CashFlowReport: () => <div data-testid="cash-flow-report">Cash Flow Report</div>,
+}));
+
+jest.mock('./components/reports/BudgetPerformanceReport', () => ({
+  BudgetPerformanceReport: () => (
+    <div data-testid="budget-performance-report">Budget Performance Report</div>
+  ),
 }));
 
 jest.mock('./components/budgets/BudgetsPage', () => ({
@@ -61,10 +83,30 @@ describe('AppRoutes', () => {
       expect(screen.getByText('Transactions Page')).toBeInTheDocument();
     });
 
-    it('renders ReportsPage at /reports route', () => {
+    it('renders ReportsPage at /reports route and redirects to balance-sheet', async () => {
       renderWithRouter('/reports');
       expect(screen.getByTestId('reports-page')).toBeInTheDocument();
-      expect(screen.getByText('Reports Page')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId('balance-sheet')).toBeInTheDocument();
+      });
+    });
+
+    it('renders BalanceSheet at /reports/balance-sheet route', () => {
+      renderWithRouter('/reports/balance-sheet');
+      expect(screen.getByTestId('reports-page')).toBeInTheDocument();
+      expect(screen.getByTestId('balance-sheet')).toBeInTheDocument();
+    });
+
+    it('renders CashFlowReport at /reports/cash-flow route', () => {
+      renderWithRouter('/reports/cash-flow');
+      expect(screen.getByTestId('reports-page')).toBeInTheDocument();
+      expect(screen.getByTestId('cash-flow-report')).toBeInTheDocument();
+    });
+
+    it('renders BudgetPerformanceReport at /reports/budget-performance route', () => {
+      renderWithRouter('/reports/budget-performance');
+      expect(screen.getByTestId('reports-page')).toBeInTheDocument();
+      expect(screen.getByTestId('budget-performance-report')).toBeInTheDocument();
     });
 
     it('renders BudgetsPage at /budgets route', () => {

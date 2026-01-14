@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ReportsPage } from './ReportsPage';
 
 // Mock the report components to avoid complex dependencies
@@ -16,52 +17,66 @@ jest.mock('./BudgetPerformanceReport', () => ({
   ),
 }));
 
+const renderWithRouter = (initialPath = '/reports/balance-sheet') => {
+  return render(
+    <MemoryRouter initialEntries={[initialPath]}>
+      <Routes>
+        <Route path="/reports" element={<ReportsPage />}>
+          <Route
+            path="balance-sheet"
+            element={<div data-testid="balance-sheet">Balance Sheet Component</div>}
+          />
+          <Route
+            path="cash-flow"
+            element={<div data-testid="cash-flow-report">Cash Flow Report</div>}
+          />
+          <Route
+            path="budget-performance"
+            element={<div data-testid="budget-performance-report">Budget Performance Report</div>}
+          />
+        </Route>
+      </Routes>
+    </MemoryRouter>
+  );
+};
+
 describe('ReportsPage', () => {
   it('renders the page title', () => {
-    render(<ReportsPage />);
+    renderWithRouter();
     expect(screen.getByText('Financial Reports')).toBeInTheDocument();
   });
 
   it('renders tabs for Balance Sheet, Cash Flow, and Budget Performance', () => {
-    render(<ReportsPage />);
+    renderWithRouter();
     expect(screen.getByRole('tab', { name: /balance sheet/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /cash flow/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /budget performance/i })).toBeInTheDocument();
   });
 
   it('shows Balance Sheet tab by default', () => {
-    render(<ReportsPage />);
+    renderWithRouter('/reports/balance-sheet');
     expect(screen.getByTestId('balance-sheet')).toBeInTheDocument();
   });
 
   it('Cash Flow tab is enabled', () => {
-    render(<ReportsPage />);
+    renderWithRouter();
     const cashFlowTab = screen.getByRole('tab', { name: /cash flow/i });
     expect(cashFlowTab).not.toBeDisabled();
   });
 
   it('shows Cash Flow report when tab is clicked', () => {
-    render(<ReportsPage />);
-
-    const cashFlowTab = screen.getByRole('tab', { name: /cash flow/i });
-    fireEvent.click(cashFlowTab);
-
-    // Cash Flow report should be visible
+    renderWithRouter('/reports/cash-flow');
     expect(screen.getByTestId('cash-flow-report')).toBeInTheDocument();
   });
 
-  it('Balance Sheet tab is selected by default', () => {
-    render(<ReportsPage />);
+  it('Balance Sheet tab is selected when on balance-sheet route', () => {
+    renderWithRouter('/reports/balance-sheet');
     const balanceSheetTab = screen.getByRole('tab', { name: /balance sheet/i });
     expect(balanceSheetTab).toHaveAttribute('aria-selected', 'true');
   });
 
-  it('shows Budget Performance report when tab is clicked', () => {
-    render(<ReportsPage />);
-
-    const budgetPerformanceTab = screen.getByRole('tab', { name: /budget performance/i });
-    fireEvent.click(budgetPerformanceTab);
-
+  it('shows Budget Performance report when on budget-performance route', () => {
+    renderWithRouter('/reports/budget-performance');
     expect(screen.getByTestId('budget-performance-report')).toBeInTheDocument();
   });
 });

@@ -169,44 +169,44 @@ export const CashFlowReport: React.FC = () => {
     setSelectedCategories([]);
   };
 
-  // Prepare pie chart and table data - group by transaction type if categories are filtered
-  const [chartTableData, setChartTableData] = useState<{
+  // Prepare pie chart and table data - derive from cashFlow when no filter
+  // When filter is applied, calculate by transaction type
+  const hasFilter = selectedCategories.length > 0;
+
+  // For no filter case - use cashFlow data directly
+  const unfiltered = useMemo(() => {
+    if (hasFilter) return null;
+    return {
+      incomePieData: cashFlow.income.map((cat) => ({
+        name: cat.categoryName,
+        value: cat.total,
+      })),
+      expensesPieData: cashFlow.expenses.map((cat) => ({
+        name: cat.categoryName,
+        value: cat.total,
+      })),
+      incomeDetailData: cashFlow.income.map((cat) => ({ ...cat, isTransactionType: false })),
+      expenseDetailData: cashFlow.expenses.map((cat) => ({ ...cat, isTransactionType: false })),
+      groupingLabel: 'Category',
+    };
+  }, [hasFilter, cashFlow.income, cashFlow.expenses]);
+
+  // For filtered case - group by transaction type
+  const [filteredChartData, setFilteredChartData] = useState<{
     incomePieData: { name: string; value: number }[];
     expensesPieData: { name: string; value: number }[];
     incomeDetailData: any[];
     expenseDetailData: any[];
     groupingLabel: string;
-  }>({
-    incomePieData: [],
-    expensesPieData: [],
-    incomeDetailData: [],
-    expenseDetailData: [],
-    groupingLabel: 'Category',
-  });
+  } | null>(null);
 
   useEffect(() => {
-    const calculateChartData = async () => {
-      const hasFilter = selectedCategories.length > 0;
+    if (!hasFilter) {
+      setFilteredChartData(null);
+      return;
+    }
 
-      if (!hasFilter) {
-        // No filter - show by category
-        setChartTableData({
-          incomePieData: cashFlow.income.map((cat) => ({
-            name: cat.categoryName,
-            value: cat.total,
-          })),
-          expensesPieData: cashFlow.expenses.map((cat) => ({
-            name: cat.categoryName,
-            value: cat.total,
-          })),
-          incomeDetailData: cashFlow.income.map((cat) => ({ ...cat, isTransactionType: false })),
-          expenseDetailData: cashFlow.expenses.map((cat) => ({ ...cat, isTransactionType: false })),
-          groupingLabel: 'Category',
-        });
-        return;
-      }
-
-      // Filter applied - group by transaction type using calculation service
+    const calculateFiltered = async () => {
       const { incomeByType, expenseByType } =
         await calculationService.calculateTransactionTypeGrouping(
           filteredTransactions,
@@ -215,7 +215,7 @@ export const CashFlowReport: React.FC = () => {
           conversionCurrency
         );
 
-      setChartTableData({
+      setFilteredChartData({
         incomePieData: Array.from(incomeByType.values()).map((item) => ({
           name: item.name,
           value: item.total,
@@ -242,13 +242,21 @@ export const CashFlowReport: React.FC = () => {
       });
     };
 
-    calculateChartData();
+    calculateFiltered();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategories, conversionCurrency]);
-  // cashFlow, filteredTransactions, transactionTypes, and accounts are stable or captured in closure
+  }, [hasFilter, selectedCategories, conversionCurrency, startDate, endDate]);
+  // filteredTransactions, transactionTypes, and accounts are stable or captured in closure
 
+  // Use the appropriate data source
+  const chartTableData = hasFilter ? filteredChartData : unfiltered;
   const { incomePieData, expensesPieData, incomeDetailData, expenseDetailData, groupingLabel } =
-    chartTableData;
+    chartTableData || {
+      incomePieData: [],
+      expensesPieData: [],
+      incomeDetailData: [],
+      expenseDetailData: [],
+      groupingLabel: 'Category',
+    };
 
   return (
     <Box sx={{ p: 3 }}>

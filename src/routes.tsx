@@ -3,6 +3,9 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { DashboardPage } from './components/dashboard/DashboardPage';
 import { TransactionsPage } from './components/transactions/TransactionsPage';
 import { ReportsPage } from './components/reports/ReportsPage';
+import { BalanceSheet } from './components/reports/BalanceSheet';
+import { CashFlowReport } from './components/reports/CashFlowReport';
+import { BudgetPerformanceReport } from './components/reports/BudgetPerformanceReport';
 import { BudgetsPage } from './components/budgets/BudgetsPage';
 import { NotFoundPage } from './components/common/NotFoundPage';
 
@@ -21,7 +24,12 @@ export const AppRoutes: React.FC = () => {
       {/* Main routes */}
       <Route path="/" element={<DashboardPage />} />
       <Route path="/transactions" element={<TransactionsPage />} />
-      <Route path="/reports" element={<ReportsPage />} />
+      <Route path="/reports" element={<ReportsPage />}>
+        <Route index element={<Navigate to="/reports/balance-sheet" replace />} />
+        <Route path="balance-sheet" element={<BalanceSheet />} />
+        <Route path="cash-flow" element={<CashFlowReport />} />
+        <Route path="budget-performance" element={<BudgetPerformanceReport />} />
+      </Route>
       <Route path="/budgets" element={<BudgetsPage />} />
 
       {/* Settings routes */}

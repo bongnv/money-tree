@@ -1,28 +1,23 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Box, Container, Paper, Tabs, Tab, Typography } from '@mui/material';
-import { BalanceSheet } from './BalanceSheet';
-import { CashFlowReport } from './CashFlowReport';
-import { BudgetPerformanceReport } from './BudgetPerformanceReport';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
-  return (
-    <div role="tabpanel" hidden={value !== index}>
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-    </div>
-  );
-};
+const REPORT_TABS = [
+  { label: 'Balance Sheet', path: '/reports/balance-sheet' },
+  { label: 'Cash Flow', path: '/reports/cash-flow' },
+  { label: 'Budget Performance', path: '/reports/budget-performance' },
+];
 
 export const ReportsPage: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState(0);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Determine current tab based on URL
+  const currentTab = REPORT_TABS.findIndex((tab) => location.pathname === tab.path);
+  const activeTab = currentTab >= 0 ? currentTab : 0;
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setCurrentTab(newValue);
+    navigate(REPORT_TABS[newValue].path);
   };
 
   return (
@@ -34,26 +29,18 @@ export const ReportsPage: React.FC = () => {
 
         <Paper sx={{ mt: 3 }}>
           <Tabs
-            value={currentTab}
+            value={activeTab}
             onChange={handleTabChange}
             sx={{ borderBottom: 1, borderColor: 'divider' }}
           >
-            <Tab label="Balance Sheet" />
-            <Tab label="Cash Flow" />
-            <Tab label="Budget Performance" />
+            {REPORT_TABS.map((tab) => (
+              <Tab key={tab.path} label={tab.label} />
+            ))}
           </Tabs>
 
-          <TabPanel value={currentTab} index={0}>
-            <BalanceSheet />
-          </TabPanel>
-
-          <TabPanel value={currentTab} index={1}>
-            <CashFlowReport />
-          </TabPanel>
-
-          <TabPanel value={currentTab} index={2}>
-            <BudgetPerformanceReport />
-          </TabPanel>
+          <Box>
+            <Outlet />
+          </Box>
         </Paper>
       </Box>
     </Container>

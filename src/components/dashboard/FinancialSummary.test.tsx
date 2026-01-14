@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { FinancialSummary } from './FinancialSummary';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useTransactionStore } from '../../stores/useTransactionStore';
@@ -164,7 +165,11 @@ describe('FinancialSummary', () => {
   });
 
   it('renders financial summary cards', async () => {
-    render(<FinancialSummary period={mockPeriod} />);
+    render(
+      <MemoryRouter>
+        <FinancialSummary period={mockPeriod} />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Net Worth')).toBeInTheDocument();
@@ -175,7 +180,11 @@ describe('FinancialSummary', () => {
   });
 
   it('calculates and displays net worth correctly', async () => {
-    render(<FinancialSummary period={mockPeriod} />);
+    render(
+      <MemoryRouter>
+        <FinancialSummary period={mockPeriod} />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(mockCalculationService.calculateNetWorth).toHaveBeenCalled();
@@ -184,7 +193,11 @@ describe('FinancialSummary', () => {
   });
 
   it('calculates and displays cash flow correctly', async () => {
-    render(<FinancialSummary period={mockPeriod} />);
+    render(
+      <MemoryRouter>
+        <FinancialSummary period={mockPeriod} />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(mockReportService.calculateCashFlow).toHaveBeenCalled();
@@ -193,7 +206,11 @@ describe('FinancialSummary', () => {
   });
 
   it('displays savings rate', async () => {
-    render(<FinancialSummary period={mockPeriod} />);
+    render(
+      <MemoryRouter>
+        <FinancialSummary period={mockPeriod} />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Savings Rate')).toBeInTheDocument();
@@ -210,7 +227,11 @@ describe('FinancialSummary', () => {
       expenses: [],
     });
 
-    render(<FinancialSummary period={mockPeriod} />);
+    render(
+      <MemoryRouter>
+        <FinancialSummary period={mockPeriod} />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Cash Flow')).toBeInTheDocument();
@@ -220,7 +241,11 @@ describe('FinancialSummary', () => {
   it('handles negative net worth', async () => {
     (mockCalculationService.calculateNetWorth as jest.Mock).mockResolvedValue(-5000);
 
-    render(<FinancialSummary period={mockPeriod} />);
+    render(
+      <MemoryRouter>
+        <FinancialSummary period={mockPeriod} />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Net Worth')).toBeInTheDocument();
@@ -234,7 +259,11 @@ describe('FinancialSummary', () => {
       endDate: '2025-12-31',
     };
 
-    render(<FinancialSummary period={customPeriod} />);
+    render(
+      <MemoryRouter>
+        <FinancialSummary period={customPeriod} />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(mockReportService.calculateCashFlow).toHaveBeenCalled();

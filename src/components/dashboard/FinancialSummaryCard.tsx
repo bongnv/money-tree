@@ -11,6 +11,7 @@ export interface FinancialSummaryCardProps {
     label: string;
   };
   color?: 'success' | 'warning' | 'error' | 'default';
+  onClick?: () => void;
 }
 
 export const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
@@ -18,6 +19,7 @@ export const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
   value,
   trend,
   color = 'default',
+  onClick,
 }) => {
   const getColorValue = () => {
     switch (color) {
@@ -33,7 +35,19 @@ export const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
   };
 
   return (
-    <Card>
+    <Card
+      onClick={onClick}
+      sx={{
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        '&:hover': onClick
+          ? {
+              transform: 'translateY(-4px)',
+              boxShadow: 4,
+            }
+          : {},
+      }}
+    >
       <CardContent>
         <Typography variant="subtitle2" color="text.secondary" gutterBottom>
           {title}

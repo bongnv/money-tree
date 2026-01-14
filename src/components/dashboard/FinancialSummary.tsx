@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Box, Grid, Alert } from '@mui/material';
 import { FinancialSummaryCard } from './FinancialSummaryCard';
 import { useAccountStore } from '../../stores/useAccountStore';
@@ -23,6 +24,7 @@ const formatAmount = (amount: number): string => {
 };
 
 export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) => {
+  const navigate = useNavigate();
   const accounts = useAccountStore((state) => state.accounts);
   const transactions = useTransactionStore((state) => state.transactions);
   const manualAssets = useAssetStore((state) => state.manualAssets);
@@ -140,13 +142,18 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
       )}
       <Grid container spacing={3}>
         <Grid item xs={12} sm={6} md={3}>
-          <FinancialSummaryCard title="Net Worth" value={formatAmount(netWorth)} />
+          <FinancialSummaryCard
+            title="Net Worth"
+            value={formatAmount(netWorth)}
+            onClick={() => navigate('/reports/balance-sheet')}
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <FinancialSummaryCard
             title="Cash Flow"
             value={formatAmount(cashFlow)}
             color={cashFlow >= 0 ? 'success' : 'error'}
+            onClick={() => navigate('/reports/cash-flow')}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
@@ -154,6 +161,7 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
             title="Savings Rate"
             value={`${savingsRate.toFixed(1)}%`}
             color={getSavingsRateColor()}
+            onClick={() => navigate('/reports/cash-flow')}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
@@ -161,6 +169,7 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
             title="Budget Health"
             value={`${budgetHealth.toFixed(0)}%`}
             color={getBudgetHealthColor()}
+            onClick={() => navigate('/reports/budget-performance')}
           />
         </Grid>
       </Grid>

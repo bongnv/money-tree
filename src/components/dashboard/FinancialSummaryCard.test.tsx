@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { FinancialSummaryCard } from './FinancialSummaryCard';
 
 describe('FinancialSummaryCard', () => {
@@ -54,5 +54,20 @@ describe('FinancialSummaryCard', () => {
     render(<FinancialSummaryCard title="Overspent" value="-$500" color="error" />);
     const valueElement = screen.getByText('-$500');
     expect(valueElement).toBeInTheDocument();
+  });
+
+  it('calls onClick when card is clicked', () => {
+    const handleClick = jest.fn();
+    render(<FinancialSummaryCard title="Net Worth" value="$10,000" onClick={handleClick} />);
+    const card = screen.getByText('Net Worth').closest('.MuiCard-root');
+    fireEvent.click(card!);
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call onClick when not provided', () => {
+    render(<FinancialSummaryCard title="Net Worth" value="$10,000" />);
+    const card = screen.getByText('Net Worth').closest('.MuiCard-root');
+    // Should not throw error when clicked without onClick
+    expect(() => fireEvent.click(card!)).not.toThrow();
   });
 });

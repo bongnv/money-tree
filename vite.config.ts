@@ -43,11 +43,29 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       sourcemap: mode === 'development',
+      chunkSizeWarningLimit: 800,
       rollupOptions: {
         output: {
-          manualChunks: {
-            vendor: ['react', 'react-dom', 'react-router-dom'],
-            mui: ['@mui/material', '@mui/icons-material', '@mui/x-data-grid'],
+          manualChunks: (id) => {
+            if (id.includes('node_modules')) {
+              // Large UI library - split from core React
+              if (id.includes('/@mui/')) {
+                return 'mui';
+              }
+
+              // React and its dependencies
+              if (id.includes('/react') || id.includes('/@emotion/')) {
+                return 'react-vendor';
+              }
+
+              // Charts
+              if (id.includes('/recharts/')) {
+                return 'recharts';
+              }
+
+              // Everything else from node_modules
+              return 'vendor';
+            }
           },
         },
       },

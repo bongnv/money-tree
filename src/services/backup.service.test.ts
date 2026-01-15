@@ -129,7 +129,7 @@ describe('BackupService', () => {
       await backupService.saveBackupToStorage();
 
       expect(mockProvider.saveFile).toHaveBeenCalledWith(
-        expect.any(Uint8Array),
+        expect.any(Blob),
         expect.stringMatching(/^money-tree-backup-\d{4}-\d{2}-\d{2}-\d{6}\.gz$/)
       );
       expect(useAppStore.getState().setLastBackupDate).toHaveBeenCalledWith(expect.any(String));
@@ -170,11 +170,8 @@ describe('BackupService', () => {
       await backupService.saveBackupToStorage();
 
       expect(mockProvider.saveFile).toHaveBeenCalled();
-      // Verify gzipSync was used (mocked to return Uint8Array)
-      expect(mockProvider.saveFile).toHaveBeenCalledWith(
-        expect.any(Uint8Array),
-        expect.any(String)
-      );
+      // Verify gzipSync was used and converted to Blob
+      expect(mockProvider.saveFile).toHaveBeenCalledWith(expect.any(Blob), expect.any(String));
     });
   });
 });

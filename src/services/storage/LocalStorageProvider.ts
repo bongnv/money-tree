@@ -111,10 +111,10 @@ export class LocalStorageProvider implements IStorageProvider {
   /**
    * Save a file (e.g., backup ZIP, archive JSON)
    * Shows file picker for user to select save location
-   * @param data The data to save (string for JSON, Uint8Array for compressed/binary)
+   * @param data The data to save (string for JSON, Blob for compressed/binary)
    * @param filename The suggested filename
    */
-  async saveFile(data: string | Uint8Array, filename: string): Promise<void> {
+  async saveFile(data: string | Blob, filename: string): Promise<void> {
     // Show save file picker with suggested name
     const { FilePickerService } = await import('./FilePickerService');
 
@@ -126,8 +126,7 @@ export class LocalStorageProvider implements IStorageProvider {
 
     // Write data to file
     const writable = await fileHandle.createWritable();
-    // Cast Uint8Array to avoid TypeScript incompatibility with SharedArrayBuffer
-    await writable.write(data instanceof Uint8Array ? (data as Uint8Array<ArrayBuffer>) : data);
+    await writable.write(data);
     await writable.close();
   }
 }

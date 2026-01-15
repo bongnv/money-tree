@@ -60,6 +60,9 @@ export class BackupService {
     // Compress with maximum compression level (9)
     const compressed = gzipSync(uint8Array, { level: 9 });
 
+    // Convert to Blob for browser compatibility
+    const blob = new Blob([compressed], { type: 'application/gzip' });
+
     // Generate filename with timestamp
     const filename = this.generateBackupFilename();
 
@@ -68,7 +71,7 @@ export class BackupService {
 
     try {
       // Save using storage provider (file picker for local, next to main file for OneDrive)
-      await provider.saveFile(compressed, filename);
+      await provider.saveFile(blob, filename);
 
       // Update lastBackupDate in appStore
       const now = new Date().toISOString();

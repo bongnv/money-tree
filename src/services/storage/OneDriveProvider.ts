@@ -168,10 +168,10 @@ export class OneDriveProvider implements IStorageProvider {
   /**
    * Save a file (e.g., backup ZIP, archive JSON) to OneDrive
    * Saves next to the main file in the same folder
-   * @param data The data to save (string for JSON, Uint8Array for compressed/binary)
+   * @param data The data to save (string for JSON, Blob for compressed/binary)
    * @param filename The filename to use
    */
-  async saveFile(data: string | Uint8Array, filename: string): Promise<void> {
+  async saveFile(data: string | Blob, filename: string): Promise<void> {
     // Extract the actual path (remove Graph API prefixes)
     const actualPath = this.extractActualPath(this.selectedFileInfo.filePath);
 

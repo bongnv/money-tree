@@ -27,11 +27,11 @@ export interface IStorageProvider {
   /**
    * Save a file (e.g., backup ZIP, archive JSON)
    * Provider handles showing file picker (Local) or determining location (OneDrive)
-   * @param data The data to save (string for JSON, Uint8Array for compressed/binary)
+   * @param data The data to save (string for JSON, Blob for compressed/binary)
    * @param filename The suggested filename
    * @throws Error if saving fails or user cancels
    */
-  saveFile(data: string | Uint8Array, filename: string): Promise<void>;
+  saveFile(data: string | Blob, filename: string): Promise<void>;
 
   /**
    * Get the name of the current file

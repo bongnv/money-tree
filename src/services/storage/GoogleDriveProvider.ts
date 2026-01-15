@@ -111,10 +111,10 @@ export class GoogleDriveProvider implements IStorageProvider {
   /**
    * Save a file (e.g., backup ZIP, archive JSON) to Google Drive
    * Saves in the same folder as the main file
-   * @param data The data to save (string for JSON, Uint8Array for compressed/binary)
+   * @param data The data to save (string for JSON, Blob for compressed/binary)
    * @param filename The filename to use
    */
-  async saveFile(data: string | Uint8Array, filename: string): Promise<void> {
+  async saveFile(data: string | Blob, filename: string): Promise<void> {
     try {
       // Create file in the same folder as the main file
       await this.service.createFile(filename, data, this.selectedFileInfo.parentId);

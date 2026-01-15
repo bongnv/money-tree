@@ -247,11 +247,7 @@ export class GoogleDriveService {
    * @param content File content
    * @param parentId Parent folder ID (optional)
    */
-  async createFile(
-    name: string,
-    content: string | Uint8Array,
-    parentId?: string
-  ): Promise<DriveFile> {
+  async createFile(name: string, content: string | Blob, parentId?: string): Promise<DriveFile> {
     const token = await this.getAccessToken();
 
     const metadata = {
@@ -262,16 +258,11 @@ export class GoogleDriveService {
 
     const form = new FormData();
     form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-    // Create Blob from content
+    // Append content blob
     if (typeof content === 'string') {
       form.append('file', new Blob([content], { type: driveApiConfig.jsonMimeType }));
     } else {
-      // Convert Uint8Array buffer to ArrayBuffer for Blob
-      const buffer = content.buffer.slice(
-        content.byteOffset,
-        content.byteOffset + content.byteLength
-      ) as ArrayBuffer;
-      form.append('file', new Blob([buffer], { type: driveApiConfig.jsonMimeType }));
+      form.append('file', content);
     }
 
     const response = await fetch(

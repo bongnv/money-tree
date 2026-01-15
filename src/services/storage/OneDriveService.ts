@@ -177,11 +177,15 @@ export class OneDriveService {
   /**
    * Write file to OneDrive using Graph API endpoint
    * @param endpoint The Graph API endpoint (e.g., '/me/drive/items/{id}/content')
-   * @param content The file content to write (string for JSON, Uint8Array for compressed/binary)
+   * @param content The file content to write (string for JSON, Blob for compressed/binary)
    */
-  async writeFile(endpoint: string, content: string | Uint8Array): Promise<any> {
-    const client = await this.getGraphClient();
-    return client.api(endpoint).put(content);
+  async writeFile(endpoint: string, content: string | Blob): Promise<any> {
+    try {
+      const client = await this.getGraphClient();
+      return await client.api(endpoint).put(content);
+    } catch (error: any) {
+      throw this.createFriendlyError(error);
+    }
   }
 
   /**
@@ -238,11 +242,32 @@ export class OneDriveService {
   private createFriendlyError(error: any): Error {
     const statusCode = error?.statusCode;
     const code = error?.code;
+    const message = error?.message;
+    const body = error?.body;
+
+    // Log full error for debugging
+    console.error('[OneDriveService] Graph API Error:', {
+      statusCode,
+      code,
+      message,
+      body,
+      error,
+    });
 
     if (statusCode === 401 || code === 'InvalidAuthenticationToken') {
       return new Error('Authentication expired. Please reconnect to OneDrive.');
     }
 
-    return new Error('Failed to load folder contents');
+    if (statusCode === 403) {
+      return new Error('Permission denied. Please check OneDrive permissions.');
+    }
+
+    if (statusCode === 404) {
+      return new Error('Folder or file not found.');
+    }
+
+    // Use the error message if available, otherwise generic message
+    const errorMessage = message || body?.error?.message || 'Failed to load folder contents';
+    return new Error(errorMessage);
   }
 }

@@ -47,10 +47,26 @@ Mark task as complete only if all three pass.
 - Small, focused functions
 - Minimal comments (only for non-obvious logic)
 
+## Implementation Approach
+
+**IMPORTANT**: Do not jump into implementation immediately.
+
+When user requests a change or new feature:
+1. **Analyze** the request and current codebase
+2. **Suggest** 2-3 implementation options with pros/cons
+3. **Wait** for user to choose an approach
+4. **Implement** only after alignment is confirmed
+
+Exception: Only proceed directly with implementation for:
+- Simple, unambiguous fixes (typos, formatting)
+- Explicit debugging tasks ("fix this error")
+- Follow-up implementations where approach is already agreed
+
 ## Communication
 
 - Chat summaries only (no status files)
 - Concise responses
+- Present options before implementing
 
 ## Command Output Management
 - Write output from time-consuming commands to tmp/ folder for repeated examination

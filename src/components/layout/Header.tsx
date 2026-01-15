@@ -90,20 +90,36 @@ export const Header: React.FC = () => {
   return (
     <AppBar position="static">
       <Toolbar>
-        <Typography
-          variant="h6"
-          component="div"
-          onClick={() => navigate('/')}
-          sx={{
-            mr: 4,
-            cursor: 'pointer',
-            '&:hover': {
-              opacity: 0.8,
-            },
-          }}
-        >
-          Money Tree
-        </Typography>
+        {/* Desktop: Show Money Tree text */}
+        {!isMobile && (
+          <Typography
+            variant="h6"
+            component="div"
+            onClick={() => navigate('/')}
+            sx={{
+              mr: 4,
+              cursor: 'pointer',
+              '&:hover': {
+                opacity: 0.8,
+              },
+            }}
+          >
+            Money Tree
+          </Typography>
+        )}
+
+        {/* Mobile Menu Button - positioned at start */}
+        {isMobile && (
+          <IconButton
+            color="inherit"
+            aria-label="menu"
+            edge="start"
+            onClick={() => setMobileMenuOpen(true)}
+            sx={{ mr: 2 }}
+          >
+            <MenuIcon />
+          </IconButton>
+        )}
 
         {/* Desktop Navigation */}
         {!isMobile && (
@@ -124,21 +140,8 @@ export const Header: React.FC = () => {
           </Box>
         )}
 
-        {/* Mobile Menu Button */}
-        {isMobile && (
-          <>
-            <Box sx={{ flexGrow: 1 }} />
-            <IconButton
-              color="inherit"
-              aria-label="menu"
-              edge="start"
-              onClick={() => setMobileMenuOpen(true)}
-              sx={{ mr: 2 }}
-            >
-              <MenuIcon />
-            </IconButton>
-          </>
-        )}
+        {/* Mobile: Spacer */}
+        {isMobile && <Box sx={{ flexGrow: 1 }} />}
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {fileName && (
@@ -172,6 +175,28 @@ export const Header: React.FC = () => {
           onClick={() => setMobileMenuOpen(false)}
           onKeyDown={() => setMobileMenuOpen(false)}
         >
+          {/* Money Tree branding in drawer */}
+          <Box
+            sx={{
+              p: 2,
+              borderBottom: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <Typography
+              variant="h6"
+              component="div"
+              onClick={() => handleNavigation('/')}
+              sx={{
+                cursor: 'pointer',
+                color: 'primary.main',
+                fontWeight: 'bold',
+              }}
+            >
+              Money Tree
+            </Typography>
+          </Box>
+
           <List>
             {navItems.map((item) => (
               <ListItem key={item.path} disablePadding>

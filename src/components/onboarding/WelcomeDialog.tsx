@@ -82,7 +82,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
           await syncService.loadDataFile();
         } else {
           // Create new file
-          await syncService.syncNow(false, true);
+          await syncService.syncNow(true);
         }
         onClose();
       }
@@ -110,7 +110,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
         await syncService.loadDataFile();
       } else {
         // Create new file
-        await syncService.syncNow(false, true);
+        await syncService.syncNow(true);
       }
       onClose();
     } catch (error) {
@@ -162,7 +162,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
           type: StorageProviderType.LOCAL,
           fileHandle,
         });
-        await syncService.syncNow(false, true);
+        await syncService.syncNow(true);
         onClose();
       }
     } catch (error) {

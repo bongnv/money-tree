@@ -136,10 +136,9 @@ export class SyncService {
   /**
    * Sync data immediately
    * Saves current state to storage provider
-   * @param background - If true, won't show blocking loading screen (used for auto-save)
    * @param force - If true, save even if there are no unsaved changes (used for creating new files)
    */
-  async syncNow(background: boolean = false, force: boolean = false): Promise<void> {
+  async syncNow(force: boolean = false): Promise<void> {
     if (this.isSaving) {
       return;
     }
@@ -151,13 +150,7 @@ export class SyncService {
     }
 
     this.isSaving = true;
-    // Only show blocking loading screen for user-initiated syncs
-    if (!background) {
-      state.setLoading(true);
-    } else {
-      // Show syncing indicator for background syncs
-      state.setIsSyncing(true);
-    }
+    state.setIsSyncing(true);
 
     try {
       const storage = this.storageFactory.getCurrentProvider();
@@ -218,10 +211,8 @@ export class SyncService {
                 if (!resolutions) {
                   // User cancelled the merge
                   this.isSaving = false;
-                  // Only clear loading if we set it (not in background)
-                  if (!background) {
-                    state.setLoading(false);
-                  }
+                  state.setUnsavedChanges(true);
+                  state.setIsSyncing(false);
                   return;
                 }
 
@@ -274,13 +265,7 @@ export class SyncService {
       throw error;
     } finally {
       this.isSaving = false;
-      // Only clear loading state if we set it
-      if (!background) {
-        state.setLoading(false);
-      } else {
-        // Clear syncing indicator for background syncs
-        state.setIsSyncing(false);
-      }
+      state.setIsSyncing(false);
     }
   }
 
@@ -296,8 +281,7 @@ export class SyncService {
 
       if (state.hasUnsavedChanges && !this.isSaving) {
         try {
-          // Pass true for background sync to avoid blocking UI
-          await this.syncNow(true);
+          await this.syncNow();
         } catch (error) {
           console.error('Auto-sync failed:', error);
         }

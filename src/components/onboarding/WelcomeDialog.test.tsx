@@ -97,7 +97,7 @@ describe('WelcomeDialog', () => {
         type: StorageProviderType.LOCAL,
         fileHandle: mockFileHandle,
       });
-      expect(mockSyncService.syncNow).toHaveBeenCalledWith(false, true);
+      expect(mockSyncService.syncNow).toHaveBeenCalledWith(true);
       expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
   });

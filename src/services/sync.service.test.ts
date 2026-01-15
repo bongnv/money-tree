@@ -233,7 +233,7 @@ describe('SyncService', () => {
         loadingStates.push(state.isLoading);
       });
 
-      await syncService.syncNow(true); // background = true
+      await syncService.syncNow();
 
       unsubscribe();
 
@@ -259,18 +259,8 @@ describe('SyncService', () => {
       mockLoadDataFile.mockResolvedValue(null);
       mockSaveDataFile.mockResolvedValue(undefined);
 
-      // Track loading state changes
-      const loadingStates: boolean[] = [];
-      const unsubscribe = useAppStore.subscribe((state) => {
-        loadingStates.push(state.isLoading);
-      });
+      await syncService.syncNow();
 
-      await syncService.syncNow(false); // background = false (or default)
-
-      unsubscribe();
-
-      // Should set loading to true during foreground sync
-      expect(loadingStates).toContain(true);
       expect(useAppStore.getState().hasUnsavedChanges).toBe(false);
     });
   });

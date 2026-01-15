@@ -48,10 +48,7 @@ export const ArchiveManager: React.FC = () => {
 
     const calculateSummary = async () => {
       if (archivableYear !== null) {
-        const summary = await archiveService.calculateYearEndSummary(
-          archivableYear,
-          baseCurrency
-        );
+        const summary = await archiveService.calculateYearEndSummary(archivableYear, baseCurrency);
         if (isMounted) {
           setYearSummaries({ [archivableYear]: summary });
         }

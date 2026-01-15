@@ -23,6 +23,7 @@ import {
   useStorageFactory,
 } from '../../contexts/ServiceProviders';
 import { formatDistance } from 'date-fns';
+import { isUserCancellationError } from '../../utils/error.utils';
 import { useAccountStore } from '../../stores/useAccountStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
 import { useTransactionStore } from '../../stores/useTransactionStore';
@@ -98,7 +99,7 @@ export const DataSyncSettings: React.FC = () => {
 
       showSnackbar('Backup saved successfully. Remember to save to update backup date.', 'success');
     } catch (error) {
-      if (error instanceof Error && error.message === 'User cancelled') {
+      if (isUserCancellationError(error)) {
         // User cancelled file picker, don't show error
         return;
       }

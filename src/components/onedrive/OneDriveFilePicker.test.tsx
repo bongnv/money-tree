@@ -299,4 +299,56 @@ describe('OneDriveFilePicker', () => {
       expect(createButton.disabled).toBe(true);
     });
   });
+
+  it('should filter out non-JSON files from the list', async () => {
+    const itemsWithNonJson: DriveItem[] = [
+      {
+        id: 'folder1',
+        name: 'Documents',
+        folder: { childCount: 5 },
+      },
+      {
+        id: 'file1',
+        name: 'budget.json',
+        file: { mimeType: 'application/json' },
+      },
+      {
+        id: 'file2',
+        name: 'notes.txt',
+        file: { mimeType: 'text/plain' },
+      },
+      {
+        id: 'file3',
+        name: 'report.pdf',
+        file: { mimeType: 'application/pdf' },
+      },
+      {
+        id: 'file4',
+        name: 'data.json',
+        file: { mimeType: 'application/json' },
+      },
+    ];
+
+    mockOnListFolders.mockResolvedValue(itemsWithNonJson);
+
+    render(
+      <OneDriveFilePicker
+        open={true}
+        onSelect={mockOnSelect}
+        onCancel={mockOnCancel}
+        onListFolders={mockOnListFolders}
+      />
+    );
+
+    await waitFor(() => {
+      // Should show folders
+      expect(screen.getByText('Documents')).toBeInTheDocument();
+      // Should show .json files
+      expect(screen.getByText('budget.json')).toBeInTheDocument();
+      expect(screen.getByText('data.json')).toBeInTheDocument();
+      // Should NOT show non-JSON files
+      expect(screen.queryByText('notes.txt')).not.toBeInTheDocument();
+      expect(screen.queryByText('report.pdf')).not.toBeInTheDocument();
+    });
+  });
 });

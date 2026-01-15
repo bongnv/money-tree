@@ -27,6 +27,7 @@ import { StorageProviderType } from '../../services/storage/StorageFactory';
 import { FilePickerService } from '../../services/storage/FilePickerService';
 import type { SelectedFileInfo as OneDriveFileInfo } from '../../services/storage/OneDriveProvider';
 import { useStorageFactory, useSyncService } from '../../contexts/ServiceProviders';
+import { isUserCancellationError } from '../../utils/error.utils';
 
 interface WelcomeDialogProps {
   open: boolean;
@@ -50,8 +51,11 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
       await storageFactory.authenticateOneDrive();
       setShowOneDriveFilePicker(true);
     } catch (error: any) {
-      console.error('OneDrive connection failed:', error);
-      setAuthError(error.message || 'Failed to connect to OneDrive');
+      // Don't show error if user cancelled
+      if (!isUserCancellationError(error)) {
+        console.error('OneDrive connection failed:', error);
+        setAuthError(error.message || 'Failed to connect to OneDrive');
+      }
       setIsConnecting(false);
     }
   };
@@ -83,8 +87,11 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
         onClose();
       }
     } catch (error: any) {
-      console.error('Google Drive connection failed:', error);
-      setAuthError(error.message || 'Failed to connect to Google Drive');
+      // Don't show error if user cancelled
+      if (!isUserCancellationError(error)) {
+        console.error('Google Drive connection failed:', error);
+        setAuthError(error.message || 'Failed to connect to Google Drive');
+      }
     } finally {
       setIsConnecting(false);
     }
@@ -107,8 +114,13 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
       }
       onClose();
     } catch (error) {
-      console.error('OneDrive file selection failed:', error);
-      setAuthError(error instanceof Error ? error.message : 'Failed to connect to OneDrive');
+      // Don't show error if user cancelled
+      if (!isUserCancellationError(error)) {
+        console.error('OneDrive file selection failed:', error);
+        const errorMessage =
+          error instanceof Error ? error.message : 'Failed to connect to OneDrive';
+        setAuthError(errorMessage);
+      }
     } finally {
       setIsConnecting(false);
     }
@@ -132,8 +144,12 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
         onClose();
       }
     } catch (error) {
-      console.error('Failed to open local file:', error);
-      setAuthError(error instanceof Error ? error.message : 'Failed to open file');
+      // Don't show error if user cancelled
+      if (!isUserCancellationError(error)) {
+        console.error('Failed to open local file:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Failed to open file';
+        setAuthError(errorMessage);
+      }
     }
   };
 
@@ -150,8 +166,12 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
         onClose();
       }
     } catch (error) {
-      console.error('Failed to create new file:', error);
-      setAuthError(error instanceof Error ? error.message : 'Failed to create new file');
+      // Don't show error if user cancelled
+      if (!isUserCancellationError(error)) {
+        console.error('Failed to create new file:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Failed to create new file';
+        setAuthError(errorMessage);
+      }
     }
   };
 

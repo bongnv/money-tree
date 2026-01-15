@@ -59,7 +59,7 @@ export const ExchangeRatesSettings: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
+    <Box>
       <Typography variant="h4" gutterBottom>
         Exchange Rates
       </Typography>

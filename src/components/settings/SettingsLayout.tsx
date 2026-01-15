@@ -1,28 +1,13 @@
-import React, { useState } from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Box, Tabs, Tab } from '@mui/material';
 import {
-  Box,
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Toolbar,
-  IconButton,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
-import {
-  Menu as MenuIcon,
   AccountBalanceWallet as AccountsIcon,
   Category as CategoryIcon,
   CurrencyExchange as ExchangeRateIcon,
   Archive as ArchiveIcon,
   Settings as SettingsIcon,
 } from '@mui/icons-material';
-
-const drawerWidth = 240;
 
 const navItems = [
   { path: '/settings/preferences', label: 'Preferences', icon: <SettingsIcon /> },
@@ -33,82 +18,46 @@ const navItems = [
 ];
 
 export const SettingsLayout: React.FC = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
+  // Redirect from /settings to /settings/preferences
+  useEffect(() => {
+    if (location.pathname === '/settings') {
+      navigate('/settings/preferences', { replace: true });
+    }
+  }, [location.pathname, navigate]);
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
+    navigate(newValue);
   };
 
-  const drawer = (
-    <List>
-      {navItems.map((item) => (
-        <ListItem key={item.path} disablePadding>
-          <ListItemButton
-            component={NavLink}
-            to={item.path}
-            onClick={isMobile ? handleDrawerToggle : undefined}
-            sx={{
-              '&.active': {
-                backgroundColor: 'action.selected',
-              },
-            }}
-          >
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.label} />
-          </ListItemButton>
-        </ListItem>
-      ))}
-    </List>
-  );
+  // Default to preferences if on base route
+  const currentTab =
+    location.pathname === '/settings' ? '/settings/preferences' : location.pathname;
 
   return (
-    <Box sx={{ display: 'flex' }}>
-      {isMobile && (
-        <IconButton
-          color="inherit"
-          aria-label="open drawer"
-          edge="start"
-          onClick={handleDrawerToggle}
-          sx={{ position: 'absolute', top: 16, left: 16, zIndex: 1200 }}
+    <Box sx={{ width: '100%' }}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs
+          value={currentTab}
+          onChange={handleTabChange}
+          variant="scrollable"
+          scrollButtons="auto"
+          aria-label="settings navigation"
         >
-          <MenuIcon />
-        </IconButton>
-      )}
-
-      {isMobile ? (
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true, // Better open performance on mobile
-          }}
-          sx={{
-            '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box' },
-          }}
-        >
-          {drawer}
-        </Drawer>
-      ) : (
-        <Drawer
-          variant="permanent"
-          sx={{
-            width: drawerWidth,
-            flexShrink: 0,
-            '& .MuiDrawer-paper': {
-              width: drawerWidth,
-              boxSizing: 'border-box',
-              position: 'relative',
-            },
-          }}
-        >
-          <Toolbar />
-          {drawer}
-        </Drawer>
-      )}
-      <Box component="main" sx={{ flexGrow: 1, p: 3, pt: isMobile ? 8 : 3 }}>
+          {navItems.map((item) => (
+            <Tab
+              key={item.path}
+              label={item.label}
+              value={item.path}
+              icon={item.icon}
+              iconPosition="start"
+            />
+          ))}
+        </Tabs>
+      </Box>
+      <Box sx={{ p: 3 }}>
         <Outlet />
       </Box>
     </Box>

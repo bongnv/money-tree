@@ -4,13 +4,17 @@ import { SettingsLayout } from './SettingsLayout';
 
 const MockChildComponent = () => <div>Mock Child Content</div>;
 
-const renderWithRouter = (initialPath: string = '/settings') => {
+const renderWithRouter = (initialPath: string = '/settings/preferences') => {
   window.history.pushState({}, 'Test page', initialPath);
   return render(
     <BrowserRouter>
       <Routes>
         <Route path="/settings" element={<SettingsLayout />}>
-          <Route index element={<MockChildComponent />} />
+          <Route path="preferences" element={<MockChildComponent />} />
+          <Route path="accounts" element={<MockChildComponent />} />
+          <Route path="categories" element={<MockChildComponent />} />
+          <Route path="exchange-rates" element={<MockChildComponent />} />
+          <Route path="archives" element={<MockChildComponent />} />
         </Route>
       </Routes>
     </BrowserRouter>
@@ -19,7 +23,7 @@ const renderWithRouter = (initialPath: string = '/settings') => {
 
 describe('SettingsLayout', () => {
   it('renders Outlet with child content', () => {
-    renderWithRouter('/settings');
+    renderWithRouter('/settings/preferences');
     expect(screen.getByText('Mock Child Content')).toBeInTheDocument();
   });
 });

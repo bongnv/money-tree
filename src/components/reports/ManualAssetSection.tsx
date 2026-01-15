@@ -152,21 +152,21 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
         {title}
       </Typography>
       <TableContainer component={Paper} elevation={1}>
-        <Table>
+        <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell width="50px"></TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell align="right">Value</TableCell>
+              <TableCell width="40px" sx={{ p: { xs: 1, sm: 2 } }}></TableCell>
+              <TableCell sx={{ p: { xs: 1, sm: 2 } }}>Name</TableCell>
+              <TableCell align="right" sx={{ p: { xs: 1, sm: 2 } }}>
+                Value
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {groups.map((group) => (
               <React.Fragment key={group.name}>
                 <TableRow sx={{ backgroundColor: 'action.hover' }}>
-                  <TableCell></TableCell>
-                  <TableCell colSpan={3}>
+                  <TableCell colSpan={3} sx={{ p: { xs: 1, sm: 2 } }}>
                     <Typography variant="subtitle2" fontWeight="bold">
                       {group.name}
                     </Typography>
@@ -193,15 +193,14 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
                           }
                         }}
                       >
-                        <TableCell>
+                        <TableCell sx={{ p: { xs: 1, sm: 2 } }}>
                           {hasHistory && (
                             <IconButton size="small">
                               {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                             </IconButton>
                           )}
                         </TableCell>
-                        <TableCell></TableCell>
-                        <TableCell>
+                        <TableCell sx={{ p: { xs: 1, sm: 2 } }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             {item.name}
                             {hasHistory && growthInfo && (
@@ -221,7 +220,7 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
                             )}
                           </Box>
                         </TableCell>
-                        <TableCell align="right">
+                        <TableCell align="right" sx={{ p: { xs: 1, sm: 2 } }}>
                           <Box
                             sx={{
                               display: 'flex',
@@ -242,7 +241,7 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
                       </TableRow>
                       {hasHistory && (
                         <TableRow>
-                          <TableCell colSpan={4} sx={{ p: 0, border: 0 }}>
+                          <TableCell colSpan={3} sx={{ p: 0, border: 0 }}>
                             <Collapse in={isExpanded} timeout="auto" unmountOnExit>
                               <Box sx={{ p: 3, backgroundColor: 'background.default' }}>
                                 <Box
@@ -297,14 +296,13 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
                   );
                 })}
                 <TableRow>
-                  <TableCell></TableCell>
-                  <TableCell></TableCell>
-                  <TableCell>
+                  <TableCell sx={{ p: { xs: 1, sm: 2 } }}></TableCell>
+                  <TableCell sx={{ p: { xs: 1, sm: 2 } }}>
                     <Typography variant="body2" fontWeight="medium">
                       Subtotal
                     </Typography>
                   </TableCell>
-                  <TableCell align="right">
+                  <TableCell align="right" sx={{ p: { xs: 1, sm: 2 } }}>
                     <Typography variant="body2" fontWeight="medium">
                       {formatCurrency(group.total, currencyCode)}
                     </Typography>
@@ -313,13 +311,12 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
               </React.Fragment>
             ))}
             <TableRow sx={{ backgroundColor: 'primary.light' }}>
-              <TableCell></TableCell>
-              <TableCell colSpan={2}>
+              <TableCell colSpan={2} sx={{ p: { xs: 1, sm: 2 } }}>
                 <Typography variant="subtitle1" fontWeight="bold" color="primary.contrastText">
                   Total {title}
                 </Typography>
               </TableCell>
-              <TableCell align="right">
+              <TableCell align="right" sx={{ p: { xs: 1, sm: 2 } }}>
                 <Typography variant="subtitle1" fontWeight="bold" color="primary.contrastText">
                   {formatCurrency(total, currencyCode)}
                 </Typography>

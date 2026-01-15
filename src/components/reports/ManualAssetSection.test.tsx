@@ -92,7 +92,6 @@ describe('ManualAssetSection', () => {
 
   it('should have correct table headers', () => {
     renderComponent({ title: 'Assets', groups: mockGroups, currencyCode: CurrencyCode.USD });
-    expect(screen.getByText('Type')).toBeInTheDocument();
     expect(screen.getByText('Name')).toBeInTheDocument();
     expect(screen.getByText('Value')).toBeInTheDocument();
   });

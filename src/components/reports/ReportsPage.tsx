@@ -31,6 +31,8 @@ export const ReportsPage: React.FC = () => {
           <Tabs
             value={activeTab}
             onChange={handleTabChange}
+            variant="scrollable"
+            scrollButtons="auto"
             sx={{ borderBottom: 1, borderColor: 'divider' }}
           >
             {REPORT_TABS.map((tab) => (

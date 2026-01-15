@@ -14,3 +14,4 @@
 - [x] BUG-14: Dashboard cashflow calculation doesn't handle multi-currency properly - sums transaction amounts without converting to base currency
 - [x] BUG-15: Transaction schema missing fromAssetId and toAssetId fields - caused asset-linked transactions to lose their asset references when saved and reloaded from file
 - [x] BUG-16: Income Details & Expense Details empty in cashflow reports - ROOT CAUSE: useEffect calculating chart data didn't include cashFlow in dependencies, so detail tables didn't update when cashFlow data changed
+- [x] BUG-17: unsavedChanges flag incorrectly set to false after syncing when changes are made during the sync operation - FIX: Capture snapshot timestamp when gathering data, clear flag before save. If changes occur during save, store actions automatically set flag back to true. lastModified/lastSaved use snapshot time. If save fails, flag remains unchanged.

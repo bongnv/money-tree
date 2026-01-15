@@ -51,3 +51,12 @@ Mark task as complete only if all three pass.
 
 - Chat summaries only (no status files)
 - Concise responses
+
+## Command Output Management
+- Write output from time-consuming commands to tmp/ folder for repeated examination
+- Examples of expensive commands: test runs, build processes, integration tests
+- Create new timestamped or uniquely named files each time to preserve old outputs for comparison
+- Use descriptive names with timestamps or incremental numbers: `tmp/test_run_20260115_143522.txt` or `tmp/hwm_test_1.txt`, `tmp/hwm_test_2.txt`
+- Redirect command output: `command > tmp/output_$(date +%Y%m%d_%H%M%S).txt 2>&1`
+- Reuse saved output instead of re-running commands when analyzing results
+- Keep multiple runs available for comparison and regression analysis

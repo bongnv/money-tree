@@ -403,6 +403,34 @@ describe('SyncService', () => {
     });
   });
 
+  describe('BUG-17: changes during sync', () => {
+    it('should preserve unsavedChanges flag when changes are made during sync', async () => {
+      useAccountStore.getState().addAccount({
+        id: '1',
+        name: 'Test Account',
+        type: AccountType.CASH,
+        currencyCode: 'USD',
+        initialBalance: 1000,
+        isActive: true,
+        description: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      useAppStore.getState().setUnsavedChanges(true);
+
+      // Mock saveDataFile to simulate a change happening during the save
+      mockSaveDataFile.mockImplementation(async () => {
+        // Simulate a change made during the save operation
+        useAppStore.getState().setUnsavedChanges(true);
+      });
+
+      await syncService.syncNow();
+
+      // The flag should still be true because a change was made during sync
+      expect(useAppStore.getState().hasUnsavedChanges).toBe(true);
+    });
+  });
+
   describe('autoLoad', () => {
     it('should return true when load succeeds', async () => {
       const mockInitialize = jest.fn().mockResolvedValue(undefined);

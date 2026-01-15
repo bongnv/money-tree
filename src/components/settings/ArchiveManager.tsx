@@ -239,15 +239,15 @@ export const ArchiveManager: React.FC = () => {
           </Box>
         </DialogTitle>
         <DialogContent>
+          <DialogContentText>This will:</DialogContentText>
+          <Box component="ul" sx={{ mt: 1, mb: 1 }}>
+            <li>Create an archive file for {confirmDialog.year}</li>
+            <li>
+              <strong>Remove all {confirmDialog.year} data from your main file</strong>
+            </li>
+            <li>Save changes to your storage provider</li>
+          </Box>
           <DialogContentText>
-            This will:
-            <Box component="ul" sx={{ mt: 1, mb: 1 }}>
-              <li>Create an archive file for {confirmDialog.year}</li>
-              <li>
-                <strong>Remove all {confirmDialog.year} data from your main file</strong>
-              </li>
-              <li>Save changes to your storage provider</li>
-            </Box>
             This action cannot be undone. Make sure you have a backup of your data.
           </DialogContentText>
         </DialogContent>

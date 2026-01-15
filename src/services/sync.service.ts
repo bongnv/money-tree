@@ -154,6 +154,9 @@ export class SyncService {
     // Only show blocking loading screen for user-initiated syncs
     if (!background) {
       state.setLoading(true);
+    } else {
+      // Show syncing indicator for background syncs
+      state.setIsSyncing(true);
     }
 
     try {
@@ -167,6 +170,13 @@ export class SyncService {
       const budgetStore = useBudgetStore.getState();
       const exchangeRateStore = useExchangeRateStore.getState();
 
+      // Capture the snapshot timestamp - this is when we're gathering the data
+      const snapshotTime = new Date().toISOString();
+
+      // Clear the flag - we're about to save these changes
+      // If any changes happen during save, store actions will set it back to true
+      state.setUnsavedChanges(false);
+
       const appVersion: DataFile = structuredClone({
         version: '1.0.0',
         transactions: transactionStore.transactions,
@@ -178,7 +188,7 @@ export class SyncService {
         transactionTypes: categoryStore.transactionTypes,
         archivedYears: state.archivedYears,
         baseCurrency: state.baseCurrency,
-        lastModified: state.baseVersion?.lastModified || new Date().toISOString(),
+        lastModified: snapshotTime,
         lastBackupDate: state.lastBackupDate || undefined,
       });
 
@@ -248,10 +258,11 @@ export class SyncService {
 
       // Update file hash and base version after successful save
       const newHash = await calculateDataFileHash(dataToSave);
-      const savedAt = new Date().toISOString();
-      state.setFileMetadata(newHash, savedAt, dataToSave);
+      state.setFileMetadata(newHash, snapshotTime, dataToSave);
 
-      state.markAsSaved();
+      // Always update lastSaved timestamp since data was actually saved
+      state.setLastSaved(snapshotTime);
+
       // Get the actual filename from storage provider
       const fileName = storage.getFileName();
       state.setFileName(fileName);
@@ -266,6 +277,9 @@ export class SyncService {
       // Only clear loading state if we set it
       if (!background) {
         state.setLoading(false);
+      } else {
+        // Clear syncing indicator for background syncs
+        state.setIsSyncing(false);
       }
     }
   }

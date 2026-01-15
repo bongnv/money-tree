@@ -38,7 +38,7 @@ export const Header: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const syncService = useSyncService();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { fileName, lastSaved, hasUnsavedChanges, isLoading } = useAppStore();
+  const { fileName, lastSaved, hasUnsavedChanges, isLoading, isSyncing } = useAppStore();
 
   const handleSync = async () => {
     try {
@@ -154,9 +154,9 @@ export const Header: React.FC = () => {
 
           <Button
             color="inherit"
-            startIcon={isLoading ? <CircularProgress size={20} /> : <SyncIcon />}
+            startIcon={isLoading || isSyncing ? <CircularProgress size={20} /> : <SyncIcon />}
             onClick={handleSync}
-            disabled={isLoading || !hasUnsavedChanges}
+            disabled={isLoading || isSyncing || !hasUnsavedChanges}
             aria-label="Sync"
           >
             Sync

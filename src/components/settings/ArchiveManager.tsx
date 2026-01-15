@@ -40,23 +40,32 @@ export const ArchiveManager: React.FC = () => {
   const [yearSummaries, setYearSummaries] = useState<Record<number, YearEndSummary>>({});
 
   const archivableYear = archiveService.identifyArchivableYear();
-  const archivableYears = archivableYear !== null ? [archivableYear] : [];
   const archivedYears = archiveService.getArchivedYears();
 
-  // Calculate summaries for archivable years
+  // Calculate summary for archivable year
   useEffect(() => {
-    const calculateSummaries = async () => {
-      const summaries: Record<number, YearEndSummary> = {};
-      for (const year of archivableYears) {
-        summaries[year] = await archiveService.calculateYearEndSummary(year, baseCurrency);
+    let isMounted = true;
+
+    const calculateSummary = async () => {
+      if (archivableYear !== null) {
+        const summary = await archiveService.calculateYearEndSummary(
+          archivableYear,
+          baseCurrency
+        );
+        if (isMounted) {
+          setYearSummaries({ [archivableYear]: summary });
+        }
+      } else {
+        setYearSummaries({});
       }
-      setYearSummaries(summaries);
     };
 
-    if (archivableYears.length > 0) {
-      calculateSummaries();
-    }
-  }, [archivableYears, baseCurrency]);
+    calculateSummary();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [archivableYear, baseCurrency, archiveService]);
 
   const handleExportYear = async (year: number) => {
     // Close confirmation dialog
@@ -126,7 +135,7 @@ export const ArchiveManager: React.FC = () => {
           helps keep your main file smaller and faster.
         </Typography>
 
-        {archivableYears.length === 0 ? (
+        {archivableYear === null ? (
           <Alert severity="info">No years available to export yet.</Alert>
         ) : (
           <TableContainer>
@@ -140,13 +149,13 @@ export const ArchiveManager: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {archivableYears.map((year) => {
-                  const summary = yearSummaries[year];
-                  const isCurrentlyExporting = isExporting && exportingYear === year;
+                {(() => {
+                  const summary = yearSummaries[archivableYear];
+                  const isCurrentlyExporting = isExporting && exportingYear === archivableYear;
 
                   if (!summary) {
                     return (
-                      <TableRow key={year}>
+                      <TableRow>
                         <TableCell colSpan={4} align="center">
                           <CircularProgress size={20} />
                         </TableCell>
@@ -155,9 +164,9 @@ export const ArchiveManager: React.FC = () => {
                   }
 
                   return (
-                    <TableRow key={year}>
+                    <TableRow>
                       <TableCell>
-                        <strong>{year}</strong>
+                        <strong>{archivableYear}</strong>
                       </TableCell>
                       <TableCell align="right">{summary.transactionCount}</TableCell>
                       <TableCell align="right">
@@ -171,7 +180,7 @@ export const ArchiveManager: React.FC = () => {
                           startIcon={
                             isCurrentlyExporting ? <CircularProgress size={16} /> : <ArchiveIcon />
                           }
-                          onClick={() => handleOpenConfirmDialog(year)}
+                          onClick={() => handleOpenConfirmDialog(archivableYear)}
                           disabled={isExporting}
                         >
                           {isCurrentlyExporting ? 'Archiving...' : 'Archive'}
@@ -179,7 +188,7 @@ export const ArchiveManager: React.FC = () => {
                       </TableCell>
                     </TableRow>
                   );
-                })}
+                })()}
               </TableBody>
             </Table>
           </TableContainer>

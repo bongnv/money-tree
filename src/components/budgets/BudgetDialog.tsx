@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -7,6 +7,7 @@ import {
   MenuItem,
   Box,
   Button,
+  Autocomplete,
 } from '@mui/material';
 import type { Budget } from '../../types/models';
 import { useCategoryStore } from '../../stores/useCategoryStore';
@@ -34,18 +35,30 @@ export const BudgetDialog: React.FC<BudgetDialogProps> = ({ open, budget, onClos
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Group transaction types by category - only show income and expense types
-  const groupedTransactionTypes = categories
-    .map((category) => ({
-      category,
-      transactionTypes: transactionTypes.filter(
+  // Flatten transaction types with category labels for autocomplete - only show income and expense types
+  const transactionTypeOptions = useMemo(() => {
+    const options: Array<{ id: string; name: string; categoryName: string }> = [];
+    categories.forEach((category) => {
+      const types = transactionTypes.filter(
         (tt) =>
           tt.categoryId === category.id &&
           tt.isActive !== false &&
           (tt.group === Group.INCOME || tt.group === Group.EXPENSE)
-      ),
-    }))
-    .filter((group) => group.transactionTypes.length > 0);
+      );
+      types.forEach((type) => {
+        options.push({
+          id: type.id,
+          name: type.name,
+          categoryName: category.name,
+        });
+      });
+    });
+    return options;
+  }, [categories, transactionTypes]);
+
+  const selectedTransactionTypeOption = transactionTypeOptions.find(
+    (opt) => opt.id === formData.transactionTypeId
+  );
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -113,33 +126,30 @@ export const BudgetDialog: React.FC<BudgetDialogProps> = ({ open, budget, onClos
       <DialogTitle>{budget ? 'Edit Budget' : 'Add Budget'}</DialogTitle>
       <DialogContent>
         <Box component="form" onSubmit={handleSubmit} noValidate sx={{ pt: 1 }}>
-          <TextField
-            fullWidth
-            select
-            label="Transaction Type"
-            value={formData.transactionTypeId}
-            onChange={handleChange('transactionTypeId')}
-            error={!!errors.transactionTypeId}
-            helperText={errors.transactionTypeId}
-            margin="normal"
-            required
-            disabled={!!budget} // Cannot change transaction type when editing
-          >
-            {groupedTransactionTypes.map((group) => [
-              <MenuItem
-                key={`header-${group.category.id}`}
-                disabled
-                sx={{ fontWeight: 'bold', opacity: 1 }}
-              >
-                {group.category.name}
-              </MenuItem>,
-              ...group.transactionTypes.map((tt) => (
-                <MenuItem key={tt.id} value={tt.id} sx={{ pl: 4 }}>
-                  {tt.name}
-                </MenuItem>
-              )),
-            ])}
-          </TextField>
+          <Autocomplete
+            options={transactionTypeOptions}
+            getOptionLabel={(option) => option.name}
+            groupBy={(option) => option.categoryName}
+            value={selectedTransactionTypeOption || null}
+            onChange={(_event, newValue) => {
+              setFormData({ ...formData, transactionTypeId: newValue?.id || '' });
+              if (errors.transactionTypeId) {
+                setErrors({ ...errors, transactionTypeId: '' });
+              }
+            }}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            disabled={!!budget}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Transaction Type"
+                error={!!errors.transactionTypeId}
+                helperText={errors.transactionTypeId}
+                required
+                margin="normal"
+              />
+            )}
+          />
 
           <TextField
             fullWidth

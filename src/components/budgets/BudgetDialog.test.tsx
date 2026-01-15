@@ -154,8 +154,8 @@ describe('BudgetDialog', () => {
       <BudgetDialog open={true} budget={budget} onClose={mockOnClose} onSubmit={mockOnSubmit} />
     );
 
-    const transactionTypeField = screen.getByLabelText(/Transaction Type/i).closest('div');
-    expect(transactionTypeField).toHaveAttribute('aria-disabled', 'true');
+    const transactionTypeField = screen.getByLabelText(/Transaction Type/i);
+    expect(transactionTypeField).toBeDisabled();
   });
 
   it('should render dialog when closed', () => {

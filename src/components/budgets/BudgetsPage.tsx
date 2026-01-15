@@ -191,11 +191,19 @@ export const BudgetsPage: React.FC = () => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h4" component="h1" sx={{ mb: { xs: 2, sm: 3 } }}>
           Budgets
         </Typography>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: { xs: 1, sm: 2 },
+            alignItems: { xs: 'stretch', sm: 'center' },
+            flexDirection: { xs: 'column', sm: 'row' },
+            flexWrap: 'wrap',
+          }}
+        >
           <PeriodSelector
             startDate={selectedPeriod.startDate}
             endDate={selectedPeriod.endDate}
@@ -213,16 +221,28 @@ export const BudgetsPage: React.FC = () => {
             onClear={() => setSelectedCategories([])}
             label="Filter by Category"
             fullWidth={false}
-            sx={{ minWidth: 250 }}
+            sx={{ minWidth: { xs: '100%', sm: 250 } }}
           />
-          {selectedCategories.length > 0 && (
-            <Button variant="outlined" onClick={() => setSelectedCategories([])} size="small">
-              Clear Filter
+          <Box sx={{ display: 'flex', gap: 1, flexGrow: { xs: 1, sm: 0 } }}>
+            {selectedCategories.length > 0 && (
+              <Button
+                variant="outlined"
+                onClick={() => setSelectedCategories([])}
+                size="small"
+                sx={{ flexGrow: { xs: 1, sm: 0 } }}
+              >
+                Clear Filter
+              </Button>
+            )}
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleAdd}
+              sx={{ flexGrow: { xs: 1, sm: 0 } }}
+            >
+              Add Budget
             </Button>
-          )}
-          <Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd}>
-            Add Budget
-          </Button>
+          </Box>
         </Box>
       </Box>
 
@@ -266,23 +286,37 @@ export const BudgetsPage: React.FC = () => {
                     ) => (
                       <React.Fragment key={budget.id}>
                         {index > 0 && <Divider />}
-                        <ListItem sx={{ flexDirection: 'column', alignItems: 'stretch', py: 1.5 }}>
+                        <ListItem
+                          sx={{
+                            flexDirection: 'column',
+                            alignItems: 'stretch',
+                            py: 1.5,
+                            px: { xs: 1, sm: 2 },
+                          }}
+                        >
                           <Box
                             sx={{
                               display: 'flex',
                               justifyContent: 'space-between',
                               alignItems: 'flex-start',
                               mb: 0.5,
+                              gap: 1,
                             }}
                           >
-                            <Box sx={{ flex: 1 }}>
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
                               <Typography variant="body1" fontWeight="medium">
                                 {transactionType.name}
                               </Typography>
                               <Typography
                                 variant="body2"
                                 color="text.secondary"
-                                sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 0.25 }}
+                                sx={{
+                                  display: 'flex',
+                                  gap: { xs: 0.5, sm: 1 },
+                                  flexWrap: 'wrap',
+                                  mt: 0.25,
+                                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                }}
                               >
                                 <Box component="span">
                                   {formatCurrency(actualAmount, CurrencyCode.USD)} of{' '}
@@ -291,15 +325,33 @@ export const BudgetsPage: React.FC = () => {
                                 <Box component="span" sx={{ color: 'text.primary' }}>
                                   ({percentage.toFixed(0)}%)
                                 </Box>
-                                <Box component="span">•</Box>
+                                <Box
+                                  component="span"
+                                  sx={{ display: { xs: 'none', sm: 'inline' } }}
+                                >
+                                  •
+                                </Box>
                                 <Box component="span">
                                   {formatCurrency(budget.amount, CurrencyCode.USD)} {budget.period}
                                 </Box>
-                                <Box component="span">•</Box>
-                                <Box component="span">{formatDateRange(budget)}</Box>
+                                <Box
+                                  component="span"
+                                  sx={{ display: { xs: 'none', sm: 'inline' } }}
+                                >
+                                  •
+                                </Box>
+                                <Box
+                                  component="span"
+                                  sx={{
+                                    width: { xs: '100%', sm: 'auto' },
+                                    mt: { xs: 0.25, sm: 0 },
+                                  }}
+                                >
+                                  {formatDateRange(budget)}
+                                </Box>
                               </Typography>
                             </Box>
-                            <Box sx={{ display: 'flex', ml: 1 }}>
+                            <Box sx={{ display: 'flex', flexShrink: 0 }}>
                               <IconButton
                                 size="small"
                                 aria-label="edit"
@@ -328,13 +380,25 @@ export const BudgetsPage: React.FC = () => {
                     )
                   )}
                   <Divider />
-                  <ListItem sx={{ backgroundColor: 'grey.50', py: 2 }}>
+                  <ListItem sx={{ backgroundColor: 'grey.50', py: 2, px: { xs: 1, sm: 2 } }}>
                     <Box sx={{ width: '100%' }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          mb: 1,
+                          gap: 1,
+                          flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                        }}
+                      >
                         <Typography variant="subtitle1" fontWeight="bold">
                           Total
                         </Typography>
-                        <Typography variant="subtitle1" fontWeight="bold">
+                        <Typography
+                          variant="subtitle1"
+                          fontWeight="bold"
+                          sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                        >
                           {formatCurrency(totalActual, CurrencyCode.USD)} of{' '}
                           {formatCurrency(totalBudget, CurrencyCode.USD)} (
                           {totalPercentage.toFixed(0)}%)

@@ -177,7 +177,10 @@ export function CloudFilePicker({
   // Filter items based on mode
   // In 'open' mode: show both folders (for navigation) and JSON files (for selection)
   // In 'create' mode: show only folders (for selection)
-  const jsonFiles = mode === 'open' ? items.filter((item) => !item.isFolder) : [];
+  const jsonFiles =
+    mode === 'open'
+      ? items.filter((item) => !item.isFolder && item.name.toLowerCase().endsWith('.json'))
+      : [];
   const folders = items.filter((item) => item.isFolder);
 
   // Check if file already exists in current folder

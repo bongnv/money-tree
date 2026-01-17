@@ -41,6 +41,15 @@ After each task implementation, always run:
 
 Mark task as complete only if all three pass.
 
+## Test Coverage
+
+- Maintain **80% minimum test coverage** for all code changes
+- When modifying existing files, ensure coverage doesn't drop below 80%
+- When creating new files, write tests to achieve at least 80% coverage
+- Run `npm test -- --coverage` to check coverage before marking tasks complete
+- Focus on testing critical business logic, edge cases, and error handling
+- Use coverage gaps as a guide for identifying untested scenarios
+
 ## Code Style
 
 - Self-documenting code with clear names

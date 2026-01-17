@@ -47,18 +47,8 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
       itemsMapRef.current.set(item.id, item);
     });
 
-    // Filter to only show folders and .json files
-    const filteredItems = driveItems.filter((item) => {
-      // Always show folders
-      if (item.folder) {
-        return true;
-      }
-      // Only show .json files
-      return item.name.toLowerCase().endsWith('.json');
-    });
-
     // Convert to generic CloudItem format
-    return filteredItems.map((item) => ({
+    return driveItems.map((item) => ({
       id: item.id,
       name: item.name,
       isFolder: !!item.folder,

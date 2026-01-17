@@ -387,4 +387,39 @@ describe('CloudFilePicker', () => {
       expect(screen.getByText('This folder is empty')).toBeInTheDocument();
     });
   });
+
+  it('should filter out non-JSON files in open mode', async () => {
+    const itemsWithNonJson: CloudItem[] = [
+      { id: 'folder1', name: 'Documents', isFolder: true },
+      { id: 'file1', name: 'test.json', isFolder: false },
+      { id: 'file2', name: 'document.txt', isFolder: false },
+      { id: 'file3', name: 'image.png', isFolder: false },
+      { id: 'file4', name: 'data.JSON', isFolder: false }, // uppercase extension
+      { id: 'file5', name: 'README.md', isFolder: false },
+    ];
+    mockOnListItems.mockResolvedValue(itemsWithNonJson);
+
+    render(
+      <CloudFilePicker
+        open={true}
+        title="Test Storage"
+        mode="open"
+        onSelect={mockOnSelect}
+        onCancel={mockOnCancel}
+        onListItems={mockOnListItems}
+      />
+    );
+
+    await waitFor(() => {
+      // Should show folder
+      expect(screen.getByText('Documents')).toBeInTheDocument();
+      // Should show .json files
+      expect(screen.getByText('test.json')).toBeInTheDocument();
+      expect(screen.getByText('data.JSON')).toBeInTheDocument();
+      // Should NOT show non-JSON files
+      expect(screen.queryByText('document.txt')).not.toBeInTheDocument();
+      expect(screen.queryByText('image.png')).not.toBeInTheDocument();
+      expect(screen.queryByText('README.md')).not.toBeInTheDocument();
+    });
+  });
 });

@@ -193,10 +193,12 @@ export class StorageFactory {
   };
 
   /**
-   * Show Google Drive file picker
+   * List Google Drive files
+   * @param parentId Parent folder ID or undefined for root
    */
-  showGoogleDriveFilePicker = async (allowCreate: boolean = true) => {
-    return this.getGoogleDriveService().showFilePicker(allowCreate);
+  listGoogleDriveFiles = async (parentId?: string): Promise<any[]> => {
+    const service = this.getGoogleDriveService();
+    return service.listFiles(parentId);
   };
 
   /**
@@ -277,15 +279,6 @@ export class StorageFactory {
   listOneDriveFolders = async (parentItem?: any): Promise<any[]> => {
     const service = this.getOneDriveService();
     return service.listFolders(parentItem);
-  };
-
-  /**
-   * List Google Drive files
-   * @param parentId Parent folder ID or undefined for root
-   */
-  listGoogleDriveFiles = async (parentId?: string): Promise<any[]> => {
-    const service = this.getGoogleDriveService();
-    return service.listFiles(parentId);
   };
 
   /**

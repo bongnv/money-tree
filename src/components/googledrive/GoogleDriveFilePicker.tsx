@@ -7,6 +7,7 @@ import { CloudFilePicker, CloudItem } from '../common/CloudFilePicker';
 
 interface GoogleDriveFilePickerProps {
   open: boolean;
+  mode?: 'open' | 'create';
   onSelect: (fileInfo: SelectedFileInfo) => void;
   onCancel: () => void;
   onListFiles: (parentId?: string) => Promise<DriveFile[]>;
@@ -15,6 +16,7 @@ interface GoogleDriveFilePickerProps {
 
 export const GoogleDriveFilePicker: React.FC<GoogleDriveFilePickerProps> = ({
   open,
+  mode = 'open',
   onSelect,
   onCancel,
   onListFiles,
@@ -50,6 +52,7 @@ export const GoogleDriveFilePicker: React.FC<GoogleDriveFilePickerProps> = ({
     <CloudFilePicker
       open={open}
       title="Select Google Drive File Location"
+      mode={mode}
       onSelect={onSelect}
       onCancel={onCancel}
       onListItems={handleListItems}

@@ -185,17 +185,22 @@ describe('CloudFilePicker', () => {
 
   it('should create new file', async () => {
     const user = userEvent.setup();
-    mockOnListItems.mockResolvedValue([]);
+    const mockFolders: CloudItem[] = [
+      { id: 'folder1', name: 'Documents', isFolder: true },
+      { id: 'folder2', name: 'Pictures', isFolder: true },
+    ];
+    mockOnListItems.mockResolvedValue(mockFolders);
     mockMapToFileInfo.mockReturnValue({
       fileId: null,
       fileName: 'new-file.json',
-      parentId: undefined,
+      parentId: 'folder1',
     });
 
     render(
       <CloudFilePicker<TestFileInfo>
         open={true}
         title="Test Storage"
+        mode="create"
         onSelect={mockOnSelect}
         onCancel={mockOnCancel}
         onListItems={mockOnListItems}
@@ -205,13 +210,20 @@ describe('CloudFilePicker', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('My Drive')).toBeInTheDocument();
+      expect(screen.getByText('Documents')).toBeInTheDocument();
     });
 
-    // Click Create File button
-    await user.click(screen.getByRole('button', { name: 'Create File' }));
+    // Navigate into folder
+    await user.click(screen.getByText('Documents'));
 
-    // Wait for dialog
+    await waitFor(() => {
+      expect(mockOnListItems).toHaveBeenCalledWith('folder1');
+    });
+
+    // Click "Create Here" button (creates in current folder)
+    await user.click(screen.getByRole('button', { name: 'Create Here' }));
+
+    // Wait for file name dialog
     await waitFor(() => {
       expect(screen.getByText('Create New File')).toBeInTheDocument();
     });
@@ -223,25 +235,27 @@ describe('CloudFilePicker', () => {
       expect(mockMapToFileInfo).toHaveBeenCalledWith(
         null,
         'new-file.json',
-        null,
+        'folder1',
         expect.any(Array)
       );
       expect(mockOnSelect).toHaveBeenCalledWith({
         fileId: null,
         fileName: 'new-file.json',
-        parentId: undefined,
+        parentId: 'folder1',
       });
     });
   });
 
   it('should validate file name has .json extension', async () => {
     const user = userEvent.setup();
-    mockOnListItems.mockResolvedValue([]);
+    const mockFolders: CloudItem[] = [{ id: 'folder1', name: 'Documents', isFolder: true }];
+    mockOnListItems.mockResolvedValue(mockFolders);
 
     render(
       <CloudFilePicker<TestFileInfo>
         open={true}
         title="Test Storage"
+        mode="create"
         onSelect={mockOnSelect}
         onCancel={mockOnCancel}
         onListItems={mockOnListItems}
@@ -250,11 +264,18 @@ describe('CloudFilePicker', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('My Drive')).toBeInTheDocument();
+      expect(screen.getByText('Documents')).toBeInTheDocument();
     });
 
-    // Click Create File button
-    await user.click(screen.getByRole('button', { name: 'Create File' }));
+    // Navigate into folder
+    await user.click(screen.getByText('Documents'));
+
+    await waitFor(() => {
+      expect(mockOnListItems).toHaveBeenCalledWith('folder1');
+    });
+
+    // Click "Create Here" button (creates in current folder)
+    await user.click(screen.getByRole('button', { name: 'Create Here' }));
 
     await waitFor(() => {
       expect(screen.getByText('Create New File')).toBeInTheDocument();
@@ -268,6 +289,47 @@ describe('CloudFilePicker', () => {
     // Create button should be disabled
     const createButton = screen.getByRole('button', { name: 'Create' });
     expect(createButton).toBeDisabled();
+  });
+
+  it('should prevent creating file when name already exists', async () => {
+    const user = userEvent.setup();
+    const mockItems: CloudItem[] = [
+      { id: 'folder1', name: 'Documents', isFolder: true },
+      { id: 'file1', name: 'existing.json', isFolder: false },
+    ];
+    mockOnListItems.mockResolvedValue(mockItems);
+
+    render(
+      <CloudFilePicker<TestFileInfo>
+        open={true}
+        title="Test Storage"
+        mode="create"
+        onSelect={mockOnSelect}
+        onCancel={mockOnCancel}
+        onListItems={mockOnListItems}
+        mapToFileInfo={mockMapToFileInfo}
+        defaultFileName="existing.json"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Documents')).toBeInTheDocument();
+    });
+
+    // Click Create Here button
+    await user.click(screen.getByRole('button', { name: 'Create Here' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Create New File')).toBeInTheDocument();
+    });
+
+    // File name is already set to existing.json (default)
+    // Create button should be disabled because file exists
+    const createButton = screen.getByRole('button', { name: 'Create' });
+    expect(createButton).toBeDisabled();
+
+    // Error message should be shown
+    expect(screen.getByText('A file with this name already exists')).toBeInTheDocument();
   });
 
   it('should call onCancel when cancel button clicked', async () => {

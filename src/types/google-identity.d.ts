@@ -8,6 +8,7 @@ declare namespace google {
     namespace oauth2 {
       interface TokenClient {
         callback: (response: TokenResponse) => void;
+        error_callback?: (error: ClientConfigError) => void;
         requestAccessToken(options?: { prompt?: string }): void;
       }
 
@@ -19,10 +20,16 @@ declare namespace google {
         error?: string;
       }
 
+      interface ClientConfigError {
+        type: 'popup_closed' | 'popup_failed_to_open' | string;
+        message?: string;
+      }
+
       interface TokenClientConfig {
         client_id: string;
         scope: string;
         callback: (response: TokenResponse) => void;
+        error_callback?: (error: ClientConfigError) => void;
       }
 
       function initTokenClient(config: TokenClientConfig): TokenClient;

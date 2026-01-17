@@ -6,6 +6,7 @@ import { CloudFilePicker, CloudItem } from '../common/CloudFilePicker';
 
 interface OneDriveFilePickerProps {
   open: boolean;
+  mode?: 'open' | 'create';
   onSelect: (fileInfo: SelectedFileInfo) => void;
   onCancel: () => void;
   onListFolders: (parentItem?: DriveItem | null) => Promise<DriveItem[]>;
@@ -14,6 +15,7 @@ interface OneDriveFilePickerProps {
 
 export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
   open,
+  mode = 'open',
   onSelect,
   onCancel,
   onListFolders,
@@ -121,6 +123,7 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
       open={open}
       title="Select OneDrive File Location"
       rootName="OneDrive"
+      mode={mode}
       onSelect={onSelect}
       onCancel={onCancel}
       onListItems={handleListItems}

@@ -4,7 +4,6 @@ import {
   errorMessages,
   isGoogleDriveConfigured,
 } from '../../config/googledrive.config';
-import type { SelectedFileInfo } from './GoogleDriveProvider';
 
 /**
  * Google Drive file metadata
@@ -38,8 +37,6 @@ export class GoogleDriveService {
   private tokenClient: google.accounts.oauth2.TokenClient | null = null;
   private cachedToken: CachedToken | null = null;
   private initPromise: Promise<void> | null = null;
-  private pickerApiLoaded = false;
-  private pickerApiLoadPromise: Promise<void> | null = null;
 
   constructor() {
     if (isGoogleDriveConfigured()) {
@@ -61,14 +58,12 @@ export class GoogleDriveService {
     this.loadCachedToken();
 
     // Initialize token client (used for popup-based auth)
+    // Note: The callback and error_callback are overridden during authenticate()
     this.tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: googleDriveConfig.clientId,
       scope: googleDriveConfig.scopes.join(' '),
-      callback: (response: google.accounts.oauth2.TokenResponse) => {
-        if (response.access_token) {
-          this.cacheToken(response.access_token, response.expires_in || 3600);
-        }
-      },
+      callback: () => {}, // Default no-op, overridden per request
+      error_callback: () => {}, // Default no-op, overridden per request
     });
   }
 
@@ -159,7 +154,25 @@ export class GoogleDriveService {
           this.cacheToken(response.access_token, response.expires_in || 3600);
           resolve();
         } else if (response.error) {
+          console.error('[GoogleDrive] Authentication error:', response.error);
           reject(new Error(response.error));
+        } else {
+          console.error('[GoogleDrive] Authentication cancelled: No access token received');
+          reject(new Error('user_cancelled'));
+        }
+      };
+
+      // Override error_callback to handle popup issues
+      this.tokenClient.error_callback = (errorResponse: google.accounts.oauth2.ClientConfigError) => {
+        if (errorResponse.type === 'popup_closed') {
+          console.error('[GoogleDrive] User closed authentication popup');
+          reject(new Error('user_cancelled'));
+        } else if (errorResponse.type === 'popup_failed_to_open') {
+          console.error('[GoogleDrive] Popup failed to open:', errorResponse);
+          reject(new Error('Popup failed to open. Please check your browser settings.'));
+        } else {
+          console.error('[GoogleDrive] Authentication error:', errorResponse);
+          reject(new Error(errorResponse.message || 'Authentication failed'));
         }
       };
 
@@ -175,6 +188,7 @@ export class GoogleDriveService {
     await this.initPromise;
 
     if (!this.cachedToken || this.cachedToken.expiresAt <= Date.now()) {
+      console.error('[GoogleDrive] Access token not available or expired');
       throw new Error(errorMessages.authRequired);
     }
 
@@ -314,6 +328,7 @@ export class GoogleDriveService {
    * Create user-friendly error messages from HTTP status codes
    */
   private createFriendlyError(statusCode: number): Error {
+    console.error(`[GoogleDrive] HTTP error ${statusCode}`);
     switch (statusCode) {
       case 401:
         return new Error('Authentication expired. Please reconnect to Google Drive.');
@@ -344,119 +359,5 @@ export class GoogleDriveService {
       this.cachedToken = null;
       localStorage.removeItem(TOKEN_STORAGE_KEY);
     }
-  }
-
-  /**
-   * Load Google Picker API
-   */
-  private async loadPickerApi(): Promise<void> {
-    if (this.pickerApiLoaded) {
-      return;
-    }
-
-    if (this.pickerApiLoadPromise) {
-      return this.pickerApiLoadPromise;
-    }
-
-    this.pickerApiLoadPromise = new Promise((resolve, reject) => {
-      // Check if gapi script is already loaded
-      if (typeof window.gapi !== 'undefined') {
-        window.gapi.load('picker', {
-          callback: () => {
-            this.pickerApiLoaded = true;
-            resolve();
-          },
-          onerror: () => {
-            reject(new Error('Failed to load Google Picker API'));
-          },
-        });
-        return;
-      }
-
-      // Load gapi script
-      const script = document.createElement('script');
-      script.src = 'https://apis.google.com/js/api.js';
-      script.async = true;
-      script.defer = true;
-
-      script.onload = () => {
-        window.gapi.load('picker', {
-          callback: () => {
-            this.pickerApiLoaded = true;
-            resolve();
-          },
-          onerror: () => {
-            reject(new Error('Failed to load Google Picker API'));
-          },
-        });
-      };
-
-      script.onerror = () => {
-        reject(new Error('Failed to load Google API library'));
-      };
-
-      document.head.appendChild(script);
-    });
-
-    return this.pickerApiLoadPromise;
-  }
-
-  /**
-   * Show Google Picker to select or create a file
-   * @param allowCreate Whether to show "Create" option
-   * @returns Selected file info or null if cancelled
-   */
-  async showFilePicker(allowCreate: boolean = true): Promise<SelectedFileInfo | null> {
-    await this.loadPickerApi();
-
-    const accessToken = await this.getAccessToken();
-
-    return new Promise((resolve) => {
-      const pickerCallback = (data: google.picker.ResponseObject) => {
-        if (data.action === google.picker.Action.PICKED) {
-          const doc = data.docs?.[0];
-          if (doc) {
-            // Check if user selected a folder or a file
-            const isFolder = doc.mimeType === 'application/vnd.google-apps.folder';
-
-            // Convert to SelectedFileInfo format
-            resolve({
-              fileId: isFolder ? null : doc.id,
-              fileName: isFolder ? 'money-tree.json' : doc.name,
-              parentId: isFolder ? doc.id : (doc.parentId ?? undefined),
-            });
-            return;
-          }
-        } else if (data.action === google.picker.Action.CANCEL) {
-          // User explicitly cancelled
-          resolve(null);
-          return;
-        }
-
-        // Ignore other actions like 'loaded'
-      };
-
-      // Create DocsView that shows folders and JSON files
-      const docsView = new google.picker.DocsView()
-        .setIncludeFolders(true)
-        .setSelectFolderEnabled(true)
-        .setMimeTypes('application/json,application/vnd.google-apps.folder');
-
-      const pickerBuilder = new google.picker.PickerBuilder()
-        .addView(docsView)
-        .addView(google.picker.ViewId.FOLDERS)
-        .setOAuthToken(accessToken)
-        .setDeveloperKey(googleDriveConfig.apiKey)
-        .setCallback(pickerCallback)
-        .setTitle('Select Money Tree file location');
-
-      // Enable multiselect if creating (so user can pick folder)
-      if (allowCreate) {
-        pickerBuilder.enableFeature(google.picker.Feature.MULTISELECT_ENABLED);
-      }
-
-      const picker = pickerBuilder.build();
-      picker.setVisible(true);
-    });
   }
 }

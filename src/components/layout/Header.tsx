@@ -157,7 +157,7 @@ export const Header: React.FC = () => {
 
           <Button
             color="inherit"
-            startIcon={isLoading || isSyncing ? <CircularProgress size={20} /> : <SyncIcon />}
+            startIcon={isLoading || isSyncing ? <CircularProgress size={20} color="inherit" /> : <SyncIcon />}
             onClick={handleSync}
             disabled={isLoading || isSyncing || !hasUnsavedChanges}
             aria-label="Sync"

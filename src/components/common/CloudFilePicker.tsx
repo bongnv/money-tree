@@ -49,6 +49,7 @@ interface CloudFilePickerProps<TFileInfo extends CloudFileInfo> {
   open: boolean;
   title: string;
   rootName?: string;
+  mode?: 'open' | 'create'; // 'open' = select existing file, 'create' = select folder to create in
   onSelect: (fileInfo: TFileInfo) => void;
   onCancel: () => void;
   onListItems: (parentId?: string | null) => Promise<CloudItem[]>;
@@ -65,6 +66,7 @@ export function CloudFilePicker<TFileInfo extends CloudFileInfo>({
   open,
   title,
   rootName = 'My Drive',
+  mode = 'open',
   onSelect,
   onCancel,
   onListItems,
@@ -111,8 +113,14 @@ export function CloudFilePicker<TFileInfo extends CloudFileInfo>({
   };
 
   const handleFolderClick = async (folder: CloudItem) => {
+    // Single click navigates into the folder (both modes)
+    await navigateIntoFolder(folder);
+  };
+
+  const navigateIntoFolder = async (folder: CloudItem) => {
     setLoading(true);
     setError(null);
+    setSelectedFile(null); // Clear selection when navigating
 
     try {
       const folderItems = await onListItems(folder.id);
@@ -152,7 +160,7 @@ export function CloudFilePicker<TFileInfo extends CloudFileInfo>({
 
   const handleSelectFile = () => {
     if (selectedFile) {
-      // Existing file selected
+      // Existing file selected in open mode
       const fileInfo = mapToFileInfo(
         selectedFile.id,
         selectedFile.name,
@@ -170,19 +178,21 @@ export function CloudFilePicker<TFileInfo extends CloudFileInfo>({
     setShowFileNameDialog(false);
   };
 
-  const handleCreateClick = () => {
-    setNewFileName(defaultFileName);
-    setShowFileNameDialog(true);
-  };
-
   const handleFileNameDialogClose = () => {
     setShowFileNameDialog(false);
     setNewFileName(defaultFileName);
   };
 
-  // Filter items into folders and JSON files
-  const jsonFiles = items.filter((item) => !item.isFolder);
+  // Filter items based on mode
+  // In 'open' mode: show both folders (for navigation) and JSON files (for selection)
+  // In 'create' mode: show only folders (for selection)
+  const jsonFiles = mode === 'open' ? items.filter((item) => !item.isFolder) : [];
   const folders = items.filter((item) => item.isFolder);
+
+  // Check if file already exists in current folder
+  const fileExists = items.some(
+    (item) => !item.isFolder && item.name.toLowerCase() === newFileName.toLowerCase()
+  );
 
   return (
     <Dialog open={open} onClose={onCancel} maxWidth="md" fullWidth>
@@ -280,15 +290,24 @@ export function CloudFilePicker<TFileInfo extends CloudFileInfo>({
       </DialogContent>
       <DialogActions>
         <Button onClick={onCancel}>Cancel</Button>
-        <Button onClick={handleCreateClick} disabled={loading}>
-          Create File
-        </Button>
-        <Button variant="contained" onClick={handleSelectFile} disabled={!selectedFile || loading}>
-          Select File
-        </Button>
+        {mode === 'open' ? (
+          <Button
+            variant="contained"
+            onClick={handleSelectFile}
+            disabled={!selectedFile || loading}
+          >
+            Select File
+          </Button>
+        ) : (
+          <Button
+            variant="contained"
+            onClick={() => setShowFileNameDialog(true)}
+            disabled={loading}
+          >
+            Create Here
+          </Button>
+        )}
       </DialogActions>
-
-      {/* File Name Dialog */}
       <Dialog open={showFileNameDialog} onClose={handleFileNameDialogClose} maxWidth="sm" fullWidth>
         <DialogTitle>Create New File</DialogTitle>
         <DialogContent>
@@ -298,8 +317,12 @@ export function CloudFilePicker<TFileInfo extends CloudFileInfo>({
             label="File name"
             value={newFileName}
             onChange={(e) => setNewFileName(e.target.value)}
-            helperText="File must have .json extension"
-            error={!newFileName.endsWith('.json')}
+            helperText={
+              fileExists
+                ? 'A file with this name already exists'
+                : 'File must have .json extension'
+            }
+            error={!newFileName.endsWith('.json') || fileExists}
             sx={{ mt: 2 }}
           />
         </DialogContent>
@@ -308,7 +331,7 @@ export function CloudFilePicker<TFileInfo extends CloudFileInfo>({
           <Button
             variant="contained"
             onClick={handleCreateHere}
-            disabled={!newFileName.trim() || !newFileName.endsWith('.json')}
+            disabled={!newFileName.trim() || !newFileName.endsWith('.json') || fileExists}
           >
             Create
           </Button>

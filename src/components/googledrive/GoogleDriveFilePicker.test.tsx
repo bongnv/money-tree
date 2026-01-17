@@ -158,11 +158,12 @@ describe('GoogleDriveFilePicker', () => {
     expect(mockOnCancel).toHaveBeenCalled();
   });
 
-  it('should open file name dialog on Create File', async () => {
+  it('should open file name dialog on Create Here in create mode', async () => {
     const user = userEvent.setup();
     render(
       <GoogleDriveFilePicker
         open={true}
+        mode="create"
         onSelect={mockOnSelect}
         onCancel={mockOnCancel}
         onListFiles={mockOnListFiles}
@@ -170,10 +171,18 @@ describe('GoogleDriveFilePicker', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /create file/i })).toBeInTheDocument();
+      expect(screen.getByText('Documents')).toBeInTheDocument();
     });
 
-    const createButton = screen.getByRole('button', { name: /create file/i });
+    // Select a folder
+    await user.click(screen.getByText('Documents'));
+
+    // Click Create Here button
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /create here/i })).toBeInTheDocument();
+    });
+
+    const createButton = screen.getByRole('button', { name: /create here/i });
     await user.click(createButton);
 
     await waitFor(() => {
@@ -186,6 +195,7 @@ describe('GoogleDriveFilePicker', () => {
     render(
       <GoogleDriveFilePicker
         open={true}
+        mode="create"
         onSelect={mockOnSelect}
         onCancel={mockOnCancel}
         onListFiles={mockOnListFiles}
@@ -193,10 +203,18 @@ describe('GoogleDriveFilePicker', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /create file/i })).toBeInTheDocument();
+      expect(screen.getByText('Documents')).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole('button', { name: /create file/i }));
+    // Select a folder
+    await user.click(screen.getByText('Documents'));
+
+    // Click Create Here button
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /create here/i })).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: /create here/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Create New File')).toBeInTheDocument();

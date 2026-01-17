@@ -61,7 +61,7 @@ export class BackupService {
     const compressed = gzipSync(uint8Array, { level: 9 });
 
     // Convert to Blob for browser compatibility
-    const blob = new Blob([compressed], { type: 'application/gzip' });
+    const blob = new Blob([compressed as BlobPart], { type: 'application/gzip' });
 
     // Generate filename with timestamp
     const filename = this.generateBackupFilename();

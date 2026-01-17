@@ -66,6 +66,7 @@ describe('OneDriveFilePicker', () => {
     render(
       <OneDriveFilePicker
         open={true}
+        mode="open"
         onSelect={mockOnSelect}
         onCancel={mockOnCancel}
         onListFolders={mockOnListFolders}
@@ -73,17 +74,17 @@ describe('OneDriveFilePicker', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Create File')).toBeInTheDocument();
       expect(screen.getByText('Select File')).toBeInTheDocument();
     });
   });
 
-  it('should show Create File dialog when Create File clicked', async () => {
+  it('should show Create Here button in create mode', async () => {
     const user = userEvent.setup();
 
     render(
       <OneDriveFilePicker
         open={true}
+        mode="create"
         onSelect={mockOnSelect}
         onCancel={mockOnCancel}
         onListFolders={mockOnListFolders}
@@ -91,10 +92,19 @@ describe('OneDriveFilePicker', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Create File')).toBeInTheDocument();
+      expect(screen.getByText('Documents')).toBeInTheDocument();
     });
 
-    const createButton = screen.getByRole('button', { name: /create file/i });
+    // Select a folder
+    await user.click(screen.getByText('Documents'));
+
+    // Should show Create Here button
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /create here/i })).toBeInTheDocument();
+    });
+
+    // Click Create Here button
+    const createButton = screen.getByRole('button', { name: /create here/i });
     await user.click(createButton);
 
     await waitFor(() => {
@@ -147,9 +157,12 @@ describe('OneDriveFilePicker', () => {
   });
 
   it('should call onSelect with new file info', async () => {
+    const user = userEvent.setup();
+
     render(
       <OneDriveFilePicker
         open={true}
+        mode="create"
         onSelect={mockOnSelect}
         onCancel={mockOnCancel}
         onListFolders={mockOnListFolders}
@@ -158,12 +171,20 @@ describe('OneDriveFilePicker', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('OneDrive')).toBeInTheDocument();
+      expect(screen.getByText('Documents')).toBeInTheDocument();
     });
 
-    // Click Create File button to open dialog
-    const createButton = screen.getByText('Create File');
-    fireEvent.click(createButton);
+    // Navigate into folder
+    await user.click(screen.getByText('Documents'));
+
+    await waitFor(() => {
+      // Verify we navigated into the folder
+      expect(mockOnListFolders).toHaveBeenCalledTimes(2); // Once for root, once for Documents
+    });
+
+    // Click Create Here button to open dialog (creates in current folder)
+    const createButton = screen.getByRole('button', { name: /create here/i });
+    await user.click(createButton);
 
     // Wait for dialog and submit
     await waitFor(() => {
@@ -171,12 +192,12 @@ describe('OneDriveFilePicker', () => {
     });
 
     const submitButton = screen.getByRole('button', { name: 'Create' });
-    fireEvent.click(submitButton);
+    await user.click(submitButton);
 
     expect(mockOnSelect).toHaveBeenCalledWith(
       expect.objectContaining({
         fileId: null,
-        filePath: 'test.json',
+        filePath: 'Documents/test.json', // File created in Documents folder
       })
     );
   });
@@ -271,6 +292,7 @@ describe('OneDriveFilePicker', () => {
     render(
       <OneDriveFilePicker
         open={true}
+        mode="create"
         onSelect={mockOnSelect}
         onCancel={mockOnCancel}
         onListFolders={mockOnListFolders}
@@ -278,12 +300,15 @@ describe('OneDriveFilePicker', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Create File')).toBeInTheDocument();
+      expect(screen.getByText('Documents')).toBeInTheDocument();
     });
 
-    // Click Create File button to open dialog
-    const createFileButton = screen.getByRole('button', { name: /create file/i });
-    await user.click(createFileButton);
+    // Select a folder
+    await user.click(screen.getByText('Documents'));
+
+    // Click Create Here button to open dialog
+    const createButton = screen.getByRole('button', { name: /create here/i });
+    await user.click(createButton);
 
     // Wait for Create New File dialog to appear
     await waitFor(() => {

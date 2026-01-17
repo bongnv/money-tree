@@ -24,6 +24,8 @@ interface AppState {
   baseVersion: DataFile | null;
   // Backup metadata
   lastBackupDate: string | null; // ISO date of last successful backup
+  // Welcome dialog control
+  shouldShowWelcome: boolean;
 }
 
 interface AppActions {
@@ -44,6 +46,8 @@ interface AppActions {
   clearFileMetadata: () => void;
   // Backup actions
   setLastBackupDate: (date: string | null) => void;
+  // Welcome dialog actions
+  setShouldShowWelcome: (show: boolean) => void;
 }
 
 export const useAppStore = create<AppState & AppActions>((set) => ({
@@ -63,6 +67,7 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
   fileLoadedAt: null,
   baseVersion: null,
   lastBackupDate: null,
+  shouldShowWelcome: false,
 
   setFileName: (fileName) => {
     set({ fileName });
@@ -108,6 +113,7 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
       fileLoadedAt: null,
       baseVersion: null,
       lastBackupDate: null,
+      shouldShowWelcome: false,
     });
   },
 
@@ -144,5 +150,9 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
 
   setLastBackupDate: (date) => {
     set({ lastBackupDate: date, hasUnsavedChanges: true });
+  },
+
+  setShouldShowWelcome: (show) => {
+    set({ shouldShowWelcome: show });
   },
 }));

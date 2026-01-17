@@ -35,7 +35,14 @@ export const DataSyncSettings: React.FC = () => {
   const storageFactory = useStorageFactory();
   const syncService = useSyncService();
   const backupService = useBackupService();
-  const { fileName, lastSaved, hasUnsavedChanges, lastBackupDate, showSnackbar } = useAppStore();
+  const {
+    fileName,
+    lastSaved,
+    hasUnsavedChanges,
+    lastBackupDate,
+    showSnackbar,
+    setShouldShowWelcome,
+  } = useAppStore();
   const [disconnectDialogOpen, setDisconnectDialogOpen] = React.useState(false);
   const [backupLoading, setBackupLoading] = React.useState(false);
 
@@ -116,9 +123,9 @@ export const DataSyncSettings: React.FC = () => {
     // Reset all data
     await syncService.resetToWelcome();
 
-    // Redirect to dashboard - user will see Welcome dialog
+    // Redirect to dashboard and trigger welcome dialog
     navigate('/');
-    window.location.reload();
+    setShouldShowWelcome(true);
   };
 
   return (

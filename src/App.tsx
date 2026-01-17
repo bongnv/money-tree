@@ -28,9 +28,25 @@ const AppContent: React.FC = () => {
   const syncService = useSyncService();
   const backupService = useBackupService();
   const archiveService = useArchiveService();
-  const { hasUnsavedChanges, snackbar, hideSnackbar, baseCurrency, lastBackupDate, isLoading } =
-    useAppStore();
+  const {
+    hasUnsavedChanges,
+    snackbar,
+    hideSnackbar,
+    baseCurrency,
+    lastBackupDate,
+    isLoading,
+    shouldShowWelcome,
+    setShouldShowWelcome,
+  } = useAppStore();
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
+
+  // Watch shouldShowWelcome from store
+  useEffect(() => {
+    if (shouldShowWelcome) {
+      setShowWelcomeDialog(true);
+      setShouldShowWelcome(false); // Reset flag after showing
+    }
+  }, [shouldShowWelcome, setShouldShowWelcome]);
   const [showArchivePrompt, setShowArchivePrompt] = useState(false);
   const [showBackupPrompt, setShowBackupPrompt] = useState(false);
   const [archiveYearSummary, setArchiveYearSummary] = useState<any>(null);

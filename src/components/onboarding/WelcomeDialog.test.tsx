@@ -396,8 +396,6 @@ describe('WelcomeDialog', () => {
       expect(screen.getByText('Connect to OneDrive')).toBeInTheDocument();
       expect(screen.getByText('Connect to Google Drive')).toBeInTheDocument();
     });
-
-
   });
 
   describe('User Interaction Flow', () => {

@@ -1,6 +1,12 @@
 import { CalculationService } from './calculation.service';
 import type { Transaction, Account, ManualAsset } from '../types/models';
 import { AccountType, AssetType, CurrencyCode } from '../types/enums';
+import * as exchangeRateService from './exchangeRate.service';
+
+// Mock the getRateForMonth function
+jest.mock('./exchangeRate.service', () => ({
+  getRateForMonth: jest.fn(),
+}));
 
 const calculationService = new CalculationService();
 
@@ -745,6 +751,450 @@ describe('CalculationService', () => {
       it('should handle 100% savings rate', () => {
         const rate = calculationService.calculateSavingsRate(1000, 0);
         expect(rate).toBe(100);
+      });
+    });
+
+    describe('convertTransactionAmount', () => {
+      const accountUSD: Account = {
+        id: 'acc-usd',
+        name: 'USD Account',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: 1000,
+        isActive: true,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      };
+
+      const accountEUR: Account = {
+        id: 'acc-eur',
+        name: 'EUR Account',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.EUR,
+        initialBalance: 1000,
+        isActive: true,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      };
+
+      it('should return original amount when account not found', async () => {
+        const transaction: Transaction = {
+          id: 'tx1',
+          date: '2026-01-15',
+          description: 'Test',
+          amount: 100,
+          transactionTypeId: 'type-1',
+          fromAccountId: 'acc-unknown',
+          createdAt: '2026-01-15T00:00:00.000Z',
+          updatedAt: '2026-01-15T00:00:00.000Z',
+        };
+
+        const result = await calculationService.convertTransactionAmount(
+          transaction,
+          [accountUSD],
+          CurrencyCode.EUR
+        );
+        expect(result).toBe(100);
+      });
+
+      it('should return original amount when same currency', async () => {
+        const transaction: Transaction = {
+          id: 'tx1',
+          date: '2026-01-15',
+          description: 'Test',
+          amount: 100,
+          transactionTypeId: 'type-1',
+          fromAccountId: 'acc-usd',
+          createdAt: '2026-01-15T00:00:00.000Z',
+          updatedAt: '2026-01-15T00:00:00.000Z',
+        };
+
+        const result = await calculationService.convertTransactionAmount(
+          transaction,
+          [accountUSD],
+          CurrencyCode.USD
+        );
+        expect(result).toBe(100);
+      });
+
+      it('should return original amount when conversion rate not available', async () => {
+        // Mock getRateForMonth to return null (no rate available)
+        (exchangeRateService.getRateForMonth as jest.Mock).mockResolvedValue(null);
+
+        const transaction: Transaction = {
+          id: 'tx1',
+          date: '2026-01-15',
+          description: 'Test',
+          amount: 100,
+          transactionTypeId: 'type-1',
+          fromAccountId: 'acc-eur',
+          createdAt: '2026-01-15T00:00:00.000Z',
+          updatedAt: '2026-01-15T00:00:00.000Z',
+        };
+
+        const result = await calculationService.convertTransactionAmount(
+          transaction,
+          [accountEUR],
+          CurrencyCode.USD
+        );
+        expect(result).toBe(100);
+      });
+    });
+
+    describe('convertBudgetAmount', () => {
+      it('should return original amount when same currency', async () => {
+        const budget = {
+          id: 'b1',
+          transactionTypeId: 'type-1',
+          currencyCode: CurrencyCode.USD,
+          amount: 500,
+          period: 'monthly' as const,
+          startDate: '2026-01-01',
+          endDate: '2026-12-31',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        };
+
+        const result = await calculationService.convertBudgetAmount(
+          budget,
+          '2026-01',
+          CurrencyCode.USD
+        );
+        expect(result).toBe(500);
+      });
+
+      it('should throw error when conversion rate not available', async () => {
+        // Mock getRateForMonth to return null (no rate available)
+        (exchangeRateService.getRateForMonth as jest.Mock).mockResolvedValue(null);
+
+        const budget = {
+          id: 'b1',
+          transactionTypeId: 'type-1',
+          currencyCode: CurrencyCode.EUR,
+          amount: 500,
+          period: 'monthly' as const,
+          startDate: '2026-01-01',
+          endDate: '2026-12-31',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        };
+
+        await expect(
+          calculationService.convertBudgetAmount(budget, '2026-01', CurrencyCode.USD)
+        ).rejects.toThrow(/Missing exchange rate/);
+      });
+    });
+
+    describe('sumTransactionAmounts', () => {
+      const accountUSD: Account = {
+        id: 'acc-usd',
+        name: 'USD Account',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: 1000,
+        isActive: true,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      };
+
+      it('should sum transaction amounts', async () => {
+        const transactions: Transaction[] = [
+          {
+            id: 'tx1',
+            date: '2026-01-15',
+            description: 'Test 1',
+            amount: 100,
+            transactionTypeId: 'type-1',
+            fromAccountId: 'acc-usd',
+            createdAt: '2026-01-15T00:00:00.000Z',
+            updatedAt: '2026-01-15T00:00:00.000Z',
+          },
+          {
+            id: 'tx2',
+            date: '2026-01-16',
+            description: 'Test 2',
+            amount: 200,
+            transactionTypeId: 'type-1',
+            fromAccountId: 'acc-usd',
+            createdAt: '2026-01-16T00:00:00.000Z',
+            updatedAt: '2026-01-16T00:00:00.000Z',
+          },
+        ];
+
+        const result = await calculationService.sumTransactionAmounts(
+          transactions,
+          [accountUSD],
+          CurrencyCode.USD
+        );
+        expect(result).toBe(300);
+      });
+
+      it('should return 0 for empty transaction list', async () => {
+        const result = await calculationService.sumTransactionAmounts(
+          [],
+          [accountUSD],
+          CurrencyCode.USD
+        );
+        expect(result).toBe(0);
+      });
+    });
+
+    describe('calculateTransactionTypeGrouping', () => {
+      const accountUSD: Account = {
+        id: 'acc-usd',
+        name: 'USD Account',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: 1000,
+        isActive: true,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      };
+
+      const transactionTypes = [
+        {
+          id: 'type-income',
+          name: 'Salary',
+          categoryId: 'cat-1',
+          group: 'income' as const,
+          isActive: true,
+          createdAt: '2024-01-01T00:00:00.000Z',
+          updatedAt: '2024-01-01T00:00:00.000Z',
+        },
+        {
+          id: 'type-expense',
+          name: 'Groceries',
+          categoryId: 'cat-2',
+          group: 'expense' as const,
+          isActive: true,
+          createdAt: '2024-01-01T00:00:00.000Z',
+          updatedAt: '2024-01-01T00:00:00.000Z',
+        },
+      ];
+
+      it('should group income and expense transactions', async () => {
+        const transactions: Transaction[] = [
+          {
+            id: 'tx1',
+            date: '2026-01-15',
+            description: 'Salary',
+            amount: 3000,
+            transactionTypeId: 'type-income',
+            toAccountId: 'acc-usd',
+            createdAt: '2026-01-15T00:00:00.000Z',
+            updatedAt: '2026-01-15T00:00:00.000Z',
+          },
+          {
+            id: 'tx2',
+            date: '2026-01-16',
+            description: 'Groceries',
+            amount: 200,
+            transactionTypeId: 'type-expense',
+            fromAccountId: 'acc-usd',
+            createdAt: '2026-01-16T00:00:00.000Z',
+            updatedAt: '2026-01-16T00:00:00.000Z',
+          },
+        ];
+
+        const result = await calculationService.calculateTransactionTypeGrouping(
+          transactions,
+          transactionTypes,
+          [accountUSD],
+          CurrencyCode.USD
+        );
+
+        expect(result.incomeByType.size).toBe(1);
+        expect(result.expenseByType.size).toBe(1);
+        expect(result.incomeByType.get('type-income')?.total).toBe(3000);
+        expect(result.expenseByType.get('type-expense')?.total).toBe(200);
+      });
+
+      it('should handle empty transactions', async () => {
+        const result = await calculationService.calculateTransactionTypeGrouping(
+          [],
+          transactionTypes,
+          [accountUSD],
+          CurrencyCode.USD
+        );
+
+        expect(result.incomeByType.size).toBe(0);
+        expect(result.expenseByType.size).toBe(0);
+      });
+
+      it('should skip transactions with missing transaction type', async () => {
+        const transactions: Transaction[] = [
+          {
+            id: 'tx1',
+            date: '2026-01-15',
+            description: 'Unknown',
+            amount: 100,
+            transactionTypeId: 'type-unknown',
+            fromAccountId: 'acc-usd',
+            createdAt: '2026-01-15T00:00:00.000Z',
+            updatedAt: '2026-01-15T00:00:00.000Z',
+          },
+        ];
+
+        const result = await calculationService.calculateTransactionTypeGrouping(
+          transactions,
+          transactionTypes,
+          [accountUSD],
+          CurrencyCode.USD
+        );
+
+        expect(result.incomeByType.size).toBe(0);
+        expect(result.expenseByType.size).toBe(0);
+      });
+    });
+
+    describe('calculateBudgetGrouping', () => {
+      const accountUSD: Account = {
+        id: 'acc-usd',
+        name: 'USD Account',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: 1000,
+        isActive: true,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      };
+
+      const transactionTypes = [
+        {
+          id: 'type-groceries',
+          name: 'Groceries',
+          categoryId: 'cat-food',
+          group: 'expense' as const,
+          isActive: true,
+          createdAt: '2024-01-01T00:00:00.000Z',
+          updatedAt: '2024-01-01T00:00:00.000Z',
+        },
+      ];
+
+      const category = {
+        id: 'cat-food',
+        name: 'Food',
+        isActive: true,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      };
+
+      const getCategoryById = (id: string) => (id === 'cat-food' ? category : null);
+
+      it('should group budgets by category', async () => {
+        const budgets = [
+          {
+            id: 'b1',
+            transactionTypeId: 'type-groceries',
+            currencyCode: CurrencyCode.USD,
+            amount: 500,
+            period: 'monthly' as const,
+            startDate: '2026-01-01',
+            endDate: '2026-12-31',
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+        ];
+
+        const transactions: Transaction[] = [
+          {
+            id: 'tx1',
+            date: '2026-01-15',
+            description: 'Groceries',
+            amount: 200,
+            transactionTypeId: 'type-groceries',
+            fromAccountId: 'acc-usd',
+            createdAt: '2026-01-15T00:00:00.000Z',
+            updatedAt: '2026-01-15T00:00:00.000Z',
+          },
+        ];
+
+        const result = await calculationService.calculateBudgetGrouping(
+          budgets,
+          transactions,
+          transactionTypes,
+          [accountUSD],
+          { startDate: '2026-01-01', endDate: '2026-01-31' },
+          CurrencyCode.USD,
+          getCategoryById
+        );
+
+        expect(Object.keys(result).length).toBe(1);
+        expect(result['cat-food']).toBeDefined();
+        expect(result['cat-food'].items.length).toBe(1);
+        expect(result['cat-food'].totalActual).toBe(200);
+      });
+
+      it('should skip budgets with missing transaction type', async () => {
+        const budgets = [
+          {
+            id: 'b1',
+            transactionTypeId: 'type-unknown',
+            currencyCode: CurrencyCode.USD,
+            amount: 500,
+            period: 'monthly' as const,
+            startDate: '2026-01-01',
+            endDate: '2026-12-31',
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+        ];
+
+        const result = await calculationService.calculateBudgetGrouping(
+          budgets,
+          [],
+          transactionTypes,
+          [accountUSD],
+          { startDate: '2026-01-01', endDate: '2026-01-31' },
+          CurrencyCode.USD,
+          getCategoryById
+        );
+
+        expect(Object.keys(result).length).toBe(0);
+      });
+
+      it('should skip budgets with missing category', async () => {
+        const budgets = [
+          {
+            id: 'b1',
+            transactionTypeId: 'type-groceries',
+            currencyCode: CurrencyCode.USD,
+            amount: 500,
+            period: 'monthly' as const,
+            startDate: '2026-01-01',
+            endDate: '2026-12-31',
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+        ];
+
+        const getCategoryByIdMissing = () => null;
+
+        const result = await calculationService.calculateBudgetGrouping(
+          budgets,
+          [],
+          transactionTypes,
+          [accountUSD],
+          { startDate: '2026-01-01', endDate: '2026-01-31' },
+          CurrencyCode.USD,
+          getCategoryByIdMissing
+        );
+
+        expect(Object.keys(result).length).toBe(0);
+      });
+
+      it('should handle empty budgets', async () => {
+        const result = await calculationService.calculateBudgetGrouping(
+          [],
+          [],
+          transactionTypes,
+          [accountUSD],
+          { startDate: '2026-01-01', endDate: '2026-01-31' },
+          CurrencyCode.USD,
+          getCategoryById
+        );
+
+        expect(Object.keys(result).length).toBe(0);
       });
     });
   });

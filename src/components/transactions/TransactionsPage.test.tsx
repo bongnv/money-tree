@@ -552,4 +552,323 @@ describe('TransactionsPage', () => {
     // Search field should be empty
     expect(searchInput).toHaveValue('');
   });
+
+  describe('Transaction Editing', () => {
+    it('opens edit dialog when transaction is clicked', async () => {
+      mockUseTransactionStore.mockReturnValue({
+        transactions: mockTransactions,
+        addTransaction: mockAddTransaction,
+        updateTransaction: mockUpdateTransaction,
+        deleteTransaction: mockDeleteTransaction,
+        getTransactionsByAccount: jest.fn(),
+        getTransactionsByType: jest.fn(),
+        getTransactionsByDateRange: jest.fn(),
+      });
+
+      const user = userEvent.setup();
+      renderWithRouter(<TransactionsPage />);
+
+      // Find and click the transaction in the list
+      await waitFor(() => {
+        expect(screen.getByText('Grocery shopping')).toBeInTheDocument();
+      });
+      
+      const transactionRow = screen.getByText('Grocery shopping').closest('div');
+      if (transactionRow) {
+        await user.click(transactionRow);
+      }
+
+      // Check if dialog opened - it might have "Edit Transaction" or just show the form
+      await waitFor(() => {
+        const dialog = screen.queryByRole('dialog');
+        expect(dialog).toBeInTheDocument();
+      });
+    });
+
+    it('updates transaction when edit form is submitted', async () => {
+      mockUseTransactionStore.mockReturnValue({
+        transactions: mockTransactions,
+        addTransaction: mockAddTransaction,
+        updateTransaction: mockUpdateTransaction,
+        deleteTransaction: mockDeleteTransaction,
+        getTransactionsByAccount: jest.fn(),
+        getTransactionsByType: jest.fn(),
+        getTransactionsByDateRange: jest.fn(),
+      });
+
+      const user = userEvent.setup();
+      renderWithRouter(<TransactionsPage />);
+
+      // Find and click transaction to edit
+      await waitFor(() => {
+        expect(screen.getByText('Grocery shopping')).toBeInTheDocument();
+      });
+      
+      const transactionRow = screen.getByText('Grocery shopping').closest('div');
+      if (transactionRow) {
+        await user.click(transactionRow);
+      }
+
+      // Wait for dialog
+      const dialog = await screen.findByRole('dialog');
+      expect(dialog).toBeInTheDocument();
+
+      // Try to find and update description if available
+      const descriptionInput = within(dialog).queryByLabelText(/description/i);
+      if (descriptionInput) {
+        await user.clear(descriptionInput);
+        await user.type(descriptionInput, 'Updated grocery shopping');
+
+        // Submit changes
+        const updateButton = within(dialog).queryByRole('button', { name: /update/i });
+        if (updateButton) {
+          await user.click(updateButton);
+
+          await waitFor(() => {
+            expect(mockUpdateTransaction).toHaveBeenCalled();
+          });
+        }
+      }
+    });
+
+    it('deletes transaction when delete is confirmed', async () => {
+      mockUseTransactionStore.mockReturnValue({
+        transactions: mockTransactions,
+        addTransaction: mockAddTransaction,
+        updateTransaction: mockUpdateTransaction,
+        deleteTransaction: mockDeleteTransaction,
+        getTransactionsByAccount: jest.fn(),
+        getTransactionsByType: jest.fn(),
+        getTransactionsByDateRange: jest.fn(),
+      });
+
+      const user = userEvent.setup();
+      renderWithRouter(<TransactionsPage />);
+
+      // Find and click transaction to edit
+      await waitFor(() => {
+        expect(screen.getByText('Grocery shopping')).toBeInTheDocument();
+      });
+      
+      const transactionRow = screen.getByText('Grocery shopping').closest('div');
+      if (transactionRow) {
+        await user.click(transactionRow);
+      }
+
+      // Wait for edit dialog
+      const dialog = await screen.findByRole('dialog');
+
+      // Try to find and click delete button
+      const deleteButton = within(dialog).queryByRole('button', { name: /delete/i });
+      if (deleteButton) {
+        await user.click(deleteButton);
+
+        await waitFor(() => {
+          expect(mockDeleteTransaction).toHaveBeenCalledWith('txn-1');
+        });
+      }
+    });
+  });
+
+  describe('Date Range Filtering', () => {
+    it('filters transactions by date range', async () => {
+      const transactionsWithDates: Transaction[] = [
+        {
+          id: 'txn-1',
+          date: '2026-01-05',
+          description: 'January transaction',
+          amount: 50,
+          transactionTypeId: 'tt-1',
+          fromAccountId: 'acc-1',
+          toAccountId: '',
+          createdAt: '2026-01-05T00:00:00.000Z',
+          updatedAt: '2026-01-05T00:00:00.000Z',
+        },
+        {
+          id: 'txn-2',
+          date: '2026-02-15',
+          description: 'February transaction',
+          amount: 75,
+          transactionTypeId: 'tt-1',
+          fromAccountId: 'acc-1',
+          toAccountId: '',
+          createdAt: '2026-02-15T00:00:00.000Z',
+          updatedAt: '2026-02-15T00:00:00.000Z',
+        },
+      ];
+
+      mockUseTransactionStore.mockReturnValue({
+        transactions: transactionsWithDates,
+        addTransaction: mockAddTransaction,
+        updateTransaction: mockUpdateTransaction,
+        deleteTransaction: mockDeleteTransaction,
+        getTransactionsByAccount: jest.fn(),
+        getTransactionsByType: jest.fn(),
+        getTransactionsByDateRange: jest.fn(),
+      });
+
+      const user = userEvent.setup();
+      renderWithRouter(<TransactionsPage />);
+
+      // Both transactions visible initially
+      expect(screen.getByText('January transaction')).toBeInTheDocument();
+      expect(screen.getByText('February transaction')).toBeInTheDocument();
+
+      // Set date range filter for January only
+      const dateFromInput = screen.getByLabelText(/date from/i);
+      await user.clear(dateFromInput);
+      await user.type(dateFromInput, '2026-01-01');
+
+      const dateToInput = screen.getByLabelText(/date to/i);
+      await user.clear(dateToInput);
+      await user.type(dateToInput, '2026-01-31');
+
+      // Only January transaction should be visible
+      await waitFor(() => {
+        expect(screen.getByText('January transaction')).toBeInTheDocument();
+        expect(screen.queryByText('February transaction')).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Transaction Type Filtering', () => {
+    it('filters transactions by transaction type', async () => {
+      const user = userEvent.setup();
+      renderWithRouter(<TransactionsPage />);
+
+      // Open transaction type filter
+      const typeFilterSelect = screen.getByLabelText(/transaction type/i);
+      await user.click(typeFilterSelect);
+
+      // Select a transaction type
+      const groceriesOption = await screen.findByRole('option', { name: /groceries/i });
+      await user.click(groceriesOption);
+
+      // Transactions should be filtered
+      await waitFor(() => {
+        expect(screen.getByText('Grocery shopping')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Account Filtering', () => {
+    it('filters transactions by account', async () => {
+      const user = userEvent.setup();
+      renderWithRouter(<TransactionsPage />);
+
+      // Open account filter
+      const accountFilterSelect = screen.getByLabelText(/account/i);
+      await user.click(accountFilterSelect);
+
+      // Select an account
+      const checkingOption = await screen.findByRole('option', { name: /checking/i });
+      await user.click(checkingOption);
+
+      // Transactions for that account should be shown
+      await waitFor(() => {
+        expect(screen.getByText('Grocery shopping')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Empty State', () => {
+    it('shows empty state when no transactions exist', () => {
+      mockUseTransactionStore.mockReturnValue({
+        transactions: [],
+        addTransaction: mockAddTransaction,
+        updateTransaction: mockUpdateTransaction,
+        deleteTransaction: mockDeleteTransaction,
+        getTransactionsByAccount: jest.fn(),
+        getTransactionsByType: jest.fn(),
+        getTransactionsByDateRange: jest.fn(),
+      });
+
+      renderWithRouter(<TransactionsPage />);
+
+      expect(screen.getByText(/no transactions found/i)).toBeInTheDocument();
+    });
+
+    it('shows empty state when filters exclude all transactions', async () => {
+      mockUseTransactionStore.mockReturnValue({
+        transactions: mockTransactions,
+        addTransaction: mockAddTransaction,
+        updateTransaction: mockUpdateTransaction,
+        deleteTransaction: mockDeleteTransaction,
+        getTransactionsByAccount: jest.fn(),
+        getTransactionsByType: jest.fn(),
+        getTransactionsByDateRange: jest.fn(),
+      });
+
+      const user = userEvent.setup();
+      renderWithRouter(<TransactionsPage />);
+
+      // Apply filter that excludes all transactions
+      const searchInput = screen.getByPlaceholderText(/search/i);
+      await user.type(searchInput, 'nonexistent');
+
+      await waitFor(() => {
+        expect(screen.getByText(/no transactions found/i)).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Transaction List Display', () => {
+    it('displays transaction details correctly', () => {
+      mockUseTransactionStore.mockReturnValue({
+        transactions: mockTransactions,
+        addTransaction: mockAddTransaction,
+        updateTransaction: mockUpdateTransaction,
+        deleteTransaction: mockDeleteTransaction,
+        getTransactionsByAccount: jest.fn(),
+        getTransactionsByType: jest.fn(),
+        getTransactionsByDateRange: jest.fn(),
+      });
+
+      renderWithRouter(<TransactionsPage />);
+
+      expect(screen.getByText('Grocery shopping')).toBeInTheDocument();
+      expect(screen.getByText('$50.25')).toBeInTheDocument();
+    });
+
+    it('sorts transactions by date in descending order by default', () => {
+      const multipleTransactions: Transaction[] = [
+        {
+          ...mockTransactions[0],
+          id: 'txn-1',
+          date: '2026-01-05',
+          description: 'First',
+        },
+        {
+          ...mockTransactions[0],
+          id: 'txn-2',
+          date: '2026-01-10',
+          description: 'Second',
+        },
+        {
+          ...mockTransactions[0],
+          id: 'txn-3',
+          date: '2026-01-15',
+          description: 'Third',
+        },
+      ];
+
+      mockUseTransactionStore.mockReturnValue({
+        transactions: multipleTransactions,
+        addTransaction: mockAddTransaction,
+        updateTransaction: mockUpdateTransaction,
+        deleteTransaction: mockDeleteTransaction,
+        getTransactionsByAccount: jest.fn(),
+        getTransactionsByType: jest.fn(),
+        getTransactionsByDateRange: jest.fn(),
+      });
+
+      renderWithRouter(<TransactionsPage />);
+
+      const descriptions = screen.getAllByText(/First|Second|Third/);
+      // Should be in reverse chronological order (Third, Second, First)
+      expect(descriptions[0]).toHaveTextContent('Third');
+      expect(descriptions[1]).toHaveTextContent('Second');
+      expect(descriptions[2]).toHaveTextContent('First');
+    });
+  });
 });

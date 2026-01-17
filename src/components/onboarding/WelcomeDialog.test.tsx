@@ -303,4 +303,166 @@ describe('WelcomeDialog', () => {
       });
     });
   });
+
+  describe('Cloud Storage Integration', () => {
+    it('should connect to OneDrive when Open Existing clicked', async () => {
+      mockStorageFactory.connect.mockResolvedValue(undefined);
+      mockStorageFactory.listFiles.mockResolvedValue([
+        { id: 'file1', name: 'money-tree.json', lastModified: new Date().toISOString() },
+      ]);
+      
+      // Create a mock provider for OneDrive
+      const mockOneDriveProvider = {
+        listFiles: mockStorageFactory.listFiles,
+      };
+      mockStorageFactory.provider = mockOneDriveProvider;
+      
+      mockSyncService.loadDataFile.mockResolvedValue(undefined);
+
+      render(<WelcomeDialog open={true} onClose={mockOnClose} />);
+
+      const openButtons = screen.getAllByRole('button', { name: /open existing/i });
+      // OneDrive is the second option (after Local Storage)
+      fireEvent.click(openButtons[1]);
+
+      await waitFor(() => {
+        expect(mockStorageFactory.connect).toHaveBeenCalledWith({
+          type: StorageProviderType.ONEDRIVE,
+        });
+      });
+      
+      await waitFor(() => {
+        expect(mockOnClose).toHaveBeenCalled();
+      });
+    });
+
+    it('should connect to Google Drive when Create New clicked', async () => {
+      mockStorageFactory.connect.mockResolvedValue(undefined);
+      mockSyncService.syncNow.mockResolvedValue(undefined);
+
+      render(<WelcomeDialog open={true} onClose={mockOnClose} />);
+
+      const createButtons = screen.getAllByRole('button', { name: /create new/i });
+      // Google Drive is the third option
+      fireEvent.click(createButtons[2]);
+
+      await waitFor(() => {
+        expect(mockStorageFactory.connect).toHaveBeenCalledWith({
+          type: StorageProviderType.GOOGLE_DRIVE,
+        });
+        expect(mockOnClose).toHaveBeenCalled();
+      });
+    });
+
+    it('should handle cloud connection errors', async () => {
+      mockStorageFactory.connect.mockRejectedValue(new Error('Auth failed'));
+
+      render(<WelcomeDialog open={true} onClose={mockOnClose} />);
+
+      const openButtons = screen.getAllByRole('button', { name: /open existing/i });
+      fireEvent.click(openButtons[1]); // OneDrive
+
+      await waitFor(() => {
+        expect(screen.getByText('Auth failed')).toBeInTheDocument();
+        expect(mockOnClose).not.toHaveBeenCalled();
+      });
+    });
+
+    it('should handle file picker cancellation gracefully', async () => {
+      (FilePickerService.showOpenFilePicker as jest.Mock).mockResolvedValue(null);
+
+      render(<WelcomeDialog open={true} onClose={mockOnClose} />);
+
+      const openButtons = screen.getAllByRole('button', { name: /open existing/i });
+      fireEvent.click(openButtons[0]);
+
+      await waitFor(() => {
+        expect(mockOnClose).not.toHaveBeenCalled();
+        expect(screen.queryByText(/error/i)).not.toBeInTheDocument();
+      });
+    });
+
+    it('should show storage options when dialog opens', () => {
+      render(<WelcomeDialog open={true} onClose={mockOnClose} />);
+
+      expect(screen.getByText('Local File Storage')).toBeInTheDocument();
+      expect(screen.getByText('Connect to OneDrive')).toBeInTheDocument();
+      expect(screen.getByText('Connect to Google Drive')).toBeInTheDocument();
+    });
+
+    it('should display privacy information', () => {
+      render(<WelcomeDialog open={true} onClose={mockOnClose} />);
+
+      expect(
+        screen.getByText(/your data stays private and under your control/i)
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe('User Interaction Flow', () => {
+    it('should complete full onboarding flow with local storage', async () => {
+      const mockFileHandle = {} as FileSystemFileHandle;
+      (FilePickerService.showSaveFilePicker as jest.Mock).mockResolvedValue(mockFileHandle);
+      mockStorageFactory.connect.mockResolvedValue(undefined);
+      mockSyncService.syncNow.mockResolvedValue(undefined);
+
+      render(<WelcomeDialog open={true} onClose={mockOnClose} />);
+
+      // User sees welcome screen
+      expect(screen.getByText('Welcome to Money Tree')).toBeInTheDocument();
+
+      // User clicks Create New File
+      const createButtons = screen.getAllByRole('button', { name: /create new/i });
+      fireEvent.click(createButtons[0]);
+
+      // Dialog closes after successful setup
+      await waitFor(() => {
+        expect(mockOnClose).toHaveBeenCalled();
+      });
+    });
+
+    it('should complete full onboarding flow with OneDrive', async () => {
+      mockStorageFactory.connect.mockResolvedValue(undefined);
+      mockSyncService.syncNow.mockResolvedValue(undefined);
+
+      render(<WelcomeDialog open={true} onClose={mockOnClose} />);
+
+      // User selects OneDrive
+      const createButtons = screen.getAllByRole('button', { name: /create new/i });
+      fireEvent.click(createButtons[1]); // OneDrive
+
+      await waitFor(() => {
+        expect(mockStorageFactory.connect).toHaveBeenCalledWith({
+          type: StorageProviderType.ONEDRIVE,
+        });
+        expect(mockSyncService.syncNow).toHaveBeenCalledWith(true);
+        expect(mockOnClose).toHaveBeenCalled();
+      });
+    });
+
+    it('should allow retrying after error', async () => {
+      (FilePickerService.showSaveFilePicker as jest.Mock)
+        .mockRejectedValueOnce(new Error('First attempt failed'))
+        .mockResolvedValueOnce({} as FileSystemFileHandle);
+      
+      mockStorageFactory.connect.mockResolvedValue(undefined);
+      mockSyncService.syncNow.mockResolvedValue(undefined);
+
+      render(<WelcomeDialog open={true} onClose={mockOnClose} />);
+
+      const createButtons = screen.getAllByRole('button', { name: /create new/i });
+      
+      // First attempt fails
+      fireEvent.click(createButtons[0]);
+      await waitFor(() => {
+        expect(screen.getByText('First attempt failed')).toBeInTheDocument();
+      });
+
+      // Second attempt succeeds
+      fireEvent.click(createButtons[0]);
+      await waitFor(() => {
+        expect(mockOnClose).toHaveBeenCalled();
+      });
+    });
+  });
 });

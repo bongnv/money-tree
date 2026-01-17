@@ -450,4 +450,360 @@ describe('SyncService', () => {
       expect(mockLoadDataFile).toHaveBeenCalled();
     });
   });
+
+  describe('syncNow', () => {
+    it('should not save if already saving', async () => {
+      useAccountStore.getState().addAccount({
+        id: '1',
+        name: 'Test Account',
+        type: AccountType.CASH,
+        currencyCode: 'USD',
+        initialBalance: 1000,
+        isActive: true,
+        description: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      useAppStore.getState().setUnsavedChanges(true);
+
+      // Start first save that won't complete immediately
+      const savePromise1 = syncService.syncNow();
+
+      // Try to start second save while first is in progress
+      const savePromise2 = syncService.syncNow();
+
+      await Promise.all([savePromise1, savePromise2]);
+
+      // Should only have saved once
+      expect(mockSaveDataFile).toHaveBeenCalledTimes(1);
+    });
+
+    it('should save with force flag even without changes', async () => {
+      useAppStore.getState().setUnsavedChanges(false);
+
+      mockSaveDataFile.mockResolvedValue(undefined);
+
+      await syncService.syncNow(true);
+
+      expect(mockSaveDataFile).toHaveBeenCalled();
+    });
+
+    it('should not save without force flag when no changes', async () => {
+      useAppStore.getState().setUnsavedChanges(false);
+
+      await syncService.syncNow(false);
+
+      expect(mockSaveDataFile).not.toHaveBeenCalled();
+    });
+
+    it('should handle save errors gracefully', async () => {
+      useAccountStore.getState().addAccount({
+        id: '1',
+        name: 'Test Account',
+        type: AccountType.CASH,
+        currencyCode: 'USD',
+        initialBalance: 1000,
+        isActive: true,
+        description: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      useAppStore.getState().setUnsavedChanges(true);
+
+      mockSaveDataFile.mockRejectedValue(new Error('Save failed'));
+
+      await expect(syncService.syncNow()).rejects.toThrow('Save failed');
+
+      // Note: The service clears the flag before saving, so it will be false after error
+      // This is expected behavior - the store will set it back to true on next change
+    });
+
+    it('should detect external file changes and handle auto-merge', async () => {
+      useAccountStore.getState().addAccount({
+        id: '1',
+        name: 'Test Account',
+        type: AccountType.CASH,
+        currencyCode: 'USD',
+        initialBalance: 1000,
+        isActive: true,
+        description: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      useAppStore.getState().setUnsavedChanges(true);
+
+      const baseVersion: DataFile = {
+        version: '1.0.0',
+        transactions: [],
+        budgets: [],
+        manualAssets: [],
+        exchangeRates: [],
+        accounts: [],
+        categories: [],
+        transactionTypes: [],
+        archivedYears: [],
+        lastModified: new Date().toISOString(),
+      };
+
+      // Set base version and file hash to simulate previous load
+      useAppStore.getState().setFileMetadata('base-hash', new Date().toISOString(), baseVersion);
+
+      // Simulate external file modification
+      const externallyModifiedFile: DataFile = {
+        ...baseVersion,
+        accounts: [
+          {
+            id: '2',
+            name: 'External Account',
+            type: AccountType.BANK_ACCOUNT,
+            currencyCode: 'USD',
+            initialBalance: 2000,
+            isActive: true,
+            description: '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+        lastModified: new Date().toISOString(),
+      };
+
+      mockLoadDataFile.mockResolvedValue(externallyModifiedFile);
+      mockSaveDataFile.mockResolvedValue(undefined);
+
+      await syncService.syncNow();
+
+      expect(mockLoadDataFile).toHaveBeenCalled();
+      expect(mockSaveDataFile).toHaveBeenCalled();
+    });
+
+    it('should handle merge conflicts with merge handler', async () => {
+      useAccountStore.getState().addAccount({
+        id: '1',
+        name: 'Local Account',
+        type: AccountType.CASH,
+        currencyCode: 'USD',
+        initialBalance: 1000,
+        isActive: true,
+        description: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      useAppStore.getState().setUnsavedChanges(true);
+
+      const baseVersion: DataFile = {
+        version: '1.0.0',
+        transactions: [],
+        budgets: [],
+        manualAssets: [],
+        exchangeRates: [],
+        accounts: [
+          {
+            id: '1',
+            name: 'Original Account',
+            type: AccountType.CASH,
+            currencyCode: 'USD',
+            initialBalance: 500,
+            isActive: true,
+            description: '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+        categories: [],
+        transactionTypes: [],
+        archivedYears: [],
+        lastModified: new Date().toISOString(),
+      };
+
+      useAppStore.getState().setFileMetadata('base-hash', new Date().toISOString(), baseVersion);
+
+      // Simulate conflicting external modification
+      const externallyModifiedFile: DataFile = {
+        ...baseVersion,
+        accounts: [
+          {
+            id: '1',
+            name: 'External Account',
+            type: AccountType.BANK_ACCOUNT,
+            currencyCode: 'EUR',
+            initialBalance: 1500,
+            isActive: true,
+            description: '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+        lastModified: new Date().toISOString(),
+      };
+
+      mockLoadDataFile.mockResolvedValue(externallyModifiedFile);
+      mockSaveDataFile.mockResolvedValue(undefined);
+
+      // Set merge handler that chooses app version
+      const mockMergeHandler = jest.fn().mockResolvedValue([
+        { conflictIndex: 0, resolution: 'app' as const },
+      ]);
+      syncService.setMergeHandler(mockMergeHandler);
+
+      await syncService.syncNow();
+
+      expect(mockMergeHandler).toHaveBeenCalled();
+      expect(mockSaveDataFile).toHaveBeenCalled();
+    });
+
+    it('should handle merge conflicts when user cancels', async () => {
+      useAccountStore.getState().addAccount({
+        id: '1',
+        name: 'Local Account',
+        type: AccountType.CASH,
+        currencyCode: 'USD',
+        initialBalance: 1000,
+        isActive: true,
+        description: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      useAppStore.getState().setUnsavedChanges(true);
+
+      const baseVersion: DataFile = {
+        version: '1.0.0',
+        transactions: [],
+        budgets: [],
+        manualAssets: [],
+        exchangeRates: [],
+        accounts: [
+          {
+            id: '1',
+            name: 'Original Account',
+            type: AccountType.CASH,
+            currencyCode: 'USD',
+            initialBalance: 500,
+            isActive: true,
+            description: '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+        categories: [],
+        transactionTypes: [],
+        archivedYears: [],
+        lastModified: new Date().toISOString(),
+      };
+
+      useAppStore.getState().setFileMetadata('base-hash', new Date().toISOString(), baseVersion);
+
+      const externallyModifiedFile: DataFile = {
+        ...baseVersion,
+        accounts: [
+          {
+            id: '1',
+            name: 'External Account',
+            type: AccountType.BANK_ACCOUNT,
+            currencyCode: 'EUR',
+            initialBalance: 1500,
+            isActive: true,
+            description: '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+        lastModified: new Date().toISOString(),
+      };
+
+      mockLoadDataFile.mockResolvedValue(externallyModifiedFile);
+
+      // Set merge handler that returns null (user cancelled)
+      const mockMergeHandler = jest.fn().mockResolvedValue(null);
+      syncService.setMergeHandler(mockMergeHandler);
+
+      await syncService.syncNow();
+
+      expect(mockMergeHandler).toHaveBeenCalled();
+      expect(mockSaveDataFile).not.toHaveBeenCalled();
+      // Changes should still be marked as unsaved
+      expect(useAppStore.getState().hasUnsavedChanges).toBe(true);
+    });
+
+    it('should continue save when file read fails during conflict check', async () => {
+      useAccountStore.getState().addAccount({
+        id: '1',
+        name: 'Test Account',
+        type: AccountType.CASH,
+        currencyCode: 'USD',
+        initialBalance: 1000,
+        isActive: true,
+        description: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      useAppStore.getState().setUnsavedChanges(true);
+
+      const baseVersion: DataFile = {
+        version: '1.0.0',
+        transactions: [],
+        budgets: [],
+        manualAssets: [],
+        exchangeRates: [],
+        accounts: [],
+        categories: [],
+        transactionTypes: [],
+        archivedYears: [],
+        lastModified: new Date().toISOString(),
+      };
+
+      useAppStore.getState().setFileMetadata('base-hash', new Date().toISOString(), baseVersion);
+
+      // Simulate file read error (e.g., file deleted)
+      mockLoadDataFile.mockRejectedValue(new Error('File not found'));
+      mockSaveDataFile.mockResolvedValue(undefined);
+
+      await syncService.syncNow();
+
+      // Should continue with save despite read error
+      expect(mockSaveDataFile).toHaveBeenCalled();
+    });
+  });
+
+  describe('loadDataFile', () => {
+    it('should load data and initialize stores', async () => {
+      const mockDataFile: DataFile = {
+        version: '1.0.0',
+        transactions: [],
+        budgets: [],
+        manualAssets: [],
+        exchangeRates: [],
+        accounts: [
+          {
+            id: '1',
+            name: 'Test Account',
+            type: AccountType.CASH,
+            currencyCode: 'USD',
+            initialBalance: 1000,
+            isActive: true,
+            description: '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+        categories: [],
+        transactionTypes: [],
+        archivedYears: [],
+        lastModified: new Date().toISOString(),
+      };
+
+      mockLoadDataFile.mockResolvedValue(mockDataFile);
+
+      await syncService.loadDataFile();
+
+      expect(mockLoadDataFile).toHaveBeenCalled();
+      expect(useAccountStore.getState().accounts).toHaveLength(1);
+      expect(useAppStore.getState().hasUnsavedChanges).toBe(false);
+    });
+
+    it('should throw error when load fails', async () => {
+      mockLoadDataFile.mockRejectedValue(new Error('Load failed'));
+
+      await expect(syncService.loadDataFile()).rejects.toThrow('Load failed');
+    });
+  });
 });

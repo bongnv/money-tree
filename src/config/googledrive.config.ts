@@ -4,18 +4,9 @@
  * SETUP INSTRUCTIONS:
  * 1. Go to https://console.cloud.google.com/
  * 2. Create a new project or select existing one
- * 3. Enable "Google Drive API" and "Google Picker API" for your project
+ * 3. Enable "Google Drive API" for your project
  * 4. Go to "Credentials" section
- * 5. Create API Key:
- *    - Click "Create Credentials" -> "API Key"
- *    - Copy the API key
- *    - IMPORTANT: Configure API Key restrictions:
- *      a) API restrictions: Select "Restrict key" and check "Google Picker API"
- *      b) Website restrictions: Select "HTTP referrers" and add:
- *         - http://localhost:3000/*
- *         - http://localhost:8080/*
- *         - https://yourdomain.com/*
- * 6. Create OAuth 2.0 Client ID:
+ * 5. Create OAuth 2.0 Client ID:
  *    - Click "Create Credentials" -> "OAuth client ID"
  *    - Application type: "Web application"
  *    - Name: "Money Tree App"
@@ -27,24 +18,18 @@
  * Set environment variables when building:
  *   Development:
  *     GOOGLE_DRIVE_CLIENT_ID=your-client-id \
- *     GOOGLE_DRIVE_API_KEY=your-api-key \
  *     npm run dev
  *   Production:
  *     GOOGLE_DRIVE_CLIENT_ID=your-client-id \
- *     GOOGLE_DRIVE_API_KEY=your-api-key \
  *     npm run build
  *
  * Or create a .env file (not committed to git):
  *   GOOGLE_DRIVE_CLIENT_ID=your-client-id
- *   GOOGLE_DRIVE_API_KEY=your-api-key
  */
 
 export const googleDriveConfig = {
   // Client ID must be injected via GOOGLE_DRIVE_CLIENT_ID environment variable at build time
   clientId: process.env.GOOGLE_DRIVE_CLIENT_ID || '',
-
-  // API Key must be injected via GOOGLE_DRIVE_API_KEY environment variable at build time
-  apiKey: process.env.GOOGLE_DRIVE_API_KEY || '',
 
   // OAuth 2.0 scopes for Google Drive API
   // drive.file: Access files created by the app or selected via Google Picker
@@ -97,5 +82,5 @@ export const errorMessages = {
  * Check if Google Drive is configured
  */
 export const isGoogleDriveConfigured = (): boolean => {
-  return googleDriveConfig.clientId !== '' && googleDriveConfig.apiKey !== '';
+  return googleDriveConfig.clientId !== '';
 };

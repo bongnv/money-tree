@@ -11,7 +11,7 @@ import { useCategoryStore } from '../stores/useCategoryStore';
 import { useExchangeRateStore } from '../stores/useExchangeRateStore';
 import { useAppStore } from '../stores/useAppStore';
 import { CalculationService } from './calculation.service';
-import { StorageFactory } from './storage/StorageFactory';
+import { StorageService } from './storage/StorageService';
 import { CurrencyCode } from '../types/enums';
 
 // Mock the stores
@@ -23,10 +23,22 @@ jest.mock('../stores/useCategoryStore');
 jest.mock('../stores/useExchangeRateStore');
 jest.mock('../stores/useAppStore');
 
-// Create mock storage factory
-const mockStorageFactory = {
-  getCurrentProvider: jest.fn(),
-} as unknown as StorageFactory;
+// Create mock provider
+const mockProvider = {
+  saveAdditionalFile: jest.fn().mockResolvedValue(undefined),
+};
+
+// Create mock storage service
+const mockStorageService = {
+  fileName: 'test-file.json',
+  providerName: 'Local File',
+  provider: mockProvider,
+  currentProvider: mockProvider,
+  saveFile: jest.fn().mockImplementation(async (data: string | Blob, filename: string) => {
+    // This should forward to provider.saveAdditionalFile
+    return mockProvider.saveAdditionalFile(filename, data);
+  }),
+} as unknown as StorageService;
 
 // Create mock calculation service
 const mockCalculationService = {
@@ -39,7 +51,7 @@ describe('Archive Service', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    archiveService = new ArchiveService(mockStorageFactory, mockCalculationService);
+    archiveService = new ArchiveService(mockStorageService, mockCalculationService);
   });
 
   describe('identifyArchivableYear', () => {
@@ -383,15 +395,26 @@ describe('Archive Service', () => {
   });
 
   describe('saveArchiveFile', () => {
-    const mockProvider = {
-      saveFile: jest.fn().mockResolvedValue(undefined),
-      getFileName: jest.fn().mockReturnValue('money-tree.json'),
-      loadDataFile: jest.fn(),
-      saveDataFile: jest.fn(),
+    // Use the same mockProvider from above
+    const localMockProvider = {
+      saveAdditionalFile: jest.fn().mockResolvedValue(undefined),
     };
 
+    const localMockStorageService = {
+      fileName: 'money-tree.json',
+      providerName: 'Local File',
+      provider: localMockProvider,
+      currentProvider: localMockProvider,
+      saveFile: jest.fn().mockImplementation(async (data: string | Blob, filename: string) => {
+        return localMockProvider.saveAdditionalFile(filename, data);
+      }),
+    } as unknown as StorageService;
+
+    let localArchiveService: ArchiveService;
+
     beforeEach(() => {
-      (mockStorageFactory.getCurrentProvider as jest.Mock).mockReturnValue(mockProvider);
+      jest.clearAllMocks();
+      localArchiveService = new ArchiveService(localMockStorageService, mockCalculationService);
     });
 
     it('should save archive file with correct filename', async () => {
@@ -414,11 +437,11 @@ describe('Archive Service', () => {
         },
       };
 
-      await archiveService.saveArchiveFile(archiveFile);
+      await localArchiveService.saveArchiveFile(archiveFile);
 
-      expect(mockProvider.saveFile).toHaveBeenCalledWith(
-        expect.any(String),
-        'money-tree-2023.json'
+      expect(localMockProvider.saveAdditionalFile).toHaveBeenCalledWith(
+        'money-tree-2023.json',
+        expect.any(String)
       );
     });
 
@@ -442,9 +465,9 @@ describe('Archive Service', () => {
         },
       };
 
-      await archiveService.saveArchiveFile(archiveFile);
+      await localArchiveService.saveArchiveFile(archiveFile);
 
-      const stringArg = mockProvider.saveFile.mock.calls[0][0];
+      const stringArg = localMockProvider.saveAdditionalFile.mock.calls[0][1];
       expect(typeof stringArg).toBe('string');
       const savedArchive = JSON.parse(stringArg);
       expect(savedArchive).toEqual(archiveFile);

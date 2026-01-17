@@ -1,15 +1,17 @@
 import { SyncService } from './sync.service';
 import { useAppStore } from '../stores/useAppStore';
 import { useAccountStore } from '../stores/useAccountStore';
-import { StorageFactory } from './storage/StorageFactory';
+import { StorageService } from './storage/StorageService';
 import type { DataFile } from '../types/models';
 import { AccountType } from '../types/enums';
 
-// Create mock storage factory
-const mockStorageFactory = {
-  getCurrentProvider: jest.fn(),
-  resetProvider: jest.fn(),
-} as unknown as StorageFactory;
+// Create mock storage service
+const mockStorageService = {
+  loadDataFile: jest.fn(),
+  saveDataFile: jest.fn(),
+  fileName: 'test.json',
+  providerName: 'Test Provider',
+} as unknown as StorageService;
 
 describe('SyncService', () => {
   let syncService: SyncService;
@@ -22,20 +24,14 @@ describe('SyncService', () => {
     // Reset account store by setting accounts to empty
     useAccountStore.setState({ accounts: [] });
 
-    // Create new SyncService instance with mock storageFactory
-    syncService = new SyncService(mockStorageFactory);
+    // Create new SyncService instance with mock storageService
+    syncService = new SyncService(mockStorageService);
 
     mockSaveDataFile = jest.fn();
     mockLoadDataFile = jest.fn();
 
-    (mockStorageFactory.getCurrentProvider as jest.Mock).mockReturnValue({
-      saveDataFile: mockSaveDataFile,
-      loadDataFile: mockLoadDataFile,
-      initialize: jest.fn().mockResolvedValue(undefined),
-      getFileName: jest.fn().mockReturnValue('test.json'),
-      getName: jest.fn().mockReturnValue('Test Provider'),
-      saveFile: jest.fn().mockResolvedValue(undefined),
-    });
+    (mockStorageService.loadDataFile as jest.Mock) = mockLoadDataFile;
+    (mockStorageService.saveDataFile as jest.Mock) = mockSaveDataFile;
 
     jest.spyOn(window, 'confirm').mockReturnValue(false);
   });
@@ -437,13 +433,7 @@ describe('SyncService', () => {
         lastModified: new Date().toISOString(),
       };
 
-      mockStorageFactory.getCurrentProvider.mockReturnValue({
-        saveDataFile: mockSaveDataFile,
-        loadDataFile: mockLoadDataFile.mockResolvedValue(mockDataFile),
-        getFileName: jest.fn().mockReturnValue('test.json'),
-        getName: jest.fn().mockReturnValue('Test Provider'),
-        saveFile: jest.fn().mockResolvedValue(undefined),
-      });
+      mockLoadDataFile.mockResolvedValue(mockDataFile);
 
       const result = await syncService.autoLoad();
 
@@ -452,13 +442,7 @@ describe('SyncService', () => {
     });
 
     it('should return false when load fails', async () => {
-      mockStorageFactory.getCurrentProvider.mockReturnValue({
-        saveDataFile: mockSaveDataFile,
-        loadDataFile: mockLoadDataFile.mockRejectedValue(new Error('Load failed')),
-        getFileName: jest.fn().mockReturnValue('test.json'),
-        getName: jest.fn().mockReturnValue('Test Provider'),
-        saveFile: jest.fn().mockResolvedValue(undefined),
-      });
+      mockLoadDataFile.mockRejectedValue(new Error('Load failed'));
 
       const result = await syncService.autoLoad();
 

@@ -1,46 +1,57 @@
-import type { DataFile } from '../../types/models';
-
 /**
- * Storage provider interface
- * Defines the contract for storage implementations (local, OneDrive, Google Drive, etc.)
- *
- * File pickers should be shown BEFORE initializing the provider.
- * Providers should never show file pickers - they only work with provided file handles/info.
+ * Storage Provider Interface
+ * Each provider manages its own file state internally and handles caching
  */
 export interface IStorageProvider {
   /**
-   * Load multi-year data file from the configured file location
-   * File handle/info must be set before calling this method
-   * @returns Promise with the data file, or null if file doesn't exist
-   * @throws Error if loading fails or no file is configured
+   * Initialize provider - load cached file and verify authentication
+   * Called once at app startup
+   * @returns true if successfully loaded cached file with valid authentication
    */
-  loadDataFile(): Promise<DataFile | null>;
+  initialize(): Promise<boolean>;
 
   /**
-   * Save multi-year data file to the configured file location
-   * File handle/info must be set before calling this method
-   * @param data The data file to save
-   * @throws Error if saving fails or no file is configured
+   * Authenticate with the storage provider
+   * For local: no-op (File System Access API handles permissions per-file)
+   * For cloud: trigger OAuth flow
    */
-  saveDataFile(data: DataFile): Promise<void>;
+  authenticate(): Promise<void>;
 
   /**
-   * Save a file (e.g., backup ZIP, archive JSON)
-   * Provider handles showing file picker (Local) or determining location (OneDrive)
-   * @param data The data to save (string for JSON, Blob for compressed/binary)
-   * @param filename The suggested filename
-   * @throws Error if saving fails or user cancels
+   * Read main file content
+   * @throws Error if no file is set
    */
-  saveFile(data: string | Blob, filename: string): Promise<void>;
+  readMainFile(): Promise<string>;
 
   /**
-   * Get the name of the current file
+   * Write to main file
+   * @param content String content to write
+   * @throws Error if no file is set
    */
-  getFileName(): string;
+  writeMainFile(content: string): Promise<void>;
 
   /**
-   * Get a user-friendly name for this storage provider
-   * @returns Display name (e.g., "Local File", "OneDrive", "Google Drive")
+   * Save an additional file (backup, archive, etc.)
+   * For local: shows file picker
+   * For cloud: saves in same folder as main file
+   * @param filename The filename for the new file
+   * @param content String or Blob to write
+   */
+  saveAdditionalFile(filename: string, content: string | Blob): Promise<void>;
+
+  /**
+   * Get main file name
+   * @returns File name or null if no file set
+   */
+  getMainFileName(): string | null;
+
+  /**
+   * Get provider name for display
    */
   getName(): string;
+
+  /**
+   * Clear cached file
+   */
+  clearCache(): Promise<void>;
 }

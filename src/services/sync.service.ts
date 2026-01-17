@@ -5,7 +5,7 @@ import { useTransactionStore } from '../stores/useTransactionStore';
 import { useAssetStore } from '../stores/useAssetStore';
 import { useBudgetStore } from '../stores/useBudgetStore';
 import { useExchangeRateStore } from '../stores/useExchangeRateStore';
-import { StorageFactory } from './storage/StorageFactory';
+import { StorageService } from './storage/StorageService';
 import type { DataFile } from '../types/models';
 import { calculateDataFileHash } from '../utils/hash.utils';
 import { performThreeWayMerge, Conflict, MergeResult } from './merge.service';
@@ -19,10 +19,10 @@ export class SyncService {
   private autoSaveTimerId: NodeJS.Timeout | null = null;
   private isSaving = false;
   private mergeHandler: MergeHandler | null = null;
-  private storageFactory: StorageFactory;
+  private storageService: StorageService;
 
-  constructor(storageFactory: StorageFactory) {
-    this.storageFactory = storageFactory;
+  constructor(storageService: StorageService) {
+    this.storageService = storageService;
   }
 
   /**
@@ -153,8 +153,6 @@ export class SyncService {
     state.setIsSyncing(true);
 
     try {
-      const storage = this.storageFactory.getCurrentProvider();
-
       // Gather data from all domain stores to create app version
       const accountStore = useAccountStore.getState();
       const categoryStore = useCategoryStore.getState();
@@ -189,7 +187,7 @@ export class SyncService {
       if (state.fileContentHash && state.baseVersion) {
         try {
           // Re-read current file content
-          const currentFileData = await storage.loadDataFile();
+          const currentFileData = await this.storageService.loadDataFile();
 
           if (currentFileData) {
             // Calculate current file hash
@@ -245,7 +243,7 @@ export class SyncService {
         }
       }
 
-      await storage.saveDataFile(dataToSave);
+      await this.storageService.saveDataFile(dataToSave);
 
       // Update file hash and base version after successful save
       const newHash = await calculateDataFileHash(dataToSave);
@@ -255,7 +253,7 @@ export class SyncService {
       state.setLastSaved(snapshotTime);
 
       // Get the actual filename from storage provider
-      const fileName = storage.getFileName();
+      const fileName = this.storageService.fileName || 'Unknown';
       state.setFileName(fileName);
       state.showSnackbar('Data saved successfully', 'success');
     } catch (error) {
@@ -307,8 +305,7 @@ export class SyncService {
     state.setLoading(true);
 
     try {
-      const storage = this.storageFactory.getCurrentProvider();
-      const dataFile = await storage.loadDataFile();
+      const dataFile = await this.storageService.loadDataFile();
 
       if (dataFile) {
         // Store archived years in app state
@@ -334,8 +331,8 @@ export class SyncService {
         // Load base currency from data file (schema provides default if not present)
         state.setBaseCurrency(dataFile.baseCurrency);
 
-        // Get the actual filename from storage provider
-        const fileName = storage.getFileName();
+        // Get the actual filename from storage service
+        const fileName = this.storageService.fileName;
         state.setFileName(fileName);
         state.markAsSaved();
       }
@@ -368,7 +365,7 @@ export class SyncService {
    */
   async resetToWelcome(): Promise<void> {
     // Clear all provider caches and disconnect services
-    await this.storageFactory.resetProvider();
+    this.storageService.disconnect();
 
     // Clear all domain stores
     useAccountStore.getState().setAccounts([]);

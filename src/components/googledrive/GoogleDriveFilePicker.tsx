@@ -1,29 +1,33 @@
 import React from 'react';
 import { People as PeopleIcon } from '@mui/icons-material';
-import type { SelectedFileInfo } from '../../services/storage/GoogleDriveProvider';
-import type { DriveFile } from '../../services/storage/GoogleDriveService';
+import {
+  GoogleDriveProvider,
+  GoogleDriveFileInfo,
+  DriveFile,
+} from '../../services/storage/GoogleDriveProvider';
 import { driveApiConfig } from '../../config/googledrive.config';
 import { CloudFilePicker, CloudItem } from '../common/CloudFilePicker';
+import { useStorage } from '../../contexts/ServiceProviders';
 
 interface GoogleDriveFilePickerProps {
   open: boolean;
   mode?: 'open' | 'create';
-  onSelect: (fileInfo: SelectedFileInfo) => void;
+  onComplete: (hasExistingFile: boolean) => void;
   onCancel: () => void;
-  onListFiles: (parentId?: string) => Promise<DriveFile[]>;
   defaultFileName?: string;
 }
 
 export const GoogleDriveFilePicker: React.FC<GoogleDriveFilePickerProps> = ({
   open,
   mode = 'open',
-  onSelect,
+  onComplete,
   onCancel,
-  onListFiles,
   defaultFileName = 'money-tree.json',
 }) => {
+  const storage = useStorage();
+  const provider = storage.provider as GoogleDriveProvider;
   const handleListItems = async (parentId?: string | null): Promise<CloudItem[]> => {
-    const driveFiles = await onListFiles(parentId || undefined);
+    const driveFiles = await provider.listDriveFiles(parentId || undefined);
 
     // Convert to generic CloudItem format
     return driveFiles.map((file) => ({
@@ -36,16 +40,22 @@ export const GoogleDriveFilePicker: React.FC<GoogleDriveFilePickerProps> = ({
     }));
   };
 
-  const mapToFileInfo = (
+  const handleSelect = async (
     fileId: string | null,
     fileName: string,
-    currentFolderId?: string | null
-  ): SelectedFileInfo => {
-    return {
+    currentFolderId: string | null
+  ) => {
+    const fileInfo: GoogleDriveFileInfo = {
       fileId,
       fileName,
       parentId: currentFolderId || undefined,
     };
+
+    // Set file on provider and cache it
+    await provider.setFile(fileInfo);
+
+    // Notify completion with whether it's an existing file
+    onComplete(!!fileInfo.fileId);
   };
 
   return (
@@ -53,11 +63,10 @@ export const GoogleDriveFilePicker: React.FC<GoogleDriveFilePickerProps> = ({
       open={open}
       title="Select Google Drive File Location"
       mode={mode}
-      onSelect={onSelect}
+      onSelect={handleSelect}
       onCancel={onCancel}
       onListItems={handleListItems}
       defaultFileName={defaultFileName}
-      mapToFileInfo={mapToFileInfo}
     />
   );
 };

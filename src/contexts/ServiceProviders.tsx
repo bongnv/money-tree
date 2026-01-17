@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useMemo, ReactNode } from 'react';
 import { SyncService } from '../services/sync.service';
 import { BackupService } from '../services/backup.service';
-import { StorageFactory } from '../services/storage/StorageFactory';
+import { StorageService } from '../services/storage/StorageService';
 import { ArchiveService } from '../services/archive.service';
 import { CalculationService } from '../services/calculation.service';
 import { ReportService } from '../services/report.service';
@@ -14,7 +14,7 @@ import { ReportService } from '../services/report.service';
 // Create contexts with null assertion (will be provided by ServiceProvider)
 const SyncServiceContext = createContext<SyncService>(null!);
 const BackupServiceContext = createContext<BackupService>(null!);
-const StorageFactoryContext = createContext<StorageFactory>(null!);
+const StorageServiceContext = createContext<StorageService>(null!);
 const ArchiveServiceContext = createContext<ArchiveService>(null!);
 const CalculationServiceContext = createContext<CalculationService>(null!);
 const ReportServiceContext = createContext<ReportService>(null!);
@@ -26,22 +26,22 @@ const ReportServiceContext = createContext<ReportService>(null!);
 export const ServiceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Create singleton instances using useMemo (created once per app lifecycle)
   // Create base services without dependencies first
-  const storageFactory = useMemo(() => new StorageFactory(), []);
+  const storageService = useMemo(() => new StorageService(), []);
   const calculationService = useMemo(() => new CalculationService(), []);
 
   // Services that depend on other services
-  const syncService = useMemo(() => new SyncService(storageFactory), [storageFactory]);
-  const backupService = useMemo(() => new BackupService(storageFactory), [storageFactory]);
+  const syncService = useMemo(() => new SyncService(storageService), [storageService]);
+  const backupService = useMemo(() => new BackupService(storageService), [storageService]);
   const archiveService = useMemo(
-    () => new ArchiveService(storageFactory, calculationService),
-    [storageFactory, calculationService]
+    () => new ArchiveService(storageService, calculationService),
+    [storageService, calculationService]
   );
   const reportService = useMemo(() => new ReportService(calculationService), [calculationService]);
 
   return (
     <SyncServiceContext.Provider value={syncService}>
       <BackupServiceContext.Provider value={backupService}>
-        <StorageFactoryContext.Provider value={storageFactory}>
+        <StorageServiceContext.Provider value={storageService}>
           <ArchiveServiceContext.Provider value={archiveService}>
             <CalculationServiceContext.Provider value={calculationService}>
               <ReportServiceContext.Provider value={reportService}>
@@ -49,22 +49,25 @@ export const ServiceProvider: React.FC<{ children: ReactNode }> = ({ children })
               </ReportServiceContext.Provider>
             </CalculationServiceContext.Provider>
           </ArchiveServiceContext.Provider>
-        </StorageFactoryContext.Provider>
+        </StorageServiceContext.Provider>
       </BackupServiceContext.Provider>
     </SyncServiceContext.Provider>
   );
 };
 
 /**
- * Hook to access the StorageFactory singleton
+ * Hook to access the StorageService singleton
  */
-export const useStorageFactory = (): StorageFactory => {
-  const context = useContext(StorageFactoryContext);
+export const useStorage = (): StorageService => {
+  const context = useContext(StorageServiceContext);
   if (!context) {
-    throw new Error('useStorageFactory must be used within ServiceProvider');
+    throw new Error('useStorage must be used within ServiceProvider');
   }
   return context;
 };
+
+// Keep old name for compatibility during migration
+export const useStorageFactory = useStorage;
 
 /**
  * Hook to access the SyncService singleton
@@ -126,7 +129,7 @@ export const useReportService = (): ReportService => {
  */
 export const useServices = () => {
   return {
-    storage: useStorageFactory(),
+    storage: useStorage(),
     sync: useSyncService(),
     backup: useBackupService(),
     archive: useArchiveService(),

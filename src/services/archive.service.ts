@@ -12,7 +12,7 @@ import { useBudgetStore } from '../stores/useBudgetStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
 import { useAppStore } from '../stores/useAppStore';
 import { CalculationService } from './calculation.service';
-import { StorageFactory } from './storage/StorageFactory';
+import { StorageService } from './storage/StorageService';
 import type {
   ArchiveFile,
   ArchivedYearReference,
@@ -26,11 +26,11 @@ import { getAssetClosingValue } from '../utils/asset.utils';
 export type { YearEndSummary };
 
 export class ArchiveService {
-  private storageFactory: StorageFactory;
+  private storageService: StorageService;
   private calculationService: CalculationService;
 
-  constructor(storageFactory: StorageFactory, calculationService: CalculationService) {
-    this.storageFactory = storageFactory;
+  constructor(storageService: StorageService, calculationService: CalculationService) {
+    this.storageService = storageService;
     this.calculationService = calculationService;
   }
 
@@ -178,11 +178,13 @@ export class ArchiveService {
    * Provider handles showing file picker (Local) or determining location (OneDrive)
    */
   async saveArchiveFile(archiveFile: ArchiveFile): Promise<void> {
-    const provider = this.storageFactory.getCurrentProvider();
-    const fileName = provider.getFileName();
+    const fileName = this.storageService.fileName;
+    if (!fileName) {
+      throw new Error('No storage connected');
+    }
     const archiveFileName = fileName.replace('.json', `-${archiveFile.year}.json`);
     const content = JSON.stringify(archiveFile);
-    await provider.saveFile(content, archiveFileName);
+    await this.storageService.saveFile(content, archiveFileName);
   }
 
   /**

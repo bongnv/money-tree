@@ -4,14 +4,9 @@
 
 import { BackupService } from './backup.service';
 import { useAppStore } from '../stores/useAppStore';
-import { StorageFactory } from './storage/StorageFactory';
+import { StorageService } from './storage/StorageService';
 import type { DataFile } from '../types/models';
 import { CurrencyCode } from '../types/enums';
-
-// Create mock storage factory
-const mockStorageFactory = {
-  getCurrentProvider: jest.fn(),
-} as unknown as StorageFactory;
 
 // Mock dependencies
 jest.mock('fflate', () => ({
@@ -21,6 +16,8 @@ jest.mock('fflate', () => ({
 
 describe('BackupService', () => {
   let backupService: BackupService;
+  let mockProvider: { saveAdditionalFile: jest.Mock };
+  let mockStorageService: jest.Mocked<StorageService>;
   const mockDataFile: DataFile = {
     version: '1.0.0',
     transactions: [],
@@ -36,8 +33,27 @@ describe('BackupService', () => {
   };
 
   beforeEach(() => {
-    // Create new BackupService instance with mock storageFactory
-    backupService = new BackupService(mockStorageFactory);
+    // Reset mocks
+    jest.clearAllMocks();
+
+    // Create fresh mocks
+    mockProvider = {
+      saveAdditionalFile: jest.fn().mockResolvedValue(undefined),
+    };
+
+    mockStorageService = {
+      fileName: 'test-file.json',
+      providerName: 'Local File',
+      provider: mockProvider,
+      currentProvider: mockProvider,
+      saveFile: jest.fn(async (data: string | Blob, filename: string) => {
+        await mockProvider.saveAdditionalFile(filename, data);
+      }),
+      loadDataFile: jest.fn(),
+    } as unknown as jest.Mocked<StorageService>;
+
+    // Create new BackupService instance with mock storageService
+    backupService = new BackupService(mockStorageService);
 
     // Reset store
     useAppStore.setState({
@@ -102,15 +118,9 @@ describe('BackupService', () => {
   });
 
   describe('saveBackupToStorage', () => {
-    const mockProvider = {
-      saveDataFile: jest.fn(),
-      loadDataFile: jest.fn(),
-      saveFile: jest.fn().mockResolvedValue(undefined),
-      getFileName: jest.fn().mockReturnValue('test.json'),
-    };
-
     beforeEach(() => {
-      (mockStorageFactory.getCurrentProvider as jest.Mock).mockReturnValue(mockProvider);
+      // Reset mock functions
+      (mockStorageService.saveFile as jest.Mock).mockReset().mockResolvedValue(undefined);
       jest.spyOn(useAppStore.getState(), 'setLastBackupDate');
       jest.spyOn(useAppStore.getState(), 'setUnsavedChanges');
     });
@@ -128,7 +138,8 @@ describe('BackupService', () => {
 
       await backupService.saveBackupToStorage();
 
-      expect(mockProvider.saveFile).toHaveBeenCalledWith(
+      // Verify saveFile was called with Blob and filename
+      expect(mockStorageService.saveFile).toHaveBeenCalledWith(
         expect.any(Blob),
         expect.stringMatching(/^money-tree-backup-\d{4}-\d{2}-\d{2}-\d{6}\.gz$/)
       );
@@ -138,7 +149,7 @@ describe('BackupService', () => {
 
     it('should throw error when saveFile fails', async () => {
       useAppStore.setState({ baseVersion: mockDataFile });
-      mockProvider.saveFile.mockRejectedValueOnce(new Error('Save failed'));
+      mockStorageService.saveFile.mockRejectedValueOnce(new Error('Save failed'));
 
       await expect(backupService.saveBackupToStorage()).rejects.toThrow(
         'Failed to save backup: Save failed'
@@ -147,7 +158,7 @@ describe('BackupService', () => {
 
     it('should re-throw error when user cancels', async () => {
       useAppStore.setState({ baseVersion: mockDataFile });
-      mockProvider.saveFile.mockRejectedValueOnce(new Error('File save cancelled'));
+      mockStorageService.saveFile.mockRejectedValueOnce(new Error('File save cancelled'));
 
       await expect(backupService.saveBackupToStorage()).rejects.toThrow('File save cancelled');
     });
@@ -157,8 +168,8 @@ describe('BackupService', () => {
 
       await backupService.saveBackupToStorage();
 
-      const callArgs = mockProvider.saveFile.mock.calls[0];
-      const filename = callArgs[1];
+      const callArgs = mockStorageService.saveFile.mock.calls[0];
+      const filename = callArgs[1]; // filename is second argument
 
       expect(filename).toMatch(/^money-tree-backup-\d{4}-\d{2}-\d{2}-\d{6}\.gz$/);
     });
@@ -169,9 +180,12 @@ describe('BackupService', () => {
 
       await backupService.saveBackupToStorage();
 
-      expect(mockProvider.saveFile).toHaveBeenCalled();
+      expect(mockStorageService.saveFile).toHaveBeenCalled();
       // Verify gzipSync was used and converted to Blob
-      expect(mockProvider.saveFile).toHaveBeenCalledWith(expect.any(Blob), expect.any(String));
+      expect(mockStorageService.saveFile).toHaveBeenCalledWith(
+        expect.any(Blob),
+        expect.any(String)
+      );
     });
   });
 });

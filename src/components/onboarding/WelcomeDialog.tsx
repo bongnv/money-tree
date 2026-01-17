@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -24,12 +24,11 @@ import { isOneDriveConfigured } from '../../config/onedrive.config';
 import { isGoogleDriveConfigured } from '../../config/googledrive.config';
 import { OneDriveFilePicker } from '../onedrive/OneDriveFilePicker';
 import { GoogleDriveFilePicker } from '../googledrive/GoogleDriveFilePicker';
-import { StorageProviderType } from '../../services/storage/StorageFactory';
+import { useStorage, useSyncService } from '../../contexts/ServiceProviders';
+import { StorageProviderType } from '../../services/storage/StorageService';
 import { FilePickerService } from '../../services/storage/FilePickerService';
-import type { SelectedFileInfo as OneDriveFileInfo } from '../../services/storage/OneDriveProvider';
-import type { SelectedFileInfo as GoogleDriveFileInfo } from '../../services/storage/GoogleDriveProvider';
-import { useStorageFactory, useSyncService } from '../../contexts/ServiceProviders';
 import { isUserCancellationError } from '../../utils/error.utils';
+import type { LocalStorageProvider } from '../../services/storage/LocalStorageProvider';
 
 interface WelcomeDialogProps {
   open: boolean;
@@ -39,202 +38,105 @@ interface WelcomeDialogProps {
 export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const storageFactory = useStorageFactory();
+  const storage = useStorage();
   const syncService = useSyncService();
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [showOneDriveFilePicker, setShowOneDriveFilePicker] = useState(false);
-  const [showGoogleDriveFilePicker, setShowGoogleDriveFilePicker] = useState(false);
-  const [pickerMode, setPickerMode] = useState<'open' | 'create'>('open');
 
-  const handleOpenOneDrive = async () => {
-    setIsConnecting(true);
-    setAuthError(null);
-    setPickerMode('open');
+  const [state, setState] = useState({
+    isConnecting: false,
+    error: null as string | null,
+    showOneDrivePicker: false,
+    showGoogleDrivePicker: false,
+    pickerMode: 'open' as 'open' | 'create',
+  });
 
-    try {
-      await storageFactory.authenticateOneDrive();
-      setShowOneDriveFilePicker(true);
-    } catch (error: any) {
-      setIsConnecting(false);
-      // Don't show error if user cancelled
-      if (!isUserCancellationError(error)) {
-        console.error('OneDrive connection failed:', error);
-        setAuthError(error.message || 'Failed to connect to OneDrive');
+  const handleConnect = useCallback(
+    async (provider: StorageProviderType, mode: 'open' | 'create') => {
+      setState((s) => ({ ...s, isConnecting: true, error: null, pickerMode: mode }));
+
+      try {
+        if (provider === StorageProviderType.LOCAL) {
+          // Local: show file picker immediately
+          const fileHandle =
+            mode === 'open'
+              ? await FilePickerService.showOpenFilePicker()
+              : await FilePickerService.showSaveFilePicker('money-tree.json');
+
+          if (fileHandle) {
+            await storage.connect({ type: provider });
+
+            // Set file on the provider
+            const localProvider = storage.provider as LocalStorageProvider;
+            await localProvider.setFile(fileHandle);
+
+            // Load or create file
+            if (mode === 'open') {
+              await syncService.loadDataFile();
+            } else {
+              await syncService.syncNow(true);
+            }
+
+            setState((s) => ({ ...s, isConnecting: false }));
+            onClose();
+          } else {
+            setState((s) => ({ ...s, isConnecting: false }));
+          }
+        } else {
+          // Cloud: authenticate then show picker
+          await storage.connect({ type: provider });
+          setState((s) => ({
+            ...s,
+            showOneDrivePicker: provider === StorageProviderType.ONEDRIVE,
+            showGoogleDrivePicker: provider === StorageProviderType.GOOGLE_DRIVE,
+          }));
+        }
+      } catch (error: any) {
+        setState((s) => ({ ...s, isConnecting: false }));
+        if (!isUserCancellationError(error)) {
+          setState((s) => ({ ...s, error: error.message }));
+        }
       }
-    }
-  };
+    },
+    [storage, syncService, onClose]
+  );
 
-  const handleCreateOneDrive = async () => {
-    setIsConnecting(true);
-    setAuthError(null);
-    setPickerMode('create');
+  const handleFileSelected = useCallback(
+    async (hasExistingFile: boolean) => {
+      setState((s) => ({ ...s, showOneDrivePicker: false, showGoogleDrivePicker: false }));
 
-    try {
-      await storageFactory.authenticateOneDrive();
-      setShowOneDriveFilePicker(true);
-    } catch (error: any) {
-      setIsConnecting(false);
-      // Don't show error if user cancelled
-      if (!isUserCancellationError(error)) {
-        console.error('OneDrive connection failed:', error);
-        setAuthError(error.message || 'Failed to connect to OneDrive');
-      }
-    }
-  };
+      try {
+        // Provider has already called setFile() in the picker
+        // Load existing file or create new
+        if (hasExistingFile) {
+          await syncService.loadDataFile();
+        } else {
+          await syncService.syncNow(true);
+        }
 
-  const handleOpenGoogleDrive = async () => {
-    setIsConnecting(true);
-    setAuthError(null);
-    setPickerMode('open');
-
-    try {
-      await storageFactory.authenticateGoogleDrive();
-      setShowGoogleDriveFilePicker(true);
-    } catch (error: any) {
-      setIsConnecting(false);
-      // Don't show error if user cancelled
-      if (!isUserCancellationError(error)) {
-        console.error('Google Drive connection failed:', error);
-        setAuthError(error.message || 'Failed to connect to Google Drive');
-      }
-    }
-  };
-
-  const handleCreateGoogleDrive = async () => {
-    setIsConnecting(true);
-    setAuthError(null);
-    setPickerMode('create');
-
-    try {
-      await storageFactory.authenticateGoogleDrive();
-      setShowGoogleDriveFilePicker(true);
-    } catch (error: any) {
-      setIsConnecting(false);
-      // Don't show error if user cancelled
-      if (!isUserCancellationError(error)) {
-        console.error('Google Drive connection failed:', error);
-        setAuthError(error.message || 'Failed to connect to Google Drive');
-      }
-    }
-  };
-
-  const handleOneDriveFileSelect = async (fileInfo: OneDriveFileInfo) => {
-    setShowOneDriveFilePicker(false);
-    try {
-      await storageFactory.replaceProvider({
-        type: StorageProviderType.ONEDRIVE,
-        fileInfo,
-      });
-
-      if (fileInfo.fileId) {
-        // Load existing file
-        await syncService.loadDataFile();
-      } else {
-        // Create new file
-        await syncService.syncNow(true);
-      }
-      onClose();
-    } catch (error) {
-      // Don't show error if user cancelled
-      if (!isUserCancellationError(error)) {
-        console.error('OneDrive file selection failed:', error);
-        const errorMessage =
-          error instanceof Error ? error.message : 'Failed to connect to OneDrive';
-        setAuthError(errorMessage);
-      }
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  const handleOneDriveFilePickerCancel = () => {
-    setShowOneDriveFilePicker(false);
-    setIsConnecting(false);
-  };
-
-  const handleGoogleDriveFileSelect = async (fileInfo: GoogleDriveFileInfo) => {
-    setShowGoogleDriveFilePicker(false);
-    try {
-      await storageFactory.replaceProvider({
-        type: StorageProviderType.GOOGLE_DRIVE,
-        fileInfo,
-      });
-
-      if (fileInfo.fileId) {
-        // Load existing file
-        await syncService.loadDataFile();
-      } else {
-        // Create new file
-        await syncService.syncNow(true);
-      }
-      onClose();
-    } catch (error) {
-      // Don't show error if user cancelled
-      if (!isUserCancellationError(error)) {
-        console.error('Google Drive file selection failed:', error);
-        const errorMessage =
-          error instanceof Error ? error.message : 'Failed to connect to Google Drive';
-        setAuthError(errorMessage);
-      }
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  const handleGoogleDriveFilePickerCancel = () => {
-    setShowGoogleDriveFilePicker(false);
-    setIsConnecting(false);
-  };
-
-  const handleOpenLocalFile = async () => {
-    setAuthError(null);
-    try {
-      const fileHandle = await FilePickerService.showOpenFilePicker();
-      if (fileHandle) {
-        await storageFactory.replaceProvider({
-          type: StorageProviderType.LOCAL,
-          fileHandle,
-        });
-        await syncService.loadDataFile();
+        setState((s) => ({ ...s, isConnecting: false }));
         onClose();
+      } catch (error: any) {
+        setState((s) => ({ ...s, isConnecting: false }));
+        if (!isUserCancellationError(error)) {
+          setState((s) => ({ ...s, error: error.message }));
+        }
       }
-    } catch (error) {
-      // Don't show error if user cancelled
-      if (!isUserCancellationError(error)) {
-        console.error('Failed to open local file:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Failed to open file';
-        setAuthError(errorMessage);
-      }
-    }
-  };
+    },
+    [syncService, onClose]
+  );
 
-  const handleCreateNewLocalFile = async () => {
-    setAuthError(null);
-    try {
-      const fileHandle = await FilePickerService.showSaveFilePicker('money-tree.json');
-      if (fileHandle) {
-        await storageFactory.replaceProvider({
-          type: StorageProviderType.LOCAL,
-          fileHandle,
-        });
-        await syncService.syncNow(true);
-        onClose();
-      }
-    } catch (error) {
-      // Don't show error if user cancelled
-      if (!isUserCancellationError(error)) {
-        console.error('Failed to create new file:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Failed to create new file';
-        setAuthError(errorMessage);
-      }
-    }
-  };
+  const cancelPicker = useCallback(() => {
+    setState((s) => ({
+      ...s,
+      showOneDrivePicker: false,
+      showGoogleDrivePicker: false,
+      isConnecting: false,
+    }));
+  }, []);
 
   return (
     <>
       <Dialog
-        open={open && !showOneDriveFilePicker && !showGoogleDriveFilePicker}
+        open={open && !state.showOneDrivePicker && !state.showGoogleDrivePicker}
         maxWidth="md"
         fullWidth
         fullScreen={isMobile}
@@ -250,9 +152,9 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
             Choose how you&apos;d like to manage your financial data:
           </Typography>
 
-          {authError && (
+          {state.error && (
             <Alert severity="error" sx={{ mb: 2 }}>
-              {authError}
+              {state.error}
             </Alert>
           )}
 
@@ -276,7 +178,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
                 <Button
                   variant="outlined"
                   startIcon={<FolderOpenIcon />}
-                  onClick={handleOpenLocalFile}
+                  onClick={() => handleConnect(StorageProviderType.LOCAL, 'open')}
                   fullWidth
                 >
                   Open Existing
@@ -284,7 +186,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
-                  onClick={handleCreateNewLocalFile}
+                  onClick={() => handleConnect(StorageProviderType.LOCAL, 'create')}
                   fullWidth
                 >
                   Create New
@@ -319,21 +221,23 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
               <CardActions sx={{ gap: 1 }}>
                 <Button
                   variant="outlined"
-                  startIcon={isConnecting ? <CircularProgress size={20} /> : <FolderOpenIcon />}
-                  onClick={handleOpenOneDrive}
-                  disabled={!isOneDriveConfigured() || isConnecting}
+                  startIcon={
+                    state.isConnecting ? <CircularProgress size={20} /> : <FolderOpenIcon />
+                  }
+                  onClick={() => handleConnect(StorageProviderType.ONEDRIVE, 'open')}
+                  disabled={!isOneDriveConfigured() || state.isConnecting}
                   fullWidth
                 >
-                  {isConnecting ? 'Connecting...' : 'Open Existing'}
+                  {state.isConnecting ? 'Connecting...' : 'Open Existing'}
                 </Button>
                 <Button
                   variant="contained"
-                  startIcon={isConnecting ? <CircularProgress size={20} /> : <AddIcon />}
-                  onClick={handleCreateOneDrive}
-                  disabled={!isOneDriveConfigured() || isConnecting}
+                  startIcon={state.isConnecting ? <CircularProgress size={20} /> : <AddIcon />}
+                  onClick={() => handleConnect(StorageProviderType.ONEDRIVE, 'create')}
+                  disabled={!isOneDriveConfigured() || state.isConnecting}
                   fullWidth
                 >
-                  {isConnecting ? 'Connecting...' : 'Create New'}
+                  {state.isConnecting ? 'Connecting...' : 'Create New'}
                 </Button>
               </CardActions>
             </Card>
@@ -365,21 +269,23 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
               <CardActions sx={{ gap: 1 }}>
                 <Button
                   variant="outlined"
-                  startIcon={isConnecting ? <CircularProgress size={20} /> : <FolderOpenIcon />}
-                  onClick={handleOpenGoogleDrive}
-                  disabled={!isGoogleDriveConfigured() || isConnecting}
+                  startIcon={
+                    state.isConnecting ? <CircularProgress size={20} /> : <FolderOpenIcon />
+                  }
+                  onClick={() => handleConnect(StorageProviderType.GOOGLE_DRIVE, 'open')}
+                  disabled={!isGoogleDriveConfigured() || state.isConnecting}
                   fullWidth
                 >
-                  {isConnecting ? 'Connecting...' : 'Open Existing'}
+                  {state.isConnecting ? 'Connecting...' : 'Open Existing'}
                 </Button>
                 <Button
                   variant="contained"
-                  startIcon={isConnecting ? <CircularProgress size={20} /> : <AddIcon />}
-                  onClick={handleCreateGoogleDrive}
-                  disabled={!isGoogleDriveConfigured() || isConnecting}
+                  startIcon={state.isConnecting ? <CircularProgress size={20} /> : <AddIcon />}
+                  onClick={() => handleConnect(StorageProviderType.GOOGLE_DRIVE, 'create')}
+                  disabled={!isGoogleDriveConfigured() || state.isConnecting}
                   fullWidth
                 >
-                  {isConnecting ? 'Connecting...' : 'Create New'}
+                  {state.isConnecting ? 'Connecting...' : 'Create New'}
                 </Button>
               </CardActions>
             </Card>
@@ -393,22 +299,24 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
       </Dialog>
 
       {/* OneDrive File Picker */}
-      <OneDriveFilePicker
-        open={showOneDriveFilePicker}
-        mode={pickerMode}
-        onSelect={handleOneDriveFileSelect}
-        onCancel={handleOneDriveFilePickerCancel}
-        onListFolders={storageFactory.listOneDriveFolders}
-      />
+      {state.showOneDrivePicker && (
+        <OneDriveFilePicker
+          open={state.showOneDrivePicker}
+          mode={state.pickerMode}
+          onComplete={handleFileSelected}
+          onCancel={cancelPicker}
+        />
+      )}
 
       {/* Google Drive File Picker */}
-      <GoogleDriveFilePicker
-        open={showGoogleDriveFilePicker}
-        mode={pickerMode}
-        onSelect={handleGoogleDriveFileSelect}
-        onCancel={handleGoogleDriveFilePickerCancel}
-        onListFiles={storageFactory.listGoogleDriveFiles}
-      />
+      {state.showGoogleDrivePicker && (
+        <GoogleDriveFilePicker
+          open={state.showGoogleDrivePicker}
+          mode={state.pickerMode}
+          onComplete={handleFileSelected}
+          onCancel={cancelPicker}
+        />
+      )}
     </>
   );
 };

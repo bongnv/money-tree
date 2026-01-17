@@ -1,6 +1,6 @@
 import { strToU8, gzipSync } from 'fflate';
 import { useAppStore } from '../stores/useAppStore';
-import { StorageFactory } from './storage/StorageFactory';
+import { StorageService } from './storage/StorageService';
 
 /**
  * Backup Service
@@ -8,10 +8,10 @@ import { StorageFactory } from './storage/StorageFactory';
  */
 export class BackupService {
   private readonly BACKUP_THRESHOLD_DAYS = 30;
-  private storageFactory: StorageFactory;
+  private storageService: StorageService;
 
-  constructor(storageFactory: StorageFactory) {
-    this.storageFactory = storageFactory;
+  constructor(storageService: StorageService) {
+    this.storageService = storageService;
   }
 
   /**
@@ -66,12 +66,9 @@ export class BackupService {
     // Generate filename with timestamp
     const filename = this.generateBackupFilename();
 
-    // Get storage provider and save
-    const provider = this.storageFactory.getCurrentProvider();
-
     try {
       // Save using storage provider (file picker for local, next to main file for OneDrive)
-      await provider.saveFile(blob, filename);
+      await this.storageService.saveFile(blob, filename);
 
       // Update lastBackupDate in appStore
       const now = new Date().toISOString();

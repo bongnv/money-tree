@@ -45,24 +45,23 @@ interface BreadcrumbItem {
   name: string;
 }
 
-interface CloudFilePickerProps<TFileInfo extends CloudFileInfo> {
+interface CloudFilePickerProps {
   open: boolean;
   title: string;
   rootName?: string;
   mode?: 'open' | 'create'; // 'open' = select existing file, 'create' = select folder to create in
-  onSelect: (fileInfo: TFileInfo) => void;
+  onSelect: (
+    fileId: string | null,
+    fileName: string,
+    currentFolderId: string | null,
+    breadcrumbs: BreadcrumbItem[]
+  ) => void;
   onCancel: () => void;
   onListItems: (parentId?: string | null) => Promise<CloudItem[]>;
   defaultFileName?: string;
-  mapToFileInfo: (
-    fileId: string | null,
-    fileName: string,
-    currentFolderId?: string | null,
-    breadcrumbs?: BreadcrumbItem[]
-  ) => TFileInfo;
 }
 
-export function CloudFilePicker<TFileInfo extends CloudFileInfo>({
+export function CloudFilePicker({
   open,
   title,
   rootName = 'My Drive',
@@ -71,8 +70,7 @@ export function CloudFilePicker<TFileInfo extends CloudFileInfo>({
   onCancel,
   onListItems,
   defaultFileName = 'money-tree.json',
-  mapToFileInfo,
-}: CloudFilePickerProps<TFileInfo>) {
+}: CloudFilePickerProps) {
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [items, setItems] = useState<CloudItem[]>([]);
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
@@ -161,20 +159,13 @@ export function CloudFilePicker<TFileInfo extends CloudFileInfo>({
   const handleSelectFile = () => {
     if (selectedFile) {
       // Existing file selected in open mode
-      const fileInfo = mapToFileInfo(
-        selectedFile.id,
-        selectedFile.name,
-        currentFolderId,
-        breadcrumbs
-      );
-      onSelect(fileInfo);
+      onSelect(selectedFile.id, selectedFile.name, currentFolderId, breadcrumbs);
     }
   };
 
   const handleCreateHere = () => {
     // Create new file in current folder
-    const fileInfo = mapToFileInfo(null, newFileName, currentFolderId, breadcrumbs);
-    onSelect(fileInfo);
+    onSelect(null, newFileName, currentFolderId, breadcrumbs);
     setShowFileNameDialog(false);
   };
 
@@ -318,9 +309,7 @@ export function CloudFilePicker<TFileInfo extends CloudFileInfo>({
             value={newFileName}
             onChange={(e) => setNewFileName(e.target.value)}
             helperText={
-              fileExists
-                ? 'A file with this name already exists'
-                : 'File must have .json extension'
+              fileExists ? 'A file with this name already exists' : 'File must have .json extension'
             }
             error={!newFileName.endsWith('.json') || fileExists}
             sx={{ mt: 2 }}

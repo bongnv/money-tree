@@ -41,8 +41,7 @@ export const DataSyncSettings: React.FC = () => {
 
   const getStorageLocation = (): string => {
     try {
-      const provider = storageFactory.getCurrentProvider();
-      return provider.getName();
+      return storageFactory.providerName || 'Not connected';
     } catch {
       return 'Not connected';
     }

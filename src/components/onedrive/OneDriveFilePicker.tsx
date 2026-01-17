@@ -1,26 +1,30 @@
 import React, { useRef } from 'react';
 import { People as PeopleIcon } from '@mui/icons-material';
-import type { SelectedFileInfo } from '../../services/storage/OneDriveProvider';
-import type { DriveItem } from '../../services/storage/OneDriveService';
+import {
+  OneDriveProvider,
+  OneDriveFileInfo,
+  DriveItem,
+} from '../../services/storage/OneDriveProvider';
 import { CloudFilePicker, CloudItem } from '../common/CloudFilePicker';
+import { useStorage } from '../../contexts/ServiceProviders';
 
 interface OneDriveFilePickerProps {
   open: boolean;
   mode?: 'open' | 'create';
-  onSelect: (fileInfo: SelectedFileInfo) => void;
+  onComplete: (hasExistingFile: boolean) => void;
   onCancel: () => void;
-  onListFolders: (parentItem?: DriveItem | null) => Promise<DriveItem[]>;
   defaultFileName?: string;
 }
 
 export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
   open,
   mode = 'open',
-  onSelect,
+  onComplete,
   onCancel,
-  onListFolders,
   defaultFileName = 'money-tree.json',
 }) => {
+  const storage = useStorage();
+  const provider = storage.provider as OneDriveProvider;
   // Store current folder context for create operations
   const currentFolderRef = useRef<DriveItem | null>(null);
   const itemsMapRef = useRef<Map<string, DriveItem>>(new Map());
@@ -28,7 +32,7 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
   const handleListItems = async (parentId?: string | null): Promise<CloudItem[]> => {
     // Convert parentId back to DriveItem - OneDrive expects undefined for root, not null
     const parentItem = parentId ? itemsMapRef.current.get(parentId) : undefined;
-    const driveItems = await onListFolders(parentItem);
+    const driveItems = await provider.listDriveItems(parentItem);
 
     // Update current folder reference
     if (parentId === null) {
@@ -64,12 +68,14 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
     }));
   };
 
-  const mapToFileInfo = (
+  const handleSelect = async (
     fileId: string | null,
     fileName: string,
-    _currentFolderId?: string | null,
-    breadcrumbs?: Array<{ id: string; name: string }>
-  ): SelectedFileInfo => {
+    _currentFolderId: string | null,
+    breadcrumbs: Array<{ id: string; name: string }>
+  ) => {
+    let fileInfo: OneDriveFileInfo;
+
     if (fileId) {
       // Existing file selected
       const driveItem = itemsMapRef.current.get(fileId);
@@ -83,7 +89,7 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
         ? currentFolderRef.current?.remoteItem?.parentReference?.driveId
         : undefined;
 
-      return {
+      fileInfo = {
         fileId,
         filePath,
         driveId,
@@ -109,13 +115,19 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
         ? currentFolderRef.current?.remoteItem?.id || currentFolderRef.current?.id
         : undefined;
 
-      return {
+      fileInfo = {
         fileId: null,
         filePath,
         driveId,
         parentItemId,
       };
     }
+
+    // Set file on provider and cache it
+    await provider.setFile(fileInfo);
+
+    // Notify completion with whether it's an existing file
+    onComplete(!!fileInfo.fileId);
   };
 
   return (
@@ -124,11 +136,10 @@ export const OneDriveFilePicker: React.FC<OneDriveFilePickerProps> = ({
       title="Select OneDrive File Location"
       rootName="OneDrive"
       mode={mode}
-      onSelect={onSelect}
+      onSelect={handleSelect}
       onCancel={onCancel}
       onListItems={handleListItems}
       defaultFileName={defaultFileName}
-      mapToFileInfo={mapToFileInfo}
     />
   );
 };

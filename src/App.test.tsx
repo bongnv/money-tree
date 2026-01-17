@@ -11,7 +11,7 @@ const mockSyncService = {
 };
 
 const mockStorageFactory = {
-  initialize: jest.fn().mockResolvedValue(true),
+  initialize: jest.fn().mockResolvedValue({ success: true, needsReconnect: false }),
 };
 
 const mockBackupService = {
@@ -50,6 +50,7 @@ const mockReportService = {
 // Mock ServiceProvider
 jest.mock('./contexts/ServiceProviders', () => ({
   ServiceProvider: ({ children }: any) => children,
+  useStorage: () => mockStorageFactory,
   useSyncService: () => mockSyncService,
   useStorageFactory: () => mockStorageFactory,
   useBackupService: () => mockBackupService,

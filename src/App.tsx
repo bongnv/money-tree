@@ -68,7 +68,8 @@ const AppContent: React.FC = () => {
       });
 
       // Initialize storage provider
-      const loaded = await storageFactory.initialize(async (providerName: string) => {
+      const success = await storageFactory.initialize(async (providerName: string) => {
+        // Show reconnect dialog and return user's choice
         return new Promise<'reconnect' | 'dismiss'>((resolve) => {
           setReconnectDialogState({
             open: true,
@@ -78,7 +79,8 @@ const AppContent: React.FC = () => {
         });
       });
 
-      if (!loaded) {
+      if (!success) {
+        // No cached connection or user dismissed - show welcome dialog
         setShowWelcomeDialog(true);
         return;
       }

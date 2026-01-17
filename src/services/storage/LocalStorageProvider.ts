@@ -44,10 +44,12 @@ export class LocalStorageProvider implements IStorageProvider {
   /**
    * Request permission for the current file handle
    * Called when cached file handle loses permissions
+   * If no file handle is available, silently returns without error
    */
   async authenticate(): Promise<void> {
     if (!this.currentFileHandle) {
-      throw new Error('No file handle available for permission request');
+      // No file handle available - nothing to authenticate
+      return;
     }
 
     // Request both read and write permissions

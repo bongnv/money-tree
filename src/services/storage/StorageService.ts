@@ -36,18 +36,18 @@ interface StoredConfig {
 export class StorageService {
   private currentProvider: IStorageProvider | null = null;
   private currentType: StorageProviderType | null = null;
+  private onReconnectNeeded: (providerName: string) => Promise<'reconnect' | 'dismiss'>;
 
-  constructor() {}
+  constructor(onReconnectNeeded: (providerName: string) => Promise<'reconnect' | 'dismiss'>) {
+    this.onReconnectNeeded = onReconnectNeeded;
+  }
 
   /**
    * Initialize service and restore cached connection
    * Called once at app startup
-   * @param onReconnectNeeded Optional callback for handling reconnection when auth expires
    * @returns true if successfully restored cached connection
    */
-  async initialize(
-    onReconnectNeeded?: (providerName: string) => Promise<'reconnect' | 'dismiss'>
-  ): Promise<boolean> {
+  async initialize(): Promise<boolean> {
     try {
       const config = this.loadConfig();
       if (!config) {
@@ -64,8 +64,8 @@ export class StorageService {
       const success = await provider.initialize();
       if (!success) {
         // Check if we have a file cached but need reconnection
-        if (onReconnectNeeded && provider.getMainFileName()) {
-          const action = await onReconnectNeeded(provider.getName());
+        if (provider.getMainFileName()) {
+          const action = await this.onReconnectNeeded(provider.getName());
 
           if (action === 'reconnect') {
             // Re-authenticate and retry
@@ -139,15 +139,18 @@ export class StorageService {
   /**
    * Load data file from current provider
    * Handles JSON parsing and validation
-   * @throws Error if not connected or data is invalid
+   * Automatically handles auth errors with reconnect dialog if callback is configured
+   * @throws Error if not connected, data is invalid, or reconnection fails
    */
   async loadDataFile(): Promise<DataFile> {
     if (!this.currentProvider) {
       throw new Error('No storage provider connected. Please select a file first.');
     }
 
-    const content = await this.currentProvider.readMainFile();
+    // Read file content (handles auth errors with reconnection)
+    const content = await this.readMainFileWithAuth();
 
+    // Parse and validate content (separate from auth errors)
     try {
       const parsed = JSON.parse(content);
       return DataFileSchema.parse(parsed) as DataFile;
@@ -156,6 +159,56 @@ export class StorageService {
         throw new Error(`Invalid data file format: ${error.message}`);
       }
       throw new Error('Failed to parse data file: invalid JSON');
+    }
+  }
+
+  /**
+   * Read main file from current provider with automatic auth error handling
+   * If auth expires, shows reconnect dialog and retries after re-authentication
+   * @throws Error if not connected, auth fails, or user cancels reconnection
+   */
+  private async readMainFileWithAuth(): Promise<string> {
+    if (!this.currentProvider) {
+      throw new Error('No storage provider connected.');
+    }
+
+    try {
+      return await this.currentProvider.readMainFile();
+    } catch (error) {
+      console.error('Failed to read main file:', error);
+
+      // Check if error is auth-related
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const isAuthError =
+        errorMessage.includes('auth') ||
+        errorMessage.includes('permission') ||
+        errorMessage.includes('expired') ||
+        errorMessage.includes('unauthorized') ||
+        errorMessage.includes('401');
+
+      if (isAuthError) {
+        const providerName = this.currentProvider.getName();
+        const action = await this.onReconnectNeeded(providerName);
+
+        if (action === 'reconnect') {
+          // Re-authenticate and retry
+          try {
+            await this.currentProvider.authenticate();
+            return await this.currentProvider.readMainFile();
+          } catch (retryError) {
+            console.error('Failed to load data after reconnection:', retryError);
+            throw new Error(
+              `Failed to load data after reconnection: ${retryError instanceof Error ? retryError.message : String(retryError)}`
+            );
+          }
+        } else {
+          // User dismissed - keep connection but throw error
+          throw new Error('User cancelled reconnection');
+        }
+      }
+
+      // Re-throw original error if not auth-related
+      throw error;
     }
   }
 

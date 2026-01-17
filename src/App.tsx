@@ -44,15 +44,6 @@ const AppContent: React.FC = () => {
     mergeResult: null,
     resolve: null,
   });
-  const [reconnectDialogState, setReconnectDialogState] = useState<{
-    open: boolean;
-    providerName: string;
-    resolve: ((value: 'reconnect' | 'dismiss') => void) | null;
-  }>({
-    open: false,
-    providerName: '',
-    resolve: null,
-  });
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -68,16 +59,7 @@ const AppContent: React.FC = () => {
       });
 
       // Initialize storage provider
-      const success = await storageFactory.initialize(async (providerName: string) => {
-        // Show reconnect dialog and return user's choice
-        return new Promise<'reconnect' | 'dismiss'>((resolve) => {
-          setReconnectDialogState({
-            open: true,
-            providerName,
-            resolve,
-          });
-        });
-      });
+      const success = await storageFactory.initialize();
 
       if (!success) {
         // No cached connection or user dismissed - show welcome dialog
@@ -178,21 +160,7 @@ const AppContent: React.FC = () => {
     }
     setMergeDialogState({ open: false, mergeResult: null, resolve: null });
   };
-  const handleReconnect = () => {
-    if (reconnectDialogState.resolve) {
-      reconnectDialogState.resolve('reconnect');
-    }
-    setReconnectDialogState({ open: false, providerName: '', resolve: null });
-  };
 
-  const handleReconnectDismiss = () => {
-    if (reconnectDialogState.resolve) {
-      reconnectDialogState.resolve('dismiss');
-    }
-    setReconnectDialogState({ open: false, providerName: '', resolve: null });
-    // Show welcome dialog when user dismisses reconnect
-    setShowWelcomeDialog(true);
-  };
   const handleArchiveGoToSettings = () => {
     setShowArchivePrompt(false);
     // Navigate to archive settings page using React Router
@@ -224,12 +192,6 @@ const AppContent: React.FC = () => {
         onCancel={handleMergeCancel}
         onApply={handleMergeApply}
       />
-      <ReconnectDialog
-        open={reconnectDialogState.open}
-        providerName={reconnectDialogState.providerName}
-        onReconnect={handleReconnect}
-        onDismiss={handleReconnectDismiss}
-      />
       {archiveYearSummary && archiveYear && (
         <ArchivePrompt
           open={showArchivePrompt}
@@ -254,13 +216,54 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  const [reconnectDialogState, setReconnectDialogState] = useState<{
+    open: boolean;
+    providerName: string;
+    resolve: ((value: 'reconnect' | 'dismiss') => void) | null;
+  }>({
+    open: false,
+    providerName: '',
+    resolve: null,
+  });
+
+  // Reconnect callback to be injected into StorageService
+  const handleReconnectNeeded = async (providerName: string): Promise<'reconnect' | 'dismiss'> => {
+    return new Promise<'reconnect' | 'dismiss'>((resolve) => {
+      setReconnectDialogState({
+        open: true,
+        providerName,
+        resolve,
+      });
+    });
+  };
+
+  const handleReconnect = () => {
+    if (reconnectDialogState.resolve) {
+      reconnectDialogState.resolve('reconnect');
+    }
+    setReconnectDialogState({ open: false, providerName: '', resolve: null });
+  };
+
+  const handleReconnectDismiss = () => {
+    if (reconnectDialogState.resolve) {
+      reconnectDialogState.resolve('dismiss');
+    }
+    setReconnectDialogState({ open: false, providerName: '', resolve: null });
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <ServiceProvider>
+      <ServiceProvider onReconnectNeeded={handleReconnectNeeded}>
         <BrowserRouter>
           <AppContent />
         </BrowserRouter>
+        <ReconnectDialog
+          open={reconnectDialogState.open}
+          providerName={reconnectDialogState.providerName}
+          onReconnect={handleReconnect}
+          onDismiss={handleReconnectDismiss}
+        />
       </ServiceProvider>
     </ThemeProvider>
   );

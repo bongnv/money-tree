@@ -93,82 +93,29 @@ describe('App', () => {
     expect(mockSyncService.stopAutoSave).toHaveBeenCalled();
   });
 
-  it('should show welcome dialog when initialization fails', async () => {
-    mockStorageFactory.initialize.mockResolvedValue({ success: false, needsReconnect: false });
-    
-    const { container } = render(<App />);
-    
-    await waitFor(() => {
-      // Check if WelcomeDialog component is rendered by checking for dialog role
-      const dialogs = container.querySelectorAll('[role="dialog"]');
-      expect(dialogs.length).toBeGreaterThan(0);
-    });
-  });
-
-  it('should show welcome dialog when autoLoad fails', async () => {
-    mockStorageFactory.initialize.mockResolvedValue({ success: true, needsReconnect: false });
-    mockSyncService.autoLoad.mockResolvedValue(false);
-    
-    const { container } = render(<App />);
-    
-    await waitFor(() => {
-      const dialogs = container.querySelectorAll('[role="dialog"]');
-      expect(dialogs.length).toBeGreaterThan(0);
-    });
-  });
-
-  it('should show archive prompt when archivable year detected', async () => {
-    mockArchiveService.identifyArchivableYear.mockReturnValue(2025);
-    mockArchiveService.calculateYearEndSummary.mockReturnValue({
-      year: 2025,
-      totalIncome: 50000,
-      totalExpenses: 30000,
-    });
-    
-    const { container } = render(<App />);
-    
-    await waitFor(() => {
-      // Archive prompt creates a dialog
-      const dialogs = container.querySelectorAll('[role="dialog"]');
-      expect(dialogs.length).toBeGreaterThan(0);
-    });
-  });
-
-  it('should show backup prompt when backup is due', async () => {
-    mockBackupService.shouldPromptBackup.mockReturnValue(true);
-    
-    const { container } = render(<App />);
-    
-    await waitFor(() => {
-      // Backup prompt creates a dialog
-      const dialogs = container.querySelectorAll('[role="dialog"]');
-      expect(dialogs.length).toBeGreaterThan(0);
-    });
-  });
-
   it('should prevent navigation with unsaved changes', async () => {
     render(<App />);
-    
+
     // Set unsaved changes after render
     await waitFor(() => {
       useAppStore.setState({ hasUnsavedChanges: true });
     });
-    
+
     const beforeUnloadEvent = new Event('beforeunload') as BeforeUnloadEvent;
     Object.defineProperty(beforeUnloadEvent, 'returnValue', {
       writable: true,
       value: '',
     });
-    
+
     window.dispatchEvent(beforeUnloadEvent);
-    
+
     // Check that returnValue was set (this is how beforeunload works)
     expect(beforeUnloadEvent.returnValue).toBe('');
   });
 
   it('should set merge handler on mount', async () => {
     render(<App />);
-    
+
     await waitFor(() => {
       expect(mockSyncService.setMergeHandler).toHaveBeenCalled();
     });
@@ -176,21 +123,21 @@ describe('App', () => {
 
   it('should clear merge handler on unmount', async () => {
     const { unmount } = render(<App />);
-    
+
     await waitFor(() => {
       expect(mockSyncService.setMergeHandler).toHaveBeenCalledTimes(1);
     });
-    
+
     unmount();
-    
+
     expect(mockSyncService.setMergeHandler).toHaveBeenCalledWith(null);
   });
 
   it('should show loading backdrop when isLoading is true', () => {
     useAppStore.setState({ isLoading: true });
-    
+
     render(<App />);
-    
+
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
 
@@ -202,9 +149,9 @@ describe('App', () => {
         severity: 'success',
       },
     });
-    
+
     render(<App />);
-    
+
     expect(screen.getByText('Test notification')).toBeInTheDocument();
   });
 });

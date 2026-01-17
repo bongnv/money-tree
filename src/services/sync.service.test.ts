@@ -640,9 +640,9 @@ describe('SyncService', () => {
       mockSaveDataFile.mockResolvedValue(undefined);
 
       // Set merge handler that chooses app version
-      const mockMergeHandler = jest.fn().mockResolvedValue([
-        { conflictIndex: 0, resolution: 'app' as const },
-      ]);
+      const mockMergeHandler = jest
+        .fn()
+        .mockResolvedValue([{ conflictIndex: 0, resolution: 'app' as const }]);
       syncService.setMergeHandler(mockMergeHandler);
 
       await syncService.syncNow();

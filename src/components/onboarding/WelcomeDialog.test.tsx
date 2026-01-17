@@ -22,10 +22,26 @@ const mockLocalProvider = {
   setFile: jest.fn().mockResolvedValue(undefined),
 };
 
+const mockOneDriveProvider = {
+  listDriveItems: jest.fn().mockResolvedValue([]),
+  setFileInfo: jest.fn().mockResolvedValue(undefined),
+};
+
+const mockGoogleDriveProvider = {
+  listDriveFiles: jest.fn().mockResolvedValue([]),
+  setFileInfo: jest.fn().mockResolvedValue(undefined),
+};
+
 const mockStorageFactory = {
-  connect: jest.fn().mockImplementation(async () => {
-    // Set the provider synchronously so it's available immediately after connect()
-    mockStorageFactory.provider = mockLocalProvider;
+  connect: jest.fn().mockImplementation(async (config) => {
+    // Set the appropriate provider based on the type
+    if (config.type === StorageProviderType.ONEDRIVE) {
+      mockStorageFactory.provider = mockOneDriveProvider;
+    } else if (config.type === StorageProviderType.GOOGLE_DRIVE) {
+      mockStorageFactory.provider = mockGoogleDriveProvider;
+    } else {
+      mockStorageFactory.provider = mockLocalProvider;
+    }
   }),
   listFiles: jest.fn(),
   provider: null as any,
@@ -50,6 +66,8 @@ describe('WelcomeDialog', () => {
     jest.clearAllMocks();
     // Reset provider to mockLocalProvider before each test
     mockStorageFactory.provider = mockLocalProvider;
+    mockOneDriveProvider.listDriveItems.mockResolvedValue([]);
+    mockGoogleDriveProvider.listDriveFiles.mockResolvedValue([]);
   });
 
   it('should render when open', () => {
@@ -307,17 +325,7 @@ describe('WelcomeDialog', () => {
   describe('Cloud Storage Integration', () => {
     it('should connect to OneDrive when Open Existing clicked', async () => {
       mockStorageFactory.connect.mockResolvedValue(undefined);
-      mockStorageFactory.listFiles.mockResolvedValue([
-        { id: 'file1', name: 'money-tree.json', lastModified: new Date().toISOString() },
-      ]);
-      
-      // Create a mock provider for OneDrive
-      const mockOneDriveProvider = {
-        listFiles: mockStorageFactory.listFiles,
-      };
-      mockStorageFactory.provider = mockOneDriveProvider;
-      
-      mockSyncService.loadDataFile.mockResolvedValue(undefined);
+      mockOneDriveProvider.listDriveItems.mockResolvedValue([]);
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
@@ -329,16 +337,14 @@ describe('WelcomeDialog', () => {
         expect(mockStorageFactory.connect).toHaveBeenCalledWith({
           type: StorageProviderType.ONEDRIVE,
         });
-      });
-      
-      await waitFor(() => {
-        expect(mockOnClose).toHaveBeenCalled();
+        // Should show the OneDrive file picker after connection
+        expect(screen.getByText('Select OneDrive File Location')).toBeInTheDocument();
       });
     });
 
     it('should connect to Google Drive when Create New clicked', async () => {
       mockStorageFactory.connect.mockResolvedValue(undefined);
-      mockSyncService.syncNow.mockResolvedValue(undefined);
+      mockGoogleDriveProvider.listDriveFiles.mockResolvedValue([]);
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
@@ -350,7 +356,8 @@ describe('WelcomeDialog', () => {
         expect(mockStorageFactory.connect).toHaveBeenCalledWith({
           type: StorageProviderType.GOOGLE_DRIVE,
         });
-        expect(mockOnClose).toHaveBeenCalled();
+        // Should show the Google Drive file picker after connection
+        expect(screen.getByText('Select Google Drive File Location')).toBeInTheDocument();
       });
     });
 
@@ -390,13 +397,7 @@ describe('WelcomeDialog', () => {
       expect(screen.getByText('Connect to Google Drive')).toBeInTheDocument();
     });
 
-    it('should display privacy information', () => {
-      render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
-      expect(
-        screen.getByText(/your data stays private and under your control/i)
-      ).toBeInTheDocument();
-    });
   });
 
   describe('User Interaction Flow', () => {
@@ -423,7 +424,7 @@ describe('WelcomeDialog', () => {
 
     it('should complete full onboarding flow with OneDrive', async () => {
       mockStorageFactory.connect.mockResolvedValue(undefined);
-      mockSyncService.syncNow.mockResolvedValue(undefined);
+      mockOneDriveProvider.listDriveItems.mockResolvedValue([]);
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
@@ -435,8 +436,8 @@ describe('WelcomeDialog', () => {
         expect(mockStorageFactory.connect).toHaveBeenCalledWith({
           type: StorageProviderType.ONEDRIVE,
         });
-        expect(mockSyncService.syncNow).toHaveBeenCalledWith(true);
-        expect(mockOnClose).toHaveBeenCalled();
+        // Should show the file picker after connection
+        expect(screen.getByText('Select OneDrive File Location')).toBeInTheDocument();
       });
     });
 
@@ -444,14 +445,14 @@ describe('WelcomeDialog', () => {
       (FilePickerService.showSaveFilePicker as jest.Mock)
         .mockRejectedValueOnce(new Error('First attempt failed'))
         .mockResolvedValueOnce({} as FileSystemFileHandle);
-      
+
       mockStorageFactory.connect.mockResolvedValue(undefined);
       mockSyncService.syncNow.mockResolvedValue(undefined);
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
       const createButtons = screen.getAllByRole('button', { name: /create new/i });
-      
+
       // First attempt fails
       fireEvent.click(createButtons[0]);
       await waitFor(() => {

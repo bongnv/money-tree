@@ -23,10 +23,13 @@ const ReportServiceContext = createContext<ReportService>(null!);
  * Combined Service Provider
  * Wraps app and provides all service instances via React Context
  */
-export const ServiceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const ServiceProvider: React.FC<{
+  children: ReactNode;
+  onReconnectNeeded: (providerName: string) => Promise<'reconnect' | 'dismiss'>;
+}> = ({ children, onReconnectNeeded }) => {
   // Create singleton instances using useMemo (created once per app lifecycle)
   // Create base services without dependencies first
-  const storageService = useMemo(() => new StorageService(), []);
+  const storageService = useMemo(() => new StorageService(onReconnectNeeded), [onReconnectNeeded]);
   const calculationService = useMemo(() => new CalculationService(), []);
 
   // Services that depend on other services

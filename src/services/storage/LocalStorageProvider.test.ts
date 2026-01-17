@@ -19,10 +19,9 @@ describe('LocalStorageProvider', () => {
     expect(provider.getName()).toBe('Local File');
   });
 
-  it('should throw error when authenticating without file handle', async () => {
-    await expect(provider.authenticate()).rejects.toThrow(
-      'No file handle available for permission request'
-    );
+  it('should not throw error when authenticating without file handle', async () => {
+    // authenticate() should silently return if no file handle is set
+    await expect(provider.authenticate()).resolves.toBeUndefined();
   });
 
   // readFile and writeFile tested via StorageService integration tests

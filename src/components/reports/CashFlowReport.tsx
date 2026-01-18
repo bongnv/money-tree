@@ -19,6 +19,8 @@ import {
   InputLabel,
   SelectChangeEvent,
   Button,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
@@ -55,6 +57,7 @@ export const CashFlowReport: React.FC = () => {
   const [endDate, setEndDate] = useState<string>(today);
   const [conversionCurrency, setConversionCurrency] = useState<CurrencyCode>(baseCurrency);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'period' | 'cumulative'>('period');
 
   const handleDateRangeChange = (range: { startDate: string; endDate: string }) => {
     setStartDate(range.startDate);
@@ -129,9 +132,30 @@ export const CashFlowReport: React.FC = () => {
   // filteredTransactions, transactionTypes, categories, accounts, and effectiveGetRateForMonth are stable or captured in closure
   // effectiveGetRateForMonth is stable from Zustand store
 
-  // Prepare chart data
+  // Calculate cumulative data
+  const cumulativeData = useMemo(() => {
+    let cumulativeIncome = 0;
+    let cumulativeExpenses = 0;
+    let cumulativeNet = 0;
+
+    return trendData.map((point: any) => {
+      cumulativeIncome += point.income;
+      cumulativeExpenses += point.expenses;
+      cumulativeNet += point.netCashFlow;
+
+      return {
+        date: point.date,
+        income: cumulativeIncome,
+        expenses: cumulativeExpenses,
+        netCashFlow: cumulativeNet,
+      };
+    });
+  }, [trendData]);
+
+  // Prepare chart data based on view mode
   const chartData = useMemo(() => {
-    return trendData.map((point: any) => ({
+    const dataSource = viewMode === 'cumulative' ? cumulativeData : trendData;
+    return dataSource.map((point: any) => ({
       name: new Date(point.date).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
@@ -140,7 +164,7 @@ export const CashFlowReport: React.FC = () => {
       Expenses: point.expenses,
       'Net Cash Flow': point.netCashFlow,
     }));
-  }, [trendData]);
+  }, [trendData, cumulativeData, viewMode]);
 
   const handleCurrencyChange = (newCurrency: CurrencyCode) => {
     setConversionCurrency(newCurrency);
@@ -367,9 +391,29 @@ export const CashFlowReport: React.FC = () => {
       {/* Trend Chart */}
       {trendData.length > 0 && (
         <Paper sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Cash Flow Trend
-          </Typography>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+          >
+            <Typography variant="h6">Cash Flow Trend</Typography>
+            <ToggleButtonGroup
+              size="small"
+              value={viewMode}
+              exclusive
+              onChange={(event, newMode) => {
+                if (newMode !== null) {
+                  setViewMode(newMode);
+                }
+              }}
+              aria-label="chart view mode"
+            >
+              <ToggleButton value="period" aria-label="period view">
+                Period
+              </ToggleButton>
+              <ToggleButton value="cumulative" aria-label="cumulative view">
+                Cumulative
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
           <LineChart
             data={chartData}
             lines={[

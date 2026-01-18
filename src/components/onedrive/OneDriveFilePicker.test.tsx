@@ -51,13 +51,7 @@ describe('OneDriveFilePicker', () => {
   it('should render and list files', async () => {
     mockProvider.listDriveItems = jest.fn().mockResolvedValue(mockDriveItems);
 
-    render(
-      <OneDriveFilePicker
-        open={true}
-        onComplete={mockOnComplete}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<OneDriveFilePicker open={true} onComplete={mockOnComplete} onCancel={mockOnCancel} />);
 
     await waitFor(() => {
       expect(screen.getByText('Select OneDrive File Location')).toBeInTheDocument();
@@ -70,13 +64,7 @@ describe('OneDriveFilePicker', () => {
   it('should show shared icon for shared files', async () => {
     mockProvider.listDriveItems = jest.fn().mockResolvedValue(mockDriveItems);
 
-    render(
-      <OneDriveFilePicker
-        open={true}
-        onComplete={mockOnComplete}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<OneDriveFilePicker open={true} onComplete={mockOnComplete} onCancel={mockOnCancel} />);
 
     await waitFor(() => {
       const sharedIcons = screen.getAllByTitle('Shared');
@@ -182,13 +170,7 @@ describe('OneDriveFilePicker', () => {
         },
       ]);
 
-    render(
-      <OneDriveFilePicker
-        open={true}
-        onComplete={mockOnComplete}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<OneDriveFilePicker open={true} onComplete={mockOnComplete} onCancel={mockOnCancel} />);
 
     await waitFor(() => {
       expect(screen.getByText('Documents')).toBeInTheDocument();
@@ -212,13 +194,7 @@ describe('OneDriveFilePicker', () => {
     const user = userEvent.setup();
     mockProvider.listDriveItems = jest.fn().mockResolvedValue(mockDriveItems);
 
-    render(
-      <OneDriveFilePicker
-        open={true}
-        onComplete={mockOnComplete}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<OneDriveFilePicker open={true} onComplete={mockOnComplete} onCancel={mockOnCancel} />);
 
     await waitFor(() => {
       expect(screen.getByText('test.json')).toBeInTheDocument();

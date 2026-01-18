@@ -21,6 +21,8 @@ import {
   LinearProgress,
   Chip,
   Button,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
@@ -59,6 +61,7 @@ export const BudgetPerformanceReport: React.FC = () => {
   const [endDate, setEndDate] = useState<string>(today);
   const [conversionCurrency, setConversionCurrency] = useState<CurrencyCode>(baseCurrency);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'period' | 'cumulative'>('cumulative');
 
   const handleDateRangeChange = (range: { startDate: string; endDate: string }) => {
     setStartDate(range.startDate);
@@ -133,7 +136,7 @@ export const BudgetPerformanceReport: React.FC = () => {
   ]);
 
   // Calculate trend data
-  const [trendData, setTrendData] = useState<any[]>([]);
+  const [rawTrendData, setRawTrendData] = useState<any[]>([]);
 
   useEffect(() => {
     const calculateTrend = async () => {
@@ -155,18 +158,7 @@ export const BudgetPerformanceReport: React.FC = () => {
         conversionCurrency
       );
 
-      setTrendData(
-        trend.map((point) => ({
-          name: new Date(point.date).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-          }),
-          'Income Target': point.budgetedIncome,
-          'Income Actual': point.actualIncome,
-          'Expense Budgeted': point.budgeted,
-          'Expense Actual': point.actual,
-        }))
-      );
+      setRawTrendData(trend);
     };
 
     calculateTrend();
@@ -180,6 +172,50 @@ export const BudgetPerformanceReport: React.FC = () => {
     accounts,
     conversionCurrency,
   ]);
+
+  // Calculate period trend data (differences between consecutive cumulative points)
+  const periodTrendData = useMemo(() => {
+    if (rawTrendData.length === 0) return [];
+
+    return rawTrendData.map((point, index) => {
+      if (index === 0) {
+        // First point is the period value itself
+        return {
+          date: point.date,
+          budgetedIncome: point.budgetedIncome,
+          actualIncome: point.actualIncome,
+          budgeted: point.budgeted,
+          actual: point.actual,
+        };
+      }
+
+      // Calculate difference from previous cumulative point
+      const prevPoint = rawTrendData[index - 1];
+      return {
+        date: point.date,
+        budgetedIncome: point.budgetedIncome - prevPoint.budgetedIncome,
+        actualIncome: point.actualIncome - prevPoint.actualIncome,
+        budgeted: point.budgeted - prevPoint.budgeted,
+        actual: point.actual - prevPoint.actual,
+      };
+    });
+  }, [rawTrendData]);
+
+  // Prepare chart data based on view mode
+  const trendData = useMemo(() => {
+    // rawTrendData from service is already cumulative
+    const dataSource = viewMode === 'cumulative' ? rawTrendData : periodTrendData;
+    return dataSource.map((point) => ({
+      name: new Date(point.date).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      }),
+      'Income Target': point.budgetedIncome,
+      'Income Actual': point.actualIncome,
+      'Expense Budgeted': point.budgeted,
+      'Expense Actual': point.actual,
+    }));
+  }, [rawTrendData, periodTrendData, viewMode]);
 
   // Determine health score color
   const getHealthColor = (score: number) => {
@@ -443,9 +479,29 @@ export const BudgetPerformanceReport: React.FC = () => {
       {/* Combined Trend Chart */}
       {trendData.length > 0 && (
         <Paper sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Budget vs Actual Trend
-          </Typography>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+          >
+            <Typography variant="h6">Budget vs Actual Trend</Typography>
+            <ToggleButtonGroup
+              size="small"
+              value={viewMode}
+              exclusive
+              onChange={(event, newMode) => {
+                if (newMode !== null) {
+                  setViewMode(newMode);
+                }
+              }}
+              aria-label="chart view mode"
+            >
+              <ToggleButton value="period" aria-label="period view">
+                Period
+              </ToggleButton>
+              <ToggleButton value="cumulative" aria-label="cumulative view">
+                Cumulative
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
           <LineChart
             data={trendData}
             lines={[

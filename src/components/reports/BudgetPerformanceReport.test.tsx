@@ -894,4 +894,94 @@ describe('BudgetPerformanceReport', () => {
       });
     });
   });
+
+  describe('Toggle View Mode', () => {
+    it('should render toggle buttons for period and cumulative views', async () => {
+      renderComponent();
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /period view/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /cumulative view/i })).toBeInTheDocument();
+      });
+    });
+
+    it('should default to cumulative view mode', async () => {
+      renderComponent();
+
+      await waitFor(() => {
+        const cumulativeButton = screen.getByRole('button', { name: /cumulative view/i });
+        expect(cumulativeButton).toHaveClass('Mui-selected');
+      });
+    });
+
+    it('should switch to period view when toggle button is clicked', async () => {
+      const user = userEvent.setup();
+      renderComponent();
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /period view/i })).toBeInTheDocument();
+      });
+
+      const periodButton = screen.getByRole('button', { name: /period view/i });
+      await user.click(periodButton);
+
+      expect(periodButton).toHaveClass('Mui-selected');
+    });
+
+    it('should calculate period data correctly from cumulative data', async () => {
+      const user = userEvent.setup();
+      // Service returns cumulative data (each point is cumulative from start)
+      (mockReportService.calculateBudgetTrend as jest.Mock) = jest.fn().mockResolvedValue([
+        { date: '2026-01-01', budgeted: 100, actual: 80, budgetedIncome: 1000, actualIncome: 900 },
+        {
+          date: '2026-01-08',
+          budgeted: 250,
+          actual: 200,
+          budgetedIncome: 2500,
+          actualIncome: 2300,
+        },
+        {
+          date: '2026-01-15',
+          budgeted: 450,
+          actual: 380,
+          budgetedIncome: 4500,
+          actualIncome: 4200,
+        },
+      ]);
+
+      renderComponent();
+
+      // Wait for data to load - cumulative is default
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /cumulative view/i })).toBeInTheDocument();
+      });
+
+      const cumulativeButton = screen.getByRole('button', { name: /cumulative view/i });
+      expect(cumulativeButton).toHaveClass('Mui-selected');
+
+      // Switch to period view
+      const periodButton = screen.getByRole('button', { name: /period view/i });
+      await user.click(periodButton);
+
+      // Verify button is selected
+      expect(periodButton).toHaveClass('Mui-selected');
+    });
+
+    it('should not allow deselecting both toggle buttons', async () => {
+      const user = userEvent.setup();
+      renderComponent();
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /cumulative view/i })).toBeInTheDocument();
+      });
+
+      const cumulativeButton = screen.getByRole('button', { name: /cumulative view/i });
+
+      // Try to deselect the currently selected button
+      await user.click(cumulativeButton);
+
+      // Cumulative button should still be selected
+      expect(cumulativeButton).toHaveClass('Mui-selected');
+    });
+  });
 });

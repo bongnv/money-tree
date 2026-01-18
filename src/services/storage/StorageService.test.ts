@@ -170,9 +170,7 @@ describe('StorageService', () => {
         JSON.stringify({ type: StorageProviderType.ONEDRIVE })
       );
 
-      mockOneDriveProvider.initialize
-        .mockResolvedValueOnce(false)
-        .mockResolvedValueOnce(false);
+      mockOneDriveProvider.initialize.mockResolvedValueOnce(false).mockResolvedValueOnce(false);
       mockOneDriveProvider.getMainFileName.mockReturnValue('test.json');
       mockOneDriveProvider.authenticate.mockRejectedValue(new Error('Auth failed'));
 
@@ -333,9 +331,7 @@ describe('StorageService', () => {
     it('should save data file', async () => {
       await storageService.saveDataFile(mockDataFile);
 
-      expect(mockLocalProvider.writeMainFile).toHaveBeenCalledWith(
-        JSON.stringify(mockDataFile)
-      );
+      expect(mockLocalProvider.writeMainFile).toHaveBeenCalledWith(JSON.stringify(mockDataFile));
     });
 
     it('should throw error when not connected', async () => {

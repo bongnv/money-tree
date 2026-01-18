@@ -52,11 +52,7 @@ describe('GoogleDriveFilePicker', () => {
     mockProvider.listDriveFiles = jest.fn().mockResolvedValue(mockDriveFiles);
 
     render(
-      <GoogleDriveFilePicker
-        open={true}
-        onComplete={mockOnComplete}
-        onCancel={mockOnCancel}
-      />
+      <GoogleDriveFilePicker open={true} onComplete={mockOnComplete} onCancel={mockOnCancel} />
     );
 
     await waitFor(() => {
@@ -71,11 +67,7 @@ describe('GoogleDriveFilePicker', () => {
     mockProvider.listDriveFiles = jest.fn().mockResolvedValue(mockDriveFiles);
 
     render(
-      <GoogleDriveFilePicker
-        open={true}
-        onComplete={mockOnComplete}
-        onCancel={mockOnCancel}
-      />
+      <GoogleDriveFilePicker open={true} onComplete={mockOnComplete} onCancel={mockOnCancel} />
     );
 
     await waitFor(() => {
@@ -181,11 +173,7 @@ describe('GoogleDriveFilePicker', () => {
       ]);
 
     render(
-      <GoogleDriveFilePicker
-        open={true}
-        onComplete={mockOnComplete}
-        onCancel={mockOnCancel}
-      />
+      <GoogleDriveFilePicker open={true} onComplete={mockOnComplete} onCancel={mockOnCancel} />
     );
 
     await waitFor(() => {
@@ -206,11 +194,7 @@ describe('GoogleDriveFilePicker', () => {
     mockProvider.listDriveFiles = jest.fn().mockResolvedValue(mockDriveFiles);
 
     render(
-      <GoogleDriveFilePicker
-        open={true}
-        onComplete={mockOnComplete}
-        onCancel={mockOnCancel}
-      />
+      <GoogleDriveFilePicker open={true} onComplete={mockOnComplete} onCancel={mockOnCancel} />
     );
 
     await waitFor(() => {

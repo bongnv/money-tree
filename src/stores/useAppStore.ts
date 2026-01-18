@@ -19,8 +19,6 @@ interface AppState {
   baseCurrency: CurrencyCode; // Currency for reporting
   archivedYears: ArchivedYearReference[]; // References to archived years
   // Conflict detection metadata
-  fileContentHash: string | null;
-  fileLoadedAt: string | null;
   baseVersion: DataFile | null;
   // Backup metadata
   lastBackupDate: string | null; // ISO date of last successful backup
@@ -42,7 +40,7 @@ interface AppActions {
   setArchivedYears: (archivedYears: ArchivedYearReference[]) => void;
   addArchivedYear: (reference: ArchivedYearReference) => void;
   // Conflict detection actions
-  setFileMetadata: (hash: string, loadedAt: string, baseVersion: DataFile) => void;
+  setFileMetadata: (baseVersion: DataFile) => void;
   clearFileMetadata: () => void;
   // Backup actions
   setLastBackupDate: (date: string | null) => void;
@@ -63,8 +61,6 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
   },
   baseCurrency: CurrencyCode.USD,
   archivedYears: [],
-  fileContentHash: null,
-  fileLoadedAt: null,
   baseVersion: null,
   lastBackupDate: null,
   shouldShowWelcome: false,
@@ -109,8 +105,6 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
       },
       baseCurrency: CurrencyCode.USD,
       archivedYears: [],
-      fileContentHash: null,
-      fileLoadedAt: null,
       baseVersion: null,
       lastBackupDate: null,
       shouldShowWelcome: false,
@@ -140,12 +134,12 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
     }));
   },
 
-  setFileMetadata: (hash, loadedAt, baseVersion) => {
-    set({ fileContentHash: hash, fileLoadedAt: loadedAt, baseVersion });
+  setFileMetadata: (baseVersion) => {
+    set({ baseVersion });
   },
 
   clearFileMetadata: () => {
-    set({ fileContentHash: null, fileLoadedAt: null, baseVersion: null });
+    set({ baseVersion: null });
   },
 
   setLastBackupDate: (date) => {

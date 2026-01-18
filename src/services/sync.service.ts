@@ -7,7 +7,6 @@ import { useBudgetStore } from '../stores/useBudgetStore';
 import { useExchangeRateStore } from '../stores/useExchangeRateStore';
 import { StorageService } from './storage/StorageService';
 import type { DataFile } from '../types/models';
-import { calculateDataFileHash } from '../utils/hash.utils';
 import { performThreeWayMerge, Conflict, MergeResult } from './merge.service';
 import { ConflictResolution } from '../components/common/MergePreviewDialog';
 
@@ -184,17 +183,14 @@ export class SyncService {
       });
 
       let dataToSave = appVersion;
-      if (state.fileContentHash && state.baseVersion) {
+      if (state.baseVersion) {
         try {
           // Re-read current file content
           const currentFileData = await this.storageService.loadDataFile();
 
           if (currentFileData) {
-            // Calculate current file hash
-            const currentHash = await calculateDataFileHash(currentFileData);
-
-            // If hashes differ, file was modified externally
-            if (currentHash !== state.fileContentHash) {
+            // Check if file was modified externally by comparing lastModified timestamps
+            if (currentFileData.lastModified !== state.baseVersion.lastModified) {
               // Perform three-way merge
               const mergeResult = performThreeWayMerge(
                 state.baseVersion,
@@ -245,9 +241,8 @@ export class SyncService {
 
       await this.storageService.saveDataFile(dataToSave);
 
-      // Update file hash and base version after successful save
-      const newHash = await calculateDataFileHash(dataToSave);
-      state.setFileMetadata(newHash, snapshotTime, dataToSave);
+      // Update base version after successful save
+      state.setFileMetadata(snapshotTime, dataToSave);
 
       // Always update lastSaved timestamp since data was actually saved
       state.setLastSaved(snapshotTime);
@@ -314,10 +309,8 @@ export class SyncService {
         // Store last backup date in app state
         state.setLastBackupDate(dataFile.lastBackupDate || null);
 
-        // Calculate and store file hash for conflict detection
-        const fileHash = await calculateDataFileHash(dataFile);
-        const loadedAt = new Date().toISOString();
-        state.setFileMetadata(fileHash, loadedAt, structuredClone(dataFile));
+        // Store file metadata for conflict detection
+        state.setFileMetadata(structuredClone(dataFile));
 
         // Distribute data to domain stores
         useAccountStore.getState().setAccounts(dataFile.accounts || []);

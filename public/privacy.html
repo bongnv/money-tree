@@ -6,41 +6,41 @@
     <title>Privacy Policy - Money Tree</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.8;
             max-width: 900px;
-            margin: 0 auto;
-            padding: 40px 20px;
+            margin: 40px auto;
+            padding: 0 20px;
             color: #333;
-            background: #fff;
         }
-        h1 { 
-            color: #1976d2; 
+        h1 {
             font-size: 2.5em;
             margin-bottom: 10px;
+            color: #1976d2;
         }
-        h2 { 
-            color: #333; 
-            margin-top: 40px;
+        h2 {
             font-size: 1.5em;
-            border-bottom: 2px solid #e0e0e0;
+            margin-top: 30px;
+            margin-bottom: 15px;
             padding-bottom: 10px;
-        }
-        .last-updated { 
-            color: #666; 
-            font-style: italic;
-            margin-bottom: 30px;
-            display: block;
+            border-bottom: 2px solid #e0e0e0;
+            color: #424242;
         }
         p {
             margin: 15px 0;
         }
         ul {
-            margin: 15px 0;
-            padding-left: 40px;
+            margin: 10px 0;
+            padding-left: 25px;
         }
         li {
-            margin: 10px 0;
+            margin: 8px 0;
+        }
+        .last-updated {
+            color: #666;
+            font-style: italic;
+            display: block;
+            margin-bottom: 30px;
         }
         code {
             background: #f5f5f5;
@@ -61,80 +61,77 @@
             border-radius: 5px;
             margin-top: 30px;
         }
+        strong {
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
     <h1>Privacy Policy</h1>
     <span class="last-updated">Last Updated: January 19, 2026</span>
 
-    <h2>1. Overview</h2>
-    <p>Money Tree ("we", "our", or "the app") is a personal finance management application that helps you track your income, expenses, budgets, and financial data. We are committed to protecting your privacy and ensuring the security of your personal information.</p>
+    <h2>Introduction</h2>
+    <p>Money Tree ("we", "our", or "the app") is a personal finance management application. This Privacy Policy explains how we handle your information when you use our application.</p>
 
-    <h2>2. Data Collection and Storage</h2>
-    <p>Money Tree operates entirely on your device:</p>
+    <h2>What Information We Collect</h2>
+    <p><strong>We only collect anonymous analytics.</strong> We use Cloudflare Web Analytics to collect:</p>
     <ul>
-        <li><strong>Local Storage:</strong> All your financial data is stored locally on your device using your browser's storage</li>
-        <li><strong>No Server Collection:</strong> We do not collect, transmit, or store any of your financial data on our servers</li>
-        <li><strong>Web Analytics:</strong> The app uses Cloudflare Web Analytics to collect anonymous usage statistics (page views, session duration, referrer). This is privacy-friendly and does not use cookies or track individual users. No financial data is included in these analytics.</li>
-        <li><strong>Hosting Platform:</strong> The app is hosted on Cloudflare Pages. See <a href="https://www.cloudflare.com/privacypolicy/">Cloudflare's Privacy Policy</a> for details on how they handle data.</li>
+        <li>Page views</li>
+        <li>Session duration</li>
+        <li>Referrer information</li>
     </ul>
+    <p>This data is anonymous, does not use cookies, and does not include any financial information or personal data.</p>
+    
+    <p><strong>We do not collect your financial data.</strong> All financial information you enter (transactions, budgets, accounts, categories) stays on your device or in your cloud storage. We never see, store, or have access to it.</p>
 
-    <h2>3. Cloud Storage Integration</h2>
-    <p>When you choose to sync your data with cloud storage providers:</p>
+    <h2>How We Use and Store Your Data</h2>
+    
+    <p><strong>Your data stays on your device.</strong> All financial data is stored in your browser's local storage. If you enable cloud sync, your data is transmitted directly from your device to your chosen cloud storage - never through our servers.</p>
+    
+    <p><strong>Google Drive Integration:</strong></p>
     <ul>
-        <li><strong>OneDrive:</strong> We access only the specific file you select or create. Your data is stored in your OneDrive account.</li>
-        <li><strong>Google Drive:</strong> We use the <code>drive.file</code> and <code>drive.readonly</code> scopes to enable you to browse, select, and save files in your Google Drive. We can only read the list of files to display in the file picker and can only modify files you explicitly select or that we create. We do not access or modify any other files.</li>
-        <li><strong>Local Files:</strong> When using local file storage, files remain entirely on your device.</li>
-    </ul>
-
-    <h2>4. What Information We Access</h2>
-    <p>The only information we access includes:</p>
-    <ul>
-        <li>Financial data you enter into the app (transactions, budgets, accounts)</li>
-        <li>File names and folder structure when browsing your cloud storage (to help you select files)</li>
-        <li>Content of files you explicitly select or create in cloud storage</li>
-        <li>Your authentication tokens (stored locally) to access cloud storage services</li>
-    </ul>
-
-    <h2>5. How We Use Your Information</h2>
-    <p>Your information is used solely to:</p>
-    <ul>
-        <li>Display your financial data within the app</li>
-        <li>Sync your data to the cloud storage location you choose</li>
-        <li>Generate reports and visualizations based on your data</li>
-    </ul>
-
-    <h2>6. Data Security</h2>
-    <ul>
-        <li>Your data is encrypted when stored in cloud services (handled by the cloud provider)</li>
+        <li>We use <code>drive.file</code> scope to read and write your Money Tree data file</li>
+        <li>We use <code>drive.readonly</code> scope to show your files in the picker so you can choose where to save</li>
+        <li>We only access files you explicitly select or that we create</li>
+        <li>All communication uses HTTPS encryption</li>
         <li>Authentication tokens are stored securely in your browser</li>
-        <li>No data is transmitted to our servers or third parties</li>
     </ul>
+    
+    <p><strong>OneDrive Integration:</strong> We only access the specific file you select or create.</p>
+    
+    <p><strong>We do not sell, trade, or share your data with third parties.</strong> Your financial information is transmitted only between your device and your chosen cloud storage provider.</p>
 
-    <h2>7. Your Rights</h2>
+    <h2>Your Data Control</h2>
     <p>You have complete control over your data:</p>
     <ul>
-        <li>Delete your data anytime by clearing browser storage or deleting your cloud file</li>
-        <li>Revoke app access through your Google Account or Microsoft Account settings</li>
-        <li>Export your data as a backup file</li>
-        <li>Switch between storage providers at any time</li>
+        <li><strong>Access & Edit:</strong> View and modify your data anytime through the app</li>
+        <li><strong>Export:</strong> Download your data in JSON format to use with other services</li>
+        <li><strong>Delete:</strong> Clear browser storage or delete your cloud storage file to remove all data</li>
+        <li><strong>Disconnect:</strong> Remove cloud sync anytime from app settings (doesn't delete the cloud file)</li>
+        <li><strong>Revoke Access:</strong> Remove app permissions through <a href="https://myaccount.google.com/permissions">Google</a> or <a href="https://account.microsoft.com/privacy/">Microsoft</a> account settings</li>
     </ul>
 
-    <h2>8. Third-Party Services</h2>
-    <p>We integrate with:</p>
+    <h2>Google API Compliance</h2>
+    <p>Money Tree complies with the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including Limited Use requirements:</p>
     <ul>
-        <li><strong>Google Drive API:</strong> Subject to <a href="https://developers.google.com/terms">Google API Terms of Service</a>. The app uses the <code>drive.readonly</code> scope which is a sensitive scope. We only use this permission to display your files in the file picker to help you select or create files.</li>
-        <li><strong>Microsoft OneDrive API:</strong> Subject to <a href="https://docs.microsoft.com/en-us/legal/microsoft-apis/terms-of-use">Microsoft API Terms</a></li>
+        <li>We use Google Drive API only to store and retrieve your finance data</li>
+        <li>We do not transfer your data to third parties</li>
+        <li>We do not use your data for advertising</li>
+        <li>We do not use your data for any purpose beyond app functionality</li>
     </ul>
-    <p><strong>Important:</strong> We never read, modify, or delete files other than the specific Money Tree data file you select or create. The <code>drive.readonly</code> scope is only used to show file names in the picker interface.</p>
 
-    <h2>9. Changes to Privacy Policy</h2>
-    <p>We may update this privacy policy from time to time. Changes will be posted on this page with an updated "Last Updated" date.</p>
+    <h2>Third-Party Services</h2>
+    <p>When using cloud storage, you're also subject to: <a href="https://policies.google.com/privacy">Google</a>, <a href="https://privacy.microsoft.com/en-us/privacystatement">Microsoft</a>, and <a href="https://www.cloudflare.com/privacypolicy/">Cloudflare</a> privacy policies.</p>
 
-    <h2>Contact Information</h2>
+    <h2>Children's Privacy</h2>
+    <p>Not intended for children under 13. We do not knowingly collect information from children.</p>
+
+    <h2>Policy Updates</h2>
+    <p>We may update this policy. Check the "Last Updated" date above. Continued use means you accept any changes.</p>
+
+    <h2>Contact</h2>
     <div class="contact-info">
-        <p><strong>For questions or concerns about this privacy policy or your data, please contact:</strong></p>
-        <p>Email: money-tree-support@googlegroups.com</p>
+        <p>Questions? Email: <a href="mailto:money-tree-support@googlegroups.com">money-tree-support@googlegroups.com</a></p>
     </div>
 
     <p style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; text-align: center;">

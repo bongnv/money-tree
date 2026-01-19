@@ -400,8 +400,8 @@ export const BudgetsPage: React.FC = () => {
                           sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
                         >
                           {formatCurrency(totalActual, baseCurrency)} of{' '}
-                          {formatCurrency(totalBudget, baseCurrency)} (
-                          {totalPercentage.toFixed(0)}%)
+                          {formatCurrency(totalBudget, baseCurrency)} ({totalPercentage.toFixed(0)}
+                          %)
                         </Typography>
                       </Box>
                       <LinearProgress

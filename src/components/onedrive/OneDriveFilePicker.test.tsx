@@ -206,6 +206,57 @@ describe('OneDriveFilePicker', () => {
     expect(mockOnCancel).toHaveBeenCalled();
   });
 
+  it('should load both personal and shared items at root level', async () => {
+    // Mock both personal items and shared items at root
+    const mockRootItems = [
+      {
+        id: 'folder1',
+        name: 'Documents',
+        folder: { childCount: 0 },
+        parentReference: { id: 'root', path: '/drive/root:' },
+      },
+      {
+        id: 'file1',
+        name: 'personal.json',
+        file: { mimeType: 'application/json' },
+        parentReference: { id: 'root', path: '/drive/root:' },
+      },
+      {
+        id: 'shared-folder',
+        name: 'Shared Workspace',
+        folder: { childCount: 2 },
+        remoteItem: {
+          id: 'remote-shared',
+          parentReference: { driveId: 'shared-drive-456' },
+        },
+        parentReference: { id: 'root', path: '/drive/root:' },
+      },
+      {
+        id: 'shared-file',
+        name: 'team-data.json',
+        file: { mimeType: 'application/json' },
+        remoteItem: { id: 'remote-file' },
+        parentReference: { id: 'root', path: '/drive/root:' },
+      },
+    ];
+
+    mockProvider.listDriveItems = jest.fn().mockResolvedValue(mockRootItems);
+
+    render(<OneDriveFilePicker open={true} onComplete={mockOnComplete} onCancel={mockOnCancel} />);
+
+    await waitFor(() => {
+      // Verify all items are shown: personal folder, personal file, shared folder, shared file
+      expect(screen.getByText('Documents')).toBeInTheDocument();
+      expect(screen.getByText('personal.json')).toBeInTheDocument();
+      expect(screen.getByText('Shared Workspace')).toBeInTheDocument();
+      expect(screen.getByText('team-data.json')).toBeInTheDocument();
+
+      // Verify shared items show the shared icon
+      const sharedIcons = screen.getAllByTitle('Shared');
+      expect(sharedIcons).toHaveLength(2); // Shared folder and shared file
+    });
+  });
+
   it('should use custom default file name', async () => {
     mockProvider.listDriveItems = jest.fn().mockResolvedValue([]);
 

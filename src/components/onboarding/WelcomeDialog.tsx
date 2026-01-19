@@ -243,52 +243,45 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
             </Card>
 
             {/* Connect to Google Drive */}
-            <Card variant="outlined">
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                  <CloudIcon
-                    color={isGoogleDriveConfigured() ? 'primary' : 'disabled'}
-                    fontSize="large"
-                  />
-                  <Box>
-                    <Typography
-                      variant="h6"
-                      component="div"
-                      color={isGoogleDriveConfigured() ? 'inherit' : 'text.disabled'}
-                    >
-                      Connect to Google Drive
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {isGoogleDriveConfigured()
-                        ? 'Sync your data with Google Drive'
-                        : 'Not configured - Google Cloud Console setup required'}
-                    </Typography>
+            {isGoogleDriveConfigured() && (
+              <Card variant="outlined">
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                    <CloudIcon color="primary" fontSize="large" />
+                    <Box>
+                      <Typography variant="h6" component="div">
+                        Connect to Google Drive
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Sync your data with Google Drive
+                      </Typography>
+                    </Box>
                   </Box>
-                </Box>
-              </CardContent>
-              <CardActions sx={{ gap: 1 }}>
-                <Button
-                  variant="outlined"
-                  startIcon={
-                    state.isConnecting ? <CircularProgress size={20} /> : <FolderOpenIcon />
-                  }
-                  onClick={() => handleConnect(StorageProviderType.GOOGLE_DRIVE, 'open')}
-                  disabled={!isGoogleDriveConfigured() || state.isConnecting}
-                  fullWidth
-                >
-                  {state.isConnecting ? 'Connecting...' : 'Open Existing'}
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={state.isConnecting ? <CircularProgress size={20} /> : <AddIcon />}
-                  onClick={() => handleConnect(StorageProviderType.GOOGLE_DRIVE, 'create')}
-                  disabled={!isGoogleDriveConfigured() || state.isConnecting}
-                  fullWidth
-                >
-                  {state.isConnecting ? 'Connecting...' : 'Create New'}
-                </Button>
-              </CardActions>
-            </Card>
+                </CardContent>
+                <CardActions sx={{ gap: 1 }}>
+                  <Button
+                    variant="outlined"
+                    startIcon={
+                      state.isConnecting ? <CircularProgress size={20} /> : <FolderOpenIcon />
+                    }
+                    onClick={() => handleConnect(StorageProviderType.GOOGLE_DRIVE, 'open')}
+                    disabled={state.isConnecting}
+                    fullWidth
+                  >
+                    {state.isConnecting ? 'Connecting...' : 'Open Existing'}
+                  </Button>
+                  <Button
+                    variant="contained"
+                    startIcon={state.isConnecting ? <CircularProgress size={20} /> : <AddIcon />}
+                    onClick={() => handleConnect(StorageProviderType.GOOGLE_DRIVE, 'create')}
+                    disabled={state.isConnecting}
+                    fullWidth
+                  >
+                    {state.isConnecting ? 'Connecting...' : 'Create New'}
+                  </Button>
+                </CardActions>
+              </Card>
+            )}
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>

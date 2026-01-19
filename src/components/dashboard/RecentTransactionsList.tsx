@@ -4,10 +4,10 @@ import { Link as RouterLink } from 'react-router-dom';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
-import { useAppStore } from '../../stores/useAppStore';
+import { useAccountStore } from '../../stores/useAccountStore';
 import { formatDate } from '../../utils/date.utils';
 import { formatCurrency } from '../../utils/currency.utils';
-import { Group } from '../../types/enums';
+import { Group, CurrencyCode } from '../../types/enums';
 
 export interface RecentTransactionsListProps {
   limit?: number;
@@ -22,7 +22,7 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
 }) => {
   const transactions = useTransactionStore((state) => state.transactions);
   const transactionTypes = useCategoryStore((state) => state.transactionTypes);
-  const baseCurrency = useAppStore((state) => state.baseCurrency);
+  const accounts = useAccountStore((state) => state.accounts);
 
   // Get recent transactions sorted by date (newest first)
   const recentTransactions = [...transactions]
@@ -53,8 +53,20 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
     return type.group === Group.INCOME;
   };
 
-  const formatTransactionAmount = (amount: number, transactionTypeId: string): string => {
-    const formattedAmount = formatCurrency(amount, baseCurrency, { showSymbol: true });
+  const getTransactionCurrency = (transaction: any): CurrencyCode => {
+    // For income, use toAccountId; for expenses, use fromAccountId
+    const accountId = transaction.toAccountId || transaction.fromAccountId;
+    if (!accountId) return CurrencyCode.USD; // Fallback if no account
+    const account = accounts.find((a) => a.id === accountId);
+    return account?.currencyCode || CurrencyCode.USD;
+  };
+
+  const formatTransactionAmount = (
+    amount: number,
+    transactionTypeId: string,
+    currencyCode: CurrencyCode
+  ): string => {
+    const formattedAmount = formatCurrency(amount, currencyCode, { showSymbol: true });
     return isIncome(transactionTypeId) ? `+${formattedAmount}` : formattedAmount;
   };
 
@@ -96,7 +108,11 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
               color={isIncome(transaction.transactionTypeId) ? 'success.main' : 'text.primary'}
               sx={{ minWidth: 80, textAlign: 'right' }}
             >
-              {formatTransactionAmount(transaction.amount, transaction.transactionTypeId)}
+              {formatTransactionAmount(
+                transaction.amount,
+                transaction.transactionTypeId,
+                getTransactionCurrency(transaction)
+              )}
             </Typography>
             {onEdit && (
               <IconButton

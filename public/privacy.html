@@ -37,7 +37,7 @@
     <p>When you choose to sync your data with cloud storage providers:</p>
     <ul>
         <li><strong>OneDrive:</strong> We access only the specific file you select or create. Your data is stored in your OneDrive account.</li>
-        <li><strong>Google Drive:</strong> We use the <code>drive.file</code> scope, which only allows access to files you explicitly select or that we create. We cannot access any other files in your Google Drive.</li>
+        <li><strong>Google Drive:</strong> We use the <code>drive.file</code> and <code>drive.readonly</code> scopes to enable you to browse, select, and save files in your Google Drive. We can only read the list of files to display in the file picker and can only modify files you explicitly select or that we create. We do not access or modify any other files.</li>
         <li><strong>Local Files:</strong> When using local file storage, files remain entirely on your device.</li>
     </ul>
 
@@ -45,7 +45,8 @@
     <p>The only information we access includes:</p>
     <ul>
         <li>Financial data you enter into the app (transactions, budgets, accounts)</li>
-        <li>Files you explicitly select or create in cloud storage</li>
+        <li>File names and folder structure when browsing your cloud storage (to help you select files)</li>
+        <li>Content of files you explicitly select or create in cloud storage</li>
         <li>Your authentication tokens (stored locally) to access cloud storage services</li>
     </ul>
 
@@ -76,15 +77,16 @@
     <h2>8. Third-Party Services</h2>
     <p>We integrate with:</p>
     <ul>
-        <li><strong>Google Drive API:</strong> Subject to <a href="https://developers.google.com/terms">Google API Terms of Service</a></li>
+        <li><strong>Google Drive API:</strong> Subject to <a href="https://developers.google.com/terms">Google API Terms of Service</a>. The app uses the <code>drive.readonly</code> scope which is a sensitive scope. We only use this permission to display your files in the file picker to help you select or create files.</li>
         <li><strong>Microsoft OneDrive API:</strong> Subject to <a href="https://docs.microsoft.com/en-us/legal/microsoft-apis/terms-of-use">Microsoft API Terms</a></li>
     </ul>
+    <p><strong>Important:</strong> We never read, modify, or delete files other than the specific Money Tree data file you select or create. The <code>drive.readonly</code> scope is only used to show file names in the picker interface.</p>
 
     <h2>9. Changes to Privacy Policy</h2>
     <p>We may update this privacy policy from time to time. Changes will be posted on this page with an updated "Last Updated" date.</p>
 
     <h2>10. Contact</h2>
-    <p>For questions about this privacy policy, please contact: [Your Email Here]</p>
+    <p>For questions about this privacy policy, please contact: money-tree-support@googlegroups.com</p>
 
     <p style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #666;">
         <a href="/">← Back to Money Tree</a>

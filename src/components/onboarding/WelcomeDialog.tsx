@@ -285,8 +285,27 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Typography variant="caption" color="text.secondary">
-            You can change your data storage location later in Settings
+          <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
+            You can disconnect from this file later in Settings. By using Money Tree, you agree to
+            our{' '}
+            <a
+              href="/terms.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: 'inherit', textDecoration: 'underline' }}
+            >
+              Terms of Service
+            </a>{' '}
+            and{' '}
+            <a
+              href="/privacy.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: 'inherit', textDecoration: 'underline' }}
+            >
+              Privacy Policy
+            </a>
+            .
           </Typography>
         </DialogActions>
       </Dialog>

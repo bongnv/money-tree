@@ -134,8 +134,17 @@ describe('WelcomeDialog', () => {
     render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
     expect(
-      screen.getByText(/you can change your data storage location later in settings/i)
+      screen.getByText(/you can disconnect from this file later in settings/i)
     ).toBeInTheDocument();
+    expect(screen.getByText(/by using money tree, you agree to our/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /terms of service/i })).toHaveAttribute(
+      'href',
+      '/terms.html'
+    );
+    expect(screen.getByRole('link', { name: /privacy policy/i })).toHaveAttribute(
+      'href',
+      '/privacy.html'
+    );
   });
 
   describe('OneDrive Integration', () => {

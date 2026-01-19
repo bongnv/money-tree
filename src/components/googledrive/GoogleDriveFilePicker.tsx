@@ -3,7 +3,6 @@ import { People as PeopleIcon } from '@mui/icons-material';
 import {
   GoogleDriveProvider,
   GoogleDriveFileInfo,
-  DriveFile,
 } from '../../services/storage/GoogleDriveProvider';
 import { driveApiConfig } from '../../config/googledrive.config';
 import { CloudFilePicker, CloudItem } from '../common/CloudFilePicker';

@@ -32,13 +32,9 @@ export const googleDriveConfig = {
   clientId: process.env.GOOGLE_DRIVE_CLIENT_ID || '',
 
   // OAuth 2.0 scopes for Google Drive API
-  // drive.file: Access files created by the app or selected via Google Picker
-  // drive.readonly: Required for Google Picker to display file list
-  // This combination is still non-sensitive and doesn't require OAuth verification
-  scopes: [
-    'https://www.googleapis.com/auth/drive.file',
-    'https://www.googleapis.com/auth/drive.readonly',
-  ],
+  // drive.file: Access only files created by the app or explicitly opened by the user
+  // This minimal scope follows the principle of least privilege and is non-sensitive
+  scopes: ['https://www.googleapis.com/auth/drive.file'],
 
   // Discovery docs for Google Drive API
   discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],

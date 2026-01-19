@@ -224,23 +224,35 @@ export class OneDriveProvider implements IStorageProvider {
   async listDriveItems(parentItem?: DriveItem): Promise<DriveItem[]> {
     try {
       const client = await this.getGraphClient();
-      let endpoint: string;
+      let items: DriveItem[] = [];
 
       if (!parentItem) {
-        // Root folder
-        endpoint = '/me/drive/root/children';
+        // Root folder - need to fetch both personal drive and shared items
+        const [rootResponse, sharedResponse] = await Promise.all([
+          client.api('/me/drive/root/children').get(),
+          client.api('/me/drive/sharedWithMe').get(),
+        ]);
+
+        const rootItems = rootResponse.value || [];
+        const sharedItems = sharedResponse.value || [];
+
+        // Combine both lists
+        items = [...rootItems, ...sharedItems];
       } else if (parentItem.remoteItem) {
         // Shared folder
         const driveId = parentItem.remoteItem.parentReference?.driveId;
         const itemId = parentItem.remoteItem.id;
-        endpoint = `/drives/${driveId}/items/${itemId}/children`;
+        const endpoint = `/drives/${driveId}/items/${itemId}/children`;
+        const response = await client.api(endpoint).get();
+        items = response.value || [];
       } else {
         // Regular folder
-        endpoint = `/me/drive/items/${parentItem.id}/children`;
+        const endpoint = `/me/drive/items/${parentItem.id}/children`;
+        const response = await client.api(endpoint).get();
+        items = response.value || [];
       }
 
-      const response = await client.api(endpoint).get();
-      return response.value || [];
+      return items;
     } catch (error: any) {
       throw this.createFriendlyError(error);
     }

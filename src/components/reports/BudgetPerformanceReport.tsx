@@ -40,9 +40,49 @@ import { PeriodSelector } from '../common/PeriodSelector';
 import { CategoryFilter } from '../common/CategoryFilter';
 import { formatCurrency } from '../../utils/currency.utils';
 import { getTodayDate } from '../../utils/date.utils';
+import { hasTransactionTypesInGroup } from '../../utils/report.utils';
 import { CHART_COLORS } from '../../theme';
 import type { CurrencyCode } from '../../types/enums';
+import { Group } from '../../types/enums';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
+
+/**
+ * Build chart lines for budget performance trend based on available income/expense types
+ */
+const buildBudgetTrendLines = (hasIncomeTypes: boolean, hasExpenseTypes: boolean) => {
+  const lines = [];
+  if (hasIncomeTypes) {
+    lines.push(
+      {
+        dataKey: 'Income Target',
+        color: CHART_COLORS.income.target,
+        name: 'Income Target',
+      },
+      {
+        dataKey: 'Income Actual',
+        color: CHART_COLORS.income.actual,
+        name: 'Income Actual',
+        strokeDasharray: '5 5',
+      }
+    );
+  }
+  if (hasExpenseTypes) {
+    lines.push(
+      {
+        dataKey: 'Expense Budgeted',
+        color: CHART_COLORS.expense.budgeted,
+        name: 'Expense Budgeted',
+      },
+      {
+        dataKey: 'Expense Actual',
+        color: CHART_COLORS.expense.actual,
+        name: 'Expense Actual',
+        strokeDasharray: '5 5',
+      }
+    );
+  }
+  return lines;
+};
 
 export const BudgetPerformanceReport: React.FC = () => {
   const navigate = useNavigate();
@@ -325,6 +365,23 @@ export const BudgetPerformanceReport: React.FC = () => {
     }));
   }, [performance.items, selectedCategories]);
 
+  // Determine which transaction types exist in filtered categories
+  const hasIncomeTypes = useMemo(
+    () => hasTransactionTypesInGroup(selectedCategories, transactionTypes, Group.INCOME),
+    [selectedCategories, transactionTypes]
+  );
+
+  const hasExpenseTypes = useMemo(
+    () => hasTransactionTypesInGroup(selectedCategories, transactionTypes, Group.EXPENSE),
+    [selectedCategories, transactionTypes]
+  );
+
+  // Dynamically build chart lines based on what exists
+  const trendChartLines = useMemo(
+    () => buildBudgetTrendLines(hasIncomeTypes, hasExpenseTypes),
+    [hasIncomeTypes, hasExpenseTypes]
+  );
+
   return (
     <Box sx={{ p: 3 }}>
       {/* Header */}
@@ -504,30 +561,7 @@ export const BudgetPerformanceReport: React.FC = () => {
           </Box>
           <LineChart
             data={trendData}
-            lines={[
-              {
-                dataKey: 'Income Target',
-                color: CHART_COLORS.income.target,
-                name: 'Income Target',
-              },
-              {
-                dataKey: 'Income Actual',
-                color: CHART_COLORS.income.actual,
-                name: 'Income Actual',
-                strokeDasharray: '5 5',
-              },
-              {
-                dataKey: 'Expense Budgeted',
-                color: CHART_COLORS.expense.budgeted,
-                name: 'Expense Budgeted',
-              },
-              {
-                dataKey: 'Expense Actual',
-                color: CHART_COLORS.expense.actual,
-                name: 'Expense Actual',
-                strokeDasharray: '5 5',
-              },
-            ]}
+            lines={trendChartLines}
             height={300}
             formatValue={(value: number) => formatCurrency(value, conversionCurrency)}
           />

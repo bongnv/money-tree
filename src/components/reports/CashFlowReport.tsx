@@ -35,10 +35,33 @@ import { PeriodSelector } from '../common/PeriodSelector';
 import { CategoryFilter } from '../common/CategoryFilter';
 import { formatCurrency } from '../../utils/currency.utils';
 import { getTodayDate } from '../../utils/date.utils';
+import { hasTransactionTypesInGroup } from '../../utils/report.utils';
 import { CHART_COLORS } from '../../theme';
 import type { CurrencyCode } from '../../types/enums';
+import { Group } from '../../types/enums';
 import type { CashFlowData } from '../../services/report.service';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
+
+/**
+ * Build chart lines for cash flow trend based on available income/expense types
+ */
+const buildCashFlowTrendLines = (hasIncomeTypes: boolean, hasExpenseTypes: boolean) => {
+  const lines = [];
+  if (hasIncomeTypes) {
+    lines.push({ dataKey: 'Income', color: CHART_COLORS.simple.income, name: 'Income' });
+  }
+  if (hasExpenseTypes) {
+    lines.push({ dataKey: 'Expenses', color: CHART_COLORS.simple.expense, name: 'Expenses' });
+  }
+  if (hasIncomeTypes && hasExpenseTypes) {
+    lines.push({
+      dataKey: 'Net Cash Flow',
+      color: CHART_COLORS.simple.netCashFlow,
+      name: 'Net Cash Flow',
+    });
+  }
+  return lines;
+};
 
 export const CashFlowReport: React.FC = () => {
   const navigate = useNavigate();
@@ -282,6 +305,23 @@ export const CashFlowReport: React.FC = () => {
       groupingLabel: 'Category',
     };
 
+  // Determine which transaction types exist in filtered categories
+  const hasIncomeTypes = useMemo(
+    () => hasTransactionTypesInGroup(selectedCategories, transactionTypes, Group.INCOME),
+    [selectedCategories, transactionTypes]
+  );
+
+  const hasExpenseTypes = useMemo(
+    () => hasTransactionTypesInGroup(selectedCategories, transactionTypes, Group.EXPENSE),
+    [selectedCategories, transactionTypes]
+  );
+
+  // Dynamically build chart lines based on what exists
+  const trendChartLines = useMemo(
+    () => buildCashFlowTrendLines(hasIncomeTypes, hasExpenseTypes),
+    [hasIncomeTypes, hasExpenseTypes]
+  );
+
   return (
     <Box sx={{ p: 3 }}>
       {/* Header */}
@@ -416,15 +456,7 @@ export const CashFlowReport: React.FC = () => {
           </Box>
           <LineChart
             data={chartData}
-            lines={[
-              { dataKey: 'Income', color: CHART_COLORS.simple.income, name: 'Income' },
-              { dataKey: 'Expenses', color: CHART_COLORS.simple.expense, name: 'Expenses' },
-              {
-                dataKey: 'Net Cash Flow',
-                color: CHART_COLORS.simple.netCashFlow,
-                name: 'Net Cash Flow',
-              },
-            ]}
+            lines={trendChartLines}
             height={300}
             formatValue={(value: number) => formatCurrency(value, conversionCurrency)}
           />
@@ -472,88 +504,92 @@ export const CashFlowReport: React.FC = () => {
 
       {/* Detailed Tables */}
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Income Details
-            </Typography>
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>{groupingLabel}</TableCell>
-                    <TableCell align="right">Total</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {incomeDetailData.map((item) => (
-                    <TableRow
-                      key={item.categoryId}
-                      onClick={() => handleCategoryClick(item.categoryId, item.isTransactionType)}
-                      sx={{
-                        cursor: 'pointer',
-                        '&:hover': { backgroundColor: 'action.hover' },
-                      }}
-                    >
-                      <TableCell>{item.categoryName}</TableCell>
-                      <TableCell align="right">
-                        {formatCurrency(item.total, conversionCurrency)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {incomeDetailData.length === 0 && (
+        {hasIncomeTypes && (
+          <Grid item xs={12} md={hasExpenseTypes ? 6 : 12}>
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                Income Details
+              </Typography>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
                     <TableRow>
-                      <TableCell colSpan={2} align="center">
-                        No income transactions
-                      </TableCell>
+                      <TableCell>{groupingLabel}</TableCell>
+                      <TableCell align="right">Total</TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Expense Details
-            </Typography>
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>{groupingLabel}</TableCell>
-                    <TableCell align="right">Total</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {expenseDetailData.map((item) => (
-                    <TableRow
-                      key={item.categoryId}
-                      onClick={() => handleCategoryClick(item.categoryId, item.isTransactionType)}
-                      sx={{
-                        cursor: 'pointer',
-                        '&:hover': { backgroundColor: 'action.hover' },
-                      }}
-                    >
-                      <TableCell>{item.categoryName}</TableCell>
-                      <TableCell align="right">
-                        {formatCurrency(item.total, conversionCurrency)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {expenseDetailData.length === 0 && (
+                  </TableHead>
+                  <TableBody>
+                    {incomeDetailData.map((item) => (
+                      <TableRow
+                        key={item.categoryId}
+                        onClick={() => handleCategoryClick(item.categoryId, item.isTransactionType)}
+                        sx={{
+                          cursor: 'pointer',
+                          '&:hover': { backgroundColor: 'action.hover' },
+                        }}
+                      >
+                        <TableCell>{item.categoryName}</TableCell>
+                        <TableCell align="right">
+                          {formatCurrency(item.total, conversionCurrency)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {incomeDetailData.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={2} align="center">
+                          No income transactions
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
+          </Grid>
+        )}
+        {hasExpenseTypes && (
+          <Grid item xs={12} md={hasIncomeTypes ? 6 : 12}>
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                Expense Details
+              </Typography>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
                     <TableRow>
-                      <TableCell colSpan={2} align="center">
-                        No expense transactions
-                      </TableCell>
+                      <TableCell>{groupingLabel}</TableCell>
+                      <TableCell align="right">Total</TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
-        </Grid>
+                  </TableHead>
+                  <TableBody>
+                    {expenseDetailData.map((item) => (
+                      <TableRow
+                        key={item.categoryId}
+                        onClick={() => handleCategoryClick(item.categoryId, item.isTransactionType)}
+                        sx={{
+                          cursor: 'pointer',
+                          '&:hover': { backgroundColor: 'action.hover' },
+                        }}
+                      >
+                        <TableCell>{item.categoryName}</TableCell>
+                        <TableCell align="right">
+                          {formatCurrency(item.total, conversionCurrency)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {expenseDetailData.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={2} align="center">
+                          No expense transactions
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
+          </Grid>
+        )}
       </Grid>
     </Box>
   );

@@ -1,5 +1,7 @@
 import React from 'react';
 import { Box, Typography, LinearProgress, styled } from '@mui/material';
+import { formatCurrency } from '../../utils/currency.utils';
+import type { CurrencyCode } from '../../types/enums';
 
 const StyledLinearProgress = styled(LinearProgress, {
   shouldForwardProp: (prop) => prop !== 'progressColor',
@@ -22,6 +24,7 @@ export interface BudgetProgressBarProps {
   spent: number;
   budget: number;
   isIncome?: boolean;
+  baseCurrency: CurrencyCode;
 }
 
 export const BudgetProgressBar: React.FC<BudgetProgressBarProps> = ({
@@ -29,6 +32,7 @@ export const BudgetProgressBar: React.FC<BudgetProgressBarProps> = ({
   spent,
   budget,
   isIncome = false,
+  baseCurrency,
 }) => {
   const percentage = budget === 0 ? 0 : (spent / budget) * 100;
 
@@ -47,16 +51,6 @@ export const BudgetProgressBar: React.FC<BudgetProgressBarProps> = ({
     }
   };
 
-  const formatAmount = (amount: number): string => {
-    const formatter = new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
-    return formatter.format(amount);
-  };
-
   return (
     <Box sx={{ mb: 2 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
@@ -64,7 +58,8 @@ export const BudgetProgressBar: React.FC<BudgetProgressBarProps> = ({
           {name}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {formatAmount(spent)} / {formatAmount(budget)} ({percentage.toFixed(0)}%)
+          {formatCurrency(spent, baseCurrency, { showSymbol: true })} /{' '}
+          {formatCurrency(budget, baseCurrency, { showSymbol: true })} ({percentage.toFixed(0)}%)
         </Typography>
       </Box>
       <StyledLinearProgress

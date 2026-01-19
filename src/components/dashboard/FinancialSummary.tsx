@@ -10,18 +10,11 @@ import { useCategoryStore } from '../../stores/useCategoryStore';
 import { useBudgetStore } from '../../stores/useBudgetStore';
 import { useCalculationService, useReportService } from '../../contexts/ServiceProviders';
 import type { PeriodOption } from '../common/PeriodSelector';
+import { formatCurrency } from '../../utils/currency.utils';
 
 export interface FinancialSummaryProps {
   period: PeriodOption;
 }
-
-const formatAmount = (amount: number): string => {
-  const formatter = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  });
-  return formatter.format(amount);
-};
 
 export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) => {
   const navigate = useNavigate();
@@ -144,14 +137,14 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
         <Grid item xs={12} sm={6} md={3}>
           <FinancialSummaryCard
             title="Net Worth"
-            value={formatAmount(netWorth)}
+            value={formatCurrency(netWorth, baseCurrency)}
             onClick={() => navigate('/reports/balance-sheet')}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <FinancialSummaryCard
             title="Cash Flow"
-            value={formatAmount(cashFlow)}
+            value={formatCurrency(cashFlow, baseCurrency)}
             color={cashFlow >= 0 ? 'success' : 'error'}
             onClick={() => navigate('/reports/cash-flow')}
           />

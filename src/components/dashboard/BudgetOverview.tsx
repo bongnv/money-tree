@@ -133,6 +133,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ period }) => {
           spent={budgetItem.spent}
           budget={budgetItem.budget}
           isIncome={budgetItem.isIncome}
+          baseCurrency={baseCurrency}
         />
       ))}
       <Box sx={{ mt: 2, textAlign: 'center' }}>

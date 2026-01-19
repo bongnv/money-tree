@@ -319,8 +319,8 @@ export const BudgetsPage: React.FC = () => {
                                 }}
                               >
                                 <Box component="span">
-                                  {formatCurrency(actualAmount, CurrencyCode.USD)} of{' '}
-                                  {formatCurrency(proratedBudget, CurrencyCode.USD)}
+                                  {formatCurrency(actualAmount, baseCurrency)} of{' '}
+                                  {formatCurrency(proratedBudget, baseCurrency)}
                                 </Box>
                                 <Box component="span" sx={{ color: 'text.primary' }}>
                                   ({percentage.toFixed(0)}%)
@@ -332,7 +332,7 @@ export const BudgetsPage: React.FC = () => {
                                   •
                                 </Box>
                                 <Box component="span">
-                                  {formatCurrency(budget.amount, CurrencyCode.USD)} {budget.period}
+                                  {formatCurrency(budget.amount, baseCurrency)} {budget.period}
                                 </Box>
                                 <Box
                                   component="span"
@@ -399,8 +399,8 @@ export const BudgetsPage: React.FC = () => {
                           fontWeight="bold"
                           sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
                         >
-                          {formatCurrency(totalActual, CurrencyCode.USD)} of{' '}
-                          {formatCurrency(totalBudget, CurrencyCode.USD)} (
+                          {formatCurrency(totalActual, baseCurrency)} of{' '}
+                          {formatCurrency(totalBudget, baseCurrency)} (
                           {totalPercentage.toFixed(0)}%)
                         </Typography>
                       </Box>

@@ -4,7 +4,9 @@ import { Link as RouterLink } from 'react-router-dom';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useTransactionStore } from '../../stores/useTransactionStore';
 import { useCategoryStore } from '../../stores/useCategoryStore';
+import { useAppStore } from '../../stores/useAppStore';
 import { formatDate } from '../../utils/date.utils';
+import { formatCurrency } from '../../utils/currency.utils';
 import { Group } from '../../types/enums';
 
 export interface RecentTransactionsListProps {
@@ -20,6 +22,7 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
 }) => {
   const transactions = useTransactionStore((state) => state.transactions);
   const transactionTypes = useCategoryStore((state) => state.transactionTypes);
+  const baseCurrency = useAppStore((state) => state.baseCurrency);
 
   // Get recent transactions sorted by date (newest first)
   const recentTransactions = [...transactions]
@@ -50,14 +53,8 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
     return type.group === Group.INCOME;
   };
 
-  const formatAmount = (amount: number, transactionTypeId: string): string => {
-    const formatter = new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
-    const formattedAmount = formatter.format(amount);
+  const formatTransactionAmount = (amount: number, transactionTypeId: string): string => {
+    const formattedAmount = formatCurrency(amount, baseCurrency, { showSymbol: true });
     return isIncome(transactionTypeId) ? `+${formattedAmount}` : formattedAmount;
   };
 
@@ -99,7 +96,7 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
               color={isIncome(transaction.transactionTypeId) ? 'success.main' : 'text.primary'}
               sx={{ minWidth: 80, textAlign: 'right' }}
             >
-              {formatAmount(transaction.amount, transaction.transactionTypeId)}
+              {formatTransactionAmount(transaction.amount, transaction.transactionTypeId)}
             </Typography>
             {onEdit && (
               <IconButton

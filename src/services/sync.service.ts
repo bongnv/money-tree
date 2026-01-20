@@ -242,7 +242,7 @@ export class SyncService {
       await this.storageService.saveDataFile(dataToSave);
 
       // Update base version after successful save
-      state.setFileMetadata(snapshotTime, dataToSave);
+      state.setFileMetadata(dataToSave);
 
       // Always update lastSaved timestamp since data was actually saved
       state.setLastSaved(snapshotTime);

@@ -544,7 +544,7 @@ export const BudgetPerformanceReport: React.FC = () => {
               size="small"
               value={viewMode}
               exclusive
-              onChange={(event, newMode) => {
+              onChange={(_event, newMode) => {
                 if (newMode !== null) {
                   setViewMode(newMode);
                 }

@@ -23,7 +23,7 @@ import { getBudgetPresets } from './periodPresets';
 import type { Budget } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
 import { useCalculationService } from '../../contexts/ServiceProviders';
-import { Group, CurrencyCode } from '../../types/enums';
+import { Group } from '../../types/enums';
 
 export const BudgetsPage: React.FC = () => {
   const { budgets, addBudget, updateBudget, deleteBudget } = useBudgetStore();

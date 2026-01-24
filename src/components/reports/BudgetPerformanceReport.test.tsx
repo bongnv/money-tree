@@ -4,12 +4,12 @@ import { BrowserRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { BudgetPerformanceReport } from './BudgetPerformanceReport';
-import { useBudgetStore } from '../../stores/useBudgetStore';
-import { useTransactionStore } from '../../stores/useTransactionStore';
-import { useCategoryStore } from '../../stores/useCategoryStore';
-import { useAccountStore } from '../../stores/useAccountStore';
-import { useAppStore } from '../../stores/useAppStore';
-import * as exchangeRateService from '../../services/exchangeRate.service';
+import { useBudgets } from '../../hooks/queries/useBudgets';
+import { useTransactions } from '../../hooks/queries/useTransactions';
+import { useCategories, useTransactionTypes } from '../../hooks/queries';
+import { useAccounts } from '../../hooks/queries/useAccounts';
+import { useAppContext } from '../../contexts/AppContext';
+import { AppProvider } from '../../contexts/AppContext';
 import { Group, AccountType } from '../../types/enums';
 import type { Budget, Transaction, TransactionType, Category, Account } from '../../types/models';
 
@@ -23,15 +23,19 @@ jest.mock('../../contexts/ServiceProviders', () => ({
   useReportService: () => mockReportService,
 }));
 
-// Mock stores
-jest.mock('../../stores/useBudgetStore');
-jest.mock('../../stores/useTransactionStore');
-jest.mock('../../stores/useCategoryStore');
-jest.mock('../../stores/useAccountStore');
-jest.mock('../../stores/useAppStore');
-
-// Mock services
-jest.mock('../../services/exchangeRate.service');
+// Mock hooks
+jest.mock('../../hooks/queries/useBudgets');
+jest.mock('../../hooks/queries/useTransactions');
+jest.mock('../../hooks/queries', () => ({
+  useCategories: jest.fn(),
+  useTransactionTypes: jest.fn(),
+  useBaseCurrency: jest.fn(() => 'USD'),
+}));
+jest.mock('../../hooks/queries/useAccounts');
+jest.mock('../../contexts/AppContext', () => ({
+  ...jest.requireActual('../../contexts/AppContext'),
+  useAppContext: jest.fn(),
+}));
 
 // Mock chart components
 jest.mock('../common/charts/LineChart', () => ({
@@ -250,32 +254,17 @@ describe('BudgetPerformanceReport', () => {
     { date: '2026-01-08', budgeted: 700, actual: 350, budgetedIncome: 0, actualIncome: 0 },
   ];
 
-  const mockGetRateForMonth = jest.fn().mockResolvedValue(1);
-
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Mock the service function
-    jest.spyOn(exchangeRateService, 'getRateForMonth').mockImplementation(mockGetRateForMonth);
-
-    (useBudgetStore as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({ budgets: mockBudgets })
-    );
-    (useTransactionStore as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({ transactions: mockTransactions })
-    );
-    (useCategoryStore as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({
-        transactionTypes: mockTransactionTypes,
-        categories: mockCategories,
-      })
-    );
-    (useAccountStore as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({ accounts: mockAccounts })
-    );
-    (useAppStore as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({ baseCurrency: 'USD' })
-    );
+    (useBudgets as jest.Mock).mockReturnValue(mockBudgets);
+    (useTransactions as jest.Mock).mockReturnValue(mockTransactions);
+    (useCategories as jest.Mock).mockReturnValue(mockCategories);
+    (useTransactionTypes as jest.Mock).mockReturnValue(mockTransactionTypes);
+    (useAccounts as jest.Mock).mockReturnValue(mockAccounts);
+    (useAppContext as jest.Mock).mockReturnValue({
+      baseCurrency: 'USD',
+    });
 
     (mockReportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue(
       mockPerformanceData
@@ -285,9 +274,11 @@ describe('BudgetPerformanceReport', () => {
 
   const renderComponent = () => {
     return render(
-      <BrowserRouter>
-        <BudgetPerformanceReport />
-      </BrowserRouter>
+      <AppProvider>
+        <BrowserRouter>
+          <BudgetPerformanceReport />
+        </BrowserRouter>
+      </AppProvider>
     );
   };
 
@@ -596,9 +587,7 @@ describe('BudgetPerformanceReport', () => {
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
 
-      (useBudgetStore as unknown as jest.Mock).mockImplementation((selector) =>
-        selector({ budgets: [...mockBudgets, incomeBudget] })
-      );
+      (useBudgets as jest.Mock).mockReturnValue([...mockBudgets, incomeBudget]);
 
       (mockReportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue({
         ...mockPerformanceData,
@@ -690,9 +679,7 @@ describe('BudgetPerformanceReport', () => {
 
   describe('Empty State', () => {
     it('should show empty state when no budgets exist', async () => {
-      (useBudgetStore as unknown as jest.Mock).mockImplementation((selector) =>
-        selector({ budgets: [] })
-      );
+      (useBudgets as jest.Mock).mockReturnValue([]);
 
       (mockReportService.calculateBudgetPerformance as jest.Mock).mockResolvedValue({
         items: [],
@@ -742,14 +729,14 @@ describe('BudgetPerformanceReport', () => {
         },
       ];
 
-      (useBudgetStore as unknown as jest.Mock).mockImplementation((selector) =>
-        selector({ budgets: newBudgets })
-      );
+      (useBudgets as jest.Mock).mockReturnValue(newBudgets);
 
       rerender(
-        <BrowserRouter>
-          <BudgetPerformanceReport />
-        </BrowserRouter>
+        <AppProvider>
+          <BrowserRouter>
+            <BudgetPerformanceReport />
+          </BrowserRouter>
+        </AppProvider>
       );
 
       await waitFor(() => {
@@ -773,14 +760,14 @@ describe('BudgetPerformanceReport', () => {
         },
       ];
 
-      (useTransactionStore as unknown as jest.Mock).mockImplementation((selector) =>
-        selector({ transactions: newTransactions })
-      );
+      (useTransactions as jest.Mock).mockReturnValue(newTransactions);
 
       rerender(
-        <BrowserRouter>
-          <BudgetPerformanceReport />
-        </BrowserRouter>
+        <AppProvider>
+          <BrowserRouter>
+            <BudgetPerformanceReport />
+          </BrowserRouter>
+        </AppProvider>
       );
 
       await waitFor(() => {
@@ -818,13 +805,9 @@ describe('BudgetPerformanceReport', () => {
         },
       ];
 
-      (useAccountStore as unknown as jest.Mock).mockImplementation((selector) =>
-        selector({ accounts: multiCurrencyAccounts })
-      );
+      (useAccounts as jest.Mock).mockReturnValue(multiCurrencyAccounts);
 
-      (useTransactionStore as unknown as jest.Mock).mockImplementation((selector) =>
-        selector({ transactions: multiCurrencyTransactions })
-      );
+      (useTransactions as jest.Mock).mockReturnValue(multiCurrencyTransactions);
 
       renderComponent();
 

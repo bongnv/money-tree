@@ -24,7 +24,7 @@ import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import { AssetGroup } from '../../services/report.service';
 import { formatCurrency } from '../../utils/currency.utils';
 import { LineChart } from '../common/charts/LineChart';
-import { useAssetStore } from '../../stores/useAssetStore';
+import { useAssets } from '../../hooks/queries/useAssets';
 import { getCompleteValueHistory, calculateAssetValueGrowth } from '../../utils/asset.utils';
 import type { CurrencyCode } from '../../types/enums';
 
@@ -46,7 +46,7 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
   const navigate = useNavigate();
   const [expandedAssetId, setExpandedAssetId] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>('1y');
-  const manualAssets = useAssetStore((state) => state.manualAssets);
+  const manualAssets = useAssets();
 
   const total = groups.reduce((sum, group) => sum + group.total, 0);
 
@@ -68,7 +68,7 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
   };
 
   const getFilteredChartData = (assetId: string) => {
-    const asset = manualAssets.find((a) => a.id === assetId);
+    const asset = manualAssets?.find((a) => a.id === assetId);
     if (!asset) return [];
 
     const completeHistory = getCompleteValueHistory(asset);
@@ -112,7 +112,7 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
   };
 
   const getGrowthInfo = (assetId: string) => {
-    const asset = manualAssets.find((a) => a.id === assetId);
+    const asset = manualAssets?.find((a) => a.id === assetId);
     if (!asset) return null;
 
     const completeHistory = getCompleteValueHistory(asset);
@@ -129,7 +129,7 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
     }
 
     // Check if it's an account (not a manual asset) by checking if it's in the manualAssets
-    const isManualAsset = manualAssets.some((a) => a.id === accountId);
+    const isManualAsset = manualAssets?.some((a) => a.id === accountId);
     if (!isManualAsset) {
       // It's a bank account, navigate to transactions with filter
       navigate('/transactions', {

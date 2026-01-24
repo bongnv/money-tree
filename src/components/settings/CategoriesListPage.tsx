@@ -4,13 +4,15 @@ import { Add as AddIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { CategoryList } from '../categories/CategoryList';
 import { CategoryDialog } from '../categories/CategoryDialog';
-import { useCategoryStore } from '../../stores/useCategoryStore';
+import { useCategories, useTransactionTypes } from '../../hooks/queries';
+import { useCategoryMutations } from '../../hooks/mutations/useCategoryMutations';
 import type { Category } from '../../types/models';
 
 export const CategoriesListPage: React.FC = () => {
   const navigate = useNavigate();
-  const { categories, transactionTypes, addCategory, updateCategory, deleteCategory } =
-    useCategoryStore();
+  const categories = useCategories();
+  const transactionTypes = useTransactionTypes();
+  const { addCategory, updateCategory, deleteCategory } = useCategoryMutations();
 
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | undefined>();
@@ -30,9 +32,11 @@ export const CategoriesListPage: React.FC = () => {
     setSelectedCategory(undefined);
   };
 
-  const handleSubmitCategory = (categoryData: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSubmitCategory = async (
+    categoryData: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>
+  ) => {
     if (selectedCategory) {
-      updateCategory(selectedCategory.id, {
+      await updateCategory(selectedCategory.id, {
         ...categoryData,
         id: selectedCategory.id,
         createdAt: selectedCategory.createdAt,
@@ -40,7 +44,7 @@ export const CategoriesListPage: React.FC = () => {
       });
     } else {
       const now = new Date().toISOString();
-      addCategory({
+      await addCategory({
         ...categoryData,
         id: crypto.randomUUID(),
         createdAt: now,
@@ -50,13 +54,13 @@ export const CategoriesListPage: React.FC = () => {
     handleCloseCategoryDialog();
   };
 
-  const handleDeleteCategory = (category: Category) => {
+  const handleDeleteCategory = async (category: Category) => {
     if (
       window.confirm(
         `Are you sure you want to delete the category "${category.name}"? This action cannot be undone.`
       )
     ) {
-      deleteCategory(category.id);
+      await deleteCategory(category.id);
     }
   };
 
@@ -83,8 +87,8 @@ export const CategoriesListPage: React.FC = () => {
       </Box>
 
       <CategoryList
-        categories={categories}
-        transactionTypes={transactionTypes}
+        categories={categories || []}
+        transactionTypes={transactionTypes || []}
         onEdit={handleEditCategory}
         onDelete={handleDeleteCategory}
         onClick={handleCategoryClick}

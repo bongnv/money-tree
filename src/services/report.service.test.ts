@@ -3,6 +3,11 @@ import { CalculationService } from './calculation.service';
 import type { Account, ManualAsset, Transaction, TransactionType, Category } from '../types/models';
 import { AccountType, AssetType, Group, CurrencyCode } from '../types/enums';
 
+// Mock exchange rate utils
+jest.mock('../utils/exchangeRate.utils', () => ({
+  getRateForMonth: jest.fn().mockResolvedValue(1),
+}));
+
 const calculationService = new CalculationService();
 const reportService = new ReportService(calculationService);
 
@@ -860,7 +865,7 @@ describe('ReportService', () => {
     });
 
     it('should convert budget currency when base currency provided', async () => {
-      const { useExchangeRateStore } = await import('../stores/useExchangeRateStore');
+      const { getRateForMonth } = require('../utils/exchangeRate.utils');
 
       const eurBudgets = [
         {
@@ -871,23 +876,8 @@ describe('ReportService', () => {
         },
       ];
 
-      // Mock exchange rate store
-      useExchangeRateStore.setState({
-        rates: [
-          {
-            id: 'rate1',
-            month: '2024-01',
-            fromCurrency: 'EUR',
-            toCurrency: 'USD',
-            rate: 1.1,
-            createdAt: '2024-01-01T00:00:00.000Z',
-          },
-        ],
-        addRate: jest.fn(),
-        updateRate: jest.fn(),
-        deleteRate: jest.fn(),
-        setRates: jest.fn(),
-      });
+      // Mock exchange rate
+      getRateForMonth.mockResolvedValue(1.1);
 
       const result = await reportService.calculateBudgetPerformance(
         eurBudgets,
@@ -904,7 +894,7 @@ describe('ReportService', () => {
     });
 
     it('should convert transaction currency when base currency provided', async () => {
-      const { useExchangeRateStore } = await import('../stores/useExchangeRateStore');
+      const { getRateForMonth } = require('../utils/exchangeRate.utils');
 
       const eurAccounts = [
         {
@@ -913,23 +903,8 @@ describe('ReportService', () => {
         },
       ];
 
-      // Mock exchange rate store
-      useExchangeRateStore.setState({
-        rates: [
-          {
-            id: 'rate1',
-            month: '2024-01',
-            fromCurrency: 'EUR',
-            toCurrency: 'USD',
-            rate: 1.1,
-            createdAt: '2024-01-01T00:00:00.000Z',
-          },
-        ],
-        addRate: jest.fn(),
-        updateRate: jest.fn(),
-        deleteRate: jest.fn(),
-        setRates: jest.fn(),
-      });
+      // Mock exchange rate
+      getRateForMonth.mockResolvedValue(1.1);
 
       const result = await reportService.calculateBudgetPerformance(
         mockBudgets,

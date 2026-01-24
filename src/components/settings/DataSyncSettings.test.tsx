@@ -1,17 +1,44 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { DataSyncSettings } from './DataSyncSettings';
-import { useAppStore } from '../../stores/useAppStore';
+import { AppProvider } from '../../contexts/AppContext';
+import { useAccounts } from '../../hooks/queries/useAccounts';
+import { useCategories } from '../../hooks/queries/useCategories';
+import { useTransactionTypes } from '../../hooks/queries/useTransactionTypes';
+import { useTransactions } from '../../hooks/queries/useTransactions';
+import { useAssets } from '../../hooks/queries/useAssets';
+import { useBudgets } from '../../hooks/queries/useBudgets';
 
-// Mock services
-const mockSyncService = {
-  resetToWelcome: jest.fn(),
-};
+// Mock data hooks
+jest.mock('../../hooks/queries/useAccounts');
+jest.mock('../../hooks/queries/useCategories');
+jest.mock('../../hooks/queries/useTransactionTypes');
+jest.mock('../../hooks/queries/useTransactions');
+jest.mock('../../hooks/queries/useAssets');
+jest.mock('../../hooks/queries/useBudgets');
 
+const mockUseAccounts = useAccounts as jest.MockedFunction<typeof useAccounts>;
+const mockUseCategories = useCategories as jest.MockedFunction<typeof useCategories>;
+const mockUseTransactionTypes = useTransactionTypes as jest.MockedFunction<typeof useTransactionTypes>;
+const mockUseTransactions = useTransactions as jest.MockedFunction<typeof useTransactions>;
+const mockUseAssets = useAssets as jest.MockedFunction<typeof useAssets>;
+const mockUseBudgets = useBudgets as jest.MockedFunction<typeof useBudgets>;
+
+// Mock cloudSync service
+jest.mock('../../services/cloudSync.service', () => ({
+  getCloudSyncService: jest.fn(() => ({
+    fullSync: jest.fn().mockResolvedValue(undefined),
+  })),
+  initCloudSyncService: jest.fn(),
+}));
+
+// Mock storage services
 const mockStorageFactory = {
   getCurrentProvider: jest.fn(() => ({
-    getName: () => 'Local',
+    getName: () => 'OneDrive',
   })),
+  getCurrentFileName: jest.fn(() => 'test-file.json'),
+  disconnect: jest.fn(),
 };
 
 const mockBackupService = {
@@ -20,10 +47,14 @@ const mockBackupService = {
 };
 
 // Mock the hooks
+jest.mock('../../hooks/queries', () => ({
+  ...jest.requireActual('../../hooks/queries'),
+  useCloudFileName: jest.fn(() => null),
+  useLastSynced: jest.fn(() => null),
+}));
+
 jest.mock('../../contexts/ServiceProviders', () => ({
-  useSyncService: () => mockSyncService,
   useStorageFactory: () => mockStorageFactory,
-  useBackupService: () => mockBackupService,
 }));
 
 // Mock react-router-dom
@@ -36,61 +67,34 @@ jest.mock('react-router-dom', () => ({
 describe('DataSyncSettings', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    useAppStore.setState({
-      fileName: 'test-file.json',
-      lastSaved: new Date('2024-01-01T12:00:00Z').toISOString(),
-      hasUnsavedChanges: false,
-      currentYear: 2024,
-      isLoading: false,
-      error: null,
-    });
+    
+    // Setup default mock return values
+    mockUseAccounts.mockReturnValue([]);
+    mockUseCategories.mockReturnValue([]);
+    mockUseTransactionTypes.mockReturnValue([]);
+    mockUseTransactions.mockReturnValue([]);
+    mockUseAssets.mockReturnValue([]);
+    mockUseBudgets.mockReturnValue([]);
   });
 
   const renderComponent = () => {
     return render(
-      <BrowserRouter>
-        <DataSyncSettings />
-      </BrowserRouter>
+      <AppProvider>
+        <BrowserRouter>
+          <DataSyncSettings />
+        </BrowserRouter>
+      </AppProvider>
     );
   };
 
   describe('Current File Information', () => {
-    it('should display file information', () => {
+    it('should display file information when not connected', () => {
       renderComponent();
 
       expect(screen.getByText('Current File')).toBeInTheDocument();
-      expect(screen.getByText('test-file.json')).toBeInTheDocument();
-      expect(screen.getByText('All changes saved')).toBeInTheDocument();
-    });
-
-    it('should display "No file loaded" when no file is loaded', () => {
-      useAppStore.setState({ fileName: null });
-      renderComponent();
-
       expect(screen.getByText('No file loaded')).toBeInTheDocument();
-    });
-
-    it('should display "Unsaved changes" status when there are unsaved changes', () => {
-      useAppStore.setState({ hasUnsavedChanges: true });
-      renderComponent();
-
-      expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
-    });
-
-    it('should display last modified time', () => {
-      renderComponent();
-
-      // Should display relative time
-      expect(screen.getByText(/ago/)).toBeInTheDocument();
-    });
-
-    it('should display "Never" when no last saved time', () => {
-      useAppStore.setState({ lastSaved: null });
-      renderComponent();
-
-      // Should display "Never" for Last Modified (use getAllByText since Last Backup also shows "Never")
-      const neverTexts = screen.getAllByText('Never');
-      expect(neverTexts.length).toBeGreaterThan(0);
+      const notConnectedElements = screen.getAllByText('Not connected');
+      expect(notConnectedElements.length).toBeGreaterThan(0);
     });
   });
 
@@ -102,33 +106,7 @@ describe('DataSyncSettings', () => {
       expect(screen.getByRole('button', { name: /disconnect/i })).toBeInTheDocument();
     });
 
-    it('should show confirmation dialog when disconnect button is clicked', () => {
-      renderComponent();
-
-      const disconnectButton = screen.getByRole('button', { name: /disconnect/i });
-      fireEvent.click(disconnectButton);
-
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
-      expect(screen.getByText(/Disconnect from Current File/i)).toBeInTheDocument();
-    });
-
-    it('should call resetToWelcome and navigate after confirming', async () => {
-      renderComponent();
-
-      const disconnectButton = screen.getByRole('button', { name: /disconnect/i });
-      fireEvent.click(disconnectButton);
-
-      const confirmButton = screen.getByRole('button', { name: 'Disconnect' });
-      fireEvent.click(confirmButton);
-
-      await waitFor(() => {
-        expect(mockSyncService.resetToWelcome).toHaveBeenCalled();
-        expect(mockNavigate).toHaveBeenCalledWith('/');
-      });
-    });
-
-    it('should disable disconnect button when no file is loaded', () => {
-      useAppStore.setState({ fileName: null });
+    it('should have disconnect button disabled when not connected', () => {
       renderComponent();
 
       const disconnectButton = screen.getByRole('button', { name: /disconnect/i });

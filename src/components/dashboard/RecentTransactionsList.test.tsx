@@ -2,17 +2,15 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { RecentTransactionsList } from './RecentTransactionsList';
-import { useTransactionStore } from '../../stores/useTransactionStore';
-import { useCategoryStore } from '../../stores/useCategoryStore';
+import { useTransactions } from '../../hooks/queries/useTransactions';
+import { useTransactionTypes } from '../../hooks/queries/useTransactionTypes';
 import { Group } from '../../types/enums';
 
-jest.mock('../../stores/useTransactionStore');
-jest.mock('../../stores/useCategoryStore');
+jest.mock('../../hooks/queries/useTransactions');
+jest.mock('../../hooks/queries/useTransactionTypes');
 
-const mockUseTransactionStore = useTransactionStore as jest.MockedFunction<
-  typeof useTransactionStore
->;
-const mockUseCategoryStore = useCategoryStore as jest.MockedFunction<typeof useCategoryStore>;
+const mockUseTransactions = useTransactions as jest.MockedFunction<typeof useTransactions>;
+const mockUseTransactionTypes = useTransactionTypes as jest.MockedFunction<typeof useTransactionTypes>;
 
 describe('RecentTransactionsList', () => {
   const mockTransactions = [
@@ -85,16 +83,8 @@ describe('RecentTransactionsList', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockUseTransactionStore.mockImplementation((selector: any) =>
-      selector({ transactions: mockTransactions })
-    );
-
-    mockUseCategoryStore.mockImplementation((selector: any) =>
-      selector({
-        transactionTypes: mockTransactionTypes,
-        categories: mockCategories,
-      })
-    );
+    mockUseTransactions.mockReturnValue(mockTransactions);
+    mockUseTransactionTypes.mockReturnValue(mockTransactionTypes);
   });
 
   it('renders recent transactions sorted by date', () => {
@@ -146,9 +136,7 @@ describe('RecentTransactionsList', () => {
       updatedAt: `2026-01-${String(i + 1).padStart(2, '0')}T00:00:00.000Z`,
     }));
 
-    mockUseTransactionStore.mockImplementation((selector: any) =>
-      selector({ transactions: manyTransactions })
-    );
+    mockUseTransactions.mockReturnValue(manyTransactions);
 
     render(
       <BrowserRouter>
@@ -161,7 +149,7 @@ describe('RecentTransactionsList', () => {
   });
 
   it('shows empty state when no transactions', () => {
-    mockUseTransactionStore.mockImplementation((selector: any) => selector({ transactions: [] }));
+    mockUseTransactions.mockReturnValue([]);
 
     render(
       <BrowserRouter>

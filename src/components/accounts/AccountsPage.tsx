@@ -11,12 +11,14 @@ import {
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import type { Account } from '../../types/models';
-import { useAccountStore } from '../../stores/useAccountStore';
+import { useAccounts } from '../../hooks/queries/useAccounts';
+import { useAccountMutations } from '../../hooks/mutations/useAccountMutations';
 import { AccountList } from './AccountList';
 import { AccountDialog } from './AccountDialog';
 
 export const AccountsPage: React.FC = () => {
-  const { accounts, addAccount, updateAccount, deleteAccount } = useAccountStore();
+  const accounts = useAccounts();
+  const { addAccount, updateAccount, deleteAccount } = useAccountMutations();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | undefined>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -42,9 +44,9 @@ export const AccountsPage: React.FC = () => {
     setDeleteDialogOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (accountToDelete) {
-      deleteAccount(accountToDelete.id);
+      await deleteAccount(accountToDelete.id);
     }
     setDeleteDialogOpen(false);
     setAccountToDelete(undefined);
@@ -55,9 +57,9 @@ export const AccountsPage: React.FC = () => {
     setAccountToDelete(undefined);
   };
 
-  const handleSubmit = (accountData: Omit<Account, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSubmit = async (accountData: Omit<Account, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (selectedAccount) {
-      updateAccount(selectedAccount.id, accountData);
+      await updateAccount(selectedAccount.id, accountData);
     } else {
       const newAccount: Account = {
         ...accountData,
@@ -65,7 +67,7 @@ export const AccountsPage: React.FC = () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      addAccount(newAccount);
+      await addAccount(newAccount);
     }
   };
 
@@ -80,7 +82,7 @@ export const AccountsPage: React.FC = () => {
         </Button>
       </Box>
 
-      <AccountList accounts={accounts} onEdit={handleEdit} onDelete={handleDelete} />
+      <AccountList accounts={accounts || []} onEdit={handleEdit} onDelete={handleDelete} />
 
       <AccountDialog
         open={dialogOpen}

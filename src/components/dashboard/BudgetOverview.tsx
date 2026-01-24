@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, Button, Paper } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { BudgetProgressBar } from './BudgetProgressBar';
-import { useBudgetStore } from '../../stores/useBudgetStore';
-import { useTransactionStore } from '../../stores/useTransactionStore';
-import { useCategoryStore } from '../../stores/useCategoryStore';
-import { useAccountStore } from '../../stores/useAccountStore';
-import { useAppStore } from '../../stores/useAppStore';
+import { useBudgets } from '../../hooks/queries/useBudgets';
+import { useTransactions } from '../../hooks/queries/useTransactions';
+import { useTransactionTypes } from '../../hooks/queries/useTransactionTypes';
+import { useAccounts } from '../../hooks/queries/useAccounts';
+import { useBaseCurrency } from '../../hooks/queries';
 import { useCalculationService } from '../../contexts/ServiceProviders';
 import type { PeriodOption } from '../common/PeriodSelector';
 import { Group } from '../../types/enums';
@@ -25,17 +25,19 @@ interface BudgetWithUsage {
 }
 
 export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ period }) => {
-  const budgets = useBudgetStore((state) => state.budgets);
-  const transactions = useTransactionStore((state) => state.transactions);
-  const transactionTypes = useCategoryStore((state) => state.transactionTypes);
-  const accounts = useAccountStore((state) => state.accounts);
-  const baseCurrency = useAppStore((state) => state.baseCurrency);
+  const budgets = useBudgets();
+  const transactions = useTransactions();
+  const transactionTypes = useTransactionTypes();
+  const accounts = useAccounts();
+  const baseCurrency = useBaseCurrency();
   const calculationService = useCalculationService();
 
   const [budgetsWithUsage, setBudgetsWithUsage] = useState<BudgetWithUsage[]>([]);
 
   // Calculate budget usage for the selected period
   useEffect(() => {
+    if (!budgets || !transactions || !transactionTypes || !accounts) return;
+
     const calculateBudgets = async () => {
       const results: BudgetWithUsage[] = [];
 
@@ -101,9 +103,16 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ period }) => {
     };
 
     calculateBudgets();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period.startDate, period.endDate, baseCurrency]);
-  // budgets, transactions, transactionTypes, accounts, and getRateForMonth are stable from Zustand or captured in closure
+  }, [
+    budgets,
+    transactions,
+    transactionTypes,
+    accounts,
+    period.startDate,
+    period.endDate,
+    baseCurrency,
+    calculationService,
+  ]);
 
   if (budgetsWithUsage.length === 0) {
     return (

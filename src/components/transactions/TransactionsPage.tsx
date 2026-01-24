@@ -12,10 +12,11 @@ import {
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import type { Transaction } from '../../types/models';
-import { useTransactionStore } from '../../stores/useTransactionStore';
-import { useAccountStore } from '../../stores/useAccountStore';
-import { useCategoryStore } from '../../stores/useCategoryStore';
-import { useAssetStore } from '../../stores/useAssetStore';
+import { useTransactions } from '../../hooks/queries/useTransactions';
+import { useTransactionMutations } from '../../hooks/mutations/useTransactionMutations';
+import { useAccounts } from '../../hooks/queries/useAccounts';
+import { useCategories, useTransactionTypes } from '../../hooks/queries';
+import { useAssets } from '../../hooks/queries/useAssets';
 import { TransactionDialog } from './TransactionDialog';
 import { TransactionList } from './TransactionList';
 import { TransactionFilters, TransactionFiltersState } from './TransactionFilters';
@@ -25,11 +26,12 @@ import { getTodayDate } from '../../utils/date.utils';
 export const TransactionsPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  const { transactions, addTransaction, updateTransaction, deleteTransaction } =
-    useTransactionStore();
-  const { accounts } = useAccountStore();
-  const { categories, transactionTypes } = useCategoryStore();
-  const { manualAssets } = useAssetStore();
+  const transactions = useTransactions();
+  const { addTransaction, updateTransaction, deleteTransaction } = useTransactionMutations();
+  const accounts = useAccounts();
+  const categories = useCategories();
+  const transactionTypes = useTransactionTypes();
+  const manualAssets = useAssets();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | undefined>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -76,6 +78,7 @@ export const TransactionsPage: React.FC = () => {
 
   // Filter transactions based on filter state
   const filteredTransactions = useMemo(() => {
+    if (!transactions || !transactionTypes) return [];
     return transactions.filter((transaction) => {
       // Date range filter
       if (filters.dateFrom && transaction.date < filters.dateFrom) {
@@ -156,9 +159,9 @@ export const TransactionsPage: React.FC = () => {
     setDeleteDialogOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (transactionToDelete) {
-      deleteTransaction(transactionToDelete.id);
+      await deleteTransaction(transactionToDelete.id);
     }
     setDeleteDialogOpen(false);
     setTransactionToDelete(undefined);
@@ -169,9 +172,11 @@ export const TransactionsPage: React.FC = () => {
     setTransactionToDelete(undefined);
   };
 
-  const handleSubmit = (transactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSubmit = async (
+    transactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>
+  ) => {
     if (selectedTransaction) {
-      updateTransaction(selectedTransaction.id, transactionData);
+      await updateTransaction(selectedTransaction.id, transactionData);
     } else {
       const newTransaction: Transaction = {
         ...transactionData,
@@ -179,7 +184,7 @@ export const TransactionsPage: React.FC = () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      addTransaction(newTransaction);
+      await addTransaction(newTransaction);
     }
   };
 
@@ -200,20 +205,20 @@ export const TransactionsPage: React.FC = () => {
       </Box>
 
       <TransactionFilters
-        accounts={accounts}
-        categories={categories}
-        transactionTypes={transactionTypes}
+        accounts={accounts || []}
+        categories={categories || []}
+        transactionTypes={transactionTypes || []}
         filters={filters}
         onFiltersChange={setFilters}
       />
 
       <Box sx={{ display: { xs: 'none', md: 'block' } }}>
         <QuickEntryRow
-          accounts={accounts}
-          categories={categories}
-          transactionTypes={transactionTypes}
-          transactions={transactions}
-          manualAssets={manualAssets}
+          accounts={accounts || []}
+          categories={categories || []}
+          transactionTypes={transactionTypes || []}
+          transactions={transactions || []}
+          manualAssets={manualAssets || []}
           onSubmit={handleSubmit}
           onOpenFullDialog={handleOpenDialog}
         />
@@ -221,9 +226,9 @@ export const TransactionsPage: React.FC = () => {
 
       <TransactionList
         transactions={filteredTransactions}
-        accounts={accounts}
-        categories={categories}
-        transactionTypes={transactionTypes}
+        accounts={accounts || []}
+        categories={categories || []}
+        transactionTypes={transactionTypes || []}
         onEdit={handleEdit}
         onDelete={handleDelete}
       />
@@ -231,9 +236,9 @@ export const TransactionsPage: React.FC = () => {
       <TransactionDialog
         open={dialogOpen}
         transaction={selectedTransaction}
-        accounts={accounts}
-        categories={categories}
-        transactionTypes={transactionTypes}
+        accounts={accounts || []}
+        categories={categories || []}
+        transactionTypes={transactionTypes || []}
         onClose={handleCloseDialog}
         onSubmit={handleSubmit}
       />

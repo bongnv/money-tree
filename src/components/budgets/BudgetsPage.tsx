@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -11,11 +11,11 @@ import {
   LinearProgress,
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { useBudgetStore } from '../../stores/useBudgetStore';
-import { useCategoryStore } from '../../stores/useCategoryStore';
-import { useTransactionStore } from '../../stores/useTransactionStore';
-import { useAccountStore } from '../../stores/useAccountStore';
-import { useAppStore } from '../../stores/useAppStore';
+import { useBudgets } from '../../hooks/queries/useBudgets';
+import { useBudgetMutations } from '../../hooks/mutations/useBudgetMutations';
+import { useCategories, useTransactionTypes, useBaseCurrency } from '../../hooks/queries';
+import { useTransactions } from '../../hooks/queries/useTransactions';
+import { useAccounts } from '../../hooks/queries/useAccounts';
 import { BudgetDialog } from './BudgetDialog';
 import { PeriodSelector } from '../common/PeriodSelector';
 import { CategoryFilter } from '../common/CategoryFilter';
@@ -26,12 +26,20 @@ import { useCalculationService } from '../../contexts/ServiceProviders';
 import { Group } from '../../types/enums';
 
 export const BudgetsPage: React.FC = () => {
-  const { budgets, addBudget, updateBudget, deleteBudget } = useBudgetStore();
-  const { transactionTypes, getCategoryById, categories } = useCategoryStore();
-  const { transactions } = useTransactionStore();
-  const { accounts } = useAccountStore();
-  const baseCurrency = useAppStore((state) => state.baseCurrency);
+  const budgets = useBudgets();
+  const { addBudget, updateBudget, deleteBudget } = useBudgetMutations();
+  const transactionTypes = useTransactionTypes();
+  const categories = useCategories();
+  const transactions = useTransactions();
+  const accounts = useAccounts();
+  const baseCurrency = useBaseCurrency();
   const calculationService = useCalculationService();
+
+  // Helper to get category by id - memoized to prevent infinite loops
+  const getCategoryById = useCallback(
+    (id: string) => categories?.find((c) => c.id === id),
+    [categories]
+  );
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | undefined>(undefined);
@@ -70,20 +78,20 @@ export const BudgetsPage: React.FC = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = (budget: Budget) => {
-    const transactionType = transactionTypes.find((tt) => tt.id === budget.transactionTypeId);
+  const handleDelete = async (budget: Budget) => {
+    const transactionType = transactionTypes?.find((tt) => tt.id === budget.transactionTypeId);
     const confirmMessage = `Are you sure you want to delete the budget for "${transactionType?.name}"?`;
 
     if (window.confirm(confirmMessage)) {
-      deleteBudget(budget.id);
+      await deleteBudget(budget.id);
     }
   };
 
-  const handleSubmit = (budgetData: Omit<Budget, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSubmit = async (budgetData: Omit<Budget, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       if (editingBudget) {
         // Update existing budget item
-        updateBudget(editingBudget.id, budgetData);
+        await updateBudget(editingBudget.id, budgetData);
       } else {
         // Add new budget item
         const newBudget: Budget = {
@@ -92,7 +100,7 @@ export const BudgetsPage: React.FC = () => {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
-        addBudget(newBudget);
+        await addBudget(newBudget);
       }
       setDialogOpen(false);
     } catch (error) {
@@ -134,6 +142,8 @@ export const BudgetsPage: React.FC = () => {
   >({});
 
   useEffect(() => {
+    if (!budgets || !transactionTypes || !transactions || !accounts || !categories) return;
+
     const calculateGroupedBudgets = async () => {
       // Filter budgets that are active during the selected period
       let activeBudgets = budgets.filter((budget) => {
@@ -170,10 +180,12 @@ export const BudgetsPage: React.FC = () => {
     transactionTypes,
     transactions,
     accounts,
+    categories,
     selectedPeriod,
     getCategoryById,
     selectedCategories,
     baseCurrency,
+    calculationService,
   ]);
 
   const getSectionTitle = (categoryGroup: Group): string => {
@@ -212,7 +224,7 @@ export const BudgetsPage: React.FC = () => {
             allowCustom={false}
           />
           <CategoryFilter
-            categories={categories}
+            categories={categories || []}
             selectedCategories={selectedCategories}
             onChange={(e) => {
               const value = e.target.value;
@@ -250,7 +262,7 @@ export const BudgetsPage: React.FC = () => {
         Viewing period: {selectedPeriod.startDate} to {selectedPeriod.endDate}
       </Typography>
 
-      {budgets.length === 0 ? (
+      {!budgets || budgets.length === 0 ? (
         <Paper sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
             No budgets set

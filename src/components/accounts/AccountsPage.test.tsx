@@ -1,7 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AccountsPage } from './AccountsPage';
-import { useAccountStore } from '../../stores/useAccountStore';
+import { useAccounts } from '../../hooks/queries/useAccounts';
+import { useAccountMutations } from '../../hooks/mutations/useAccountMutations';
 import { AccountType } from '../../types/enums';
 import type { Account } from '../../types/models';
 
@@ -14,7 +15,8 @@ jest.mock('../../contexts/ServiceProviders', () => ({
   useCalculationService: () => mockCalculationService,
 }));
 
-jest.mock('../../stores/useAccountStore');
+jest.mock('../../hooks/queries/useAccounts');
+jest.mock('../../hooks/mutations/useAccountMutations');
 
 describe('AccountsPage', () => {
   const mockAccounts: Account[] = [
@@ -36,8 +38,8 @@ describe('AccountsPage', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useAccountStore as unknown as jest.Mock).mockReturnValue({
-      accounts: mockAccounts,
+    (useAccounts as jest.Mock).mockReturnValue(mockAccounts);
+    (useAccountMutations as jest.Mock).mockReturnValue({
       addAccount: mockAddAccount,
       updateAccount: mockUpdateAccount,
       deleteAccount: mockDeleteAccount,
@@ -182,12 +184,7 @@ describe('AccountsPage', () => {
   });
 
   it('should render empty state when no accounts', () => {
-    (useAccountStore as unknown as jest.Mock).mockReturnValue({
-      accounts: [],
-      addAccount: mockAddAccount,
-      updateAccount: mockUpdateAccount,
-      deleteAccount: mockDeleteAccount,
-    });
+    (useAccounts as jest.Mock).mockReturnValue([]);
 
     render(<AccountsPage />);
 

@@ -3,21 +3,24 @@ import userEvent from '@testing-library/user-event';
 import { TransactionForm } from './TransactionForm';
 import type { Transaction, Account, TransactionType, Category } from '../../types/models';
 import { Group, AccountType } from '../../types/enums';
+import { useAssets } from '../../hooks/queries/useAssets';
 
-jest.mock('../../stores/useAssetStore', () => ({
-  useAssetStore: () => ({
-    manualAssets: [
-      {
-        id: 'asset-1',
-        name: 'Stocks',
-        currencyCode: 'USD',
-        currentValue: 10000,
-        createdAt: '2024-01-01T00:00:00.000Z',
-        updatedAt: '2024-01-01T00:00:00.000Z',
-      },
-    ],
-  }),
-}));
+jest.mock('../../hooks/queries/useAssets');
+const mockUseAssets = useAssets as jest.MockedFunction<typeof useAssets>;
+
+beforeEach(() => {
+  mockUseAssets.mockReturnValue([
+    {
+      id: 'asset-1',
+      name: 'Stocks',
+      type: 'INVESTMENT',
+      value: 10000,
+      currencyCode: 'USD',
+      createdAt: '2024-01-01T00:00:00.000Z',
+      updatedAt: '2024-01-01T00:00:00.000Z',
+    },
+  ]);
+});
 
 const mockAccounts: Account[] = [
   {

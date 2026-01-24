@@ -4,24 +4,25 @@ import { Add as AddIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material'
 import { useParams, useNavigate } from 'react-router-dom';
 import { TransactionTypeList } from '../categories/TransactionTypeList';
 import { TransactionTypeDialog } from '../categories/TransactionTypeDialog';
-import { useCategoryStore } from '../../stores/useCategoryStore';
+import { useCategories, useTransactionTypes } from '../../hooks/queries';
+import { useTransactionTypeMutations } from '../../hooks/mutations/useTransactionTypeMutations';
 import type { TransactionType } from '../../types/models';
 
 export const CategoryDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const categories = useCategories();
+  const allTransactionTypes = useTransactionTypes();
   const {
-    categories,
     addTransactionType,
     updateTransactionType,
     deleteTransactionType,
     archiveTransactionType,
     unarchiveTransactionType,
-    getTransactionTypesByCategory,
-  } = useCategoryStore();
+  } = useTransactionTypeMutations();
 
-  const category = categories.find((c) => c.id === id);
-  const categoryTransactionTypes = id ? getTransactionTypesByCategory(id) : [];
+  const category = categories?.find((c) => c.id === id);
+  const categoryTransactionTypes = allTransactionTypes?.filter((tt) => tt.categoryId === id) || [];
 
   const [transactionTypeDialogOpen, setTransactionTypeDialogOpen] = useState(false);
   const [selectedTransactionType, setSelectedTransactionType] = useState<
@@ -54,11 +55,11 @@ export const CategoryDetailPage: React.FC = () => {
     setSelectedTransactionType(undefined);
   };
 
-  const handleSubmitTransactionType = (
+  const handleSubmitTransactionType = async (
     transactionType: Omit<TransactionType, 'id' | 'createdAt' | 'updatedAt'>
   ) => {
     if (selectedTransactionType) {
-      updateTransactionType(selectedTransactionType.id, {
+      await updateTransactionType(selectedTransactionType.id, {
         ...transactionType,
         id: selectedTransactionType.id,
         createdAt: selectedTransactionType.createdAt,
@@ -66,7 +67,7 @@ export const CategoryDetailPage: React.FC = () => {
       });
     } else {
       const now = new Date().toISOString();
-      addTransactionType({
+      await addTransactionType({
         ...transactionType,
         id: crypto.randomUUID(),
         isActive: true,
@@ -77,21 +78,21 @@ export const CategoryDetailPage: React.FC = () => {
     handleCloseTransactionTypeDialog();
   };
 
-  const handleDeleteTransactionType = (transactionType: TransactionType) => {
+  const handleDeleteTransactionType = async (transactionType: TransactionType) => {
     if (
       window.confirm(
         `Are you sure you want to delete the transaction type "${transactionType.name}"? This action cannot be undone.`
       )
     ) {
-      deleteTransactionType(transactionType.id);
+      await deleteTransactionType(transactionType.id);
     }
   };
 
-  const handleArchiveTransactionType = (transactionType: TransactionType) => {
+  const handleArchiveTransactionType = async (transactionType: TransactionType) => {
     if (transactionType.isActive) {
-      archiveTransactionType(transactionType.id);
+      await archiveTransactionType(transactionType.id);
     } else {
-      unarchiveTransactionType(transactionType.id);
+      await unarchiveTransactionType(transactionType.id);
     }
   };
 
@@ -149,7 +150,7 @@ export const CategoryDetailPage: React.FC = () => {
 
       <TransactionTypeList
         transactionTypes={categoryTransactionTypes}
-        categories={categories}
+        categories={categories || []}
         onEdit={handleEditTransactionType}
         onDelete={handleDeleteTransactionType}
         onArchive={handleArchiveTransactionType}
@@ -158,7 +159,7 @@ export const CategoryDetailPage: React.FC = () => {
       <TransactionTypeDialog
         open={transactionTypeDialogOpen}
         transactionType={selectedTransactionType}
-        categories={categories}
+        categories={categories || []}
         categoryId={category.id}
         onClose={handleCloseTransactionTypeDialog}
         onSubmit={handleSubmitTransactionType}

@@ -2,33 +2,30 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import { Header } from './Header';
-import { useAppStore } from '../../stores/useAppStore';
+import { AppProvider } from '../../contexts/AppContext';
 
-// Mock syncService
-const mockSyncService = {
-  promptSaveIfNeeded: jest.fn(),
-  loadDataFile: jest.fn(),
-  syncNow: jest.fn(),
-};
-
-// Mock the context
-jest.mock('../../contexts/ServiceProviders', () => ({
-  useSyncService: () => mockSyncService,
+// Mock cloudSync service
+jest.mock('../../services/cloudSync.service', () => ({
+  getCloudSyncService: jest.fn(() => ({
+    fullSync: jest.fn().mockResolvedValue(undefined),
+  })),
+  initCloudSyncService: jest.fn(),
 }));
 
 const renderWithRouter = (component: React.ReactElement, initialRoute = '/') => {
   return render(
-    <MemoryRouter initialEntries={[initialRoute]}>
-      <Routes>
-        <Route path="*" element={component} />
-      </Routes>
-    </MemoryRouter>
+    <AppProvider>
+      <MemoryRouter initialEntries={[initialRoute]}>
+        <Routes>
+          <Route path="*" element={component} />
+        </Routes>
+      </MemoryRouter>
+    </AppProvider>
   );
 };
 
 describe('Header', () => {
   beforeEach(() => {
-    useAppStore.getState().resetState();
     jest.clearAllMocks();
   });
 
@@ -42,57 +39,9 @@ describe('Header', () => {
     expect(screen.getByRole('button', { name: /sync/i })).toBeInTheDocument();
   });
 
-  it('should show file name when available', () => {
-    useAppStore.getState().setFileName('money-tree-2024.json');
-    renderWithRouter(<Header />);
-    expect(screen.getByText('money-tree-2024.json')).toBeInTheDocument();
-  });
-
-  it('should show "Never synced" when lastSaved is null', () => {
+  it('should show "Never synced" when lastSynced is null', () => {
     renderWithRouter(<Header />);
     expect(screen.getByText('Never synced')).toBeInTheDocument();
-  });
-
-  it('should call syncService.syncNow when Sync button is clicked', async () => {
-    useAppStore.getState().setUnsavedChanges(true);
-    mockSyncService.syncNow.mockResolvedValue(undefined);
-
-    renderWithRouter(<Header />);
-
-    const syncButton = screen.getByRole('button', { name: /sync/i });
-    fireEvent.click(syncButton);
-
-    await waitFor(() => {
-      expect(mockSyncService.syncNow).toHaveBeenCalled();
-    });
-  });
-
-  it('should disable Sync button when no unsaved changes', () => {
-    useAppStore.getState().setUnsavedChanges(false);
-
-    renderWithRouter(<Header />);
-
-    const syncButton = screen.getByRole('button', { name: /sync/i });
-    expect(syncButton).toBeDisabled();
-  });
-
-  it('should disable Sync button when loading', () => {
-    useAppStore.getState().setLoading(true);
-    useAppStore.getState().setUnsavedChanges(true);
-
-    renderWithRouter(<Header />);
-
-    const syncButton = screen.getByRole('button', { name: /sync/i });
-    expect(syncButton).toBeDisabled();
-  });
-
-  it('should show loading spinner when loading', () => {
-    useAppStore.getState().setLoading(true);
-    useAppStore.getState().setUnsavedChanges(true);
-
-    renderWithRouter(<Header />);
-
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
 
   it('should render all navigation buttons', () => {

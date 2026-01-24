@@ -15,18 +15,19 @@ import {
   InputLabel,
   Alert,
 } from '@mui/material';
-import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
-import { useAppStore } from '../../stores/useAppStore';
+import { useExchangeRates } from '../../hooks/queries/useExchangeRates';
+import { useBaseCurrency } from '../../hooks/queries';
 
 export const ExchangeRatesSettings: React.FC = () => {
-  const baseCurrency = useAppStore((state) => state.baseCurrency);
-  const rates = useExchangeRateStore((state) => state.rates);
+  const baseCurrency = useBaseCurrency();
+  const rates = useExchangeRates();
 
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
 
   // Filter rates for selected year
   const yearRates = useMemo(() => {
+    if (!rates) return [];
     return rates.filter((rate) => rate.month.startsWith(String(selectedYear)));
   }, [rates, selectedYear]);
 

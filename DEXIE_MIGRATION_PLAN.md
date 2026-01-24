@@ -65,8 +65,7 @@ interface Transaction {
   amount: number;
   // ... other fields
   isDeleted: boolean;      // Soft delete flag
-  deletedAt?: string;      // When deleted
-  updatedAt: string;       // Last modification timestamp
+  updatedAt: string;       // Last modification timestamp (also tracks deletion time)
 }
 ```
 
@@ -286,7 +285,6 @@ export const transactionRepository = {
     const now = new Date().toISOString();
     await db.transactions.update(id, {
       isDeleted: true,
-      deletedAt: now,
       updatedAt: now,
     });
   },

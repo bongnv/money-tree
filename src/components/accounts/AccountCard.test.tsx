@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { AccountCard } from './AccountCard';
 import { AccountType, CurrencyCode } from '../../types/enums';
 import type { Account, Transaction } from '../../types/models';
-import { useTransactionStore } from '../../stores/useTransactionStore';
+import { useTransactions } from '../../hooks/queries/useTransactions';
 
 // Mock services
 const mockCalculationService = {
@@ -14,11 +14,9 @@ jest.mock('../../contexts/ServiceProviders', () => ({
   useCalculationService: () => mockCalculationService,
 }));
 
-jest.mock('../../stores/useTransactionStore');
+jest.mock('../../hooks/queries/useTransactions');
 
-const mockUseTransactionStore = useTransactionStore as jest.MockedFunction<
-  typeof useTransactionStore
->;
+const mockUseTransactions = useTransactions as jest.Mock;
 
 describe('AccountCard', () => {
   const mockAccount: Account = {
@@ -40,15 +38,7 @@ describe('AccountCard', () => {
     jest.clearAllMocks();
 
     // Default mock: no transactions
-    mockUseTransactionStore.mockReturnValue({
-      transactions: [],
-      addTransaction: jest.fn(),
-      updateTransaction: jest.fn(),
-      deleteTransaction: jest.fn(),
-      getTransactionsByAccount: jest.fn(),
-      getTransactionsByType: jest.fn(),
-      getTransactionsByDateRange: jest.fn(),
-    });
+    mockUseTransactions.mockReturnValue([]);
   });
 
   it('should render account information', () => {
@@ -127,15 +117,7 @@ describe('AccountCard', () => {
       },
     ];
 
-    mockUseTransactionStore.mockReturnValue({
-      transactions: mockTransactions,
-      addTransaction: jest.fn(),
-      updateTransaction: jest.fn(),
-      deleteTransaction: jest.fn(),
-      getTransactionsByAccount: jest.fn(),
-      getTransactionsByType: jest.fn(),
-      getTransactionsByDateRange: jest.fn(),
-    });
+    mockUseTransactions.mockReturnValue(mockTransactions);
 
     // Mock the calculated balance: $1000 + $200 (in) - $50 (out) = $1150
     mockCalculationService.calculateAccountBalance.mockReturnValue(1150);

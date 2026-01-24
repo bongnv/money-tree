@@ -7,99 +7,91 @@ import theme from './theme';
 import { MainLayout } from './components/layout/MainLayout';
 import { WelcomeDialog } from './components/onboarding/WelcomeDialog';
 import { NotificationSnackbar } from './components/common/NotificationSnackbar';
-import { MergePreviewDialog, ConflictResolution } from './components/common/MergePreviewDialog';
 import ReconnectDialog from './components/common/ReconnectDialog';
 import { ArchivePrompt } from './components/common/ArchivePrompt';
-import { BackupPromptDialog } from './components/common/BackupPromptDialog';
 import { AppRoutes } from './routes';
-import { useAppStore } from './stores/useAppStore';
+import { AppProvider, useAppContext } from './contexts/AppContext';
 import {
   ServiceProvider,
-  useSyncService,
   useStorageFactory,
-  useBackupService,
   useArchiveService,
 } from './contexts/ServiceProviders';
-import { MergeResult } from './services/merge.service';
+import { initCloudSyncService, getCloudSyncService } from './services/cloudSync.service';
+import { useBaseCurrency } from './hooks/queries';
 
 const AppContent: React.FC = () => {
   const navigate = useNavigate();
   const storageFactory = useStorageFactory();
-  const syncService = useSyncService();
-  const backupService = useBackupService();
   const archiveService = useArchiveService();
+  const baseCurrency = useBaseCurrency();
   const {
-    hasUnsavedChanges,
     snackbar,
     hideSnackbar,
-    baseCurrency,
-    lastBackupDate,
     isLoading,
     shouldShowWelcome,
     setShouldShowWelcome,
-  } = useAppStore();
+    setLoading,
+    showSnackbar,
+    setIsSyncing,
+  } = useAppContext();
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
 
-  // Watch shouldShowWelcome from store
+  // Watch shouldShowWelcome from context
   useEffect(() => {
     if (shouldShowWelcome) {
       setShowWelcomeDialog(true);
       setShouldShowWelcome(false); // Reset flag after showing
     }
   }, [shouldShowWelcome, setShouldShowWelcome]);
+
   const [showArchivePrompt, setShowArchivePrompt] = useState(false);
-  const [showBackupPrompt, setShowBackupPrompt] = useState(false);
   const [archiveYearSummary, setArchiveYearSummary] = useState<any>(null);
   const [archiveYear, setArchiveYear] = useState<number | null>(null);
-  const [mergeDialogState, setMergeDialogState] = useState<{
-    open: boolean;
-    mergeResult: MergeResult | null;
-    resolve: ((value: ConflictResolution[] | null) => void) | null;
-  }>({
-    open: false,
-    mergeResult: null,
-    resolve: null,
-  });
 
   useEffect(() => {
     const initializeApp = async () => {
-      // Set up merge handler
-      syncService.setMergeHandler(async (mergeResult: MergeResult) => {
-        return new Promise<ConflictResolution[] | null>((resolve) => {
-          setMergeDialogState({
-            open: true,
-            mergeResult,
-            resolve,
-          });
+      try {
+        // Initialize storage provider
+        const success = await storageFactory.initialize();
+
+        if (!success) {
+          // No cached connection or user dismissed - show welcome dialog
+          setShowWelcomeDialog(true);
+          return;
+        }
+
+        // Initialize cloud sync service with callbacks
+        const cloudSync = initCloudSyncService(storageFactory, {
+          onSyncStart: () => setIsSyncing(true),
+          onSyncComplete: () => {
+            setIsSyncing(false);
+          },
+          onSyncError: (error) => {
+            setIsSyncing(false);
+            console.error('Sync error:', error);
+          },
         });
-      });
 
-      // Initialize storage provider
-      const success = await storageFactory.initialize();
-
-      if (!success) {
-        // No cached connection or user dismissed - show welcome dialog
-        setShowWelcomeDialog(true);
-        return;
-      }
-
-      const dataLoaded = await syncService.autoLoad();
-
-      if (!dataLoaded) {
-        setShowWelcomeDialog(true);
-      } else {
-        checkArchivePrompt();
-        checkBackupPrompt();
+        // Try to sync from cloud (this will populate Dexie if empty)
+        setLoading(true);
+        try {
+          await cloudSync.downloadFromCloud();
+          showSnackbar('Data synced successfully', 'success');
+          checkArchivePrompt();
+        } catch (error) {
+          console.error('Failed to sync:', error);
+          const message = error instanceof Error ? error.message : 'Failed to sync with cloud';
+          showSnackbar(message, 'warning');
+        } finally {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('App initialization error:', error);
+        showSnackbar('Failed to initialize app', 'error');
       }
     };
 
     initializeApp();
-    syncService.startAutoSave();
-
-    return () => {
-      syncService.stopAutoSave();
-      syncService.setMergeHandler(null);
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
@@ -113,36 +105,14 @@ const AppContent: React.FC = () => {
     }
   };
 
-  const checkBackupPrompt = () => {
-    setShowBackupPrompt(backupService.shouldPromptBackup());
-  };
-
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [hasUnsavedChanges]);
-
   // Auto-reload data when tab becomes visible (with 30-minute throttle)
   useEffect(() => {
     let lastReloadTime = 0;
     const RELOAD_THROTTLE_MS = 30 * 60 * 1000; // 30 minutes
 
     const handleVisibilityChange = async () => {
-      // Read fresh state values when event fires
-      const state = useAppStore.getState();
-
-      // Only reload if: tab is visible, no unsaved changes, and data is loaded
-      if (document.hidden || state.hasUnsavedChanges || !state.baseVersion) {
+      // Only reload if tab is visible
+      if (document.hidden) {
         return;
       }
 
@@ -153,7 +123,13 @@ const AppContent: React.FC = () => {
       }
 
       lastReloadTime = now;
-      await syncService.loadDataFile();
+
+      try {
+        const cloudSync = getCloudSyncService();
+        await cloudSync.downloadFromCloud();
+      } catch (error) {
+        console.error('Failed to reload data:', error);
+      }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -163,30 +139,10 @@ const AppContent: React.FC = () => {
     };
   }, []); // Register once on mount
 
-  const handleMergeCancel = () => {
-    if (mergeDialogState.resolve) {
-      mergeDialogState.resolve(null);
-    }
-    setMergeDialogState({ open: false, mergeResult: null, resolve: null });
-  };
-
-  const handleMergeApply = (resolutions: ConflictResolution[]) => {
-    if (mergeDialogState.resolve) {
-      mergeDialogState.resolve(resolutions);
-    }
-    setMergeDialogState({ open: false, mergeResult: null, resolve: null });
-  };
-
   const handleArchiveGoToSettings = () => {
     setShowArchivePrompt(false);
     // Navigate to archive settings page using React Router
     navigate('/settings/archives');
-  };
-
-  const handleGoToBackupSettings = () => {
-    setShowBackupPrompt(false);
-    // Navigate to preferences page using React Router
-    navigate('/settings/preferences');
   };
 
   return (
@@ -201,13 +157,6 @@ const AppContent: React.FC = () => {
         severity={snackbar.severity}
         onClose={hideSnackbar}
       />
-      <MergePreviewDialog
-        open={mergeDialogState.open}
-        conflicts={mergeDialogState.mergeResult?.conflicts || []}
-        autoMergedCount={mergeDialogState.mergeResult?.autoMergedCount || 0}
-        onCancel={handleMergeCancel}
-        onApply={handleMergeApply}
-      />
       {archiveYearSummary && archiveYear && (
         <ArchivePrompt
           open={showArchivePrompt}
@@ -218,12 +167,6 @@ const AppContent: React.FC = () => {
           onRemindLater={() => setShowArchivePrompt(false)}
         />
       )}
-      <BackupPromptDialog
-        open={showBackupPrompt}
-        lastBackupDate={lastBackupDate}
-        onGoToSettings={handleGoToBackupSettings}
-        onDismiss={() => setShowBackupPrompt(false)}
-      />
       <Backdrop open={isLoading} sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <CircularProgress color="inherit" />
       </Backdrop>
@@ -270,17 +213,19 @@ const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <ServiceProvider onReconnectNeeded={handleReconnectNeeded}>
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
-        <ReconnectDialog
-          open={reconnectDialogState.open}
-          providerName={reconnectDialogState.providerName}
-          onReconnect={handleReconnect}
-          onDismiss={handleReconnectDismiss}
-        />
-      </ServiceProvider>
+      <AppProvider>
+        <ServiceProvider onReconnectNeeded={handleReconnectNeeded}>
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+          <ReconnectDialog
+            open={reconnectDialogState.open}
+            providerName={reconnectDialogState.providerName}
+            onReconnect={handleReconnect}
+            onDismiss={handleReconnectDismiss}
+          />
+        </ServiceProvider>
+      </AppProvider>
     </ThemeProvider>
   );
 };

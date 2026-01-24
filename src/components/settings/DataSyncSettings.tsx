@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -11,117 +11,111 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
-  CircularProgress,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import LogoutIcon from '@mui/icons-material/Logout';
-import BackupIcon from '@mui/icons-material/Backup';
-import { useAppStore } from '../../stores/useAppStore';
 import {
-  useSyncService,
-  useBackupService,
   useStorageFactory,
 } from '../../contexts/ServiceProviders';
 import { formatDistance } from 'date-fns';
-import { isUserCancellationError } from '../../utils/error.utils';
-import { useAccountStore } from '../../stores/useAccountStore';
-import { useCategoryStore } from '../../stores/useCategoryStore';
-import { useTransactionStore } from '../../stores/useTransactionStore';
-import { useAssetStore } from '../../stores/useAssetStore';
-import { useBudgetStore } from '../../stores/useBudgetStore';
+import { useAppContext } from '../../contexts/AppContext';
+import { useAccounts } from '../../hooks/queries/useAccounts';
+import { useCategories } from '../../hooks/queries/useCategories';
+import { useTransactionTypes } from '../../hooks/queries/useTransactionTypes';
+import { useTransactions } from '../../hooks/queries/useTransactions';
+import { useAssets } from '../../hooks/queries/useAssets';
+import { useBudgets } from '../../hooks/queries/useBudgets';
+import { useCloudFileName, useLastSynced } from '../../hooks/queries';
+import { db } from '../../db/database';
 
 export const DataSyncSettings: React.FC = () => {
   const navigate = useNavigate();
   const storageFactory = useStorageFactory();
-  const syncService = useSyncService();
-  const backupService = useBackupService();
+  const cloudFileName = useCloudFileName();
+  const lastSynced = useLastSynced();
   const {
-    fileName,
-    lastSaved,
-    hasUnsavedChanges,
-    lastBackupDate,
-    showSnackbar,
     setShouldShowWelcome,
-  } = useAppStore();
+  } = useAppContext();
+  const accounts = useAccounts();
+  const categories = useCategories();
+  const transactionTypes = useTransactionTypes();
+  const transactions = useTransactions();
+  const assets = useAssets();
+  const budgets = useBudgets();
+
   const [disconnectDialogOpen, setDisconnectDialogOpen] = React.useState(false);
-  const [backupLoading, setBackupLoading] = React.useState(false);
 
-  const getStorageLocation = (): string => {
-    try {
-      return storageFactory.providerName || 'Not connected';
-    } catch {
-      return 'Not connected';
-    }
-  };
-
-  const getFileSize = (): string => {
+  const fileSize = useMemo(() => {
     // Calculate approximate file size from store data
     // This is a rough estimate - actual file may be larger due to formatting
     try {
+      // Only calculate if all data is loaded
+      if (
+        accounts === undefined ||
+        categories === undefined ||
+        transactionTypes === undefined ||
+        transactions === undefined ||
+        budgets === undefined ||
+        assets === undefined
+      ) {
+        return 'Loading...';
+      }
+
       const dataObj = {
-        accounts: useAccountStore.getState().accounts,
-        categories: useCategoryStore.getState().categories,
-        transactionTypes: useCategoryStore.getState().transactionTypes,
-        transactions: useTransactionStore.getState().transactions,
-        budgets: useBudgetStore.getState().budgets,
-        manualAssets: useAssetStore.getState().manualAssets,
+        accounts,
+        categories,
+        transactionTypes,
+        transactions,
+        budgets,
+        manualAssets: assets,
       };
 
       const jsonStr = JSON.stringify(dataObj);
       const bytes = new Blob([jsonStr]).size;
 
-      if (bytes < 1024) return `${bytes} bytes`;
-      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-    } catch {
-      return 'Unknown';
-    }
-  };
-
-  const getLastModifiedText = (): string => {
-    if (!lastSaved) return 'Never';
-    try {
-      return formatDistance(new Date(lastSaved), new Date(), { addSuffix: true });
-    } catch {
-      return 'Unknown';
-    }
-  };
-
-  const getLastBackupText = (): string => {
-    if (!lastBackupDate) return 'Never';
-    try {
-      return formatDistance(new Date(lastBackupDate), new Date(), { addSuffix: true });
-    } catch {
-      return 'Unknown';
-    }
-  };
-
-  const handleCreateBackup = async () => {
-    try {
-      setBackupLoading(true);
-
-      // Save backup (backs up baseVersion, updates lastBackupDate, sets unsavedChanges)
-      await backupService.saveBackupToStorage();
-
-      showSnackbar('Backup saved successfully. Remember to save to update backup date.', 'success');
-    } catch (error) {
-      if (isUserCancellationError(error)) {
-        // User cancelled file picker, don't show error
-        return;
+      let result: string;
+      if (bytes < 1024) {
+        result = `${bytes} bytes`;
+      } else if (bytes < 1024 * 1024) {
+        result = `${(bytes / 1024).toFixed(1)} KB`;
+      } else {
+        result = `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
       }
-      const message =
-        error instanceof Error ? error.message : 'Failed to create backup. Please try again.';
-      showSnackbar(message, 'error');
-    } finally {
-      setBackupLoading(false);
+
+      console.log('[DataSyncSettings] fileSize:', result);
+      return result;
+    } catch (error) {
+      console.error('[DataSyncSettings] fileSize error:', error);
+      return 'Unknown';
     }
-  };
+  }, [accounts, categories, transactionTypes, transactions, budgets, assets]);
+
+  const lastModifiedText = useMemo(() => {
+    if (!lastSynced) return 'Never';
+    try {
+      return formatDistance(new Date(lastSynced), new Date(), { addSuffix: true });
+    } catch {
+      return 'Unknown';
+    }
+  }, [lastSynced]);
+
+  const storageLocation = useMemo(() => {
+    try {
+      return storageFactory.providerName || 'Not connected';
+    } catch {
+      return 'Not connected';
+    }
+  }, [storageFactory.providerName]);
 
   const handleDisconnect = async () => {
     setDisconnectDialogOpen(false);
 
-    // Reset all data
-    await syncService.resetToWelcome();
+    // Clear all data from IndexedDB
+    await db.delete();
+    await db.open();
+    
+    // Disconnect from cloud storage
+    await storageFactory.disconnect();
 
     // Redirect to dashboard and trigger welcome dialog
     navigate('/');
@@ -145,21 +139,21 @@ export const DataSyncSettings: React.FC = () => {
                     <Typography variant="body2" color="text.secondary">
                       File Name
                     </Typography>
-                    <Typography variant="body1">{fileName || 'No file loaded'}</Typography>
+                    <Typography variant="body1">{cloudFileName || 'No file loaded'}</Typography>
                   </Grid>
 
                   <Grid item xs={12} sm={6}>
                     <Typography variant="body2" color="text.secondary">
                       Last Modified
                     </Typography>
-                    <Typography variant="body1">{getLastModifiedText()}</Typography>
+                    <Typography variant="body1">{lastModifiedText}</Typography>
                   </Grid>
 
                   <Grid item xs={12} sm={6}>
                     <Typography variant="body2" color="text.secondary">
                       File Size (approximate)
                     </Typography>
-                    <Typography variant="body1">{getFileSize()}</Typography>
+                    <Typography variant="body1">{fileSize}</Typography>
                   </Grid>
 
                   <Grid item xs={12} sm={6}>
@@ -167,51 +161,11 @@ export const DataSyncSettings: React.FC = () => {
                       Status
                     </Typography>
                     <Typography variant="body1">
-                      {hasUnsavedChanges ? 'Unsaved changes' : 'All changes saved'}
+                      {cloudFileName ? 'Connected' : 'Not connected'}
                     </Typography>
                   </Grid>
                 </Grid>
               </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Backup Section */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Data Backup
-              </Typography>
-
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Last Backup
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 2 }}>
-                  {getLastBackupText()}
-                </Typography>
-              </Box>
-
-              <Typography variant="body2" color="text.secondary" paragraph>
-                Create a compressed backup of your data. Backups are saved as ZIP files and can be
-                stored locally or on OneDrive.
-              </Typography>
-
-              <Typography variant="body2" color="text.secondary" paragraph>
-                Note: Backups save the last saved state of your data. Make sure to save any pending
-                changes before creating a backup.
-              </Typography>
-
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={backupLoading ? <CircularProgress size={20} /> : <BackupIcon />}
-                onClick={handleCreateBackup}
-                disabled={backupLoading || !fileName}
-              >
-                {backupLoading ? 'Creating Backup...' : 'Create Backup'}
-              </Button>
             </CardContent>
           </Card>
         </Grid>
@@ -229,7 +183,7 @@ export const DataSyncSettings: React.FC = () => {
                   Storage Location
                 </Typography>
                 <Typography variant="body1" sx={{ mb: 2 }}>
-                  {getStorageLocation()}
+                  {storageLocation}
                 </Typography>
               </Box>
 
@@ -243,7 +197,7 @@ export const DataSyncSettings: React.FC = () => {
                 color="warning"
                 startIcon={<LogoutIcon />}
                 onClick={() => setDisconnectDialogOpen(true)}
-                disabled={!fileName}
+                disabled={!cloudFileName}
               >
                 Disconnect
               </Button>

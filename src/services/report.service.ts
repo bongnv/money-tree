@@ -9,7 +9,7 @@ import type {
 import { AccountType, AssetType, CurrencyCode, Group } from '../types/enums';
 import { CalculationService } from './calculation.service';
 import { getAssetCurrentValue } from '../utils/asset.utils';
-import { getRateForMonth } from './exchangeRate.service';
+import { getRateForMonth } from '../utils/exchangeRate.utils';
 
 export interface BalanceSheetData {
   assets: AssetGroup[];

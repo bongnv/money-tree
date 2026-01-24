@@ -10,7 +10,7 @@ import {
   Autocomplete,
 } from '@mui/material';
 import type { Budget } from '../../types/models';
-import { useCategoryStore } from '../../stores/useCategoryStore';
+import { useCategories, useTransactionTypes } from '../../hooks/queries';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
 import { CurrencyCode, Group } from '../../types/enums';
 
@@ -22,7 +22,8 @@ interface BudgetDialogProps {
 }
 
 export const BudgetDialog: React.FC<BudgetDialogProps> = ({ open, budget, onClose, onSubmit }) => {
-  const { categories, transactionTypes } = useCategoryStore();
+  const categories = useCategories();
+  const transactionTypes = useTransactionTypes();
 
   const [formData, setFormData] = useState({
     transactionTypeId: budget?.transactionTypeId || '',
@@ -37,6 +38,7 @@ export const BudgetDialog: React.FC<BudgetDialogProps> = ({ open, budget, onClos
 
   // Flatten transaction types with category labels for autocomplete - only show income and expense types
   const transactionTypeOptions = useMemo(() => {
+    if (!categories || !transactionTypes) return [];
     const options: Array<{ id: string; name: string; categoryName: string }> = [];
     categories.forEach((category) => {
       const types = transactionTypes.filter(

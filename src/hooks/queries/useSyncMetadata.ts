@@ -1,0 +1,33 @@
+import { useLiveQuery } from 'dexie-react-hooks';
+import { syncMetadata } from '../../db/database';
+import { CurrencyCode } from '../../types/enums';
+import type { ArchivedYearReference } from '../../types/models';
+
+/**
+ * Hook to get base currency from Dexie
+ */
+export function useBaseCurrency(): CurrencyCode {
+  const value = useLiveQuery(() => syncMetadata.getBaseCurrency());
+  return (value as CurrencyCode) || CurrencyCode.USD;
+}
+
+/**
+ * Hook to get archived years from Dexie
+ */
+export function useArchivedYears(): ArchivedYearReference[] {
+  return useLiveQuery(() => syncMetadata.getArchivedYears()) ?? [];
+}
+
+/**
+ * Hook to get last synced timestamp from Dexie
+ */
+export function useLastSynced(): string | null {
+  return useLiveQuery(() => syncMetadata.getLastSynced()) ?? null;
+}
+
+/**
+ * Hook to get cloud file name from Dexie
+ */
+export function useCloudFileName(): string | null {
+  return useLiveQuery(() => syncMetadata.getFileName()) ?? null;
+}

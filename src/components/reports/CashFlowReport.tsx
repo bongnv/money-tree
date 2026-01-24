@@ -24,10 +24,9 @@ import {
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
-import { useTransactionStore } from '../../stores/useTransactionStore';
-import { useCategoryStore } from '../../stores/useCategoryStore';
-import { useAccountStore } from '../../stores/useAccountStore';
-import { useAppStore } from '../../stores/useAppStore';
+import { useTransactions } from '../../hooks/queries/useTransactions';
+import { useCategories, useTransactionTypes, useBaseCurrency } from '../../hooks/queries';
+import { useAccounts } from '../../hooks/queries/useAccounts';
 import { useReportService, useCalculationService } from '../../contexts/ServiceProviders';
 import { LineChart } from '../common/charts/LineChart';
 import { PieChart } from '../common/charts/PieChart';
@@ -65,11 +64,11 @@ const buildCashFlowTrendLines = (hasIncomeTypes: boolean, hasExpenseTypes: boole
 
 export const CashFlowReport: React.FC = () => {
   const navigate = useNavigate();
-  const transactions = useTransactionStore((state) => state.transactions);
-  const transactionTypes = useCategoryStore((state) => state.transactionTypes);
-  const categories = useCategoryStore((state) => state.categories);
-  const accounts = useAccountStore((state) => state.accounts);
-  const baseCurrency = useAppStore((state) => state.baseCurrency);
+  const transactions = useTransactions();
+  const transactionTypes = useTransactionTypes();
+  const categories = useCategories();
+  const accounts = useAccounts();
+  const baseCurrency = useBaseCurrency();
   const reportService = useReportService();
   const calculationService = useCalculationService();
 
@@ -89,6 +88,7 @@ export const CashFlowReport: React.FC = () => {
 
   // Calculate cash flow for selected period
   const filteredTransactions = useMemo(() => {
+    if (!transactions || !transactionTypes) return [];
     if (selectedCategories.length === 0) {
       return transactions;
     }
@@ -107,6 +107,8 @@ export const CashFlowReport: React.FC = () => {
   });
 
   useEffect(() => {
+    if (!filteredTransactions || !transactionTypes || !categories || !accounts) return;
+
     const calculateCashFlow = async () => {
       const data = await reportService.calculateCashFlow(
         filteredTransactions,
@@ -121,14 +123,23 @@ export const CashFlowReport: React.FC = () => {
     };
 
     calculateCashFlow();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startDate, endDate, conversionCurrency, selectedCategories]);
-  // filteredTransactions, transactionTypes, categories, accounts, and effectiveGetRateForMonth are stable or captured in closure
+  }, [
+    filteredTransactions,
+    transactionTypes,
+    categories,
+    accounts,
+    startDate,
+    endDate,
+    conversionCurrency,
+    reportService,
+  ]);
 
   // Calculate trend data
   const [trendData, setTrendData] = useState<any>([]);
 
   useEffect(() => {
+    if (!filteredTransactions || !transactionTypes || !categories || !accounts) return;
+
     const calculateTrend = async () => {
       // Determine interval based on date range duration
       const start = new Date(startDate);
@@ -150,10 +161,16 @@ export const CashFlowReport: React.FC = () => {
     };
 
     calculateTrend();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startDate, endDate, conversionCurrency, selectedCategories]);
-  // filteredTransactions, transactionTypes, categories, accounts, and effectiveGetRateForMonth are stable or captured in closure
-  // effectiveGetRateForMonth is stable from Zustand store
+  }, [
+    filteredTransactions,
+    transactionTypes,
+    categories,
+    accounts,
+    startDate,
+    endDate,
+    conversionCurrency,
+    reportService,
+  ]);
 
   // Calculate cumulative data
   const cumulativeData = useMemo(() => {
@@ -253,6 +270,8 @@ export const CashFlowReport: React.FC = () => {
       return;
     }
 
+    if (!filteredTransactions || !transactionTypes || !accounts) return;
+
     const calculateFiltered = async () => {
       const { incomeByType, expenseByType } =
         await calculationService.calculateTransactionTypeGrouping(
@@ -307,12 +326,12 @@ export const CashFlowReport: React.FC = () => {
 
   // Determine which transaction types exist in filtered categories
   const hasIncomeTypes = useMemo(
-    () => hasTransactionTypesInGroup(selectedCategories, transactionTypes, Group.INCOME),
+    () => hasTransactionTypesInGroup(selectedCategories, transactionTypes || [], Group.INCOME),
     [selectedCategories, transactionTypes]
   );
 
   const hasExpenseTypes = useMemo(
-    () => hasTransactionTypesInGroup(selectedCategories, transactionTypes, Group.EXPENSE),
+    () => hasTransactionTypesInGroup(selectedCategories, transactionTypes || [], Group.EXPENSE),
     [selectedCategories, transactionTypes]
   );
 
@@ -360,7 +379,7 @@ export const CashFlowReport: React.FC = () => {
           </Grid>
           <Grid item xs={12} sm={6} md={4.5}>
             <CategoryFilter
-              categories={categories}
+              categories={categories || []}
               selectedCategories={selectedCategories}
               onChange={handleCategoryChange}
               onClear={handleClearFilters}

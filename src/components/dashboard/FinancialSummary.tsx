@@ -2,12 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Grid, Alert } from '@mui/material';
 import { FinancialSummaryCard } from './FinancialSummaryCard';
-import { useAccountStore } from '../../stores/useAccountStore';
-import { useTransactionStore } from '../../stores/useTransactionStore';
-import { useAssetStore } from '../../stores/useAssetStore';
-import { useAppStore } from '../../stores/useAppStore';
-import { useCategoryStore } from '../../stores/useCategoryStore';
-import { useBudgetStore } from '../../stores/useBudgetStore';
+import { useAccounts } from '../../hooks/queries/useAccounts';
+import { useTransactions } from '../../hooks/queries/useTransactions';
+import { useAssets } from '../../hooks/queries/useAssets';
+import { useCategories, useTransactionTypes, useBaseCurrency } from '../../hooks/queries';
+import { useBudgets } from '../../hooks/queries/useBudgets';
 import { useCalculationService, useReportService } from '../../contexts/ServiceProviders';
 import type { PeriodOption } from '../common/PeriodSelector';
 import { formatCurrency } from '../../utils/currency.utils';
@@ -18,13 +17,13 @@ export interface FinancialSummaryProps {
 
 export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) => {
   const navigate = useNavigate();
-  const accounts = useAccountStore((state) => state.accounts);
-  const transactions = useTransactionStore((state) => state.transactions);
-  const manualAssets = useAssetStore((state) => state.manualAssets);
-  const budgets = useBudgetStore((state) => state.budgets);
-  const categories = useCategoryStore((state) => state.categories);
-  const transactionTypes = useCategoryStore((state) => state.transactionTypes);
-  const baseCurrency = useAppStore((state) => state.baseCurrency);
+  const accounts = useAccounts();
+  const transactions = useTransactions();
+  const manualAssets = useAssets();
+  const budgets = useBudgets();
+  const categories = useCategories();
+  const transactionTypes = useTransactionTypes();
+  const baseCurrency = useBaseCurrency();
   const calculationService = useCalculationService();
   const reportService = useReportService();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -38,6 +37,8 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
 
   // Calculate net worth with currency conversion
   useEffect(() => {
+    if (!accounts || !transactions || !manualAssets) return;
+
     const calculateNetWorth = async () => {
       try {
         const worth = await calculationService.calculateNetWorth(
@@ -62,6 +63,8 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
 
   // Calculate cash flow and budget performance
   useEffect(() => {
+    if (!transactions || !transactionTypes || !categories || !accounts || !budgets) return;
+
     const calculateMetrics = async () => {
       const periodTransactions = transactions.filter(
         (t) => t.date >= period.startDate && t.date <= period.endDate

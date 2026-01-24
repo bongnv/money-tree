@@ -1,18 +1,20 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ManualAssetsPage } from './ManualAssetsPage';
-import { useAssetStore } from '../../stores/useAssetStore';
+import { useAssets } from '../../hooks/queries/useAssets';
+import { useAssetMutations } from '../../hooks/mutations/useAssetMutations';
 import { AssetType } from '../../types/enums';
 
-jest.mock('../../stores/useAssetStore');
+jest.mock('../../hooks/queries/useAssets');
+jest.mock('../../hooks/mutations/useAssetMutations');
 
 describe('ManualAssetsPage', () => {
   const mockDeleteManualAsset = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useAssetStore as unknown as jest.Mock).mockReturnValue({
-      manualAssets: [],
-      deleteManualAsset: mockDeleteManualAsset,
+    (useAssets as jest.Mock).mockReturnValue([]);
+    (useAssetMutations as jest.Mock).mockReturnValue({
+      deleteAsset: mockDeleteManualAsset,
     });
   });
 
@@ -38,20 +40,17 @@ describe('ManualAssetsPage', () => {
   });
 
   it('should display assets from store', () => {
-    (useAssetStore as unknown as jest.Mock).mockReturnValue({
-      manualAssets: [
-        {
-          id: 'asset-1',
-          name: 'House',
-          type: AssetType.REAL_ESTATE,
-          currencyCode: 'USD',
-          valueHistory: [{ date: '2024-01-15', value: 500000 }],
-          createdAt: '2024-01-01T00:00:00.000Z',
-          updatedAt: '2024-01-01T00:00:00.000Z',
-        },
-      ],
-      deleteManualAsset: mockDeleteManualAsset,
-    });
+    (useAssets as jest.Mock).mockReturnValue([
+      {
+        id: 'asset-1',
+        name: 'House',
+        type: AssetType.REAL_ESTATE,
+        currencyCode: 'USD',
+        valueHistory: [{ date: '2024-01-15', value: 500000 }],
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+    ]);
 
     render(<ManualAssetsPage />);
 
@@ -59,20 +58,17 @@ describe('ManualAssetsPage', () => {
   });
 
   it('should open edit dialog when edit is clicked', () => {
-    (useAssetStore as unknown as jest.Mock).mockReturnValue({
-      manualAssets: [
-        {
-          id: 'asset-1',
-          name: 'House',
-          type: AssetType.REAL_ESTATE,
-          currencyCode: 'USD',
-          valueHistory: [{ date: '2024-01-15', value: 500000 }],
-          createdAt: '2024-01-01T00:00:00.000Z',
-          updatedAt: '2024-01-01T00:00:00.000Z',
-        },
-      ],
-      deleteManualAsset: mockDeleteManualAsset,
-    });
+    (useAssets as jest.Mock).mockReturnValue([
+      {
+        id: 'asset-1',
+        name: 'House',
+        type: AssetType.REAL_ESTATE,
+        currencyCode: 'USD',
+        valueHistory: [{ date: '2024-01-15', value: 500000 }],
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+    ]);
 
     render(<ManualAssetsPage />);
 
@@ -83,20 +79,17 @@ describe('ManualAssetsPage', () => {
   });
 
   it('should show delete confirmation dialog', () => {
-    (useAssetStore as unknown as jest.Mock).mockReturnValue({
-      manualAssets: [
-        {
-          id: 'asset-1',
-          name: 'House',
-          type: AssetType.REAL_ESTATE,
-          currencyCode: 'USD',
-          valueHistory: [{ date: '2024-01-15', value: 500000 }],
-          createdAt: '2024-01-01T00:00:00.000Z',
-          updatedAt: '2024-01-01T00:00:00.000Z',
-        },
-      ],
-      deleteManualAsset: mockDeleteManualAsset,
-    });
+    (useAssets as jest.Mock).mockReturnValue([
+      {
+        id: 'asset-1',
+        name: 'House',
+        type: AssetType.REAL_ESTATE,
+        currencyCode: 'USD',
+        valueHistory: [{ date: '2024-01-15', value: 500000 }],
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+    ]);
 
     render(<ManualAssetsPage />);
 
@@ -108,20 +101,17 @@ describe('ManualAssetsPage', () => {
   });
 
   it('should delete asset when confirmed', async () => {
-    (useAssetStore as unknown as jest.Mock).mockReturnValue({
-      manualAssets: [
-        {
-          id: 'asset-1',
-          name: 'House',
-          type: AssetType.REAL_ESTATE,
-          currencyCode: 'USD',
-          valueHistory: [{ date: '2024-01-15', value: 500000 }],
-          createdAt: '2024-01-01T00:00:00.000Z',
-          updatedAt: '2024-01-01T00:00:00.000Z',
-        },
-      ],
-      deleteManualAsset: mockDeleteManualAsset,
-    });
+    (useAssets as jest.Mock).mockReturnValue([
+      {
+        id: 'asset-1',
+        name: 'House',
+        type: AssetType.REAL_ESTATE,
+        currencyCode: 'USD',
+        valueHistory: [{ date: '2024-01-15', value: 500000 }],
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+    ]);
 
     render(<ManualAssetsPage />);
 
@@ -137,20 +127,17 @@ describe('ManualAssetsPage', () => {
   });
 
   it('should cancel delete when cancel is clicked', async () => {
-    (useAssetStore as unknown as jest.Mock).mockReturnValue({
-      manualAssets: [
-        {
-          id: 'asset-1',
-          name: 'House',
-          type: AssetType.REAL_ESTATE,
-          currencyCode: 'USD',
-          valueHistory: [{ date: '2024-01-15', value: 500000 }],
-          createdAt: '2024-01-01T00:00:00.000Z',
-          updatedAt: '2024-01-01T00:00:00.000Z',
-        },
-      ],
-      deleteManualAsset: mockDeleteManualAsset,
-    });
+    (useAssets as jest.Mock).mockReturnValue([
+      {
+        id: 'asset-1',
+        name: 'House',
+        type: AssetType.REAL_ESTATE,
+        currencyCode: 'USD',
+        valueHistory: [{ date: '2024-01-15', value: 500000 }],
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+    ]);
 
     render(<ManualAssetsPage />);
 

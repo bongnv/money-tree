@@ -4,7 +4,7 @@ import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import type { Account } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
 import { useCalculationService } from '../../contexts/ServiceProviders';
-import { useTransactionStore } from '../../stores/useTransactionStore';
+import { useTransactions } from '../../hooks/queries/useTransactions';
 
 interface AccountCardProps {
   account: Account;
@@ -13,9 +13,9 @@ interface AccountCardProps {
 }
 
 export const AccountCard: React.FC<AccountCardProps> = ({ account, onEdit, onDelete }) => {
-  const { transactions } = useTransactionStore();
+  const transactions = useTransactions();
   const calculationService = useCalculationService();
-  const currentBalance = calculationService.calculateAccountBalance(account, transactions);
+  const currentBalance = calculationService.calculateAccountBalance(account, transactions || []);
 
   const handleEdit = () => {
     onEdit(account);

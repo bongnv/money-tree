@@ -32,9 +32,19 @@ export const SettingsLayout: React.FC = () => {
     navigate(newValue);
   };
 
-  // Default to preferences if on base route
-  const currentTab =
-    location.pathname === '/settings' ? '/settings/preferences' : location.pathname;
+  // Match current path to closest parent tab
+  // For detail pages like /settings/categories/{id}, use the parent route
+  const getCurrentTab = () => {
+    if (location.pathname === '/settings') {
+      return '/settings/preferences';
+    }
+
+    // Find the matching parent tab
+    const matchingTab = navItems.find((item) => location.pathname.startsWith(item.path));
+    return matchingTab?.path || '/settings/preferences';
+  };
+
+  const currentTab = getCurrentTab();
 
   return (
     <Box sx={{ width: '100%' }}>

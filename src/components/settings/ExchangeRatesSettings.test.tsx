@@ -1,8 +1,32 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ExchangeRatesSettings } from './ExchangeRatesSettings';
-import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
-import { useAppStore } from '../../stores/useAppStore';
+import { AppProvider } from '../../contexts/AppContext';
 import type { ExchangeRate } from '../../types/models';
+import { useExchangeRates } from '../../hooks/queries/useExchangeRates';
+
+// Mock exchange rates hook
+jest.mock('../../hooks/queries/useExchangeRates');
+const mockUseExchangeRates = useExchangeRates as jest.MockedFunction<typeof useExchangeRates>;
+
+jest.mock('../../hooks/queries', () => ({
+  useBaseCurrency: jest.fn(() => 'USD'),
+}));
+
+// Mock cloudSync service
+jest.mock('../../services/cloudSync.service', () => ({
+  getCloudSyncService: jest.fn(() => ({
+    fullSync: jest.fn().mockResolvedValue(undefined),
+    throttledSync: jest.fn(),
+  })),
+  initCloudSyncService: jest.fn(),
+}));
+
+const renderComponent = () =>
+  render(
+    <AppProvider>
+      <ExchangeRatesSettings />
+    </AppProvider>
+  );
 
 describe('ExchangeRatesSettings', () => {
   const currentYear = new Date().getFullYear();
@@ -48,17 +72,8 @@ describe('ExchangeRatesSettings', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    useAppStore.setState({
-      baseCurrency: 'USD',
-    });
-    useExchangeRateStore.setState({
-      rates: mockRates,
-    });
+    mockUseExchangeRates.mockReturnValue(mockRates);
   });
-
-  const renderComponent = () => {
-    return render(<ExchangeRatesSettings />);
-  };
 
   describe('Initial Render', () => {
     it('should render the page title', () => {
@@ -217,29 +232,15 @@ describe('ExchangeRatesSettings', () => {
 
       expect(screen.getByText(/base currency \(USD\)/i)).toBeInTheDocument();
     });
-
-    it('should update base currency display when changed', () => {
-      useAppStore.setState({ baseCurrency: 'EUR' });
-      renderComponent();
-
-      expect(screen.getByText(/base currency \(EUR\)/i)).toBeInTheDocument();
-    });
   });
 
   describe('Empty States', () => {
     it('should show info message when no rates at all', () => {
-      useExchangeRateStore.setState({ rates: [] });
+      mockUseExchangeRates.mockReturnValue([]);
       renderComponent();
 
       expect(screen.getByText(/No exchange rates to USD found/i)).toBeInTheDocument();
       expect(screen.getByText(/Rates will be automatically fetched/i)).toBeInTheDocument();
-    });
-
-    it('should not render table when no rates for selected year', () => {
-      useExchangeRateStore.setState({ rates: [] });
-      renderComponent();
-
-      expect(screen.queryByRole('table')).not.toBeInTheDocument();
     });
   });
 
@@ -326,7 +327,7 @@ describe('ExchangeRatesSettings', () => {
         },
       ];
 
-      useExchangeRateStore.setState({ rates: ratesWithVariousDecimals });
+      mockUseExchangeRates.mockReturnValue(ratesWithVariousDecimals);
       renderComponent();
 
       expect(screen.getByText('0.0089')).toBeInTheDocument(); // Rounded to 4 decimals

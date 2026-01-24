@@ -2,9 +2,9 @@ import React from 'react';
 import { Box, Typography, Button, Paper, IconButton, Chip } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { useTransactionStore } from '../../stores/useTransactionStore';
-import { useCategoryStore } from '../../stores/useCategoryStore';
-import { useAccountStore } from '../../stores/useAccountStore';
+import { useTransactions } from '../../hooks/queries/useTransactions';
+import { useTransactionTypes } from '../../hooks/queries/useTransactionTypes';
+import { useAccounts } from '../../hooks/queries/useAccounts';
 import { formatDate } from '../../utils/date.utils';
 import { formatCurrency } from '../../utils/currency.utils';
 import { Group, CurrencyCode } from '../../types/enums';
@@ -20,14 +20,14 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const transactions = useTransactionStore((state) => state.transactions);
-  const transactionTypes = useCategoryStore((state) => state.transactionTypes);
-  const accounts = useAccountStore((state) => state.accounts);
+  const transactions = useTransactions();
+  const transactionTypes = useTransactionTypes();
+  const accounts = useAccounts();
 
   // Get recent transactions sorted by date (newest first)
-  const recentTransactions = [...transactions]
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, limit);
+  const recentTransactions = transactions
+    ? [...transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, limit)
+    : [];
 
   if (recentTransactions.length === 0) {
     return (
@@ -43,12 +43,12 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
   }
 
   const getTransactionTypeName = (transactionTypeId: string): string => {
-    const type = transactionTypes.find((t) => t.id === transactionTypeId);
+    const type = transactionTypes?.find((t) => t.id === transactionTypeId);
     return type?.name || 'Unknown';
   };
 
   const isIncome = (transactionTypeId: string): boolean => {
-    const type = transactionTypes.find((t) => t.id === transactionTypeId);
+    const type = transactionTypes?.find((t) => t.id === transactionTypeId);
     if (!type) return false;
     return type.group === Group.INCOME;
   };
@@ -57,7 +57,7 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
     // For income, use toAccountId; for expenses, use fromAccountId
     const accountId = transaction.toAccountId || transaction.fromAccountId;
     if (!accountId) return CurrencyCode.USD; // Fallback if no account
-    const account = accounts.find((a) => a.id === accountId);
+    const account = accounts?.find((a) => a.id === accountId);
     return account?.currencyCode || CurrencyCode.USD;
   };
 

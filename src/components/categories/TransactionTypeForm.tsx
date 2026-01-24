@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { TextField, MenuItem, Box, Button } from '@mui/material';
 import type { TransactionType, Category } from '../../types/models';
 import { Group } from '../../types/enums';
-import { useAccountStore } from '../../stores/useAccountStore';
+import { useAccounts } from '../../hooks/queries/useAccounts';
 
 interface TransactionTypeFormProps {
   transactionType?: TransactionType;
@@ -19,7 +19,7 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
-  const accounts = useAccountStore((state) => state.accounts);
+  const accounts = useAccounts();
 
   const [formData, setFormData] = useState({
     name: transactionType?.name || '',
@@ -187,7 +187,7 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
             <MenuItem value="">
               <em>None</em>
             </MenuItem>
-            {accounts
+            {(accounts || [])
               .filter((account) => account.isActive)
               .map((account) => (
                 <MenuItem key={account.id} value={account.id}>
@@ -208,7 +208,7 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
             <MenuItem value="">
               <em>None</em>
             </MenuItem>
-            {accounts
+            {(accounts || [])
               .filter((account) => account.isActive)
               .map((account) => (
                 <MenuItem key={account.id} value={account.id}>

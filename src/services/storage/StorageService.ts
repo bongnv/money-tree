@@ -195,9 +195,8 @@ export class StorageService {
             return await this.currentProvider.readMainFile();
           } catch (retryError) {
             console.error('Failed to load data after reconnection:', retryError);
-            throw new Error(
-              `Failed to load data after reconnection: ${retryError instanceof Error ? retryError.message : String(retryError)}`
-            );
+            // Re-throw original error instead of wrapping it
+            throw retryError;
           }
         } else {
           // User dismissed - keep connection but throw error
@@ -256,6 +255,25 @@ export class StorageService {
    */
   get provider(): IStorageProvider | null {
     return this.currentProvider;
+  }
+
+  /**
+   * Helper methods for compatibility with new architecture
+   */
+  getCurrentFileName(): string | null {
+    return this.fileName;
+  }
+
+  getCurrentProviderName(): string | null {
+    return this.providerName;
+  }
+
+  async save(data: DataFile): Promise<void> {
+    return this.saveDataFile(data);
+  }
+
+  async load(): Promise<DataFile | null> {
+    return this.loadDataFile();
   }
 
   // ==================== PRIVATE METHODS ====================

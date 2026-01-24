@@ -3,21 +3,28 @@ import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { TransactionsPage } from './TransactionsPage';
-import { useTransactionStore } from '../../stores/useTransactionStore';
-import { useAccountStore } from '../../stores/useAccountStore';
-import { useCategoryStore } from '../../stores/useCategoryStore';
+import { useTransactions } from '../../hooks/queries/useTransactions';
+import { useTransactionMutations } from '../../hooks/mutations/useTransactionMutations';
+import { useAccounts } from '../../hooks/queries/useAccounts';
+import { useCategories } from '../../hooks/queries/useCategories';
+import { useTransactionTypes } from '../../hooks/queries/useTransactionTypes';
+import { useAssets } from '../../hooks/queries/useAssets';
 import type { Transaction, Account, Category, TransactionType } from '../../types/models';
 import { Group, AccountType, CurrencyCode } from '../../types/enums';
 
-jest.mock('../../stores/useTransactionStore');
-jest.mock('../../stores/useAccountStore');
-jest.mock('../../stores/useCategoryStore');
+jest.mock('../../hooks/queries/useTransactions');
+jest.mock('../../hooks/mutations/useTransactionMutations');
+jest.mock('../../hooks/queries/useAccounts');
+jest.mock('../../hooks/queries/useCategories');
+jest.mock('../../hooks/queries/useTransactionTypes');
+jest.mock('../../hooks/queries/useAssets');
 
-const mockUseTransactionStore = useTransactionStore as jest.MockedFunction<
-  typeof useTransactionStore
->;
-const mockUseAccountStore = useAccountStore as jest.MockedFunction<typeof useAccountStore>;
-const mockUseCategoryStore = useCategoryStore as jest.MockedFunction<typeof useCategoryStore>;
+const mockUseTransactions = useTransactions as jest.Mock;
+const mockUseTransactionMutations = useTransactionMutations as jest.Mock;
+const mockUseAccounts = useAccounts as jest.Mock;
+const mockUseCategories = useCategories as jest.Mock;
+const mockUseTransactionTypes = useTransactionTypes as jest.Mock;
+const mockUseAssets = useAssets as jest.Mock;
 
 const renderWithRouter = (component: React.ReactElement) => {
   return render(<MemoryRouter>{component}</MemoryRouter>);
@@ -78,36 +85,17 @@ describe('TransactionsPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockUseTransactionStore.mockReturnValue({
-      transactions: [],
+    mockUseTransactions.mockReturnValue([]);
+    mockUseTransactionMutations.mockReturnValue({
       addTransaction: mockAddTransaction,
       updateTransaction: mockUpdateTransaction,
       deleteTransaction: mockDeleteTransaction,
-      getTransactionsByAccount: jest.fn(),
-      getTransactionsByType: jest.fn(),
-      getTransactionsByDateRange: jest.fn(),
     });
 
-    mockUseAccountStore.mockReturnValue({
-      accounts: mockAccounts,
-      addAccount: jest.fn(),
-      updateAccount: jest.fn(),
-      deleteAccount: jest.fn(),
-      getAccountById: jest.fn(),
-    });
-
-    mockUseCategoryStore.mockReturnValue({
-      categories: mockCategories,
-      transactionTypes: mockTransactionTypes,
-      addCategory: jest.fn(),
-      updateCategory: jest.fn(),
-      deleteCategory: jest.fn(),
-      addTransactionType: jest.fn(),
-      updateTransactionType: jest.fn(),
-      deleteTransactionType: jest.fn(),
-      getCategoryById: jest.fn(),
-      getTransactionTypeById: jest.fn(),
-    });
+    mockUseAccounts.mockReturnValue(mockAccounts);
+    mockUseCategories.mockReturnValue(mockCategories);
+    mockUseTransactionTypes.mockReturnValue(mockTransactionTypes);
+    mockUseAssets.mockReturnValue([]);
   });
 
   it('renders page title', () => {
@@ -126,15 +114,7 @@ describe('TransactionsPage', () => {
   });
 
   it('does not show empty state when transactions exist', () => {
-    mockUseTransactionStore.mockReturnValue({
-      transactions: mockTransactions,
-      addTransaction: mockAddTransaction,
-      updateTransaction: mockUpdateTransaction,
-      deleteTransaction: mockDeleteTransaction,
-      getTransactionsByAccount: jest.fn(),
-      getTransactionsByType: jest.fn(),
-      getTransactionsByDateRange: jest.fn(),
-    });
+    mockUseTransactions.mockReturnValue(mockTransactions);
 
     renderWithRouter(<TransactionsPage />);
     expect(screen.queryByText(/no transactions yet/i)).not.toBeInTheDocument();
@@ -315,15 +295,7 @@ describe('TransactionsPage', () => {
   });
 
   it('renders TransactionList when transactions exist', () => {
-    mockUseTransactionStore.mockReturnValue({
-      transactions: mockTransactions,
-      addTransaction: mockAddTransaction,
-      updateTransaction: mockUpdateTransaction,
-      deleteTransaction: mockDeleteTransaction,
-      getTransactionsByAccount: jest.fn(),
-      getTransactionsByType: jest.fn(),
-      getTransactionsByDateRange: jest.fn(),
-    });
+    mockUseTransactions.mockReturnValue(mockTransactions);
 
     renderWithRouter(<TransactionsPage />);
 
@@ -333,15 +305,7 @@ describe('TransactionsPage', () => {
   });
 
   it('opens edit dialog when edit button is clicked', async () => {
-    mockUseTransactionStore.mockReturnValue({
-      transactions: mockTransactions,
-      addTransaction: mockAddTransaction,
-      updateTransaction: mockUpdateTransaction,
-      deleteTransaction: mockDeleteTransaction,
-      getTransactionsByAccount: jest.fn(),
-      getTransactionsByType: jest.fn(),
-      getTransactionsByDateRange: jest.fn(),
-    });
+    mockUseTransactions.mockReturnValue(mockTransactions);
 
     const user = userEvent.setup();
     renderWithRouter(<TransactionsPage />);
@@ -355,15 +319,7 @@ describe('TransactionsPage', () => {
   });
 
   it('opens delete confirmation when delete button is clicked', async () => {
-    mockUseTransactionStore.mockReturnValue({
-      transactions: mockTransactions,
-      addTransaction: mockAddTransaction,
-      updateTransaction: mockUpdateTransaction,
-      deleteTransaction: mockDeleteTransaction,
-      getTransactionsByAccount: jest.fn(),
-      getTransactionsByType: jest.fn(),
-      getTransactionsByDateRange: jest.fn(),
-    });
+    mockUseTransactions.mockReturnValue(mockTransactions);
 
     const user = userEvent.setup();
     renderWithRouter(<TransactionsPage />);
@@ -379,15 +335,7 @@ describe('TransactionsPage', () => {
   });
 
   it('cancels delete when cancel button is clicked', async () => {
-    mockUseTransactionStore.mockReturnValue({
-      transactions: mockTransactions,
-      addTransaction: mockAddTransaction,
-      updateTransaction: mockUpdateTransaction,
-      deleteTransaction: mockDeleteTransaction,
-      getTransactionsByAccount: jest.fn(),
-      getTransactionsByType: jest.fn(),
-      getTransactionsByDateRange: jest.fn(),
-    });
+    mockUseTransactions.mockReturnValue(mockTransactions);
 
     const user = userEvent.setup();
     renderWithRouter(<TransactionsPage />);
@@ -411,15 +359,7 @@ describe('TransactionsPage', () => {
   });
 
   it('calls updateTransaction when editing existing transaction', async () => {
-    mockUseTransactionStore.mockReturnValue({
-      transactions: mockTransactions,
-      addTransaction: mockAddTransaction,
-      updateTransaction: mockUpdateTransaction,
-      deleteTransaction: mockDeleteTransaction,
-      getTransactionsByAccount: jest.fn(),
-      getTransactionsByType: jest.fn(),
-      getTransactionsByDateRange: jest.fn(),
-    });
+    mockUseTransactions.mockReturnValue(mockTransactions);
 
     const user = userEvent.setup();
     renderWithRouter(<TransactionsPage />);
@@ -477,15 +417,7 @@ describe('TransactionsPage', () => {
       updatedAt: '2026-01-06T00:00:00.000Z',
     };
 
-    mockUseTransactionStore.mockReturnValue({
-      transactions: [...mockTransactions, additionalTransaction],
-      addTransaction: mockAddTransaction,
-      updateTransaction: mockUpdateTransaction,
-      deleteTransaction: mockDeleteTransaction,
-      getTransactionsByAccount: jest.fn(),
-      getTransactionsByType: jest.fn(),
-      getTransactionsByDateRange: jest.fn(),
-    });
+    mockUseTransactions.mockReturnValue([...mockTransactions, additionalTransaction]);
 
     const user = userEvent.setup();
     renderWithRouter(<TransactionsPage />);
@@ -533,15 +465,7 @@ describe('TransactionsPage', () => {
 
   describe('Empty State', () => {
     it('shows empty state when no transactions exist', () => {
-      mockUseTransactionStore.mockReturnValue({
-        transactions: [],
-        addTransaction: mockAddTransaction,
-        updateTransaction: mockUpdateTransaction,
-        deleteTransaction: mockDeleteTransaction,
-        getTransactionsByAccount: jest.fn(),
-        getTransactionsByType: jest.fn(),
-        getTransactionsByDateRange: jest.fn(),
-      });
+      mockUseTransactions.mockReturnValue([]);
 
       renderWithRouter(<TransactionsPage />);
 
@@ -551,15 +475,7 @@ describe('TransactionsPage', () => {
 
   describe('Transaction List Display', () => {
     it('displays transaction details correctly', () => {
-      mockUseTransactionStore.mockReturnValue({
-        transactions: mockTransactions,
-        addTransaction: mockAddTransaction,
-        updateTransaction: mockUpdateTransaction,
-        deleteTransaction: mockDeleteTransaction,
-        getTransactionsByAccount: jest.fn(),
-        getTransactionsByType: jest.fn(),
-        getTransactionsByDateRange: jest.fn(),
-      });
+      mockUseTransactions.mockReturnValue(mockTransactions);
 
       renderWithRouter(<TransactionsPage />);
 
@@ -589,15 +505,7 @@ describe('TransactionsPage', () => {
         },
       ];
 
-      mockUseTransactionStore.mockReturnValue({
-        transactions: multipleTransactions,
-        addTransaction: mockAddTransaction,
-        updateTransaction: mockUpdateTransaction,
-        deleteTransaction: mockDeleteTransaction,
-        getTransactionsByAccount: jest.fn(),
-        getTransactionsByType: jest.fn(),
-        getTransactionsByDateRange: jest.fn(),
-      });
+      mockUseTransactions.mockReturnValue(multipleTransactions);
 
       renderWithRouter(<TransactionsPage />);
 

@@ -4,11 +4,11 @@ import { BrowserRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { BalanceSheet } from './BalanceSheet';
-import { useAccountStore } from '../../stores/useAccountStore';
-import { useAssetStore } from '../../stores/useAssetStore';
-import { useTransactionStore } from '../../stores/useTransactionStore';
-import { useAppStore } from '../../stores/useAppStore';
-import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
+import { useAccounts } from '../../hooks/queries/useAccounts';
+import { useAssets } from '../../hooks/queries/useAssets';
+import { useTransactions } from '../../hooks/queries/useTransactions';
+import { useAppContext } from '../../contexts/AppContext';
+import { AppProvider } from '../../contexts/AppContext';
 import { AccountType, AssetType } from '../../types/enums';
 import type { Account, ManualAsset, Transaction } from '../../types/models';
 
@@ -24,12 +24,17 @@ jest.mock('../../contexts/ServiceProviders', () => ({
   useReportService: () => mockReportService,
 }));
 
-// Mock stores
-jest.mock('../../stores/useAccountStore');
-jest.mock('../../stores/useAssetStore');
-jest.mock('../../stores/useTransactionStore');
-jest.mock('../../stores/useAppStore');
-jest.mock('../../stores/useExchangeRateStore');
+// Mock hooks
+jest.mock('../../hooks/queries/useAccounts');
+jest.mock('../../hooks/queries', () => ({
+  useBaseCurrency: jest.fn(() => 'USD'),
+}));
+jest.mock('../../hooks/queries/useAssets');
+jest.mock('../../hooks/queries/useTransactions');
+jest.mock('../../contexts/AppContext', () => ({
+  ...jest.requireActual('../../contexts/AppContext'),
+  useAppContext: jest.fn(),
+}));
 
 // Mock chart components
 jest.mock('../common/charts/LineChart', () => ({
@@ -165,26 +170,15 @@ describe('BalanceSheet', () => {
     changePercent: 6.1,
   };
 
-  const mockGetRateForMonth = jest.fn().mockResolvedValue(1);
-
   beforeEach(() => {
     jest.clearAllMocks();
 
-    (useAccountStore as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({ accounts: mockAccounts })
-    );
-    (useAssetStore as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({ manualAssets: mockManualAssets })
-    );
-    (useTransactionStore as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({ transactions: mockTransactions })
-    );
-    (useAppStore as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({ baseCurrency: 'USD' })
-    );
-    (useExchangeRateStore as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({ getRateForMonth: mockGetRateForMonth })
-    );
+    (useAccounts as jest.Mock).mockReturnValue(mockAccounts);
+    (useAssets as jest.Mock).mockReturnValue(mockManualAssets);
+    (useTransactions as jest.Mock).mockReturnValue(mockTransactions);
+    (useAppContext as jest.Mock).mockReturnValue({
+      baseCurrency: 'USD',
+    });
 
     (mockReportService.calculateBalanceSheet as jest.Mock).mockResolvedValue(mockBalanceSheetData);
     (mockReportService.calculateNetWorthTrend as jest.Mock).mockResolvedValue(mockTrendData);
@@ -198,9 +192,11 @@ describe('BalanceSheet', () => {
 
   const renderComponent = () => {
     return render(
-      <BrowserRouter>
-        <BalanceSheet />
-      </BrowserRouter>
+      <AppProvider>
+        <BrowserRouter>
+          <BalanceSheet />
+        </BrowserRouter>
+      </AppProvider>
     );
   };
 
@@ -381,25 +377,6 @@ describe('BalanceSheet', () => {
       expect(screen.getByText(/Converting all amounts to USD/i)).toBeInTheDocument();
     });
 
-    it('should show loading indicator when fetching exchange rates', async () => {
-      // Create a delayed mock that stays pending
-      let resolveRate: any;
-      mockGetRateForMonth.mockImplementation(
-        () =>
-          new Promise((resolve) => {
-            resolveRate = resolve;
-            setTimeout(() => resolve(1), 200);
-          })
-      );
-
-      renderComponent();
-
-      // Check if loading indicator appears (it may be brief)
-      await waitFor(() => {
-        expect(mockReportService.calculateBalanceSheet).toHaveBeenCalled();
-      });
-    });
-
     it('should fetch exchange rates for all relevant currencies and months', async () => {
       renderComponent();
 
@@ -471,15 +448,9 @@ describe('BalanceSheet', () => {
 
   describe('Empty State', () => {
     it('should handle empty accounts, assets, and transactions gracefully', async () => {
-      (useAccountStore as unknown as jest.Mock).mockImplementation((selector) =>
-        selector({ accounts: [] })
-      );
-      (useAssetStore as unknown as jest.Mock).mockImplementation((selector) =>
-        selector({ manualAssets: [] })
-      );
-      (useTransactionStore as unknown as jest.Mock).mockImplementation((selector) =>
-        selector({ transactions: [] })
-      );
+      (useAccounts as jest.Mock).mockReturnValue([]);
+      (useAssets as jest.Mock).mockReturnValue([]);
+      (useTransactions as jest.Mock).mockReturnValue([]);
 
       renderComponent();
 
@@ -518,14 +489,14 @@ describe('BalanceSheet', () => {
         },
       ];
 
-      (useAccountStore as unknown as jest.Mock).mockImplementation((selector) =>
-        selector({ accounts: newAccounts })
-      );
+      (useAccounts as jest.Mock).mockReturnValue(newAccounts);
 
       rerender(
-        <BrowserRouter>
-          <BalanceSheet />
-        </BrowserRouter>
+        <AppProvider>
+          <BrowserRouter>
+            <BalanceSheet />
+          </BrowserRouter>
+        </AppProvider>
       );
 
       await waitFor(() => {

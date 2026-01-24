@@ -28,11 +28,10 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
-import { useBudgetStore } from '../../stores/useBudgetStore';
-import { useTransactionStore } from '../../stores/useTransactionStore';
-import { useCategoryStore } from '../../stores/useCategoryStore';
-import { useAccountStore } from '../../stores/useAccountStore';
-import { useAppStore } from '../../stores/useAppStore';
+import { useBudgets } from '../../hooks/queries/useBudgets';
+import { useTransactions } from '../../hooks/queries/useTransactions';
+import { useCategories, useTransactionTypes, useBaseCurrency } from '../../hooks/queries';
+import { useAccounts } from '../../hooks/queries/useAccounts';
 import { useReportService } from '../../contexts/ServiceProviders';
 import type { BudgetPerformanceData } from '../../services/report.service';
 import { LineChart } from '../common/charts/LineChart';
@@ -86,12 +85,12 @@ const buildBudgetTrendLines = (hasIncomeTypes: boolean, hasExpenseTypes: boolean
 
 export const BudgetPerformanceReport: React.FC = () => {
   const navigate = useNavigate();
-  const budgets = useBudgetStore((state) => state.budgets);
-  const transactions = useTransactionStore((state) => state.transactions);
-  const transactionTypes = useCategoryStore((state) => state.transactionTypes);
-  const categories = useCategoryStore((state) => state.categories);
-  const accounts = useAccountStore((state) => state.accounts);
-  const baseCurrency = useAppStore((state) => state.baseCurrency);
+  const budgets = useBudgets();
+  const transactions = useTransactions();
+  const transactionTypes = useTransactionTypes();
+  const categories = useCategories();
+  const accounts = useAccounts();
+  const baseCurrency = useBaseCurrency();
   const reportService = useReportService();
 
   // Date range state - default to Year to Date
@@ -119,6 +118,10 @@ export const BudgetPerformanceReport: React.FC = () => {
 
   // Filter transactions and budgets by selected categories
   const { filteredTransactions, filteredBudgets } = useMemo(() => {
+    if (!transactions || !budgets || !transactionTypes) {
+      return { filteredTransactions: [], filteredBudgets: [] };
+    }
+
     if (selectedCategories.length === 0) {
       return { filteredTransactions: transactions, filteredBudgets: budgets };
     }
@@ -149,6 +152,9 @@ export const BudgetPerformanceReport: React.FC = () => {
   });
 
   useEffect(() => {
+    if (!filteredBudgets || !filteredTransactions || !transactionTypes || !categories || !accounts)
+      return;
+
     const calculatePerformance = async () => {
       const data = await reportService.calculateBudgetPerformance(
         filteredBudgets,
@@ -179,6 +185,9 @@ export const BudgetPerformanceReport: React.FC = () => {
   const [rawTrendData, setRawTrendData] = useState<any[]>([]);
 
   useEffect(() => {
+    if (!filteredBudgets || !filteredTransactions || !transactionTypes || !categories || !accounts)
+      return;
+
     const calculateTrend = async () => {
       // Determine interval based on date range duration
       const start = new Date(startDate);
@@ -367,12 +376,12 @@ export const BudgetPerformanceReport: React.FC = () => {
 
   // Determine which transaction types exist in filtered categories
   const hasIncomeTypes = useMemo(
-    () => hasTransactionTypesInGroup(selectedCategories, transactionTypes, Group.INCOME),
+    () => hasTransactionTypesInGroup(selectedCategories, transactionTypes || [], Group.INCOME),
     [selectedCategories, transactionTypes]
   );
 
   const hasExpenseTypes = useMemo(
-    () => hasTransactionTypesInGroup(selectedCategories, transactionTypes, Group.EXPENSE),
+    () => hasTransactionTypesInGroup(selectedCategories, transactionTypes || [], Group.EXPENSE),
     [selectedCategories, transactionTypes]
   );
 
@@ -420,7 +429,7 @@ export const BudgetPerformanceReport: React.FC = () => {
           </Grid>
           <Grid item xs={12} sm={6} md={4.5}>
             <CategoryFilter
-              categories={categories}
+              categories={categories || []}
               selectedCategories={selectedCategories}
               onChange={handleCategoryChange}
               onClear={handleClearFilters}

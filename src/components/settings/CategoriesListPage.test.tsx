@@ -1,8 +1,28 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { CategoriesListPage } from './CategoriesListPage';
-import { useCategoryStore } from '../../stores/useCategoryStore';
 import type { Category, TransactionType } from '../../types/models';
+
+// Mock the hooks
+const mockUseCategories = jest.fn();
+const mockUseTransactionTypes = jest.fn();
+const mockAddCategory = jest.fn();
+const mockUpdateCategory = jest.fn();
+const mockDeleteCategory = jest.fn();
+
+jest.mock('../../hooks/queries', () => ({
+  useCategories: () => mockUseCategories(),
+  useTransactionTypes: () => mockUseTransactionTypes(),
+  useBaseCurrency: jest.fn(() => 'USD'),
+}));
+
+jest.mock('../../hooks/mutations/useCategoryMutations', () => ({
+  useCategoryMutations: () => ({
+    addCategory: mockAddCategory,
+    updateCategory: mockUpdateCategory,
+    deleteCategory: mockDeleteCategory,
+  }),
+}));
 
 // Mock the navigate function
 const mockNavigate = jest.fn();
@@ -55,19 +75,10 @@ describe('CategoriesListPage', () => {
     },
   ];
 
-  const mockAddCategory = jest.fn();
-  const mockUpdateCategory = jest.fn();
-  const mockDeleteCategory = jest.fn();
-
   beforeEach(() => {
     jest.clearAllMocks();
-    useCategoryStore.setState({
-      categories: mockCategories,
-      transactionTypes: mockTransactionTypes,
-      addCategory: mockAddCategory,
-      updateCategory: mockUpdateCategory,
-      deleteCategory: mockDeleteCategory,
-    });
+    mockUseCategories.mockReturnValue(mockCategories);
+    mockUseTransactionTypes.mockReturnValue(mockTransactionTypes);
   });
 
   const renderComponent = () => {
@@ -304,7 +315,7 @@ describe('CategoriesListPage', () => {
 
   describe('Edge Cases', () => {
     it('should render correctly with no categories', () => {
-      useCategoryStore.setState({ categories: [] });
+      mockUseCategories.mockReturnValue([]);
       renderComponent();
 
       expect(screen.getByRole('heading', { name: 'Categories' })).toBeInTheDocument();
@@ -333,7 +344,7 @@ describe('CategoriesListPage', () => {
         },
       ];
 
-      useCategoryStore.setState({ transactionTypes: multipleTransactionTypes });
+      mockUseTransactionTypes.mockReturnValue(multipleTransactionTypes);
       renderComponent();
 
       expect(screen.getByText('Food & Dining')).toBeInTheDocument();

@@ -1,8 +1,32 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { CategoryDetailPage } from './CategoryDetailPage';
-import { useCategoryStore } from '../../stores/useCategoryStore';
 import type { Category, TransactionType } from '../../types/models';
+
+// Mock the hooks
+const mockUseCategories = jest.fn();
+const mockUseTransactionTypes = jest.fn();
+const mockAddTransactionType = jest.fn();
+const mockUpdateTransactionType = jest.fn();
+const mockDeleteTransactionType = jest.fn();
+const mockArchiveTransactionType = jest.fn();
+const mockUnarchiveTransactionType = jest.fn();
+
+jest.mock('../../hooks/queries', () => ({
+  useCategories: () => mockUseCategories(),
+  useTransactionTypes: () => mockUseTransactionTypes(),
+  useBaseCurrency: jest.fn(() => 'USD'),
+}));
+
+jest.mock('../../hooks/mutations/useTransactionTypeMutations', () => ({
+  useTransactionTypeMutations: () => ({
+    addTransactionType: mockAddTransactionType,
+    updateTransactionType: mockUpdateTransactionType,
+    deleteTransactionType: mockDeleteTransactionType,
+    archiveTransactionType: mockArchiveTransactionType,
+    unarchiveTransactionType: mockUnarchiveTransactionType,
+  }),
+}));
 
 // Mock the navigate function and useParams
 const mockNavigate = jest.fn();
@@ -79,28 +103,17 @@ describe('CategoryDetailPage', () => {
     },
   ];
 
-  const mockAddTransactionType = jest.fn();
-  const mockUpdateTransactionType = jest.fn();
-  const mockDeleteTransactionType = jest.fn();
-  const mockArchiveTransactionType = jest.fn();
-  const mockUnarchiveTransactionType = jest.fn();
   const mockGetTransactionTypesByCategory = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetTransactionTypesByCategory.mockImplementation((categoryId: string) =>
-      mockTransactionTypes.filter((tt) => tt.categoryId === categoryId)
-    );
-
-    useCategoryStore.setState({
-      categories: mockCategories,
-      addTransactionType: mockAddTransactionType,
-      updateTransactionType: mockUpdateTransactionType,
-      deleteTransactionType: mockDeleteTransactionType,
-      archiveTransactionType: mockArchiveTransactionType,
-      unarchiveTransactionType: mockUnarchiveTransactionType,
-      getTransactionTypesByCategory: mockGetTransactionTypesByCategory,
-    });
+    mockUseCategories.mockReturnValue(mockCategories);
+    mockUseTransactionTypes.mockReturnValue(mockTransactionTypes);
+    mockAddTransactionType.mockResolvedValue(undefined);
+    mockUpdateTransactionType.mockResolvedValue(undefined);
+    mockDeleteTransactionType.mockResolvedValue(undefined);
+    mockArchiveTransactionType.mockResolvedValue(undefined);
+    mockUnarchiveTransactionType.mockResolvedValue(undefined);
   });
 
   const renderComponent = (categoryId = 'cat-1') => {
@@ -200,7 +213,7 @@ describe('CategoryDetailPage', () => {
       expect(screen.getByText('Add Transaction Type')).toBeInTheDocument();
     });
 
-    it('should add new transaction type when form is submitted', () => {
+    it('should add new transaction type when form is submitted', async () => {
       renderComponent('cat-1');
 
       // Open dialog
@@ -213,15 +226,17 @@ describe('CategoryDetailPage', () => {
       // Submit
       fireEvent.click(screen.getByRole('button', { name: /create/i }));
 
-      expect(mockAddTransactionType).toHaveBeenCalledWith(
-        expect.objectContaining({
-          id: mockUUID,
-          name: 'New Type',
-          isActive: true,
-          createdAt: expect.any(String),
-          updatedAt: expect.any(String),
-        })
-      );
+      await waitFor(() => {
+        expect(mockAddTransactionType).toHaveBeenCalledWith(
+          expect.objectContaining({
+            id: mockUUID,
+            name: 'New Type',
+            isActive: true,
+            createdAt: expect.any(String),
+            updatedAt: expect.any(String),
+          })
+        );
+      });
     });
 
     it('should close dialog after adding transaction type', async () => {
@@ -254,7 +269,7 @@ describe('CategoryDetailPage', () => {
       expect(screen.getByDisplayValue('Groceries')).toBeInTheDocument();
     });
 
-    it('should update transaction type when form is submitted', () => {
+    it('should update transaction type when form is submitted', async () => {
       renderComponent('cat-1');
 
       // Trigger edit
@@ -268,15 +283,17 @@ describe('CategoryDetailPage', () => {
       // Submit
       fireEvent.click(screen.getByRole('button', { name: /update/i }));
 
-      expect(mockUpdateTransactionType).toHaveBeenCalledWith(
-        'tt-1',
-        expect.objectContaining({
-          id: 'tt-1',
-          name: 'Updated Type',
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: expect.any(String),
-        })
-      );
+      await waitFor(() => {
+        expect(mockUpdateTransactionType).toHaveBeenCalledWith(
+          'tt-1',
+          expect.objectContaining({
+            id: 'tt-1',
+            name: 'Updated Type',
+            createdAt: '2024-01-01T00:00:00Z',
+            updatedAt: expect.any(String),
+          })
+        );
+      });
     });
 
     it('should close dialog after updating transaction type', () => {
@@ -305,14 +322,16 @@ describe('CategoryDetailPage', () => {
       );
     });
 
-    it('should delete transaction type when confirmed', () => {
+    it('should delete transaction type when confirmed', async () => {
       mockConfirm.mockReturnValue(true);
       renderComponent('cat-1');
 
       const deleteButton = screen.getByRole('button', { name: /delete groceries/i });
       fireEvent.click(deleteButton);
 
-      expect(mockDeleteTransactionType).toHaveBeenCalledWith('tt-1');
+      await waitFor(() => {
+        expect(mockDeleteTransactionType).toHaveBeenCalledWith('tt-1');
+      });
     });
 
     it('should not delete transaction type when cancelled', () => {
@@ -327,22 +346,26 @@ describe('CategoryDetailPage', () => {
   });
 
   describe('Archive/Unarchive Transaction Type', () => {
-    it('should archive active transaction type when archive button is clicked', () => {
+    it('should archive active transaction type when archive button is clicked', async () => {
       renderComponent('cat-1');
 
       const archiveButton = screen.getByRole('button', { name: /archive groceries/i });
       fireEvent.click(archiveButton);
 
-      expect(mockArchiveTransactionType).toHaveBeenCalledWith('tt-1');
+      await waitFor(() => {
+        expect(mockArchiveTransactionType).toHaveBeenCalledWith('tt-1');
+      });
     });
 
-    it('should unarchive inactive transaction type when unarchive button is clicked', () => {
+    it('should unarchive inactive transaction type when unarchive button is clicked', async () => {
       renderComponent('cat-2');
 
       const unarchiveButton = screen.getByRole('button', { name: /unarchive gas/i });
       fireEvent.click(unarchiveButton);
 
-      expect(mockUnarchiveTransactionType).toHaveBeenCalledWith('tt-3');
+      await waitFor(() => {
+        expect(mockUnarchiveTransactionType).toHaveBeenCalledWith('tt-3');
+      });
     });
   });
 
@@ -408,7 +431,7 @@ describe('CategoryDetailPage', () => {
         },
       ];
 
-      mockGetTransactionTypesByCategory.mockReturnValue(archivedTypes);
+      mockUseTransactionTypes.mockReturnValue(archivedTypes);
       renderComponent('cat-1');
 
       expect(screen.getByText('Archived Type')).toBeInTheDocument();

@@ -1,11 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { CashFlowReport } from './CashFlowReport';
-import { useTransactionStore } from '../../stores/useTransactionStore';
-import { useCategoryStore } from '../../stores/useCategoryStore';
-import { useAccountStore } from '../../stores/useAccountStore';
-import { useAppStore } from '../../stores/useAppStore';
-import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
+import { useTransactions } from '../../hooks/queries/useTransactions';
+import { useCategories, useTransactionTypes } from '../../hooks/queries';
+import { useAccounts } from '../../hooks/queries/useAccounts';
+import { useAppContext } from '../../contexts/AppContext';
+import { AppProvider } from '../../contexts/AppContext';
 
 // Mock services
 const mockReportService = {
@@ -22,12 +22,18 @@ jest.mock('../../contexts/ServiceProviders', () => ({
   useCalculationService: () => mockCalculationService,
 }));
 
-// Mock stores
-jest.mock('../../stores/useTransactionStore');
-jest.mock('../../stores/useCategoryStore');
-jest.mock('../../stores/useAccountStore');
-jest.mock('../../stores/useAppStore');
-jest.mock('../../stores/useExchangeRateStore');
+// Mock hooks
+jest.mock('../../hooks/queries/useTransactions');
+jest.mock('../../hooks/queries', () => ({
+  useCategories: jest.fn(),
+  useTransactionTypes: jest.fn(),
+  useBaseCurrency: jest.fn(() => 'USD'),
+}));
+jest.mock('../../hooks/queries/useAccounts');
+jest.mock('../../contexts/AppContext', () => ({
+  ...jest.requireActual('../../contexts/AppContext'),
+  useAppContext: jest.fn(),
+}));
 
 // Mock date utils
 jest.mock('../../utils/date.utils', () => ({
@@ -57,18 +63,14 @@ describe('CashFlowReport', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Mock stores
-    (useTransactionStore as jest.Mock).mockImplementation((selector) =>
-      selector({ transactions: [] })
-    );
-    (useCategoryStore as jest.Mock).mockImplementation((selector) =>
-      selector({ transactionTypes: [], categories: [] })
-    );
-    (useAccountStore as jest.Mock).mockImplementation((selector) => selector({ accounts: [] }));
-    (useAppStore as jest.Mock).mockImplementation((selector) => selector({ baseCurrency: 'USD' }));
-    (useExchangeRateStore as jest.Mock).mockImplementation((selector) =>
-      selector({ getRateForMonth: jest.fn(async () => 1) })
-    );
+    // Mock hooks
+    (useTransactions as jest.Mock).mockReturnValue([]);
+    (useCategories as jest.Mock).mockReturnValue([]);
+    (useTransactionTypes as jest.Mock).mockReturnValue([]);
+    (useAccounts as jest.Mock).mockReturnValue([]);
+    (useAppContext as jest.Mock).mockReturnValue({
+      baseCurrency: 'USD',
+    });
 
     // Mock report service
     (mockReportService.calculateCashFlow as jest.Mock) = jest.fn().mockResolvedValue({
@@ -88,9 +90,11 @@ describe('CashFlowReport', () => {
 
   it('renders the report title', async () => {
     render(
-      <MemoryRouter>
-        <CashFlowReport />
-      </MemoryRouter>
+      <AppProvider>
+        <MemoryRouter>
+          <CashFlowReport />
+        </MemoryRouter>
+      </AppProvider>
     );
 
     expect(screen.getByText('Cash Flow Report')).toBeInTheDocument();
@@ -98,9 +102,11 @@ describe('CashFlowReport', () => {
 
   it('displays income and expense summary cards', async () => {
     render(
-      <MemoryRouter>
-        <CashFlowReport />
-      </MemoryRouter>
+      <AppProvider>
+        <MemoryRouter>
+          <CashFlowReport />
+        </MemoryRouter>
+      </AppProvider>
     );
 
     await waitFor(() => {
@@ -112,9 +118,11 @@ describe('CashFlowReport', () => {
 
   it('renders charts', async () => {
     render(
-      <MemoryRouter>
-        <CashFlowReport />
-      </MemoryRouter>
+      <AppProvider>
+        <MemoryRouter>
+          <CashFlowReport />
+        </MemoryRouter>
+      </AppProvider>
     );
 
     // Wait for summary cards to ensure data loaded
@@ -125,9 +133,11 @@ describe('CashFlowReport', () => {
 
   it('calls report service with correct parameters', async () => {
     render(
-      <MemoryRouter>
-        <CashFlowReport />
-      </MemoryRouter>
+      <AppProvider>
+        <MemoryRouter>
+          <CashFlowReport />
+        </MemoryRouter>
+      </AppProvider>
     );
 
     await waitFor(() => {
@@ -146,9 +156,11 @@ describe('CashFlowReport', () => {
     });
 
     render(
-      <MemoryRouter>
-        <CashFlowReport />
-      </MemoryRouter>
+      <AppProvider>
+        <MemoryRouter>
+          <CashFlowReport />
+        </MemoryRouter>
+      </AppProvider>
     );
 
     await waitFor(() => {
@@ -158,9 +170,11 @@ describe('CashFlowReport', () => {
 
   it('renders toggle buttons for period and cumulative views', async () => {
     render(
-      <MemoryRouter>
-        <CashFlowReport />
-      </MemoryRouter>
+      <AppProvider>
+        <MemoryRouter>
+          <CashFlowReport />
+        </MemoryRouter>
+      </AppProvider>
     );
 
     await waitFor(() => {
@@ -171,9 +185,11 @@ describe('CashFlowReport', () => {
 
   it('defaults to period view mode', async () => {
     render(
-      <MemoryRouter>
-        <CashFlowReport />
-      </MemoryRouter>
+      <AppProvider>
+        <MemoryRouter>
+          <CashFlowReport />
+        </MemoryRouter>
+      </AppProvider>
     );
 
     await waitFor(() => {
@@ -184,9 +200,11 @@ describe('CashFlowReport', () => {
 
   it('switches to cumulative view when toggle button is clicked', async () => {
     const { user } = renderWithUser(
-      <MemoryRouter>
-        <CashFlowReport />
-      </MemoryRouter>
+      <AppProvider>
+        <MemoryRouter>
+          <CashFlowReport />
+        </MemoryRouter>
+      </AppProvider>
     );
 
     await waitFor(() => {
@@ -207,9 +225,11 @@ describe('CashFlowReport', () => {
     ]);
 
     const { user } = renderWithUser(
-      <MemoryRouter>
-        <CashFlowReport />
-      </MemoryRouter>
+      <AppProvider>
+        <MemoryRouter>
+          <CashFlowReport />
+        </MemoryRouter>
+      </AppProvider>
     );
 
     // Wait for data to load

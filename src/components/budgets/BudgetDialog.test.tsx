@@ -1,12 +1,18 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BudgetDialog } from './BudgetDialog';
-import { useCategoryStore } from '../../stores/useCategoryStore';
+import { useCategories, useTransactionTypes } from '../../hooks/queries';
 import type { Budget } from '../../types/models';
 import { Group } from '../../types/enums';
 
-// Mock the category store
-jest.mock('../../stores/useCategoryStore');
+// Mock the hooks
+jest.mock('../../hooks/queries', () => ({
+  useCategories: jest.fn(),
+  useTransactionTypes: jest.fn(),
+}));
+
+const mockUseCategories = useCategories as jest.MockedFunction<typeof useCategories>;
+const mockUseTransactionTypes = useTransactionTypes as jest.MockedFunction<typeof useTransactionTypes>;
 
 const mockCategories = [
   {
@@ -48,10 +54,8 @@ describe('BudgetDialog', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useCategoryStore as unknown as jest.Mock).mockReturnValue({
-      categories: mockCategories,
-      transactionTypes: mockTransactionTypes,
-    });
+    mockUseCategories.mockReturnValue(mockCategories);
+    mockUseTransactionTypes.mockReturnValue(mockTransactionTypes);
   });
 
   it('should render with "Add Budget" title when creating new budget', () => {

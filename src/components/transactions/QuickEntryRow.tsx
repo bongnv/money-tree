@@ -565,22 +565,25 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
 
       <Box sx={{ display: 'flex', gap: 0.5 }}>
         <Tooltip title="Add transaction (Enter)">
-          <IconButton
-            type="submit"
-            color="primary"
-            size="small"
-            disabled={!formData.amount || !formData.transactionTypeId}
-          >
-            <AddIcon />
-          </IconButton>
+          <span>
+            <IconButton
+              type="submit"
+              color="primary"
+              size="small"
+              disabled={!formData.amount || !formData.transactionTypeId}
+              aria-label="Add transaction (Enter)"
+            >
+              <AddIcon />
+            </IconButton>
+          </span>
         </Tooltip>
         <Tooltip title="Clear form (Esc)">
-          <IconButton onClick={handleClear} size="small">
+          <IconButton onClick={handleClear} size="small" aria-label="Clear form (Esc)">
             <ClearIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Open full dialog for complex transactions">
-          <IconButton onClick={onOpenFullDialog} size="small">
+          <IconButton onClick={onOpenFullDialog} size="small" aria-label="Open full dialog for complex transactions">
             <MoreIcon />
           </IconButton>
         </Tooltip>

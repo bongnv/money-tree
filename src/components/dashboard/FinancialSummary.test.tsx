@@ -1,13 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { FinancialSummary } from './FinancialSummary';
-import { useAccountStore } from '../../stores/useAccountStore';
-import { useTransactionStore } from '../../stores/useTransactionStore';
-import { useAssetStore } from '../../stores/useAssetStore';
-import { useAppStore } from '../../stores/useAppStore';
-import { useExchangeRateStore } from '../../stores/useExchangeRateStore';
-import { useCategoryStore } from '../../stores/useCategoryStore';
-import { useBudgetStore } from '../../stores/useBudgetStore';
+import { useAccounts } from '../../hooks/queries/useAccounts';
+import { useTransactions } from '../../hooks/queries/useTransactions';
+import { useAssets } from '../../hooks/queries/useAssets';
+import { useAppContext } from '../../contexts/AppContext';
+import { useCategories } from '../../hooks/queries/useCategories';
+import { useTransactionTypes } from '../../hooks/queries/useTransactionTypes';
+import { useBudgets } from '../../hooks/queries/useBudgets';
 import { AccountType, Group } from '../../types/enums';
 import type { PeriodOption } from '../common/PeriodSelector';
 
@@ -27,13 +27,13 @@ jest.mock('../../contexts/ServiceProviders', () => ({
   useReportService: () => mockReportService,
 }));
 
-jest.mock('../../stores/useAccountStore');
-jest.mock('../../stores/useTransactionStore');
-jest.mock('../../stores/useAssetStore');
-jest.mock('../../stores/useAppStore');
-jest.mock('../../stores/useExchangeRateStore');
-jest.mock('../../stores/useCategoryStore');
-jest.mock('../../stores/useBudgetStore');
+jest.mock('../../hooks/queries/useAccounts');
+jest.mock('../../hooks/queries/useTransactions');
+jest.mock('../../hooks/queries/useAssets');
+jest.mock('../../contexts/AppContext');
+jest.mock('../../hooks/queries/useCategories');
+jest.mock('../../hooks/queries/useTransactionTypes');
+jest.mock('../../hooks/queries/useBudgets');
 
 describe('FinancialSummary', () => {
   const mockPeriod: PeriodOption = {
@@ -63,105 +63,80 @@ describe('FinancialSummary', () => {
       budgets: [],
     });
 
-    // Default mock implementations
-    (useAccountStore as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({
-        accounts: [
-          {
-            id: 'acc1',
-            name: 'Checking Account',
-            type: AccountType.BANK_ACCOUNT,
-            currencyCode: 'USD',
-            initialBalance: 1000,
-            isActive: true,
-            createdAt: '2024-01-01T00:00:00.000Z',
-            updatedAt: '2024-01-01T00:00:00.000Z',
-          },
-        ],
-      })
-    );
+    // Mock Dexie hooks
+    (useAccounts as jest.Mock).mockReturnValue([
+      {
+        id: 'acc1',
+        name: 'Checking Account',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: 'USD',
+        initialBalance: 1000,
+        isActive: true,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+    ]);
 
-    (useTransactionStore as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({
-        transactions: [
-          {
-            id: 'tx1',
-            date: '2024-01-15',
-            description: 'Income',
-            amount: 3000,
-            transactionTypeId: 'type1',
-            toAccountId: 'acc1',
-            createdAt: '2024-01-15T00:00:00.000Z',
-            updatedAt: '2024-01-15T00:00:00.000Z',
-          },
-        ],
-      })
-    );
+    (useTransactions as jest.Mock).mockReturnValue([
+      {
+        id: 'tx1',
+        date: '2024-01-15',
+        description: 'Income',
+        amount: 3000,
+        transactionTypeId: 'type1',
+        toAccountId: 'acc1',
+        createdAt: '2024-01-15T00:00:00.000Z',
+        updatedAt: '2024-01-15T00:00:00.000Z',
+      },
+    ]);
 
-    (useAssetStore as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({
-        manualAssets: [
-          {
-            id: 'asset-1',
-            name: 'House',
-            type: 'real-estate' as const,
-            currencyCode: 'USD',
-            valueHistory: [{ date: '2026-01-01', value: 500000 }],
-            createdAt: '2026-01-01T00:00:00.000Z',
-            updatedAt: '2026-01-01T00:00:00.000Z',
-          },
-        ],
-      })
-    );
+    (useAssets as jest.Mock).mockReturnValue([
+      {
+        id: 'asset-1',
+        name: 'House',
+        type: 'real-estate' as const,
+        currencyCode: 'USD',
+        valueHistory: [{ date: '2026-01-01', value: 500000 }],
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ]);
 
-    (useAppStore as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({ baseCurrency: 'USD' })
-    );
+    (useAppContext as jest.Mock).mockReturnValue({ baseCurrency: 'USD' });
 
-    (useExchangeRateStore as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({ getRateForMonth: jest.fn(async () => 1) })
-    );
+    (useCategories as jest.Mock).mockReturnValue([
+      {
+        id: 'cat-1',
+        name: 'Income',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ]);
 
-    (useCategoryStore as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({
-        categories: [
-          {
-            id: 'cat-1',
-            name: 'Income',
-            createdAt: '2026-01-01T00:00:00.000Z',
-            updatedAt: '2026-01-01T00:00:00.000Z',
-          },
-        ],
-        transactionTypes: [
-          {
-            id: 'type-income',
-            name: 'Salary',
-            categoryId: 'cat-1',
-            group: Group.INCOME,
-            createdAt: '2026-01-01T00:00:00.000Z',
-            updatedAt: '2026-01-01T00:00:00.000Z',
-          },
-        ],
-      })
-    );
+    (useTransactionTypes as jest.Mock).mockReturnValue([
+      {
+        id: 'type-income',
+        name: 'Salary',
+        categoryId: 'cat-1',
+        group: Group.INCOME,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ]);
 
-    (useBudgetStore as unknown as jest.Mock).mockImplementation((selector) =>
-      selector({
-        budgets: [
-          {
-            id: 'budget-1',
-            transactionTypeId: 'type-expense',
-            currencyCode: 'USD',
-            amount: 1000,
-            period: 'monthly' as const,
-            startDate: '2026-01-01',
-            endDate: '2026-12-31',
-            createdAt: '2026-01-01T00:00:00.000Z',
-            updatedAt: '2026-01-01T00:00:00.000Z',
-          },
-        ],
-      })
-    );
+    (useBudgets as jest.Mock).mockReturnValue([
+      {
+        id: 'budget-1',
+        transactionTypeId: 'type-expense',
+        currencyCode: 'USD',
+        amount: 1000,
+        period: 'monthly' as const,
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ]);
   });
 
   it('renders financial summary cards', async () => {

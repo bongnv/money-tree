@@ -18,10 +18,10 @@ import {
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import type { BalanceSheetData } from '../../services/report.service';
-import { useAccountStore } from '../../stores/useAccountStore';
-import { useAssetStore } from '../../stores/useAssetStore';
-import { useTransactionStore } from '../../stores/useTransactionStore';
-import { useAppStore } from '../../stores/useAppStore';
+import { useAccounts } from '../../hooks/queries/useAccounts';
+import { useAssets } from '../../hooks/queries/useAssets';
+import { useTransactions } from '../../hooks/queries/useTransactions';
+import { useBaseCurrency } from '../../hooks/queries';
 import { useReportService } from '../../contexts/ServiceProviders';
 import { ManualAssetSection } from './ManualAssetSection';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
@@ -33,10 +33,10 @@ import type { CurrencyCode } from '../../types/enums';
 type ComparisonType = 'none' | 'month' | 'year';
 
 export const BalanceSheet: React.FC = () => {
-  const accounts = useAccountStore((state) => state.accounts);
-  const manualAssets = useAssetStore((state) => state.manualAssets);
-  const transactions = useTransactionStore((state) => state.transactions);
-  const baseCurrency = useAppStore((state) => state.baseCurrency);
+  const accounts = useAccounts();
+  const manualAssets = useAssets();
+  const transactions = useTransactions();
+  const baseCurrency = useBaseCurrency();
   const reportService = useReportService();
 
   // Use today as default date
@@ -56,6 +56,8 @@ export const BalanceSheet: React.FC = () => {
   });
 
   useEffect(() => {
+    if (!accounts || !manualAssets || !transactions) return;
+
     const calculateBalanceSheet = async () => {
       const data = await reportService.calculateBalanceSheet(
         accounts,
@@ -69,7 +71,6 @@ export const BalanceSheet: React.FC = () => {
 
     calculateBalanceSheet();
   }, [accounts, manualAssets, transactions, selectedDate, conversionCurrency]);
-  // effectiveGetRateForMonth is stable from Zustand store
 
   // Calculate comparison data
   const [comparison, setComparison] = useState<{
@@ -80,6 +81,8 @@ export const BalanceSheet: React.FC = () => {
   } | null>(null);
 
   useEffect(() => {
+    if (!accounts || !manualAssets || !transactions) return;
+
     const calculateComparison = async () => {
       if (comparisonType === 'month') {
         const data = await reportService.calculateMonthOverMonthComparison(
@@ -112,6 +115,8 @@ export const BalanceSheet: React.FC = () => {
   const [trendData, setTrendData] = useState<any[]>([]);
 
   useEffect(() => {
+    if (!accounts || !manualAssets || !transactions) return;
+
     const calculateTrend = async () => {
       // Parse date components to avoid timezone issues
       const [year, month, day] = selectedDate.split('-').map(Number);
@@ -174,7 +179,7 @@ export const BalanceSheet: React.FC = () => {
     setHistoryDialogAssetId(null);
   };
 
-  const selectedAsset = manualAssets.find((asset) => asset.id === historyDialogAssetId);
+  const selectedAsset = manualAssets?.find((asset) => asset.id === historyDialogAssetId);
 
   return (
     <Box>

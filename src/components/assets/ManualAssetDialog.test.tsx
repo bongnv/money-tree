@@ -1,41 +1,58 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ManualAssetDialog } from './ManualAssetDialog';
-import { useAssetStore } from '../../stores/useAssetStore';
+import { AppProvider } from '../../contexts/AppContext';
 import { AssetType } from '../../types/enums';
 import type { ManualAsset } from '../../types/models';
 
-jest.mock('../../stores/useAssetStore');
+// Mock Dexie hooks
+jest.mock('../../hooks/mutations/useAssetMutations');
+
+// Mock cloudSync
+jest.mock('../../services/cloudSync.service', () => ({
+  getCloudSyncService: jest.fn(() => ({
+    throttledSync: jest.fn(),
+  })),
+}));
+
+const renderWithProviders = (ui: React.ReactElement) => {
+  return render(<AppProvider>{ui}</AppProvider>);
+};
 
 describe('ManualAssetDialog', () => {
-  const mockAddManualAsset = jest.fn();
-  const mockUpdateManualAsset = jest.fn();
+  const mockAddAsset = jest.fn();
+  const mockUpdateAsset = jest.fn();
   const mockUpdateAssetValue = jest.fn();
   const mockOnClose = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useAssetStore as unknown as jest.Mock).mockReturnValue({
-      addManualAsset: mockAddManualAsset,
-      updateManualAsset: mockUpdateManualAsset,
+    
+    const { useAssetMutations } = require('../../hooks/mutations/useAssetMutations');
+    useAssetMutations.mockReturnValue({
+      addAsset: mockAddAsset,
+      updateAsset: mockUpdateAsset,
+      deleteAsset: jest.fn(),
       updateAssetValue: mockUpdateAssetValue,
+      isLoading: false,
+      error: null,
     });
   });
 
   describe('Create mode', () => {
     it('should render dialog with Add title', () => {
-      render(<ManualAssetDialog open={true} onClose={mockOnClose} />);
+      renderWithProviders(<ManualAssetDialog open={true} onClose={mockOnClose} />);
 
       expect(screen.getByText('Add Manual Asset')).toBeInTheDocument();
     });
 
     it('should not render when closed', () => {
-      render(<ManualAssetDialog open={false} onClose={mockOnClose} />);
+      renderWithProviders(<ManualAssetDialog open={false} onClose={mockOnClose} />);
 
       expect(screen.queryByText('Add Manual Asset')).not.toBeInTheDocument();
     });
 
     it('should call addManualAsset when form is submitted', async () => {
-      render(<ManualAssetDialog open={true} onClose={mockOnClose} />);
+      renderWithProviders(<ManualAssetDialog open={true} onClose={mockOnClose} />);
 
       fireEvent.change(screen.getByLabelText(/asset name/i), {
         target: { value: 'House' },
@@ -54,7 +71,7 @@ describe('ManualAssetDialog', () => {
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(mockAddManualAsset).toHaveBeenCalledWith(
+        expect(mockAddAsset).toHaveBeenCalledWith(
           expect.objectContaining({
             name: 'House',
             type: AssetType.REAL_ESTATE,
@@ -99,7 +116,7 @@ describe('ManualAssetDialog', () => {
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(mockUpdateManualAsset).toHaveBeenCalledWith(
+        expect(mockUpdateAsset).toHaveBeenCalledWith(
           'asset-1',
           expect.objectContaining({
             valueHistory: expect.arrayContaining([expect.objectContaining({ value: 600000 })]),

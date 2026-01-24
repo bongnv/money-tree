@@ -11,12 +11,14 @@ import {
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import type { ManualAsset } from '../../types/models';
-import { useAssetStore } from '../../stores/useAssetStore';
+import { useAssets } from '../../hooks/queries/useAssets';
+import { useAssetMutations } from '../../hooks/mutations/useAssetMutations';
 import { ManualAssetList } from './ManualAssetList';
 import { ManualAssetDialog } from './ManualAssetDialog';
 
 export const ManualAssetsPage: React.FC = () => {
-  const { manualAssets, deleteManualAsset } = useAssetStore();
+  const manualAssets = useAssets();
+  const { deleteAsset } = useAssetMutations();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<ManualAsset | undefined>();
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'update-value'>('create');
@@ -52,9 +54,9 @@ export const ManualAssetsPage: React.FC = () => {
     setDeleteDialogOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (assetToDelete) {
-      deleteManualAsset(assetToDelete.id);
+      await deleteAsset(assetToDelete.id);
     }
     setDeleteDialogOpen(false);
     setAssetToDelete(undefined);
@@ -77,7 +79,7 @@ export const ManualAssetsPage: React.FC = () => {
       </Box>
 
       <ManualAssetList
-        assets={manualAssets}
+        assets={manualAssets || []}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onUpdateValue={handleUpdateValue}

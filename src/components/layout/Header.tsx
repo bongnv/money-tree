@@ -19,7 +19,6 @@ import {
 } from '@mui/material';
 import {
   Sync as SyncIcon,
-  FiberManualRecord as DotIcon,
   Dashboard as DashboardIcon,
   ReceiptLong as TransactionsIcon,
   Assessment as ReportsIcon,
@@ -27,8 +26,9 @@ import {
   Settings as SettingsIcon,
   Menu as MenuIcon,
 } from '@mui/icons-material';
-import { useAppStore } from '../../stores/useAppStore';
-import { useSyncService } from '../../contexts/ServiceProviders';
+import { useAppContext } from '../../contexts/AppContext';
+import { useCloudFileName, useLastSynced } from '../../hooks/queries';
+import { getCloudSyncService } from '../../services/cloudSync.service';
 import { formatDistance } from 'date-fns';
 
 export const Header: React.FC = () => {
@@ -36,24 +36,26 @@ export const Header: React.FC = () => {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const syncService = useSyncService();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { fileName, lastSaved, hasUnsavedChanges, isLoading, isSyncing } = useAppStore();
+  const { isLoading, isSyncing } = useAppContext();
+  const cloudFileName = useCloudFileName();
+  const lastSynced = useLastSynced();
 
   const handleSync = async () => {
     try {
-      await syncService.syncNow();
+      const syncService = getCloudSyncService();
+      await syncService.fullSync();
     } catch (error) {
       console.error('Sync failed:', error);
     }
   };
 
   const getLastSyncedText = (): string => {
-    if (!lastSaved) {
+    if (!lastSynced) {
       return 'Never synced';
     }
     try {
-      return formatDistance(new Date(lastSaved), new Date(), { addSuffix: true });
+      return formatDistance(new Date(lastSynced), new Date(), { addSuffix: true });
     } catch {
       return 'Unknown';
     }
@@ -144,10 +146,9 @@ export const Header: React.FC = () => {
         {isMobile && <Box sx={{ flexGrow: 1 }} />}
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          {fileName && (
+          {cloudFileName && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="body2">{fileName}</Typography>
-              {hasUnsavedChanges && <DotIcon sx={{ fontSize: 12, color: 'warning.main' }} />}
+              <Typography variant="body2">{cloudFileName}</Typography>
             </Box>
           )}
 
@@ -161,7 +162,7 @@ export const Header: React.FC = () => {
               isLoading || isSyncing ? <CircularProgress size={20} color="inherit" /> : <SyncIcon />
             }
             onClick={handleSync}
-            disabled={isLoading || isSyncing || !hasUnsavedChanges}
+            disabled={isLoading || isSyncing}
             aria-label="Sync"
           >
             Sync

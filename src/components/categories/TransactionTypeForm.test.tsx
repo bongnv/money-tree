@@ -1,11 +1,38 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TransactionTypeForm } from './TransactionTypeForm';
+import { AppProvider } from '../../contexts/AppContext';
 import { Group } from '../../types/enums';
 import type { Category, TransactionType, Account } from '../../types/models';
-import { useAccountStore } from '../../stores/useAccountStore';
 
-jest.mock('../../stores/useAccountStore');
+// Mock Dexie hooks
+const mockUseAccounts = jest.fn();
+const mockAddTransactionType = jest.fn();
+const mockUpdateTransactionType = jest.fn();
+const mockDeleteTransactionType = jest.fn();
+
+jest.mock('../../hooks/queries/useAccounts', () => ({
+  useAccounts: () => mockUseAccounts(),
+}));
+
+jest.mock('../../hooks/mutations/useTransactionTypeMutations', () => ({
+  useTransactionTypeMutations: () => ({
+    addTransactionType: mockAddTransactionType,
+    updateTransactionType: mockUpdateTransactionType,
+    deleteTransactionType: mockDeleteTransactionType,
+  }),
+}));
+
+// Mock cloudSync
+jest.mock('../../services/cloudSync.service', () => ({
+  getCloudSyncService: jest.fn(() => ({
+    throttledSync: jest.fn(),
+  })),
+}));
+
+const renderWithProviders = (ui: React.ReactElement) => {
+  return render(<AppProvider>{ui}</AppProvider>);
+};
 
 describe('TransactionTypeForm', () => {
   const mockAccounts: Account[] = [
@@ -51,7 +78,7 @@ describe('TransactionTypeForm', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useAccountStore as unknown as jest.Mock).mockReturnValue(mockAccounts);
+    mockUseAccounts.mockReturnValue(mockAccounts);
   });
 
   it('should render empty form for new transaction type', () => {

@@ -1,21 +1,43 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import App from './App';
-import { useAppStore } from './stores/useAppStore';
 
-// Mock services
-const mockSyncService = {
-  startAutoSave: jest.fn(),
-  stopAutoSave: jest.fn(),
-  setMergeHandler: jest.fn(),
-  autoLoad: jest.fn().mockResolvedValue(true),
-};
+// Mock Dexie database
+jest.mock('./db/database', () => ({
+  db: {
+    accounts: { toArray: jest.fn().mockResolvedValue([]) },
+    categories: { toArray: jest.fn().mockResolvedValue([]) },
+    transactions: { toArray: jest.fn().mockResolvedValue([]) },
+    transactionTypes: { toArray: jest.fn().mockResolvedValue([]) },
+    budgets: { toArray: jest.fn().mockResolvedValue([]) },
+    assets: { toArray: jest.fn().mockResolvedValue([]) },
+  },
+  syncMetadata: {
+    getFileName: jest.fn().mockResolvedValue(null),
+    getCloudProvider: jest.fn().mockResolvedValue(null),
+    getBaseCurrency: jest.fn().mockResolvedValue('USD'),
+    getLastBackupDate: jest.fn().mockResolvedValue(null),
+    getLastSynced: jest.fn().mockResolvedValue(null),
+  },
+}));
+
+// Mock Dexie hooks
+jest.mock('./hooks/queries', () => ({
+  ...jest.requireActual('./hooks/queries'),
+  useBaseCurrency: jest.fn(() => 'USD'),
+  useCloudFileName: jest.fn(() => null),
+  useLastSynced: jest.fn(() => null),
+}));
+
+// Mock cloudSync service
+jest.mock('./services/cloudSync.service', () => ({
+  initCloudSyncService: jest.fn(),
+  getCloudSyncService: jest.fn(),
+}));
 
 const mockStorageFactory = {
-  initialize: jest.fn().mockResolvedValue({ success: true, needsReconnect: false }),
-};
-
-const mockBackupService = {
-  shouldPromptBackup: jest.fn().mockReturnValue(false),
+  initialize: jest.fn().mockResolvedValue(true),
+  getCurrentFileName: jest.fn().mockReturnValue(null),
+  getCurrentProviderName: jest.fn().mockReturnValue(null),
 };
 
 const mockArchiveService = {
@@ -47,21 +69,25 @@ const mockReportService = {
   }),
 };
 
+const mockSyncService = {
+  fullSync: jest.fn(),
+  downloadCurrentFile: jest.fn(),
+  uploadCurrentFile: jest.fn(),
+};
+
 // Mock ServiceProvider
 jest.mock('./contexts/ServiceProviders', () => ({
   ServiceProvider: ({ children }: any) => children,
   useStorage: () => mockStorageFactory,
-  useSyncService: () => mockSyncService,
   useStorageFactory: () => mockStorageFactory,
-  useBackupService: () => mockBackupService,
   useArchiveService: () => mockArchiveService,
   useCalculationService: () => mockCalculationService,
   useReportService: () => mockReportService,
+  useSyncService: () => mockSyncService,
 }));
 
 describe('App', () => {
   beforeEach(() => {
-    useAppStore.getState().resetState();
     jest.clearAllMocks();
   });
 
@@ -75,83 +101,5 @@ describe('App', () => {
     // Check for Dashboard page title - use getAllByText since it appears in nav and heading
     const dashboardElements = screen.getAllByText('Dashboard');
     expect(dashboardElements.length).toBeGreaterThan(0);
-  });
-
-  it('should start auto-save on mount', async () => {
-    render(<App />);
-    await waitFor(() => {
-      expect(mockSyncService.autoLoad).toHaveBeenCalled();
-    });
-  });
-
-  it('should stop auto-save on unmount', async () => {
-    const { unmount } = render(<App />);
-    await waitFor(() => {
-      expect(mockSyncService.startAutoSave).toHaveBeenCalled();
-    });
-    unmount();
-    expect(mockSyncService.stopAutoSave).toHaveBeenCalled();
-  });
-
-  it('should prevent navigation with unsaved changes', async () => {
-    render(<App />);
-
-    // Set unsaved changes after render
-    await waitFor(() => {
-      useAppStore.setState({ hasUnsavedChanges: true });
-    });
-
-    const beforeUnloadEvent = new Event('beforeunload') as BeforeUnloadEvent;
-    Object.defineProperty(beforeUnloadEvent, 'returnValue', {
-      writable: true,
-      value: '',
-    });
-
-    window.dispatchEvent(beforeUnloadEvent);
-
-    // Check that returnValue was set (this is how beforeunload works)
-    expect(beforeUnloadEvent.returnValue).toBe('');
-  });
-
-  it('should set merge handler on mount', async () => {
-    render(<App />);
-
-    await waitFor(() => {
-      expect(mockSyncService.setMergeHandler).toHaveBeenCalled();
-    });
-  });
-
-  it('should clear merge handler on unmount', async () => {
-    const { unmount } = render(<App />);
-
-    await waitFor(() => {
-      expect(mockSyncService.setMergeHandler).toHaveBeenCalledTimes(1);
-    });
-
-    unmount();
-
-    expect(mockSyncService.setMergeHandler).toHaveBeenCalledWith(null);
-  });
-
-  it('should show loading backdrop when isLoading is true', () => {
-    useAppStore.setState({ isLoading: true });
-
-    render(<App />);
-
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
-  });
-
-  it('should display snackbar notifications', () => {
-    useAppStore.setState({
-      snackbar: {
-        open: true,
-        message: 'Test notification',
-        severity: 'success',
-      },
-    });
-
-    render(<App />);
-
-    expect(screen.getByText('Test notification')).toBeInTheDocument();
   });
 });

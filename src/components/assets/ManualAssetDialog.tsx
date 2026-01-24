@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, Box, Typography, Alert } from '@mui/material';
 import { ManualAssetForm } from './ManualAssetForm';
-import { useAssetStore } from '../../stores/useAssetStore';
+import { useAssetMutations } from '../../hooks/mutations/useAssetMutations';
 import type { ManualAsset } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
 import { formatDate } from '../../utils/date.utils';
@@ -21,7 +21,7 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
   onClose,
   mode = 'create',
 }) => {
-  const { addManualAsset, updateManualAsset, updateAssetValue } = useAssetStore();
+  const { addAsset, updateAsset, updateAssetValue } = useAssetMutations();
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [previousValue, setPreviousValue] = useState<{ value: number; date: string } | null>(null);
 
@@ -42,7 +42,7 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
     onClose();
   };
 
-  const handleSubmit = (assetData: Omit<ManualAsset, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSubmit = async (assetData: Omit<ManualAsset, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (asset && isUpdateMode) {
       // Update value workflow: add new value to history
       const currentValue = getAssetCurrentValue(asset);
@@ -50,7 +50,7 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
       setPreviousValue({ value: currentValue, date: latestEntry.date });
       // Extract the new value entry from assetData
       const newEntry = assetData.valueHistory[assetData.valueHistory.length - 1];
-      updateAssetValue(asset.id, newEntry.value, newEntry.date, newEntry.notes);
+      await updateAssetValue(asset.id, newEntry.value, newEntry.date, newEntry.notes);
       setShowSuccessMessage(true);
       // Auto-close after showing success message
       setTimeout(() => {
@@ -58,7 +58,7 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
       }, 2000);
     } else if (asset) {
       // Regular edit workflow
-      updateManualAsset(asset.id, assetData);
+      await updateAsset(asset.id, assetData);
       handleClose();
     } else {
       // Create new asset
@@ -69,7 +69,7 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
         createdAt: now,
         updatedAt: now,
       };
-      addManualAsset(newAsset);
+      await addAsset(newAsset);
       handleClose();
     }
   };

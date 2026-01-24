@@ -79,7 +79,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
         if (hasExistingFile) {
           await syncService.loadDataFile();
         } else {
-          await syncService.syncNow(true);
+          await syncService.syncNow();
         }
 
         setState((s) => ({ ...s, isConnecting: false }));

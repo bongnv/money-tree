@@ -5,7 +5,7 @@ import type { Transaction, Account, TransactionType, Category } from '../../type
 import { Group } from '../../types/enums';
 import { toDateString, getTodayDate } from '../../utils/date.utils';
 import { validationService, ValidationError } from '../../services/validation.service';
-import { useAssetStore } from '../../stores/useAssetStore';
+import { useAssets } from '../../hooks/queries/useAssets';
 
 interface TransactionFormProps {
   transaction?: Transaction;
@@ -37,7 +37,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const { manualAssets } = useAssetStore();
+  const manualAssets = useAssets();
 
   // Derive selected group from transaction type
   const selectedGroup = useMemo(() => {
@@ -301,7 +301,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           <MenuItem value="">
             <em>None</em>
           </MenuItem>
-          {manualAssets.map((asset) => (
+          {(manualAssets || []).map((asset) => (
             <MenuItem key={asset.id} value={asset.id}>
               {asset.name}
             </MenuItem>
@@ -349,7 +349,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           <MenuItem value="">
             <em>None</em>
           </MenuItem>
-          {manualAssets.map((asset) => (
+          {(manualAssets || []).map((asset) => (
             <MenuItem key={asset.id} value={asset.id}>
               {asset.name}
             </MenuItem>

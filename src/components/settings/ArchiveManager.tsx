@@ -22,15 +22,17 @@ import {
 import ArchiveIcon from '@mui/icons-material/Archive';
 import WarningIcon from '@mui/icons-material/Warning';
 import { useSyncService, useArchiveService } from '../../contexts/ServiceProviders';
-import { useAppStore } from '../../stores/useAppStore';
+import { useAppContext } from '../../contexts/AppContext';
 import { formatCurrency } from '../../utils/currency.utils';
-import type { YearEndSummary } from '../../services/archive.service';
+import type { YearEndSummary } from '../../types/models';
+import { useBaseCurrency, useArchivedYears } from '../../hooks/queries';
 
 export const ArchiveManager: React.FC = () => {
   const syncService = useSyncService();
   const archiveService = useArchiveService();
-  const baseCurrency = useAppStore((state) => state.baseCurrency);
-  const showSnackbar = useAppStore((state) => state.showSnackbar);
+  const { showSnackbar } = useAppContext();
+  const baseCurrency = useBaseCurrency();
+  const archivedYears = useArchivedYears();
   const [isExporting, setIsExporting] = useState(false);
   const [exportingYear, setExportingYear] = useState<number | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; year: number | null }>({
@@ -40,7 +42,6 @@ export const ArchiveManager: React.FC = () => {
   const [yearSummaries, setYearSummaries] = useState<Record<number, YearEndSummary>>({});
 
   const archivableYear = archiveService.identifyArchivableYear();
-  const archivedYears = archiveService.getArchivedYears();
 
   // Calculate summary for archivable year
   useEffect(() => {

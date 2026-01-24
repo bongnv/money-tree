@@ -378,6 +378,9 @@ export class OneDriveProvider implements IStorageProvider {
    * Create user-friendly error messages from Graph API errors
    */
   private createFriendlyError(error: any): Error {
+    // Log the original error first to preserve debugging information
+    console.error('OneDrive API error:', error);
+
     const statusCode = error?.statusCode;
     const code = error?.code;
     const message = error?.message;

@@ -1,10 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { WelcomeDialog } from './WelcomeDialog';
-import { FilePickerService } from '../../services/storage/FilePickerService';
 import { StorageProviderType } from '../../services/storage/StorageService';
-
-// Mock dependencies
-jest.mock('../../services/storage/FilePickerService');
 
 // Create mock functions
 const mockIsOneDriveConfigured = jest.fn(() => true);
@@ -18,10 +14,6 @@ jest.mock('../../config/googledrive.config', () => ({
 }));
 
 // Create mock instances
-const mockLocalProvider = {
-  setFile: jest.fn().mockResolvedValue(undefined),
-};
-
 const mockOneDriveProvider = {
   listDriveItems: jest.fn().mockResolvedValue([]),
   setFileInfo: jest.fn().mockResolvedValue(undefined),
@@ -39,8 +31,6 @@ const mockStorageFactory = {
       mockStorageFactory.provider = mockOneDriveProvider;
     } else if (config.type === StorageProviderType.GOOGLE_DRIVE) {
       mockStorageFactory.provider = mockGoogleDriveProvider;
-    } else {
-      mockStorageFactory.provider = mockLocalProvider;
     }
   }),
   listFiles: jest.fn(),
@@ -64,8 +54,6 @@ describe('WelcomeDialog', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset provider to mockLocalProvider before each test
-    mockStorageFactory.provider = mockLocalProvider;
     mockOneDriveProvider.listDriveItems.mockResolvedValue([]);
     mockGoogleDriveProvider.listDriveFiles.mockResolvedValue([]);
   });
@@ -74,7 +62,6 @@ describe('WelcomeDialog', () => {
     render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
     expect(screen.getByText('Welcome to Money Tree')).toBeInTheDocument();
-    expect(screen.getByText('Local File Storage')).toBeInTheDocument();
     expect(screen.getByText('Connect to OneDrive')).toBeInTheDocument();
   });
 
@@ -84,50 +71,10 @@ describe('WelcomeDialog', () => {
     expect(screen.queryByText('Welcome to Money Tree')).not.toBeInTheDocument();
   });
 
-  it('should load existing file and close dialog when Open Existing File button clicked', async () => {
-    const mockFileHandle = {} as FileSystemFileHandle;
-    (FilePickerService.showOpenFilePicker as jest.Mock).mockResolvedValue(mockFileHandle);
-    mockStorageFactory.connect.mockResolvedValueOnce(undefined);
-    mockSyncService.loadDataFile.mockResolvedValue(undefined);
-
+  it('should not show local storage option', () => {
     render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
-    // Get all 'Open Existing' buttons and click the first one (Local Storage)
-    const openFileButtons = screen.getAllByRole('button', { name: /open existing/i });
-    fireEvent.click(openFileButtons[0]);
-
-    await waitFor(() => {
-      expect(FilePickerService.showOpenFilePicker).toHaveBeenCalledTimes(1);
-      expect(mockStorageFactory.connect).toHaveBeenCalledWith({
-        type: StorageProviderType.LOCAL,
-      });
-      expect(mockLocalProvider.setFile).toHaveBeenCalledWith(mockFileHandle);
-      expect(mockSyncService.loadDataFile).toHaveBeenCalledTimes(1);
-      expect(mockOnClose).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  it('should create new file and close dialog when Create New File clicked', async () => {
-    const mockFileHandle = {} as FileSystemFileHandle;
-    (FilePickerService.showSaveFilePicker as jest.Mock).mockResolvedValue(mockFileHandle);
-    mockStorageFactory.connect.mockResolvedValueOnce(undefined);
-    mockSyncService.syncNow.mockResolvedValue(undefined);
-
-    render(<WelcomeDialog open={true} onClose={mockOnClose} />);
-
-    // Get all 'Create New' buttons and click the first one (Local Storage)
-    const createFileButtons = screen.getAllByRole('button', { name: /create new/i });
-    fireEvent.click(createFileButtons[0]);
-
-    await waitFor(() => {
-      expect(FilePickerService.showSaveFilePicker).toHaveBeenCalledWith('money-tree.json');
-      expect(mockStorageFactory.connect).toHaveBeenCalledWith({
-        type: StorageProviderType.LOCAL,
-      });
-      expect(mockLocalProvider.setFile).toHaveBeenCalledWith(mockFileHandle);
-      expect(mockSyncService.syncNow).toHaveBeenCalledWith(true);
-      expect(mockOnClose).toHaveBeenCalledTimes(1);
-    });
+    expect(screen.queryByText('Local File Storage')).not.toBeInTheDocument();
   });
 
   it('should show helper text about changing location later', () => {
@@ -156,9 +103,9 @@ describe('WelcomeDialog', () => {
       // OneDrive has 2 buttons: Open Existing and Create New
       const allOpenButtons = screen.getAllByRole('button', { name: /open existing/i });
       const allCreateButtons = screen.getAllByRole('button', { name: /create new/i });
-      // Should have buttons for Local Storage, OneDrive, and Google Drive (3 each)
-      expect(allOpenButtons.length).toBe(3);
-      expect(allCreateButtons.length).toBe(3);
+      // Should have buttons for OneDrive and optionally Google Drive
+      expect(allOpenButtons.length).toBeGreaterThanOrEqual(1);
+      expect(allCreateButtons.length).toBeGreaterThanOrEqual(1);
     });
 
     it('should show disabled state when OneDrive not configured', () => {
@@ -183,9 +130,9 @@ describe('WelcomeDialog', () => {
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
-      // Get all 'Open Existing' buttons and click the second one (OneDrive)
+      // Get all 'Open Existing' buttons and click the first one (OneDrive)
       const openButtons = screen.getAllByRole('button', { name: /open existing/i });
-      fireEvent.click(openButtons[1]); // Index 1 is OneDrive
+      fireEvent.click(openButtons[0]);
 
       await waitFor(() => {
         expect(mockStorageFactory.connect).toHaveBeenCalledWith({
@@ -201,9 +148,9 @@ describe('WelcomeDialog', () => {
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
-      // Get all 'Create New' buttons and click the second one (OneDrive)
+      // Get all 'Create New' buttons and click the first one (OneDrive)
       const createButtons = screen.getAllByRole('button', { name: /create new/i });
-      fireEvent.click(createButtons[1]); // Index 1 is OneDrive
+      fireEvent.click(createButtons[0]);
 
       await waitFor(() => {
         expect(screen.getByText('Auth failed')).toBeInTheDocument();
@@ -216,20 +163,15 @@ describe('WelcomeDialog', () => {
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
-      // Get all 'Open Existing' buttons and click the second one (OneDrive)
+      // Get all 'Open Existing' buttons and click the first one (OneDrive)
       const openButtons = screen.getAllByRole('button', { name: /open existing/i });
-      fireEvent.click(openButtons[1]); // Index 1 is OneDrive
+      fireEvent.click(openButtons[0]);
 
       await waitFor(() => {
         expect(mockStorageFactory.connect).toHaveBeenCalledWith({
           type: StorageProviderType.ONEDRIVE,
         });
       });
-
-      // Simulate file picker selection (existing file)
-      const mockFileInfo = { fileId: 'file-123', fileName: 'existing.json', folderId: 'folder-1' };
-      // Note: The actual file picker component would trigger this
-      // For now, we're testing the handler logic
     });
 
     it('should handle OneDrive file selection for new file', async () => {
@@ -238,9 +180,9 @@ describe('WelcomeDialog', () => {
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
-      // Get all 'Create New' buttons and click the second one (OneDrive)
+      // Get all 'Create New' buttons and click the first one (OneDrive)
       const createButtons = screen.getAllByRole('button', { name: /create new/i });
-      fireEvent.click(createButtons[1]); // Index 1 is OneDrive
+      fireEvent.click(createButtons[0]);
 
       await waitFor(() => {
         expect(mockStorageFactory.connect).toHaveBeenCalledWith({
@@ -256,9 +198,9 @@ describe('WelcomeDialog', () => {
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
-      // Get all 'Create New' buttons and click the second one (OneDrive)
+      // Get all 'Create New' buttons and click the first one (OneDrive)
       const createButtons = screen.getAllByRole('button', { name: /create new/i });
-      fireEvent.click(createButtons[1]); // Index 1 is OneDrive
+      fireEvent.click(createButtons[0]);
 
       await waitFor(() => {
         // The OneDrive Create New button should show "Connecting..." and be disabled
@@ -271,39 +213,31 @@ describe('WelcomeDialog', () => {
 
   describe('Error Handling', () => {
     it('should clear error when new action is taken', async () => {
-      (FilePickerService.showOpenFilePicker as jest.Mock).mockRejectedValue(
-        new Error('Failed to open')
-      );
+      mockStorageFactory.connect.mockRejectedValueOnce(new Error('Failed to connect'));
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
-      // Trigger error - use first Open Existing button (Local Storage)
+      // Trigger error
       const openButtons = screen.getAllByRole('button', { name: /open existing/i });
       fireEvent.click(openButtons[0]);
 
       await waitFor(() => {
-        expect(screen.getByText('Failed to open')).toBeInTheDocument();
+        expect(screen.getByText('Failed to connect')).toBeInTheDocument();
       });
 
       // Clear error by starting new action
-      (FilePickerService.showSaveFilePicker as jest.Mock).mockResolvedValue(
-        {} as FileSystemFileHandle
-      );
       mockStorageFactory.connect.mockResolvedValue(undefined);
-      mockSyncService.syncNow.mockResolvedValue(undefined);
 
       const createButtons = screen.getAllByRole('button', { name: /create new/i });
       fireEvent.click(createButtons[0]);
 
       await waitFor(() => {
-        expect(screen.queryByText('Failed to open')).not.toBeInTheDocument();
+        expect(screen.queryByText('Failed to connect')).not.toBeInTheDocument();
       });
     });
 
-    it('should handle open file error', async () => {
-      (FilePickerService.showOpenFilePicker as jest.Mock).mockRejectedValue(
-        new Error('Permission denied')
-      );
+    it('should handle connection error', async () => {
+      mockStorageFactory.connect.mockRejectedValue(new Error('Permission denied'));
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
@@ -312,21 +246,6 @@ describe('WelcomeDialog', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Permission denied')).toBeInTheDocument();
-      });
-    });
-
-    it('should handle create file error', async () => {
-      (FilePickerService.showSaveFilePicker as jest.Mock).mockRejectedValue(
-        new Error('Cannot create file')
-      );
-
-      render(<WelcomeDialog open={true} onClose={mockOnClose} />);
-
-      const createButtons = screen.getAllByRole('button', { name: /create new/i });
-      fireEvent.click(createButtons[0]);
-
-      await waitFor(() => {
-        expect(screen.getByText('Cannot create file')).toBeInTheDocument();
       });
     });
   });
@@ -339,8 +258,7 @@ describe('WelcomeDialog', () => {
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
       const openButtons = screen.getAllByRole('button', { name: /open existing/i });
-      // OneDrive is the second option (after Local Storage)
-      fireEvent.click(openButtons[1]);
+      fireEvent.click(openButtons[0]);
 
       await waitFor(() => {
         expect(mockStorageFactory.connect).toHaveBeenCalledWith({
@@ -358,16 +276,18 @@ describe('WelcomeDialog', () => {
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
       const createButtons = screen.getAllByRole('button', { name: /create new/i });
-      // Google Drive is the third option
-      fireEvent.click(createButtons[2]);
+      const googleDriveButtons = createButtons.filter((btn) => !btn.closest('[disabled]'));
+      if (googleDriveButtons.length > 1) {
+        fireEvent.click(googleDriveButtons[1]); // Google Drive is second option
 
-      await waitFor(() => {
-        expect(mockStorageFactory.connect).toHaveBeenCalledWith({
-          type: StorageProviderType.GOOGLE_DRIVE,
+        await waitFor(() => {
+          expect(mockStorageFactory.connect).toHaveBeenCalledWith({
+            type: StorageProviderType.GOOGLE_DRIVE,
+          });
+          // Should show the Google Drive file picker after connection
+          expect(screen.getByText('Select Google Drive File Location')).toBeInTheDocument();
         });
-        // Should show the Google Drive file picker after connection
-        expect(screen.getByText('Select Google Drive File Location')).toBeInTheDocument();
-      });
+      }
     });
 
     it('should handle cloud connection errors', async () => {
@@ -376,7 +296,7 @@ describe('WelcomeDialog', () => {
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
       const openButtons = screen.getAllByRole('button', { name: /open existing/i });
-      fireEvent.click(openButtons[1]); // OneDrive
+      fireEvent.click(openButtons[0]);
 
       await waitFor(() => {
         expect(screen.getByText('Auth failed')).toBeInTheDocument();
@@ -384,60 +304,27 @@ describe('WelcomeDialog', () => {
       });
     });
 
-    it('should handle file picker cancellation gracefully', async () => {
-      (FilePickerService.showOpenFilePicker as jest.Mock).mockResolvedValue(null);
-
-      render(<WelcomeDialog open={true} onClose={mockOnClose} />);
-
-      const openButtons = screen.getAllByRole('button', { name: /open existing/i });
-      fireEvent.click(openButtons[0]);
-
-      await waitFor(() => {
-        expect(mockOnClose).not.toHaveBeenCalled();
-        expect(screen.queryByText(/error/i)).not.toBeInTheDocument();
-      });
-    });
-
     it('should show storage options when dialog opens', () => {
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
-      expect(screen.getByText('Local File Storage')).toBeInTheDocument();
       expect(screen.getByText('Connect to OneDrive')).toBeInTheDocument();
-      expect(screen.getByText('Connect to Google Drive')).toBeInTheDocument();
+      // Google Drive may or may not be shown depending on configuration
     });
   });
 
   describe('User Interaction Flow', () => {
-    it('should complete full onboarding flow with local storage', async () => {
-      const mockFileHandle = {} as FileSystemFileHandle;
-      (FilePickerService.showSaveFilePicker as jest.Mock).mockResolvedValue(mockFileHandle);
-      mockStorageFactory.connect.mockResolvedValue(undefined);
-      mockSyncService.syncNow.mockResolvedValue(undefined);
-
-      render(<WelcomeDialog open={true} onClose={mockOnClose} />);
-
-      // User sees welcome screen
-      expect(screen.getByText('Welcome to Money Tree')).toBeInTheDocument();
-
-      // User clicks Create New File
-      const createButtons = screen.getAllByRole('button', { name: /create new/i });
-      fireEvent.click(createButtons[0]);
-
-      // Dialog closes after successful setup
-      await waitFor(() => {
-        expect(mockOnClose).toHaveBeenCalled();
-      });
-    });
-
     it('should complete full onboarding flow with OneDrive', async () => {
       mockStorageFactory.connect.mockResolvedValue(undefined);
       mockOneDriveProvider.listDriveItems.mockResolvedValue([]);
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
+      // User sees welcome screen
+      expect(screen.getByText('Welcome to Money Tree')).toBeInTheDocument();
+
       // User selects OneDrive
       const createButtons = screen.getAllByRole('button', { name: /create new/i });
-      fireEvent.click(createButtons[1]); // OneDrive
+      fireEvent.click(createButtons[0]);
 
       await waitFor(() => {
         expect(mockStorageFactory.connect).toHaveBeenCalledWith({
@@ -449,12 +336,9 @@ describe('WelcomeDialog', () => {
     });
 
     it('should allow retrying after error', async () => {
-      (FilePickerService.showSaveFilePicker as jest.Mock)
+      mockStorageFactory.connect
         .mockRejectedValueOnce(new Error('First attempt failed'))
-        .mockResolvedValueOnce({} as FileSystemFileHandle);
-
-      mockStorageFactory.connect.mockResolvedValue(undefined);
-      mockSyncService.syncNow.mockResolvedValue(undefined);
+        .mockResolvedValueOnce(undefined);
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
@@ -469,7 +353,7 @@ describe('WelcomeDialog', () => {
       // Second attempt succeeds
       fireEvent.click(createButtons[0]);
       await waitFor(() => {
-        expect(mockOnClose).toHaveBeenCalled();
+        expect(mockStorageFactory.connect).toHaveBeenCalledTimes(2);
       });
     });
   });

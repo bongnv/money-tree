@@ -26,9 +26,7 @@ import { OneDriveFilePicker } from '../onedrive/OneDriveFilePicker';
 import { GoogleDriveFilePicker } from '../googledrive/GoogleDriveFilePicker';
 import { useStorage, useSyncService } from '../../contexts/ServiceProviders';
 import { StorageProviderType } from '../../services/storage/StorageService';
-import { FilePickerService } from '../../services/storage/FilePickerService';
 import { isUserCancellationError } from '../../utils/error.utils';
-import type { LocalStorageProvider } from '../../services/storage/LocalStorageProvider';
 
 interface WelcomeDialogProps {
   open: boolean;
@@ -54,41 +52,13 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
       setState((s) => ({ ...s, isConnecting: true, error: null, pickerMode: mode }));
 
       try {
-        if (provider === StorageProviderType.LOCAL) {
-          // Local: show file picker immediately
-          const fileHandle =
-            mode === 'open'
-              ? await FilePickerService.showOpenFilePicker()
-              : await FilePickerService.showSaveFilePicker('money-tree.json');
-
-          if (fileHandle) {
-            await storage.connect({ type: provider });
-
-            // Set file on the provider
-            const localProvider = storage.provider as LocalStorageProvider;
-            await localProvider.setFile(fileHandle);
-
-            // Load or create file
-            if (mode === 'open') {
-              await syncService.loadDataFile();
-            } else {
-              await syncService.syncNow(true);
-            }
-
-            setState((s) => ({ ...s, isConnecting: false }));
-            onClose();
-          } else {
-            setState((s) => ({ ...s, isConnecting: false }));
-          }
-        } else {
-          // Cloud: authenticate then show picker
-          await storage.connect({ type: provider });
-          setState((s) => ({
-            ...s,
-            showOneDrivePicker: provider === StorageProviderType.ONEDRIVE,
-            showGoogleDrivePicker: provider === StorageProviderType.GOOGLE_DRIVE,
-          }));
-        }
+        // Cloud: authenticate then show picker
+        await storage.connect({ type: provider });
+        setState((s) => ({
+          ...s,
+          showOneDrivePicker: provider === StorageProviderType.ONEDRIVE,
+          showGoogleDrivePicker: provider === StorageProviderType.GOOGLE_DRIVE,
+        }));
       } catch (error: any) {
         setState((s) => ({ ...s, isConnecting: false }));
         if (!isUserCancellationError(error)) {
@@ -96,7 +66,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
         }
       }
     },
-    [storage, syncService, onClose]
+    [storage]
   );
 
   const handleFileSelected = useCallback(
@@ -159,41 +129,6 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
           )}
 
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {/* Local File Storage */}
-            <Card variant="outlined">
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                  <FolderOpenIcon color="primary" fontSize="large" />
-                  <Box>
-                    <Typography variant="h6" component="div">
-                      Local File Storage
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Store your Money Tree data in a file on your computer
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-              <CardActions sx={{ gap: 1 }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<FolderOpenIcon />}
-                  onClick={() => handleConnect(StorageProviderType.LOCAL, 'open')}
-                  fullWidth
-                >
-                  Open Existing
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={() => handleConnect(StorageProviderType.LOCAL, 'create')}
-                  fullWidth
-                >
-                  Create New
-                </Button>
-              </CardActions>
-            </Card>
-
             {/* Connect to OneDrive */}
             <Card variant="outlined">
               <CardContent>

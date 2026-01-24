@@ -1,5 +1,4 @@
 import { IStorageProvider } from './IStorageProvider';
-import { LocalStorageProvider } from './LocalStorageProvider';
 import { OneDriveProvider } from './OneDriveProvider';
 import { GoogleDriveProvider } from './GoogleDriveProvider';
 import type { DataFile } from '../../types/models';
@@ -9,7 +8,6 @@ import { DataFileSchema } from '../../schemas/models.schema';
  * Storage provider type
  */
 export enum StorageProviderType {
-  LOCAL = 'local',
   ONEDRIVE = 'onedrive',
   GOOGLE_DRIVE = 'google_drive',
 }
@@ -267,9 +265,6 @@ export class StorageService {
    */
   private createProvider(type: StorageProviderType): IStorageProvider | null {
     switch (type) {
-      case StorageProviderType.LOCAL:
-        return new LocalStorageProvider();
-
       case StorageProviderType.ONEDRIVE:
         return new OneDriveProvider();
 

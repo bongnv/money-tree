@@ -2583,3 +2583,44 @@ End-to-end testing:
 23. Compare calculated values with manual calculations to verify accuracy
 24. Test Cash Flow Report still works with refactored CategoryFilter and useExchangeRateFetching
 25. Verify no regressions in Cash Flow Report functionality
+---
+
+## Phase 25: Remove Local Storage Option (Maintenance) ✅
+
+**Context**: Remove the local file storage option from the application, keeping only cloud storage providers (OneDrive and Google Drive). This simplifies the storage architecture and prepares for future Dexie migration.
+
+### 25.1 Remove Local Storage UI and Provider ✅
+**Implementation**:
+- [x] Update `src/components/onboarding/WelcomeDialog.tsx`:
+  - [x] Remove "Local File Storage" card with "Open Existing" and "Create New" buttons
+  - [x] Remove LOCAL provider handling in handleConnect function
+  - [x] Remove LocalStorageProvider and FilePickerService imports
+  - [x] Keep only OneDrive and Google Drive options
+- [x] Update `src/services/storage/StorageService.ts`:
+  - [x] Remove `StorageProviderType.LOCAL` enum value
+  - [x] Remove LocalStorageProvider import
+  - [x] Remove LOCAL case from createProvider() switch statement
+- [x] Delete `src/services/storage/LocalStorageProvider.ts`
+- [x] Delete `src/services/storage/LocalStorageProvider.test.ts`
+- [x] Delete `src/services/storage/FilePickerService.ts`
+- [x] Delete `src/services/storage/FilePickerService.test.ts`
+- [x] Update `src/components/onboarding/WelcomeDialog.test.tsx`:
+  - [x] Remove test cases for local storage provider
+  - [x] Keep only cloud storage provider tests
+- [x] Update `src/services/storage/StorageService.test.ts`:
+  - [x] Remove LOCAL provider test cases
+  - [x] Remove LocalStorageProvider mock
+  - [x] Update provider initialization tests
+- [x] **Write tests**: Verify cloud-only options work (5+ tests updated)
+- [x] **Run tests, format, build**: All 1239 tests pass, build succeeds
+
+### 25.2 Manual UI Verification
+**Manual Verification (User):**
+1. Open the app and verify Welcome Dialog only shows cloud storage options
+2. Verify "Local File Storage" option is not visible
+3. Verify OneDrive "Open Existing" and "Create New" buttons work
+4. Verify Google Drive options work (if configured)
+5. Test that existing cloud storage connections still work
+6. Verify no errors in browser console related to LocalStorageProvider
+7. Test app functionality after connecting to cloud storage
+8. Verify data sync works correctly with cloud providers

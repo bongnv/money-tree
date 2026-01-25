@@ -4,6 +4,11 @@ import { BudgetOverview } from './BudgetOverview';
 import { AppProvider } from '../../contexts/AppContext';
 import { Group } from '../../types/enums';
 import type { PeriodOption } from '../common/PeriodSelector';
+import { useBudgets } from '../../hooks/queries/useBudgets';
+import { useTransactions } from '../../hooks/queries/useTransactions';
+import { useCategories } from '../../hooks/queries/useCategories';
+import { useAccounts } from '../../hooks/queries/useAccounts';
+import { useTransactionTypes } from '../../hooks/queries/useTransactionTypes';
 
 // Mock Dexie hooks
 jest.mock('../../hooks/queries/useBudgets');
@@ -59,17 +64,11 @@ describe('BudgetOverview', () => {
     jest.clearAllMocks();
 
     // Mock the hooks with default values
-    const { useBudgets } = require('../../hooks/queries/useBudgets');
-    const { useTransactions } = require('../../hooks/queries/useTransactions');
-    const { useCategories } = require('../../hooks/queries/useCategories');
-    const { useAccounts } = require('../../hooks/queries/useAccounts');
-    const { useTransactionTypes } = require('../../hooks/queries/useTransactionTypes');
-
-    useBudgets.mockReturnValue([]);
-    useTransactions.mockReturnValue([]);
-    useCategories.mockReturnValue([]);
-    useAccounts.mockReturnValue([]);
-    useTransactionTypes.mockReturnValue([]);
+    (useBudgets as jest.Mock).mockReturnValue([]);
+    (useTransactions as jest.Mock).mockReturnValue([]);
+    (useCategories as jest.Mock).mockReturnValue([]);
+    (useAccounts as jest.Mock).mockReturnValue([]);
+    (useTransactionTypes as jest.Mock).mockReturnValue([]);
   });
 
   it('shows empty state when no budgets exist', () => {
@@ -80,13 +79,7 @@ describe('BudgetOverview', () => {
   });
 
   it('displays budget progress bars', async () => {
-    const { useBudgets } = require('../../hooks/queries/useBudgets');
-    const { useTransactions } = require('../../hooks/queries/useTransactions');
-    const { useCategories } = require('../../hooks/queries/useCategories');
-    const { useTransactionTypes } = require('../../hooks/queries/useTransactionTypes');
-    const { useAccounts } = require('../../hooks/queries/useAccounts');
-
-    useBudgets.mockReturnValue([
+    (useBudgets as jest.Mock).mockReturnValue([
       {
         id: 'budget-1',
         transactionTypeId: 'type-1',
@@ -100,7 +93,7 @@ describe('BudgetOverview', () => {
       },
     ]);
 
-    useTransactions.mockReturnValue([
+    (useTransactions as jest.Mock).mockReturnValue([
       {
         id: 'txn-1',
         date: '2026-01-15',
@@ -113,7 +106,7 @@ describe('BudgetOverview', () => {
       },
     ]);
 
-    useTransactionTypes.mockReturnValue([
+    (useTransactionTypes as jest.Mock).mockReturnValue([
       {
         id: 'type-1',
         name: 'Groceries',
@@ -124,7 +117,7 @@ describe('BudgetOverview', () => {
       },
     ]);
 
-    useCategories.mockReturnValue([
+    (useCategories as jest.Mock).mockReturnValue([
       {
         id: 'cat-1',
         name: 'Food',
@@ -133,7 +126,7 @@ describe('BudgetOverview', () => {
       },
     ]);
 
-    useAccounts.mockReturnValue([
+    (useAccounts as jest.Mock).mockReturnValue([
       {
         id: 'acc-1',
         name: 'Checking',
@@ -154,15 +147,10 @@ describe('BudgetOverview', () => {
   });
 
   it('renders the view all link', () => {
-    const { useBudgets } = require('../../hooks/queries/useBudgets');
-    const { useTransactions } = require('../../hooks/queries/useTransactions');
-    const { useTransactionTypes } = require('../../hooks/queries/useTransactionTypes');
-    const { useCategories } = require('../../hooks/queries/useCategories');
-
-    useBudgets.mockReturnValue([]);
-    useTransactions.mockReturnValue([]);
-    useTransactionTypes.mockReturnValue([]);
-    useCategories.mockReturnValue([]);
+    (useBudgets as jest.Mock).mockReturnValue([]);
+    (useTransactions as jest.Mock).mockReturnValue([]);
+    (useTransactionTypes as jest.Mock).mockReturnValue([]);
+    (useCategories as jest.Mock).mockReturnValue([]);
 
     renderWithProviders(<BudgetOverview period={mockPeriod} />);
 
@@ -170,11 +158,7 @@ describe('BudgetOverview', () => {
   });
 
   it('handles budgets with different periods', async () => {
-    const { useBudgets } = require('../../hooks/queries/useBudgets');
-    const { useTransactions } = require('../../hooks/queries/useTransactions');
-    const { useTransactionTypes } = require('../../hooks/queries/useTransactionTypes');
-
-    useBudgets.mockReturnValue([
+    (useBudgets as jest.Mock).mockReturnValue([
       {
         id: 'budget-1',
         transactionTypeId: 'type-1',
@@ -199,9 +183,9 @@ describe('BudgetOverview', () => {
       },
     ]);
 
-    useTransactions.mockReturnValue([]);
+    (useTransactions as jest.Mock).mockReturnValue([]);
 
-    useTransactionTypes.mockReturnValue([
+    (useTransactionTypes as jest.Mock).mockReturnValue([
       {
         id: 'type-1',
         name: 'Groceries',

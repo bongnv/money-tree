@@ -8,11 +8,9 @@ import React, {
   ReactNode,
 } from 'react';
 import { CloudSyncService } from '../services/cloudSync.service';
-import {
-  StorageProviderFactory,
-  StorageProviderType,
-} from '../services/storage/StorageProviderFactory';
+import { StorageProviderFactory } from '../services/storage/StorageProviderFactory';
 import { IStorageProvider, CloudItem } from '../services/storage/IStorageProvider';
+import type { StorageProviderType } from '../services/storage/StorageProviderFactory';
 import { useAppContext } from './AppContext';
 
 const FILE_CACHE_KEY = 'moneyTree.currentFile';
@@ -22,7 +20,6 @@ export interface SyncContextValue {
   isConnected: boolean;
   providerName: string | null;
   fileName: string | null;
-  providerType: StorageProviderType | null;
 
   // Sync state
   isInitializing: boolean;
@@ -54,7 +51,6 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onReconnec
 
   // Provider and services
   const [provider, setProvider] = useState<IStorageProvider | null>(null);
-  const [providerType, setProviderType] = useState<StorageProviderType | null>(null);
   const [currentFileItem, setCurrentFileItem] = useState<CloudItem | null>(null);
 
   // Connection state (derived from provider)
@@ -96,8 +92,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onReconnec
   const initialize = useCallback(async (): Promise<boolean> => {
     const result = await StorageProviderFactory.initialize(onReconnectNeeded);
     if (result) {
-      setProvider(result.provider);
-      setProviderType(result.type);
+      setProvider(result);
 
       // Load cached file info
       try {
@@ -144,15 +139,13 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onReconnec
   // Connect to a storage provider using static factory
   const connect = useCallback(async (type: StorageProviderType): Promise<void> => {
     const result = await StorageProviderFactory.connect({ type });
-    setProvider(result.provider);
-    setProviderType(result.type);
+    setProvider(result);
   }, []);
 
   // Disconnect from storage provider
   const disconnect = useCallback(async (): Promise<void> => {
     await StorageProviderFactory.disconnect(provider);
     setProvider(null);
-    setProviderType(null);
     setCurrentFileItem(null);
     localStorage.removeItem(FILE_CACHE_KEY);
   }, [provider]);
@@ -239,7 +232,6 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onReconnec
     isConnected,
     providerName: provider?.getName() ?? null,
     fileName: currentFileItem?.name ?? null,
-    providerType,
 
     // Sync state
     isInitializing,

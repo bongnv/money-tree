@@ -133,7 +133,7 @@ const App: React.FC = () => {
       <AppProvider>
         <BrowserRouter>
           <SyncProvider onReconnectNeeded={handleReconnectNeeded}>
-            <ServiceProvider onReconnectNeeded={handleReconnectNeeded}>
+            <ServiceProvider>
               <AppContent />
             </ServiceProvider>
           </SyncProvider>

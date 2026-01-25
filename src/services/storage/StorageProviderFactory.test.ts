@@ -74,29 +74,27 @@ describe('StorageProviderFactory', () => {
     });
 
     it('should restore cached ONEDRIVE connection', async () => {
-      localStorage.setItem(STORAGE_CONFIG_KEY, JSON.stringify({ type: 'onedrive' }));
+      localStorage.setItem(STORAGE_CONFIG_KEY, 'onedrive');
 
       const result = await StorageProviderFactory.initialize(mockOnReconnectNeeded);
 
       expect(result).not.toBeNull();
-      expect(result?.type).toBe(StorageProviderType.ONEDRIVE);
-      expect(result?.provider).toBe(mockOneDriveProvider);
+      expect(result).toBe(mockOneDriveProvider);
       expect(mockOneDriveProvider.initialize).toHaveBeenCalled();
     });
 
     it('should restore cached GOOGLE_DRIVE connection', async () => {
-      localStorage.setItem(STORAGE_CONFIG_KEY, JSON.stringify({ type: 'google_drive' }));
+      localStorage.setItem(STORAGE_CONFIG_KEY, 'google_drive');
 
       const result = await StorageProviderFactory.initialize(mockOnReconnectNeeded);
 
       expect(result).not.toBeNull();
-      expect(result?.type).toBe(StorageProviderType.GOOGLE_DRIVE);
-      expect(result?.provider).toBe(mockGoogleDriveProvider);
+      expect(result).toBe(mockGoogleDriveProvider);
       expect(mockGoogleDriveProvider.initialize).toHaveBeenCalled();
     });
 
     it('should return null when initialize fails', async () => {
-      localStorage.setItem(STORAGE_CONFIG_KEY, JSON.stringify({ type: 'onedrive' }));
+      localStorage.setItem(STORAGE_CONFIG_KEY, 'onedrive');
       mockOneDriveProvider.initialize.mockResolvedValue(false);
 
       const result = await StorageProviderFactory.initialize(mockOnReconnectNeeded);
@@ -117,13 +115,11 @@ describe('StorageProviderFactory', () => {
     it('should connect to ONEDRIVE provider and return result', async () => {
       const result = await StorageProviderFactory.connect({ type: StorageProviderType.ONEDRIVE });
 
-      expect(result.type).toBe(StorageProviderType.ONEDRIVE);
-      expect(result.provider).toBe(mockOneDriveProvider);
+      expect(result).toBe(mockOneDriveProvider);
       expect(mockOneDriveProvider.authenticate).toHaveBeenCalled();
       // Verify config was saved
       const savedConfig = localStorage.getItem(STORAGE_CONFIG_KEY);
-      expect(savedConfig).toBeTruthy();
-      expect(JSON.parse(savedConfig!).type).toBe('onedrive');
+      expect(savedConfig).toBe('onedrive');
     });
 
     it('should connect to GOOGLE_DRIVE provider and return result', async () => {
@@ -131,13 +127,11 @@ describe('StorageProviderFactory', () => {
         type: StorageProviderType.GOOGLE_DRIVE,
       });
 
-      expect(result.type).toBe(StorageProviderType.GOOGLE_DRIVE);
-      expect(result.provider).toBe(mockGoogleDriveProvider);
+      expect(result).toBe(mockGoogleDriveProvider);
       expect(mockGoogleDriveProvider.authenticate).toHaveBeenCalled();
       // Verify config was saved
       const savedConfig = localStorage.getItem(STORAGE_CONFIG_KEY);
-      expect(savedConfig).toBeTruthy();
-      expect(JSON.parse(savedConfig!).type).toBe('google_drive');
+      expect(savedConfig).toBe('google_drive');
     });
   });
 

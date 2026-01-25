@@ -23,7 +23,6 @@ jest.mock('../../contexts/SyncProvider', () => ({
     isConnected: false,
     providerName: null,
     fileName: null,
-    providerType: null,
     isSyncing: false,
     lastSynced: null,
     pendingChanges: false,

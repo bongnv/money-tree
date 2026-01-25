@@ -19,19 +19,6 @@ export interface ConnectConfig {
 
 const STORAGE_CONFIG_KEY = 'moneyTree.storageProviderConfig';
 
-interface StoredConfig {
-  type: StorageProviderType;
-}
-
-/**
- * Storage Provider Factory Result
- * Returned from initialize and connect operations
- */
-export interface StorageProviderResult {
-  provider: IStorageProvider;
-  type: StorageProviderType;
-}
-
 /**
  * Storage Provider Factory
  * Factory for creating and configuring storage providers
@@ -41,11 +28,11 @@ export class StorageProviderFactory {
   /**
    * Static factory: Initialize and restore cached connection
    * Called once at app startup
-   * @returns Provider and type if successful, null otherwise
+   * @returns Provider if successful, null otherwise
    */
   static async initialize(
     onReconnectNeeded: (providerName: string) => Promise<'reconnect' | 'dismiss'>
-  ): Promise<StorageProviderResult | null> {
+  ): Promise<IStorageProvider | null> {
     try {
       const config = StorageProviderFactory.loadConfig();
       if (!config) {
@@ -53,7 +40,7 @@ export class StorageProviderFactory {
       }
 
       // Create provider
-      const provider = StorageProviderFactory.createProvider(config.type);
+      const provider = StorageProviderFactory.createProvider(config);
       if (!provider) {
         return null;
       }
@@ -73,7 +60,7 @@ export class StorageProviderFactory {
               return null;
             }
 
-            return { provider, type: config.type };
+            return provider;
           } catch (error) {
             console.warn('Failed to reconnect:', error);
             StorageProviderFactory.clearCache();
@@ -86,7 +73,7 @@ export class StorageProviderFactory {
         }
       }
 
-      return { provider, type: config.type };
+      return provider;
     } catch (error) {
       console.warn('Failed to restore cached connection:', error);
       StorageProviderFactory.clearCache();
@@ -97,9 +84,9 @@ export class StorageProviderFactory {
   /**
    * Static factory: Connect to a storage provider (authenticate for cloud)
    * @param config Connection configuration
-   * @returns Provider and type
+   * @returns Provider instance
    */
-  static async connect(config: ConnectConfig): Promise<StorageProviderResult> {
+  static async connect(config: ConnectConfig): Promise<IStorageProvider> {
     const provider = StorageProviderFactory.createProvider(config.type);
     if (!provider) {
       throw new Error(`Provider not available: ${config.type}`);
@@ -111,7 +98,7 @@ export class StorageProviderFactory {
     // Save provider type to localStorage
     StorageProviderFactory.saveConfig(config.type);
 
-    return { provider, type: config.type };
+    return provider;
   }
 
   /**
@@ -144,29 +131,16 @@ export class StorageProviderFactory {
   /**
    * Load configuration from storage
    */
-  private static loadConfig(): StoredConfig | null {
+  private static loadConfig(): StorageProviderType | null {
     const saved = localStorage.getItem(STORAGE_CONFIG_KEY);
-    if (!saved) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(saved) as StoredConfig;
-    } catch (error) {
-      console.warn('Failed to parse stored config:', error);
-      return null;
-    }
+    return saved as StorageProviderType | null;
   }
 
   /**
    * Save configuration to storage
    */
   private static saveConfig(type: StorageProviderType): void {
-    const config: StoredConfig = {
-      type,
-    };
-
-    localStorage.setItem(STORAGE_CONFIG_KEY, JSON.stringify(config));
+    localStorage.setItem(STORAGE_CONFIG_KEY, type);
   }
 
   /**

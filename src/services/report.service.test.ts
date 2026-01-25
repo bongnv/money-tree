@@ -2,6 +2,7 @@ import { ReportService } from './report.service';
 import { CalculationService } from './calculation.service';
 import type { Account, ManualAsset, Transaction, TransactionType, Category } from '../types/models';
 import { AccountType, AssetType, Group, CurrencyCode } from '../types/enums';
+import { getRateForMonth } from '../utils/exchangeRate.utils';
 
 // Mock exchange rate utils
 jest.mock('../utils/exchangeRate.utils', () => ({
@@ -865,8 +866,6 @@ describe('ReportService', () => {
     });
 
     it('should convert budget currency when base currency provided', async () => {
-      const { getRateForMonth } = require('../utils/exchangeRate.utils');
-
       const eurBudgets = [
         {
           ...mockBudgets[0],
@@ -877,7 +876,7 @@ describe('ReportService', () => {
       ];
 
       // Mock exchange rate
-      getRateForMonth.mockResolvedValue(1.1);
+      (getRateForMonth as jest.Mock).mockResolvedValue(1.1);
 
       const result = await reportService.calculateBudgetPerformance(
         eurBudgets,
@@ -894,8 +893,6 @@ describe('ReportService', () => {
     });
 
     it('should convert transaction currency when base currency provided', async () => {
-      const { getRateForMonth } = require('../utils/exchangeRate.utils');
-
       const eurAccounts = [
         {
           ...mockAccounts[0],
@@ -904,7 +901,7 @@ describe('ReportService', () => {
       ];
 
       // Mock exchange rate
-      getRateForMonth.mockResolvedValue(1.1);
+      (getRateForMonth as jest.Mock).mockResolvedValue(1.1);
 
       const result = await reportService.calculateBudgetPerformance(
         mockBudgets,

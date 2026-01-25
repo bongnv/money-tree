@@ -3,6 +3,7 @@ import { ManualAssetDialog } from './ManualAssetDialog';
 import { AppProvider } from '../../contexts/AppContext';
 import { AssetType } from '../../types/enums';
 import type { ManualAsset } from '../../types/models';
+import { useAssetMutations } from '../../hooks/mutations/useAssetMutations';
 
 // Mock Dexie hooks
 jest.mock('../../hooks/mutations/useAssetMutations');
@@ -27,8 +28,7 @@ describe('ManualAssetDialog', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    const { useAssetMutations } = require('../../hooks/mutations/useAssetMutations');
-    useAssetMutations.mockReturnValue({
+    (useAssetMutations as jest.Mock).mockReturnValue({
       addAsset: mockAddAsset,
       updateAsset: mockUpdateAsset,
       deleteAsset: jest.fn(),

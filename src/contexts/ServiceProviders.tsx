@@ -212,7 +212,6 @@ const ReportServiceContext = createContext<ReportService>(null!);
  */
 export const ServiceProvider: React.FC<{
   children: ReactNode;
-  onReconnectNeeded?: (providerName: string) => Promise<'reconnect' | 'dismiss'>;
 }> = ({ children }) => {
   const calculationService = useMemo(() => new CalculationService(), []);
   const archiveService = useMemo(() => new DexieArchiveService(), []);

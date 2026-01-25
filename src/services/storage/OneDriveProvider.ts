@@ -98,7 +98,7 @@ export class OneDriveProvider implements IStorageProvider {
   /**
    * Read file content
    */
-  async readMainFile(fileItem: CloudItem): Promise<string> {
+  async readFile(fileItem: CloudItem): Promise<Blob> {
     if (!fileItem?.id) {
       throw new Error('Cannot read file: file id is missing');
     }
@@ -107,7 +107,8 @@ export class OneDriveProvider implements IStorageProvider {
       const client = await this.getGraphClient();
       const endpoint = this.buildContentUrl(fileItem, fileItem.id);
       const response = await client.api(endpoint).get();
-      return typeof response === 'string' ? response : JSON.stringify(response);
+      const content = typeof response === 'string' ? response : JSON.stringify(response);
+      return new Blob([content], { type: 'application/json' });
     } catch (error: any) {
       throw this.createFriendlyError(error);
     }
@@ -117,7 +118,7 @@ export class OneDriveProvider implements IStorageProvider {
    * Write to file - creates new file or updates existing
    * Returns updated CloudItem with id populated for new files
    */
-  async writeMainFile(fileItem: CloudItem, content: string): Promise<CloudItem> {
+  async writeFile(fileItem: CloudItem, content: Blob): Promise<CloudItem> {
     if (!fileItem) {
       throw new Error('No file item provided');
     }
@@ -132,38 +133,6 @@ export class OneDriveProvider implements IStorageProvider {
         return { ...fileItem, id: response.id };
       }
       return fileItem;
-    } catch (error: any) {
-      throw this.createFriendlyError(error);
-    }
-  }
-
-  /**
-   * Save an additional file (backup, archive, etc.)
-   * Saves in same folder as main file
-   */
-  async saveAdditionalFile(
-    mainFileItem: CloudItem,
-    filename: string,
-    content: string | Blob
-  ): Promise<void> {
-    if (!mainFileItem) {
-      throw new Error('No main file item provided');
-    }
-
-    try {
-      const client = await this.getGraphClient();
-
-      // Create CloudItem for additional file in same folder
-      const newFileItem: CloudItem = {
-        id: '',
-        name: filename,
-        isFolder: false,
-        driveId: mainFileItem.driveId,
-        parentItemId: mainFileItem.parentItemId,
-      };
-
-      const endpoint = this.buildUploadUrl(newFileItem, filename, null);
-      await client.api(endpoint).put(content);
     } catch (error: any) {
       throw this.createFriendlyError(error);
     }

@@ -1,4 +1,4 @@
-import type { IStorageProvider } from './IStorageProvider';
+import type { IStorageProvider, CloudItem } from './IStorageProvider';
 import type { DataFile } from '../../types/models';
 
 /**
@@ -10,108 +10,122 @@ describe('IStorageProvider', () => {
    * Mock implementation for testing
    */
   class MockStorageProvider implements IStorageProvider {
-    private dataFile: DataFile | null = null;
+    private fileContent: string | null = null;
 
-    async loadDataFile(): Promise<DataFile | null> {
-      return this.dataFile;
+    async initialize(): Promise<boolean> {
+      return true;
     }
 
-    async saveDataFile(data: DataFile): Promise<void> {
-      this.dataFile = data;
+    async authenticate(): Promise<void> {
+      // Mock authentication
     }
 
-    async saveFile(_blob: Blob, _filename: string): Promise<void> {
-      // Mock file save
+    async readFile(_fileItem: CloudItem): Promise<Blob> {
+      if (!this.fileContent) {
+        throw new Error('File not found');
+      }
+      return new Blob([this.fileContent], { type: 'application/json' });
     }
 
-    getFileName(): string {
-      return 'mock-file.json';
+    async writeFile(_fileItem: CloudItem, content: Blob): Promise<CloudItem> {
+      // Read Blob content using FileReader in test environment
+      const reader = new FileReader();
+      this.fileContent = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsText(content);
+      });
+      return { id: 'mock-id', name: 'mock-file.json', isFolder: false };
+    }
+
+    getName(): string {
+      return 'Mock Provider';
+    }
+
+    async listItems(_parent?: CloudItem): Promise<CloudItem[]> {
+      return [];
     }
   }
 
   let provider: IStorageProvider;
   let mockData: DataFile;
+  let fileItem: CloudItem;
 
   beforeEach(() => {
     provider = new MockStorageProvider();
+    fileItem = { id: 'test-id', name: 'test-file.json', isFolder: false };
     mockData = {
-      version: '1.0.0',
-      years: {
-        '2024': {
-          transactions: [],
-          budgets: [],
-          manualAssets: [],
-          exchangeRates: [],
-        },
-      },
+      version: '1.0',
+      transactions: [],
       accounts: [],
       categories: [],
       transactionTypes: [],
+      budgets: [],
+      manualAssets: [],
+      exchangeRates: [],
       archivedYears: [],
+      baseCurrency: 'USD',
       lastModified: new Date().toISOString(),
     };
   });
 
-  describe('loadDataFile', () => {
-    it('should return null when file does not exist', async () => {
-      const result = await provider.loadDataFile();
-      expect(result).toBeNull();
+  describe('readFile', () => {
+    it('should throw error when file does not exist', async () => {
+      await expect(provider.readFile(fileItem)).rejects.toThrow('File not found');
     });
 
-    it('should return data when file exists', async () => {
-      await provider.saveDataFile(mockData);
-      const result = await provider.loadDataFile();
-      expect(result).toEqual(mockData);
-    });
+    it('should return Blob when file exists', async () => {
+      const content = new Blob([JSON.stringify(mockData)], { type: 'application/json' });
+      await provider.writeFile(fileItem, content);
 
-    it('should return data with multiple years', async () => {
-      const multiYearData = {
-        ...mockData,
-        years: {
-          '2023': { transactions: [], budgets: [], manualAssets: [], exchangeRates: [] },
-          '2024': { transactions: [], budgets: [], manualAssets: [], exchangeRates: [] },
-        },
-      };
+      const result = await provider.readFile(fileItem);
+      expect(result).toBeInstanceOf(Blob);
 
-      await provider.saveDataFile(multiYearData);
-      const result = await provider.loadDataFile();
-
-      expect(result?.years).toHaveProperty('2023');
-      expect(result?.years).toHaveProperty('2024');
+      // Read blob using FileReader for test environment
+      const text = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsText(result);
+      });
+      expect(JSON.parse(text)).toEqual(mockData);
     });
   });
 
-  describe('saveDataFile', () => {
-    it('should save data successfully', async () => {
-      await provider.saveDataFile(mockData);
-      const result = await provider.loadDataFile();
-      expect(result).toEqual(mockData);
+  describe('writeFile', () => {
+    it('should write data successfully', async () => {
+      const content = new Blob([JSON.stringify(mockData)], { type: 'application/json' });
+      const result = await provider.writeFile(fileItem, content);
+
+      expect(result).toHaveProperty('id');
+      expect(result).toHaveProperty('name');
+
+      const readBlob = await provider.readFile(fileItem);
+      const readText = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsText(readBlob);
+      });
+      expect(JSON.parse(readText)).toEqual(mockData);
     });
 
     it('should overwrite existing data', async () => {
-      await provider.saveDataFile(mockData);
+      const content1 = new Blob([JSON.stringify(mockData)], { type: 'application/json' });
+      await provider.writeFile(fileItem, content1);
 
       const updatedData = { ...mockData, lastModified: new Date().toISOString() };
-      await provider.saveDataFile(updatedData);
+      const content2 = new Blob([JSON.stringify(updatedData)], { type: 'application/json' });
+      await provider.writeFile(fileItem, content2);
 
-      const result = await provider.loadDataFile();
-      expect(result).toEqual(updatedData);
-    });
-
-    it('should save data with multiple years', async () => {
-      const multiYearData = {
-        ...mockData,
-        years: {
-          '2023': { transactions: [], budgets: [], manualAssets: [], exchangeRates: [] },
-          '2024': { transactions: [], budgets: [], manualAssets: [], exchangeRates: [] },
-        },
-      };
-
-      await provider.saveDataFile(multiYearData);
-      const result = await provider.loadDataFile();
-
-      expect(result?.years).toHaveProperty('2023');
-      expect(result?.years).toHaveProperty('2024');
+      const result = await provider.readFile(fileItem);
+      const resultText = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsText(result);
+      });
+      expect(JSON.parse(resultText)).toEqual(updatedData);
     });
   });
 });

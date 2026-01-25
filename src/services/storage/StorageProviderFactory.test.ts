@@ -39,9 +39,10 @@ describe('StorageProviderFactory', () => {
     mockOneDriveProvider = {
       initialize: jest.fn().mockResolvedValue(true),
       authenticate: jest.fn().mockResolvedValue(undefined),
-      readMainFile: jest.fn().mockResolvedValue(JSON.stringify(mockDataFile)),
-      writeMainFile: jest.fn().mockResolvedValue(undefined),
-      saveAdditionalFile: jest.fn().mockResolvedValue(undefined),
+      readFile: jest
+        .fn()
+        .mockResolvedValue(new Blob([JSON.stringify(mockDataFile)], { type: 'application/json' })),
+      writeFile: jest.fn().mockResolvedValue(undefined),
       getMainFileName: jest.fn().mockReturnValue('test.json'),
       getName: jest.fn().mockReturnValue('OneDrive'),
       clearCache: jest.fn().mockResolvedValue(undefined),
@@ -50,9 +51,10 @@ describe('StorageProviderFactory', () => {
     mockGoogleDriveProvider = {
       initialize: jest.fn().mockResolvedValue(true),
       authenticate: jest.fn().mockResolvedValue(undefined),
-      readMainFile: jest.fn().mockResolvedValue(JSON.stringify(mockDataFile)),
-      writeMainFile: jest.fn().mockResolvedValue(undefined),
-      saveAdditionalFile: jest.fn().mockResolvedValue(undefined),
+      readFile: jest
+        .fn()
+        .mockResolvedValue(new Blob([JSON.stringify(mockDataFile)], { type: 'application/json' })),
+      writeFile: jest.fn().mockResolvedValue(undefined),
       getMainFileName: jest.fn().mockReturnValue('test.json'),
       getName: jest.fn().mockReturnValue('Google Drive'),
       clearCache: jest.fn().mockResolvedValue(undefined),

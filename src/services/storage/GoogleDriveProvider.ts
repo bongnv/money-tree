@@ -147,7 +147,7 @@ export class GoogleDriveProvider implements IStorageProvider {
   /**
    * Read file content
    */
-  async readMainFile(fileItem: CloudItem): Promise<string> {
+  async readFile(fileItem: CloudItem): Promise<Blob> {
     if (!fileItem?.id) {
       throw new Error('Cannot read file: file id is missing');
     }
@@ -165,14 +165,14 @@ export class GoogleDriveProvider implements IStorageProvider {
       throw this.createFriendlyError(response.status);
     }
 
-    return await response.text();
+    return await response.blob();
   }
 
   /**
    * Write to file - creates new file or updates existing
    * Returns updated CloudItem with id populated for new files
    */
-  async writeMainFile(fileItem: CloudItem, content: string): Promise<CloudItem> {
+  async writeFile(fileItem: CloudItem, content: Blob): Promise<CloudItem> {
     if (!fileItem) {
       throw new Error('No file item provided');
     }
@@ -186,22 +186,6 @@ export class GoogleDriveProvider implements IStorageProvider {
       const file = await this.createFile(fileItem.name, content, fileItem.parentItemId);
       return { ...fileItem, id: file.id };
     }
-  }
-
-  /**
-   * Save an additional file (backup, archive, etc.)
-   * Saves in same folder as main file
-   */
-  async saveAdditionalFile(
-    mainFileItem: CloudItem,
-    filename: string,
-    content: string | Blob
-  ): Promise<void> {
-    if (!mainFileItem) {
-      throw new Error('No main file item provided');
-    }
-
-    await this.createFile(filename, content, mainFileItem.parentItemId);
   }
 
   /**
@@ -305,11 +289,7 @@ export class GoogleDriveProvider implements IStorageProvider {
   /**
    * Create a new file in Google Drive
    */
-  private async createFile(
-    name: string,
-    content: string | Blob,
-    parentId?: string
-  ): Promise<DriveFile> {
+  private async createFile(name: string, content: Blob, parentId?: string): Promise<DriveFile> {
     const token = await this.getAccessToken();
 
     const metadata = {
@@ -320,11 +300,7 @@ export class GoogleDriveProvider implements IStorageProvider {
 
     const form = new FormData();
     form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-    if (typeof content === 'string') {
-      form.append('file', new Blob([content], { type: driveApiConfig.jsonMimeType }));
-    } else {
-      form.append('file', content);
-    }
+    form.append('file', content);
 
     const response = await fetch(
       `${driveApiConfig.uploadUrl}?uploadType=multipart&fields=id,name,mimeType,parents`,
@@ -347,7 +323,7 @@ export class GoogleDriveProvider implements IStorageProvider {
   /**
    * Update existing file in Google Drive
    */
-  private async updateFile(fileId: string, content: string | Blob): Promise<DriveFile> {
+  private async updateFile(fileId: string, content: Blob): Promise<DriveFile> {
     const token = await this.getAccessToken();
 
     const response = await fetch(
@@ -358,7 +334,7 @@ export class GoogleDriveProvider implements IStorageProvider {
           Authorization: `Bearer ${token}`,
           'Content-Type': driveApiConfig.jsonMimeType,
         },
-        body: content as BodyInit,
+        body: content,
       }
     );
 

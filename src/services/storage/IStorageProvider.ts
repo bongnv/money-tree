@@ -33,31 +33,17 @@ export interface IStorageProvider {
   /**
    * Read file content
    * @param fileItem CloudItem representing the file to read (must have id)
-   * @returns File content as string
+   * @returns File content as Blob
    */
-  readMainFile(fileItem: CloudItem): Promise<string>;
+  readFile(fileItem: CloudItem): Promise<Blob>;
 
   /**
    * Write to file - creates new file or updates existing
    * @param fileItem CloudItem representing the file (id='' for new file)
-   * @param content String content to write
+   * @param content Blob content to write
    * @returns Updated CloudItem with fileId populated for new files
    */
-  writeMainFile(fileItem: CloudItem, content: string): Promise<CloudItem>;
-
-  /**
-   * Save an additional file (backup, archive, etc.)
-   * For local: shows file picker
-   * For cloud: saves in same folder as main file
-   * @param mainFileItem CloudItem of main file (for determining save location)
-   * @param filename The filename for the new file
-   * @param content String or Blob to write
-   */
-  saveAdditionalFile(
-    mainFileItem: CloudItem,
-    filename: string,
-    content: string | Blob
-  ): Promise<void>;
+  writeFile(fileItem: CloudItem, content: Blob): Promise<CloudItem>;
 
   /**
    * Get provider name for display

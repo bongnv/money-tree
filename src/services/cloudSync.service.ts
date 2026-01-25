@@ -62,7 +62,8 @@ export class CloudSyncService {
     };
 
     const content = JSON.stringify(dataFile);
-    const updatedFileItem = await this.provider.writeMainFile(this.fileItem, content);
+    const blob = new Blob([content], { type: 'application/json' });
+    const updatedFileItem = await this.provider.writeFile(this.fileItem, blob);
     const timestamp = new Date().toISOString();
     await syncMetadata.setLastSynced(timestamp);
     return { timestamp, fileItem: updatedFileItem };
@@ -72,7 +73,8 @@ export class CloudSyncService {
    * Download from cloud and merge with local data (Last-Write-Wins)
    */
   async downloadFromCloud(): Promise<string> {
-    const content = await this.provider.readMainFile(this.fileItem);
+    const blob = await this.provider.readFile(this.fileItem);
+    const content = await blob.text();
     const cloudData = JSON.parse(content) as DataFile;
     if (!cloudData) {
       throw new Error('No data file found in cloud');

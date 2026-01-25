@@ -146,7 +146,7 @@ class DexieArchiveService {
    * 2. Remove archived year transactions
    * 3. Update account initial balances to closing balances
    * 4. Remove archived year budgets
-   * 
+   *
    * Note: Archive reference is added via useSyncMetadataMutations hook in the component
    * to ensure proper sync triggering
    */

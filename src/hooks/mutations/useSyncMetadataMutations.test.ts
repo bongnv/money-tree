@@ -59,7 +59,7 @@ describe('useSyncMetadataMutations', () => {
     });
 
     it('should set isLoading during operation', async () => {
-      let loadingStates: boolean[] = [];
+      const loadingStates: boolean[] = [];
       (syncMetadata.setBaseCurrency as jest.Mock).mockImplementationOnce(
         () =>
           new Promise((resolve) => {

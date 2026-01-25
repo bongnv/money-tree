@@ -71,8 +71,9 @@ export class CloudSyncService {
 
   /**
    * Download from cloud and merge with local data (Last-Write-Wins)
+   * Returns timestamp and whether any remote changes were merged
    */
-  async downloadFromCloud(): Promise<string> {
+  async downloadFromCloud(): Promise<{ timestamp: string; hasRemoteChanges: boolean }> {
     const blob = await this.provider.readFile(this.fileItem);
     const content = await blob.text();
     const cloudData = JSON.parse(content) as DataFile;
@@ -81,16 +82,17 @@ export class CloudSyncService {
     }
 
     // Merge with local data using Last-Write-Wins
-    await this.mergeData(cloudData);
+    const hasRemoteChanges = await this.mergeData(cloudData);
     const timestamp = new Date().toISOString();
     await syncMetadata.setLastSynced(timestamp);
-    return timestamp;
+    return { timestamp, hasRemoteChanges };
   }
 
   /**
    * Merge cloud data with local data using Last-Write-Wins strategy
+   * Returns true if any remote changes were merged into local database
    */
-  private async mergeData(cloudData: DataFile): Promise<void> {
+  private async mergeData(cloudData: DataFile): Promise<boolean> {
     // Get local data
     const [
       localTransactions,
@@ -111,30 +113,40 @@ export class CloudSyncService {
     ]);
 
     // Merge each entity type using Last-Write-Wins
-    const mergedTransactions = this.mergeByTimestamp(localTransactions, cloudData.transactions);
-    const mergedAccounts = this.mergeByTimestamp(localAccounts, cloudData.accounts);
-    const mergedCategories = this.mergeByTimestamp(localCategories, cloudData.categories);
-    const mergedTransactionTypes = this.mergeByTimestamp(
+    const transactionsResult = this.mergeByTimestamp(localTransactions, cloudData.transactions);
+    const accountsResult = this.mergeByTimestamp(localAccounts, cloudData.accounts);
+    const categoriesResult = this.mergeByTimestamp(localCategories, cloudData.categories);
+    const transactionTypesResult = this.mergeByTimestamp(
       localTransactionTypes,
       cloudData.transactionTypes
     );
-    const mergedBudgets = this.mergeByTimestamp(localBudgets, cloudData.budgets);
-    const mergedAssets = this.mergeByTimestamp(localAssets, cloudData.manualAssets);
+    const budgetsResult = this.mergeByTimestamp(localBudgets, cloudData.budgets);
+    const assetsResult = this.mergeByTimestamp(localAssets, cloudData.manualAssets);
     // Exchange rates don't have updatedAt, so just merge by ID
-    const mergedExchangeRates = this.mergeExchangeRates(
+    const exchangeRatesResult = this.mergeExchangeRates(
       localExchangeRates,
       cloudData.exchangeRates
     );
 
+    // Track if any remote changes were merged
+    const hasRemoteChanges =
+      transactionsResult.hasRemoteChanges ||
+      accountsResult.hasRemoteChanges ||
+      categoriesResult.hasRemoteChanges ||
+      transactionTypesResult.hasRemoteChanges ||
+      budgetsResult.hasRemoteChanges ||
+      assetsResult.hasRemoteChanges ||
+      exchangeRatesResult.hasRemoteChanges;
+
     // Update IndexedDB with merged data
     await Promise.all([
-      db.transactions.bulkPut(mergedTransactions),
-      db.accounts.bulkPut(mergedAccounts),
-      db.categories.bulkPut(mergedCategories),
-      db.transactionTypes.bulkPut(mergedTransactionTypes),
-      db.budgets.bulkPut(mergedBudgets),
-      db.manualAssets.bulkPut(mergedAssets),
-      db.exchangeRates.bulkPut(mergedExchangeRates),
+      db.transactions.bulkPut(transactionsResult.merged),
+      db.accounts.bulkPut(accountsResult.merged),
+      db.categories.bulkPut(categoriesResult.merged),
+      db.transactionTypes.bulkPut(transactionTypesResult.merged),
+      db.budgets.bulkPut(budgetsResult.merged),
+      db.manualAssets.bulkPut(assetsResult.merged),
+      db.exchangeRates.bulkPut(exchangeRatesResult.merged),
     ]);
 
     // Update metadata - only if local doesn't have values
@@ -149,17 +161,21 @@ export class CloudSyncService {
     if (cloudData.archivedYears && cloudData.archivedYears.length > 0) {
       await syncMetadata.setArchivedYears(cloudData.archivedYears);
     }
+
+    return hasRemoteChanges;
   }
 
   /**
    * Merge two arrays using Last-Write-Wins strategy
    * Items with newer updatedAt timestamp win
+   * Returns merged data and flag indicating if any remote changes were applied
    */
   private mergeByTimestamp<T extends { id: string; updatedAt: string }>(
     local: T[],
     remote: T[]
-  ): T[] {
+  ): { merged: T[]; hasRemoteChanges: boolean } {
     const map = new Map<string, T>();
+    let hasRemoteChanges = false;
 
     // Add all local items
     local.forEach((item) => map.set(item.id, item));
@@ -169,32 +185,43 @@ export class CloudSyncService {
       const existing = map.get(item.id);
       if (!existing || item.updatedAt > existing.updatedAt) {
         map.set(item.id, item);
+        hasRemoteChanges = true;
       }
     });
 
-    return Array.from(map.values());
+    return { merged: Array.from(map.values()), hasRemoteChanges };
   }
 
   /**
    * Merge exchange rates by ID (no timestamp)
+   * Returns merged data and flag indicating if any remote changes were applied
    */
-  private mergeExchangeRates(local: ExchangeRate[], remote: ExchangeRate[]): ExchangeRate[] {
+  private mergeExchangeRates(
+    local: ExchangeRate[],
+    remote: ExchangeRate[]
+  ): { merged: ExchangeRate[]; hasRemoteChanges: boolean } {
     const map = new Map<string, ExchangeRate>();
+    let hasRemoteChanges = false;
 
     // Add all local items
     local.forEach((item) => map.set(item.id, item));
 
     // Add/replace with remote items
     remote.forEach((item) => {
-      map.set(item.id, item);
+      const existing = map.get(item.id);
+      if (!existing || JSON.stringify(existing) !== JSON.stringify(item)) {
+        map.set(item.id, item);
+        hasRemoteChanges = true;
+      }
     });
 
-    return Array.from(map.values());
+    return { merged: Array.from(map.values()), hasRemoteChanges };
   }
 
   /**
    * Full bidirectional sync
-   * Downloads from cloud, merges, then uploads
+   * Downloads from cloud, merges, then uploads (only if local changes exist)
+   * Optimized: skips upload if only remote changes were merged (nothing new to upload)
    * Returns updated CloudItem from upload
    */
   async fullSync(): Promise<{
@@ -202,9 +229,22 @@ export class CloudSyncService {
     uploadTimestamp: string;
     fileItem: CloudItem;
   }> {
-    const downloadTimestamp = await this.downloadFromCloud();
-    const { timestamp: uploadTimestamp, fileItem } = await this.uploadToCloud();
-    return { downloadTimestamp, uploadTimestamp, fileItem };
+    const { timestamp: downloadTimestamp, hasRemoteChanges } = await this.downloadFromCloud();
+
+    // Optimize: only upload if we had local changes (i.e., not just remote changes)
+    // If only remote changes were merged, local is now in sync - no need to upload
+    if (!hasRemoteChanges) {
+      // Local data is newer or equal, upload to ensure cloud is up to date
+      const { timestamp: uploadTimestamp, fileItem } = await this.uploadToCloud();
+      return { downloadTimestamp, uploadTimestamp, fileItem };
+    }
+
+    // Only remote changes were merged, skip upload (we'd just upload what we downloaded)
+    return {
+      downloadTimestamp,
+      uploadTimestamp: downloadTimestamp,
+      fileItem: this.fileItem,
+    };
   }
 
   /**

@@ -46,6 +46,11 @@ export const BalanceSheet: React.FC = () => {
   const [historyDialogAssetId, setHistoryDialogAssetId] = useState<string | null>(null);
   const [conversionCurrency, setConversionCurrency] = useState<CurrencyCode>(baseCurrency);
 
+  // Update conversion currency when base currency changes from DB
+  useEffect(() => {
+    setConversionCurrency(baseCurrency);
+  }, [baseCurrency]);
+
   // Calculate balance sheet for selected date with currency conversion
   const [balanceSheet, setBalanceSheet] = useState<BalanceSheetData>({
     assets: [],

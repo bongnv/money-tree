@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   ReactNode,
 } from 'react';
 import { CloudSyncService } from '../services/cloudSync.service';
@@ -60,11 +61,9 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onReconnec
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSynced, setLastSynced] = useState<string | null>(null);
 
-  // Debounce timers
-  const [debounceTimeoutId, setDebounceTimeoutId] = useState<NodeJS.Timeout | null>(null);
-  const [backgroundSyncIntervalId, setBackgroundSyncIntervalId] = useState<NodeJS.Timeout | null>(
-    null
-  );
+  // Debounce timers (use refs to avoid recreating callbacks)
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const backgroundSyncIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const isConnected = Boolean(provider && currentFileItem);
 
@@ -131,10 +130,10 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onReconnec
   // Cleanup timers on unmount
   useEffect(() => {
     return () => {
-      if (debounceTimeoutId) clearTimeout(debounceTimeoutId);
-      if (backgroundSyncIntervalId) clearTimeout(backgroundSyncIntervalId);
+      if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
+      if (backgroundSyncIntervalRef.current) clearInterval(backgroundSyncIntervalRef.current);
     };
-  }, [debounceTimeoutId, backgroundSyncIntervalId]);
+  }, []);
 
   // Connect to a storage provider using static factory
   const connect = useCallback(async (type: StorageProviderType): Promise<void> => {
@@ -194,38 +193,38 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onReconnec
     }
 
     // Clear existing timer if any
-    if (debounceTimeoutId) {
-      clearTimeout(debounceTimeoutId);
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
     }
 
     // Set new debounce timer
-    const timeoutId = setTimeout(async () => {
+    debounceTimeoutRef.current = setTimeout(async () => {
       try {
         await fullSync();
       } catch {
         // Error already logged and shown by fullSync
       } finally {
-        setDebounceTimeoutId(null);
+        debounceTimeoutRef.current = null;
       }
     }, DEBOUNCE_MS);
-
-    setDebounceTimeoutId(timeoutId);
-  }, [syncService, debounceTimeoutId, DEBOUNCE_MS, fullSync]);
+  }, [syncService, DEBOUNCE_MS, fullSync]);
 
   // Set up background sync (5 minutes interval) - uses shared debounced sync
   useEffect(() => {
     if (!isConnected) return;
 
     // Set up interval to trigger debounced sync periodically
-    const intervalId = setInterval(() => {
+    backgroundSyncIntervalRef.current = setInterval(() => {
       debouncedSync();
     }, BACKGROUND_SYNC_INTERVAL_MS);
-    setBackgroundSyncIntervalId(intervalId);
 
     return () => {
-      if (intervalId) clearInterval(intervalId);
+      if (backgroundSyncIntervalRef.current) {
+        clearInterval(backgroundSyncIntervalRef.current);
+        backgroundSyncIntervalRef.current = null;
+      }
     };
-  }, [isConnected, debouncedSync, BACKGROUND_SYNC_INTERVAL_MS]);
+  }, [isConnected, BACKGROUND_SYNC_INTERVAL_MS, debouncedSync]);
 
   const value: SyncContextValue = {
     // Connection state (derived from provider and currentFileItem)

@@ -81,6 +81,11 @@ export const CashFlowReport: React.FC = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'period' | 'cumulative'>('period');
 
+  // Update conversion currency when base currency changes from DB
+  useEffect(() => {
+    setConversionCurrency(baseCurrency);
+  }, [baseCurrency]);
+
   const handleDateRangeChange = (range: { startDate: string; endDate: string }) => {
     setStartDate(range.startDate);
     setEndDate(range.endDate);

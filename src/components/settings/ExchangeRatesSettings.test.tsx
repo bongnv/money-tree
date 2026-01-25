@@ -16,7 +16,7 @@ jest.mock('../../hooks/queries', () => ({
 jest.mock('../../services/cloudSync.service', () => ({
   getCloudSyncService: jest.fn(() => ({
     fullSync: jest.fn().mockResolvedValue(undefined),
-    throttledSync: jest.fn(),
+    debouncedSync: jest.fn(),
   })),
   initCloudSyncService: jest.fn(),
 }));

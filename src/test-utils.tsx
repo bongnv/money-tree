@@ -3,15 +3,40 @@ import { BrowserRouter } from 'react-router-dom';
 import { AppProvider } from './contexts/AppContext';
 import React from 'react';
 
-// Mock cloudSync service for all tests
-jest.mock('./services/cloudSync.service', () => ({
-  getCloudSyncService: jest.fn(() => ({
+// Mock CloudSyncService class
+jest.mock('./services/cloudSync.service', () => {
+  return {
+    CloudSyncService: jest.fn().mockImplementation(() => ({
+      uploadToCloud: jest.fn().mockResolvedValue(undefined),
+      downloadFromCloud: jest.fn().mockResolvedValue(undefined),
+      fullSync: jest.fn().mockResolvedValue(undefined),
+      debouncedSync: jest.fn(),
+      loadInitialData: jest.fn().mockResolvedValue(undefined),
+      setCallbacks: jest.fn(),
+      syncing: false,
+      pendingChanges: false,
+    })),
+  };
+});
+
+// Mock SyncProvider for all tests
+jest.mock('./contexts/SyncProvider', () => ({
+  useSyncService: jest.fn(() => ({
+    isConnected: false,
+    providerName: null,
+    fileName: null,
+    providerType: null,
+    isInitializing: false,
+    isSyncing: false,
+    lastSynced: null,
+    setFile: jest.fn(),
+    listItems: jest.fn().mockResolvedValue([]),
     fullSync: jest.fn().mockResolvedValue(undefined),
-    uploadToCloud: jest.fn().mockResolvedValue(undefined),
-    downloadFromCloud: jest.fn().mockResolvedValue(undefined),
-    throttledSync: jest.fn(),
+    debouncedSync: jest.fn(),
+    connect: jest.fn().mockResolvedValue(undefined),
+    disconnect: jest.fn().mockResolvedValue(undefined),
   })),
-  initCloudSyncService: jest.fn(),
+  SyncProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {

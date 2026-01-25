@@ -23,14 +23,18 @@ const mockArchiveService = {
 // Mock sync service
 const mockSyncService = {
   fullSync: jest.fn(),
-  downloadCurrentFile: jest.fn(),
-  uploadCurrentFile: jest.fn(),
-  syncNow: jest.fn(),
+  debouncedSync: jest.fn(),
+  isConnected: true,
+  isInitializing: false,
+  isSyncing: false,
 };
 
 // Mock the hooks
 jest.mock('../../contexts/ServiceProviders', () => ({
   useArchiveService: () => mockArchiveService,
+}));
+
+jest.mock('../../contexts/SyncProvider', () => ({
   useSyncService: () => mockSyncService,
 }));
 
@@ -45,7 +49,7 @@ jest.mock('../../hooks/queries', () => ({
 describe('ArchiveManager', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockArchiveService.identifyArchivableYear.mockReturnValue(null);
+    mockArchiveService.identifyArchivableYear.mockResolvedValue(null);
     mockUseArchivedYears.mockReturnValue([]);
   });
 
@@ -80,7 +84,7 @@ describe('ArchiveManager', () => {
 
   describe('Archivable Years', () => {
     it('should display archivable year with summary', async () => {
-      mockArchiveService.identifyArchivableYear.mockReturnValue(2022);
+      mockArchiveService.identifyArchivableYear.mockResolvedValue(2022);
       mockArchiveService.calculateYearEndSummary.mockResolvedValue({
         transactionCount: 150,
         closingNetWorth: 50000,
@@ -99,7 +103,7 @@ describe('ArchiveManager', () => {
     });
 
     it('should show loading spinner while calculating summary', async () => {
-      mockArchiveService.identifyArchivableYear.mockReturnValue(2022);
+      mockArchiveService.identifyArchivableYear.mockResolvedValue(2022);
       mockArchiveService.calculateYearEndSummary.mockReturnValue(
         new Promise(() => {}) // Never resolves
       );
@@ -112,7 +116,7 @@ describe('ArchiveManager', () => {
     });
 
     it('should open confirmation dialog when Archive button is clicked', async () => {
-      mockArchiveService.identifyArchivableYear.mockReturnValue(2022);
+      mockArchiveService.identifyArchivableYear.mockResolvedValue(2022);
       mockArchiveService.calculateYearEndSummary.mockResolvedValue({
         transactionCount: 150,
         closingNetWorth: 50000,
@@ -134,7 +138,7 @@ describe('ArchiveManager', () => {
     });
 
     it('should close confirmation dialog when Cancel is clicked', async () => {
-      mockArchiveService.identifyArchivableYear.mockReturnValue(2022);
+      mockArchiveService.identifyArchivableYear.mockResolvedValue(2022);
       mockArchiveService.calculateYearEndSummary.mockResolvedValue({
         transactionCount: 150,
         closingNetWorth: 50000,
@@ -163,7 +167,7 @@ describe('ArchiveManager', () => {
 
   describe('Archive Process', () => {
     beforeEach(() => {
-      mockArchiveService.identifyArchivableYear.mockReturnValue(2022);
+      mockArchiveService.identifyArchivableYear.mockResolvedValue(2022);
       mockArchiveService.calculateYearEndSummary.mockResolvedValue({
         transactionCount: 150,
         closingNetWorth: 50000,
@@ -187,7 +191,6 @@ describe('ArchiveManager', () => {
 
       mockArchiveService.createArchiveFile.mockResolvedValue(mockArchiveFile);
       mockArchiveService.saveArchiveFile.mockResolvedValue(undefined);
-      mockSyncService.syncNow.mockResolvedValue(undefined);
 
       renderComponent();
 
@@ -212,7 +215,7 @@ describe('ArchiveManager', () => {
             archivedDate: '2024-01-15T00:00:00Z',
           })
         );
-        expect(mockSyncService.syncNow).toHaveBeenCalled();
+        expect(mockSyncService.debouncedSync).toHaveBeenCalled();
       });
     });
 
@@ -317,7 +320,7 @@ describe('ArchiveManager', () => {
 
   describe('Edge Cases', () => {
     it('should handle null archivable year', () => {
-      mockArchiveService.identifyArchivableYear.mockReturnValue(null);
+      mockArchiveService.identifyArchivableYear.mockResolvedValue(null);
 
       renderComponent();
 
@@ -333,7 +336,7 @@ describe('ArchiveManager', () => {
     });
 
     it('should use base currency for formatting', async () => {
-      mockArchiveService.identifyArchivableYear.mockReturnValue(2022);
+      mockArchiveService.identifyArchivableYear.mockResolvedValue(2022);
       mockArchiveService.calculateYearEndSummary.mockResolvedValue({
         transactionCount: 150,
         closingNetWorth: 50000,

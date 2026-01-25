@@ -24,14 +24,43 @@ jest.mock('./db/database', () => ({
 jest.mock('./hooks/queries', () => ({
   ...jest.requireActual('./hooks/queries'),
   useBaseCurrency: jest.fn(() => 'USD'),
-  useCloudFileName: jest.fn(() => null),
   useLastSynced: jest.fn(() => null),
 }));
 
 // Mock cloudSync service
 jest.mock('./services/cloudSync.service', () => ({
-  initCloudSyncService: jest.fn(),
-  getCloudSyncService: jest.fn(),
+  CloudSyncService: jest.fn().mockImplementation(() => ({
+    uploadToCloud: jest.fn().mockResolvedValue(undefined),
+    downloadFromCloud: jest.fn().mockResolvedValue(undefined),
+    fullSync: jest.fn().mockResolvedValue(undefined),
+    debouncedSync: jest.fn(),
+    loadInitialData: jest.fn().mockResolvedValue(undefined),
+    setCallbacks: jest.fn(),
+    syncing: false,
+    pendingChanges: false,
+  })),
+}));
+
+// Mock SyncProvider
+jest.mock('./contexts/SyncProvider', () => ({
+  SyncProvider: ({ children }: any) => children,
+  useSyncService: () => ({
+    isConnected: false,
+    providerName: null,
+    fileName: null,
+    providerType: null,
+    isInitializing: false,
+    isSyncing: false,
+    lastSynced: null,
+    pendingChanges: false,
+    provider: null,
+    uploadToCloud: jest.fn().mockResolvedValue(undefined),
+    downloadFromCloud: jest.fn().mockResolvedValue(undefined),
+    fullSync: jest.fn().mockResolvedValue(undefined),
+    debouncedSync: jest.fn(),
+    connect: jest.fn().mockResolvedValue(undefined),
+    disconnect: jest.fn().mockResolvedValue(undefined),
+  }),
 }));
 
 const mockStorageFactory = {
@@ -83,7 +112,6 @@ jest.mock('./contexts/ServiceProviders', () => ({
   useArchiveService: () => mockArchiveService,
   useCalculationService: () => mockCalculationService,
   useReportService: () => mockReportService,
-  useSyncService: () => mockSyncService,
 }));
 
 describe('App', () => {
@@ -96,7 +124,7 @@ describe('App', () => {
 
     // Check for Header elements
     expect(screen.getByText('Money Tree')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /sync/i })).toBeInTheDocument();
+    // Sync button only shows when connected, so we don't check for it when not connected
 
     // Check for Dashboard page title - use getAllByText since it appears in nav and heading
     const dashboardElements = screen.getAllByText('Dashboard');

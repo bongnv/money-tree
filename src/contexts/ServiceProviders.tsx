@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useMemo, ReactNode } from 'react';
-import { StorageService } from '../services/storage/StorageService';
 import { CalculationService } from '../services/calculation.service';
 import { ReportService } from '../services/report.service';
 import { db, syncMetadata } from '../db/database';
@@ -14,21 +13,22 @@ class DexieArchiveService {
   /**
    * Calculate year-end summary with closing balances
    */
-  async calculateYearEndSummary(year: number, _baseCurrency: CurrencyCode): Promise<YearEndSummary> {
+  async calculateYearEndSummary(
+    year: number,
+    _baseCurrency: CurrencyCode
+  ): Promise<YearEndSummary> {
     const transactions = await db.transactions.toArray();
     const accounts = await db.accounts.toArray();
     const assets = await db.manualAssets.toArray();
 
     // Get transactions up to and including the archived year
-    const transactionsUpToYear = transactions.filter(
-      (t) => new Date(t.date).getFullYear() <= year
-    );
+    const transactionsUpToYear = transactions.filter((t) => new Date(t.date).getFullYear() <= year);
 
     // Calculate closing balances for each account (starting from initialBalance)
     const closingBalances: Record<string, number> = {};
     for (const account of accounts) {
       let balance = account.initialBalance || 0;
-      
+
       // Apply all transactions for this account up to the year end
       for (const txn of transactionsUpToYear) {
         if (txn.toAccountId === account.id) {
@@ -38,7 +38,7 @@ class DexieArchiveService {
           balance -= txn.amount;
         }
       }
-      
+
       closingBalances[account.id] = balance;
     }
 
@@ -49,7 +49,7 @@ class DexieArchiveService {
       const assetTxns = transactionsUpToYear
         .filter((t) => t.fromAssetId === asset.id || t.toAssetId === asset.id)
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      
+
       if (assetTxns.length > 0) {
         closingAssetValuations[asset.id] = assetTxns[0].amount;
       }
@@ -57,11 +57,12 @@ class DexieArchiveService {
 
     // Calculate net worth
     const totalAccountBalances = Object.values(closingBalances).reduce((sum, bal) => sum + bal, 0);
-    const totalAssetValue = Object.values(closingAssetValuations).reduce((sum, val) => sum + val, 0);
-
-    const yearTransactions = transactions.filter(
-      (t) => new Date(t.date).getFullYear() === year
+    const totalAssetValue = Object.values(closingAssetValuations).reduce(
+      (sum, val) => sum + val,
+      0
     );
+
+    const yearTransactions = transactions.filter((t) => new Date(t.date).getFullYear() === year);
 
     return {
       transactionCount: yearTransactions.length,
@@ -75,10 +76,23 @@ class DexieArchiveService {
    * Identify the oldest archivable year
    * Returns only the OLDEST completed year to ensure sequential archiving
    * (Account initial balances depend on previous year's closing balances)
+   * Only returns a year if we have MORE than 2 years of data
    */
-  identifyArchivableYear(): number | null {
-    // Archiving is optional/manual - user initiates from UI
-    return null;
+  async identifyArchivableYear(): Promise<number | null> {
+    const txs = await db.transactions.toArray();
+    if (txs.length === 0) return null;
+
+    // Get unique years from transactions
+    const years = new Set(txs.map((t) => new Date(t.date).getFullYear()));
+    const sortedYears = Array.from(years).sort((a, b) => a - b);
+
+    // Only archive if we have more than 2 years of data
+    if (sortedYears.length <= 2) {
+      return null;
+    }
+
+    // Return the oldest year (first in sorted array)
+    return sortedYears[0];
   }
 
   /**
@@ -93,12 +107,12 @@ class DexieArchiveService {
    */
   async createArchiveFile(year: number, baseCurrency: CurrencyCode): Promise<any> {
     const summary = await this.calculateYearEndSummary(year, baseCurrency);
-    
+
     // Get all data for the year
     const transactions = await db.transactions
       .filter((t) => new Date(t.date).getFullYear() === year)
       .toArray();
-    
+
     const accounts = await db.accounts.toArray();
     const categories = await db.categories.toArray();
     const transactionTypes = await db.transactionTypes.toArray();
@@ -109,9 +123,9 @@ class DexieArchiveService {
         return startYear <= year && endYear >= year;
       })
       .toArray();
-    
+
     const assets = await db.manualAssets.toArray();
-    
+
     return {
       version: '1.0',
       year,
@@ -137,15 +151,13 @@ class DexieArchiveService {
   async saveArchiveFile(archiveFile: any): Promise<void> {
     const year = archiveFile.year;
     const summary = archiveFile.summary;
-    
+
     // Step 1: Get closing balances from summary
     const closingBalances = summary.closingBalances as Record<string, number>;
-    
+
     // Step 2: Remove transactions from the archived year
-    await db.transactions
-      .filter((t) => new Date(t.date).getFullYear() === year)
-      .delete();
-    
+    await db.transactions.filter((t) => new Date(t.date).getFullYear() === year).delete();
+
     // Step 3: Update account initial balances to year-end closing balances
     const accounts = await db.accounts.toArray();
     for (const account of accounts) {
@@ -156,7 +168,7 @@ class DexieArchiveService {
         });
       }
     }
-    
+
     // Step 4: Remove budgets from the archived year
     const budgetsToDelete = await db.budgets
       .filter((b) => {
@@ -165,20 +177,20 @@ class DexieArchiveService {
         return startYear === year || endYear === year;
       })
       .toArray();
-    
+
     for (const budget of budgetsToDelete) {
       await db.budgets.delete(budget.id);
     }
-    
+
     // Step 5: Add archive reference
     const reference: ArchivedYearReference = {
       year,
       archivedDate: archiveFile.archivedDate,
       summary,
     };
-    
+
     await syncMetadata.addArchivedYear(reference);
-    
+
     // Archive file is created but cloud storage handled by user download
     // User can manually download archive file if needed
   }
@@ -189,36 +201,8 @@ class DexieArchiveService {
 }
 
 /**
- * Simplified Sync Service for Dexie architecture
- */
-class DexieSyncService {
-  async syncNow(): Promise<void> {
-    // Sync is now handled by CloudSyncService
-    console.log('Sync triggered via CloudSyncService');
-  }
-
-  async fullSync(): Promise<void> {
-    await this.syncNow();
-  }
-
-  async loadDataFile(_file?: File): Promise<void> {
-    console.log('Load data file - handled by CloudSyncService');
-  }
-
-  async downloadCurrentFile(): Promise<void> {
-    console.log('Download triggered');
-  }
-
-  async uploadCurrentFile(): Promise<void> {
-    console.log('Upload triggered');
-  }
-}
-
-/**
  * Service Contexts
  */
-const SyncServiceContext = createContext<DexieSyncService>(null!);
-const StorageServiceContext = createContext<StorageService>(null!);
 const ArchiveServiceContext = createContext<DexieArchiveService>(null!);
 const CalculationServiceContext = createContext<CalculationService>(null!);
 const ReportServiceContext = createContext<ReportService>(null!);
@@ -228,41 +212,21 @@ const ReportServiceContext = createContext<ReportService>(null!);
  */
 export const ServiceProvider: React.FC<{
   children: ReactNode;
-  onReconnectNeeded: (providerName: string) => Promise<'reconnect' | 'dismiss'>;
-}> = ({ children, onReconnectNeeded }) => {
-  const storageService = useMemo(() => new StorageService(onReconnectNeeded), [onReconnectNeeded]);
+  onReconnectNeeded?: (providerName: string) => Promise<'reconnect' | 'dismiss'>;
+}> = ({ children }) => {
   const calculationService = useMemo(() => new CalculationService(), []);
-  const syncService = useMemo(() => new DexieSyncService(), []);
   const archiveService = useMemo(() => new DexieArchiveService(), []);
   const reportService = useMemo(() => new ReportService(calculationService), [calculationService]);
 
   return (
-    <SyncServiceContext.Provider value={syncService}>
-      <StorageServiceContext.Provider value={storageService}>
-        <ArchiveServiceContext.Provider value={archiveService}>
-          <CalculationServiceContext.Provider value={calculationService}>
-            <ReportServiceContext.Provider value={reportService}>
-              {children}
-            </ReportServiceContext.Provider>
-          </CalculationServiceContext.Provider>
-        </ArchiveServiceContext.Provider>
-      </StorageServiceContext.Provider>
-    </SyncServiceContext.Provider>
+    <ArchiveServiceContext.Provider value={archiveService}>
+      <CalculationServiceContext.Provider value={calculationService}>
+        <ReportServiceContext.Provider value={reportService}>
+          {children}
+        </ReportServiceContext.Provider>
+      </CalculationServiceContext.Provider>
+    </ArchiveServiceContext.Provider>
   );
-};
-
-export const useStorage = (): StorageService => {
-  const context = useContext(StorageServiceContext);
-  if (!context) throw new Error('useStorage must be used within ServiceProvider');
-  return context;
-};
-
-export const useStorageFactory = useStorage;
-
-export const useSyncService = (): DexieSyncService => {
-  const context = useContext(SyncServiceContext);
-  if (!context) throw new Error('useSyncService must be used within ServiceProvider');
-  return context;
 };
 
 export const useArchiveService = (): DexieArchiveService => {
@@ -285,8 +249,6 @@ export const useReportService = (): ReportService => {
 
 export const useServices = () => {
   return {
-    storage: useStorage(),
-    sync: useSyncService(),
     archive: useArchiveService(),
     calculation: useCalculationService(),
     report: useReportService(),

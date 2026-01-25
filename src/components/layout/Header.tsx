@@ -27,8 +27,8 @@ import {
   Menu as MenuIcon,
 } from '@mui/icons-material';
 import { useAppContext } from '../../contexts/AppContext';
-import { useCloudFileName, useLastSynced } from '../../hooks/queries';
-import { getCloudSyncService } from '../../services/cloudSync.service';
+import { useLastSynced } from '../../hooks/queries';
+import { useSyncService } from '../../contexts/SyncProvider';
 import { formatDistance } from 'date-fns';
 
 export const Header: React.FC = () => {
@@ -37,13 +37,13 @@ export const Header: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { isLoading, isSyncing } = useAppContext();
-  const cloudFileName = useCloudFileName();
+  const { isLoading } = useAppContext();
+  const syncService = useSyncService();
+  const cloudFileName = syncService.fileName;
   const lastSynced = useLastSynced();
 
   const handleSync = async () => {
     try {
-      const syncService = getCloudSyncService();
       await syncService.fullSync();
     } catch (error) {
       console.error('Sync failed:', error);
@@ -159,10 +159,14 @@ export const Header: React.FC = () => {
           <Button
             color="inherit"
             startIcon={
-              isLoading || isSyncing ? <CircularProgress size={20} color="inherit" /> : <SyncIcon />
+              isLoading || syncService.isSyncing ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                <SyncIcon />
+              )
             }
             onClick={handleSync}
-            disabled={isLoading || isSyncing}
+            disabled={isLoading || syncService.isSyncing}
             aria-label="Sync"
           >
             Sync

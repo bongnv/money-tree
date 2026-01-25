@@ -57,14 +57,14 @@ describe('BudgetOverview', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock the hooks with default values
     const { useBudgets } = require('../../hooks/queries/useBudgets');
     const { useTransactions } = require('../../hooks/queries/useTransactions');
     const { useCategories } = require('../../hooks/queries/useCategories');
     const { useAccounts } = require('../../hooks/queries/useAccounts');
     const { useTransactionTypes } = require('../../hooks/queries/useTransactionTypes');
-    
+
     useBudgets.mockReturnValue([]);
     useTransactions.mockReturnValue([]);
     useCategories.mockReturnValue([]);

@@ -125,8 +125,6 @@ export const mockAssets: ManualAsset[] = [
 ];
 
 export const mockAppContext = {
-  shouldShowWelcome: false,
-  setShouldShowWelcome: jest.fn(),
   showSnackbar: jest.fn(),
   isLoading: false,
   setLoading: jest.fn(),

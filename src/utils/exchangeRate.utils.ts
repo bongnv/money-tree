@@ -51,10 +51,7 @@ async function fetchRateFromAPI(fromCurrency: CurrencyCode): Promise<number> {
  * @param fromCurrency Source currency code
  * @returns Exchange rate value or null if not found
  */
-async function findFallbackRate(
-  month: string,
-  fromCurrency: CurrencyCode
-): Promise<number | null> {
+async function findFallbackRate(month: string, fromCurrency: CurrencyCode): Promise<number | null> {
   if (fromCurrency === CurrencyCode.USD) {
     return 1;
   }
@@ -114,9 +111,9 @@ async function getToUsdRate(month: string, currency: CurrencyCode): Promise<numb
 
   // Try fallback to nearby months
   const fallbackRate = await findFallbackRate(month, currency);
-  
+
   let rateValue: number;
-  
+
   if (fallbackRate !== null) {
     rateValue = fallbackRate;
   } else {
@@ -138,16 +135,16 @@ async function getToUsdRate(month: string, currency: CurrencyCode): Promise<numb
     rate: rateValue,
     createdAt: new Date().toISOString(),
   };
-  
+
   await db.exchangeRates.add(newRate);
-  
+
   return rateValue;
 }
 
 /**
  * Get exchange rate for a specific month and currency pair
  * Main entry point for getting exchange rates
- * 
+ *
  * @param month Month in YYYY-MM format
  * @param fromCurrency Source currency code
  * @param toCurrency Target currency code

@@ -4,19 +4,9 @@ import {
   errorMessages,
   isGoogleDriveConfigured,
 } from '../../config/googledrive.config';
-import type { IStorageProvider } from './IStorageProvider';
+import type { IStorageProvider, CloudItem } from './IStorageProvider';
 
 const TOKEN_STORAGE_KEY = 'moneyTree.googleDrive.token';
-const FILE_INFO_CACHE_KEY = 'moneyTree.googleDriveFileInfo';
-
-/**
- * Google Drive file info
- */
-export interface GoogleDriveFileInfo {
-  fileId: string | null; // null for new files
-  fileName: string; // File name
-  parentId?: string; // Parent folder ID (optional, defaults to root)
-}
 
 /**
  * Drive file metadata
@@ -40,15 +30,14 @@ interface CachedToken {
 }
 
 /**
- * Google Drive Storage Provider
+ * Google Drive Storage Provider - Stateless
  * Uses Google Drive API to store data in Google Drive
- * Manages its own file state and caching via localStorage
+ * File state is managed by SyncContext, not by the provider
  */
 export class GoogleDriveProvider implements IStorageProvider {
   private tokenClient: google.accounts.oauth2.TokenClient | null = null;
   private cachedToken: CachedToken | null = null;
   private initPromise: Promise<void> | null = null;
-  private currentFileInfo: GoogleDriveFileInfo | null = null;
 
   constructor() {
     if (isGoogleDriveConfigured()) {
@@ -93,18 +82,10 @@ export class GoogleDriveProvider implements IStorageProvider {
   }
 
   /**
-   * Initialize provider - load cached file and verify authentication
+   * Initialize provider - verify authentication only
    */
   async initialize(): Promise<boolean> {
     await this.initPromise;
-
-    // Load cached file info
-    const fileInfo = this.loadFileInfoFromCache();
-    if (!fileInfo) {
-      return false;
-    }
-
-    this.currentFileInfo = fileInfo;
 
     // Check if authenticated
     if (!this.cachedToken || this.cachedToken.expiresAt <= Date.now()) {
@@ -164,27 +145,15 @@ export class GoogleDriveProvider implements IStorageProvider {
   }
 
   /**
-   * Set the main file to work with
+   * Read file content
    */
-  async setFile(fileInfo: GoogleDriveFileInfo): Promise<void> {
-    this.currentFileInfo = fileInfo;
-    this.saveFileInfoToCache(fileInfo);
-  }
-
-  /**
-   * Read main file content
-   */
-  async readMainFile(): Promise<string> {
-    if (!this.currentFileInfo) {
-      throw new Error('No file selected. Please select a file first.');
-    }
-
-    if (!this.currentFileInfo.fileId) {
-      throw new Error('Cannot read file: fileId is null');
+  async readMainFile(fileItem: CloudItem): Promise<string> {
+    if (!fileItem?.id) {
+      throw new Error('Cannot read file: file id is missing');
     }
 
     const token = await this.getAccessToken();
-    const url = `${driveApiConfig.apiBaseUrl}/files/${this.currentFileInfo.fileId}?alt=media`;
+    const url = `${driveApiConfig.apiBaseUrl}/files/${fileItem.id}?alt=media`;
 
     const response = await fetch(url, {
       headers: {
@@ -200,25 +169,22 @@ export class GoogleDriveProvider implements IStorageProvider {
   }
 
   /**
-   * Write to main file
+   * Write to file - creates new file or updates existing
+   * Returns updated CloudItem with id populated for new files
    */
-  async writeMainFile(content: string): Promise<void> {
-    if (!this.currentFileInfo) {
-      throw new Error('No file selected. Please select a file first.');
+  async writeMainFile(fileItem: CloudItem, content: string): Promise<CloudItem> {
+    if (!fileItem) {
+      throw new Error('No file item provided');
     }
 
-    if (this.currentFileInfo.fileId) {
+    if (fileItem.id) {
       // Update existing file
-      await this.updateFile(this.currentFileInfo.fileId, content);
+      await this.updateFile(fileItem.id, content);
+      return fileItem;
     } else {
       // Create new file
-      const file = await this.createFile(
-        this.currentFileInfo.fileName,
-        content,
-        this.currentFileInfo.parentId
-      );
-      this.currentFileInfo = { ...this.currentFileInfo, fileId: file.id };
-      this.saveFileInfoToCache(this.currentFileInfo);
+      const file = await this.createFile(fileItem.name, content, fileItem.parentItemId);
+      return { ...fileItem, id: file.id };
     }
   }
 
@@ -226,19 +192,16 @@ export class GoogleDriveProvider implements IStorageProvider {
    * Save an additional file (backup, archive, etc.)
    * Saves in same folder as main file
    */
-  async saveAdditionalFile(filename: string, content: string | Blob): Promise<void> {
-    if (!this.currentFileInfo) {
-      throw new Error('No file selected. Please select a file first.');
+  async saveAdditionalFile(
+    mainFileItem: CloudItem,
+    filename: string,
+    content: string | Blob
+  ): Promise<void> {
+    if (!mainFileItem) {
+      throw new Error('No main file item provided');
     }
 
-    await this.createFile(filename, content, this.currentFileInfo.parentId);
-  }
-
-  /**
-   * Get main file name
-   */
-  getMainFileName(): string | null {
-    return this.currentFileInfo?.fileName ?? null;
+    await this.createFile(filename, content, mainFileItem.parentItemId);
   }
 
   /**
@@ -278,11 +241,19 @@ export class GoogleDriveProvider implements IStorageProvider {
   }
 
   /**
-   * Clear cached file
+   * List items for file picker - returns CloudItems with Google Drive-specific info
    */
-  async clearCache(): Promise<void> {
-    this.currentFileInfo = null;
-    localStorage.removeItem(FILE_INFO_CACHE_KEY);
+  async listItems(parent?: CloudItem): Promise<CloudItem[]> {
+    const driveFiles = await this.listDriveFiles(parent?.id);
+
+    // Convert to generic CloudItem format with metadata
+    return driveFiles.map((file) => ({
+      id: file.id,
+      name: file.name,
+      isFolder: file.mimeType === driveApiConfig.folderMimeType,
+      isSharedWithMe: file.shared,
+      parentItemId: parent?.id || file.parents?.[0],
+    }));
   }
 
   // ==================== PRIVATE METHODS ====================
@@ -411,33 +382,6 @@ export class GoogleDriveProvider implements IStorageProvider {
         return new Error('File not found in Google Drive.');
       default:
         return new Error(errorMessages.networkError);
-    }
-  }
-
-  /**
-   * Load file info from localStorage
-   */
-  private loadFileInfoFromCache(): GoogleDriveFileInfo | null {
-    try {
-      const cached = localStorage.getItem(FILE_INFO_CACHE_KEY);
-      if (!cached) {
-        return null;
-      }
-      return JSON.parse(cached) as GoogleDriveFileInfo;
-    } catch (error) {
-      console.warn('Failed to load cached Google Drive file info:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Save file info to localStorage
-   */
-  private saveFileInfoToCache(fileInfo: GoogleDriveFileInfo): void {
-    try {
-      localStorage.setItem(FILE_INFO_CACHE_KEY, JSON.stringify(fileInfo));
-    } catch (error) {
-      console.warn('Failed to cache Google Drive file info:', error);
     }
   }
 }

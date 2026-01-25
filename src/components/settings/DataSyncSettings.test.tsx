@@ -19,17 +19,46 @@ jest.mock('../../hooks/queries/useBudgets');
 
 const mockUseAccounts = useAccounts as jest.MockedFunction<typeof useAccounts>;
 const mockUseCategories = useCategories as jest.MockedFunction<typeof useCategories>;
-const mockUseTransactionTypes = useTransactionTypes as jest.MockedFunction<typeof useTransactionTypes>;
+const mockUseTransactionTypes = useTransactionTypes as jest.MockedFunction<
+  typeof useTransactionTypes
+>;
 const mockUseTransactions = useTransactions as jest.MockedFunction<typeof useTransactions>;
 const mockUseAssets = useAssets as jest.MockedFunction<typeof useAssets>;
 const mockUseBudgets = useBudgets as jest.MockedFunction<typeof useBudgets>;
 
-// Mock cloudSync service
+// Mock CloudSyncService class
 jest.mock('../../services/cloudSync.service', () => ({
-  getCloudSyncService: jest.fn(() => ({
+  CloudSyncService: jest.fn().mockImplementation(() => ({
+    uploadToCloud: jest.fn().mockResolvedValue(undefined),
+    downloadFromCloud: jest.fn().mockResolvedValue(undefined),
     fullSync: jest.fn().mockResolvedValue(undefined),
+    debouncedSync: jest.fn(),
+    loadInitialData: jest.fn().mockResolvedValue(undefined),
+    setCallbacks: jest.fn(),
+    syncing: false,
+    pendingChanges: false,
   })),
-  initCloudSyncService: jest.fn(),
+}));
+
+// Mock SyncProvider
+jest.mock('../../contexts/SyncProvider', () => ({
+  useSyncService: jest.fn(() => ({
+    isConnected: false,
+    providerName: null,
+    fileName: null,
+    providerType: null,
+    isSyncing: false,
+    lastSynced: null,
+    pendingChanges: false,
+    provider: null,
+    uploadToCloud: jest.fn().mockResolvedValue(undefined),
+    downloadFromCloud: jest.fn().mockResolvedValue(undefined),
+    fullSync: jest.fn().mockResolvedValue(undefined),
+    debouncedSync: jest.fn(),
+    connect: jest.fn().mockResolvedValue(undefined),
+    disconnect: jest.fn().mockResolvedValue(undefined),
+  })),
+  SyncProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 // Mock storage services
@@ -49,7 +78,6 @@ const mockBackupService = {
 // Mock the hooks
 jest.mock('../../hooks/queries', () => ({
   ...jest.requireActual('../../hooks/queries'),
-  useCloudFileName: jest.fn(() => null),
   useLastSynced: jest.fn(() => null),
 }));
 
@@ -67,7 +95,7 @@ jest.mock('react-router-dom', () => ({
 describe('DataSyncSettings', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Setup default mock return values
     mockUseAccounts.mockReturnValue([]);
     mockUseCategories.mockReturnValue([]);

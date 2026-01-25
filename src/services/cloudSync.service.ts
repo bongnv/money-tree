@@ -1,125 +1,88 @@
 import { db, syncMetadata } from '../db/database';
-import { StorageService } from './storage/StorageService';
+import { IStorageProvider, CloudItem } from './storage/IStorageProvider';
 import type { DataFile, ExchangeRate } from '../types/models';
 import { CurrencyCode } from '../types/enums';
 
-export interface CloudSyncCallbacks {
-  onSyncStart?: () => void;
-  onSyncComplete?: (timestamp: string) => void;
-  onSyncError?: (error: Error) => void;
-}
-
 /**
  * Cloud Sync Service with Last-Write-Wins strategy
- * Manages syncing data between IndexedDB and cloud storage
+ * Stateless service that manages syncing data between IndexedDB and cloud storage
+ * State management (file info) is handled by SyncProvider
  */
 export class CloudSyncService {
-  private storageService: StorageService;
-  private lastSyncTime: number = 0;
-  private isSyncing = false;
-  private throttleTimeoutId: NodeJS.Timeout | null = null;
-  private hasPendingChanges = false;
-  private readonly THROTTLE_MS = 60000; // 1 minute - guaranteed sync interval
-  private callbacks: CloudSyncCallbacks = {};
+  private provider: IStorageProvider;
+  private fileItem: CloudItem;
 
-  constructor(storageService: StorageService, callbacks?: CloudSyncCallbacks) {
-    this.storageService = storageService;
-    if (callbacks) {
-      this.callbacks = callbacks;
-    }
-  }
-
-  setCallbacks(callbacks: CloudSyncCallbacks): void {
-    this.callbacks = callbacks;
+  constructor(provider: IStorageProvider, fileItem: CloudItem) {
+    this.provider = provider;
+    this.fileItem = fileItem;
   }
 
   /**
    * Upload current IndexedDB data to cloud (Last-Write-Wins)
+   * Returns updated CloudItem (may have new id if it was a new file)
    */
-  async uploadToCloud(): Promise<void> {
-    if (this.isSyncing) return;
-    this.isSyncing = true;
-    this.callbacks.onSyncStart?.();
+  async uploadToCloud(): Promise<{ timestamp: string; fileItem: CloudItem }> {
+    // Gather all data from IndexedDB
+    const [
+      transactions,
+      accounts,
+      categories,
+      transactionTypes,
+      budgets,
+      manualAssets,
+      exchangeRates,
+    ] = await Promise.all([
+      db.transactions.toArray(),
+      db.accounts.toArray(),
+      db.categories.toArray(),
+      db.transactionTypes.toArray(),
+      db.budgets.toArray(),
+      db.manualAssets.toArray(),
+      db.exchangeRates.toArray(),
+    ]);
 
-    try {
-      // Gather all data from IndexedDB
-      const [
-        transactions,
-        accounts,
-        categories,
-        transactionTypes,
-        budgets,
-        manualAssets,
-        exchangeRates,
-      ] = await Promise.all([
-        db.transactions.toArray(),
-        db.accounts.toArray(),
-        db.categories.toArray(),
-        db.transactionTypes.toArray(),
-        db.budgets.toArray(),
-        db.manualAssets.toArray(),
-        db.exchangeRates.toArray(),
-      ]);
+    const baseCurrency =
+      ((await syncMetadata.getBaseCurrency()) as CurrencyCode) || CurrencyCode.USD;
+    const lastBackupDate = await syncMetadata.getLastBackupDate();
+    const archivedYears = await syncMetadata.getArchivedYears();
 
-      const baseCurrency =
-        ((await syncMetadata.getBaseCurrency()) as CurrencyCode) || CurrencyCode.USD;
-      const lastBackupDate = await syncMetadata.getLastBackupDate();
-      const archivedYears = await syncMetadata.getArchivedYears();
+    const dataFile: DataFile = {
+      version: '1.0',
+      transactions,
+      accounts,
+      categories,
+      transactionTypes,
+      budgets,
+      manualAssets,
+      exchangeRates,
+      archivedYears,
+      baseCurrency,
+      lastModified: new Date().toISOString(),
+      lastBackupDate: lastBackupDate || undefined,
+    };
 
-      const dataFile: DataFile = {
-        version: '1.0',
-        transactions,
-        accounts,
-        categories,
-        transactionTypes,
-        budgets,
-        manualAssets,
-        exchangeRates,
-        archivedYears,
-        baseCurrency,
-        lastModified: new Date().toISOString(),
-        lastBackupDate: lastBackupDate || undefined,
-      };
-
-      await this.storageService.save(dataFile);
-      const timestamp = new Date().toISOString();
-      await syncMetadata.setLastSynced(timestamp);
-      this.callbacks.onSyncComplete?.(timestamp);
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error('Sync failed');
-      this.callbacks.onSyncError?.(err);
-      throw error;
-    } finally {
-      this.isSyncing = false;
-    }
+    const content = JSON.stringify(dataFile);
+    const updatedFileItem = await this.provider.writeMainFile(this.fileItem, content);
+    const timestamp = new Date().toISOString();
+    await syncMetadata.setLastSynced(timestamp);
+    return { timestamp, fileItem: updatedFileItem };
   }
 
   /**
    * Download from cloud and merge with local data (Last-Write-Wins)
    */
-  async downloadFromCloud(): Promise<void> {
-    if (this.isSyncing) return;
-    this.isSyncing = true;
-    this.callbacks.onSyncStart?.();
-
-    try {
-      const cloudData = await this.storageService.load();
-      if (!cloudData) {
-        throw new Error('No data file found in cloud');
-      }
-
-      // Merge with local data using Last-Write-Wins
-      await this.mergeData(cloudData);
-      const timestamp = new Date().toISOString();
-      await syncMetadata.setLastSynced(timestamp);
-      this.callbacks.onSyncComplete?.(timestamp);
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error('Sync failed');
-      this.callbacks.onSyncError?.(err);
-      throw error;
-    } finally {
-      this.isSyncing = false;
+  async downloadFromCloud(): Promise<string> {
+    const content = await this.provider.readMainFile(this.fileItem);
+    const cloudData = JSON.parse(content) as DataFile;
+    if (!cloudData) {
+      throw new Error('No data file found in cloud');
     }
+
+    // Merge with local data using Last-Write-Wins
+    await this.mergeData(cloudData);
+    const timestamp = new Date().toISOString();
+    await syncMetadata.setLastSynced(timestamp);
+    return timestamp;
   }
 
   /**
@@ -228,49 +191,18 @@ export class CloudSyncService {
   }
 
   /**
-   * Throttled sync - uploads at most once per minute
-   * Guarantees a sync will happen either now (if enough time passed) or after the throttle period
-   * IndexedDB already persists data locally, so no data loss risk
-   */
-  throttledSync(): void {
-    const now = Date.now();
-    const timeSinceLastSync = now - this.lastSyncTime;
-
-    // If enough time has passed, sync now
-    if (timeSinceLastSync >= this.THROTTLE_MS) {
-      this.lastSyncTime = now;
-      // Clear any pending sync
-      if (this.throttleTimeoutId) {
-        clearTimeout(this.throttleTimeoutId);
-        this.throttleTimeoutId = null;
-      }
-      this.hasPendingChanges = false;
-      this.uploadToCloud().catch((error) => {
-        console.error('Throttled sync failed:', error);
-      });
-    } else if (!this.throttleTimeoutId) {
-      // Not enough time passed, schedule a sync for later
-      const delay = this.THROTTLE_MS - timeSinceLastSync;
-      this.hasPendingChanges = true;
-      this.throttleTimeoutId = setTimeout(() => {
-        this.throttleTimeoutId = null;
-        this.lastSyncTime = Date.now();
-        this.hasPendingChanges = false;
-        this.uploadToCloud().catch((error) => {
-          console.error('Throttled sync failed:', error);
-        });
-      }, delay);
-    }
-    // Otherwise, a sync is already scheduled, do nothing
-  }
-
-  /**
    * Full bidirectional sync
    * Downloads from cloud, merges, then uploads
+   * Returns updated CloudItem from upload
    */
-  async fullSync(): Promise<void> {
-    await this.downloadFromCloud();
-    await this.uploadToCloud();
+  async fullSync(): Promise<{
+    downloadTimestamp: string;
+    uploadTimestamp: string;
+    fileItem: CloudItem;
+  }> {
+    const downloadTimestamp = await this.downloadFromCloud();
+    const { timestamp: uploadTimestamp, fileItem } = await this.uploadToCloud();
+    return { downloadTimestamp, uploadTimestamp, fileItem };
   }
 
   /**
@@ -285,36 +217,4 @@ export class CloudSyncService {
 
     await this.downloadFromCloud();
   }
-
-  /**
-   * Check if sync is in progress
-   */
-  get syncing(): boolean {
-    return this.isSyncing;
-  }
-
-  /**
-   * Check if there are pending changes waiting to sync
-   */
-  get pendingChanges(): boolean {
-    return this.hasPendingChanges;
-  }
-}
-
-// Export singleton instance (initialized in App.tsx)
-let cloudSyncService: CloudSyncService | null = null;
-
-export function initCloudSyncService(
-  storageService: StorageService,
-  callbacks?: CloudSyncCallbacks
-): CloudSyncService {
-  cloudSyncService = new CloudSyncService(storageService, callbacks);
-  return cloudSyncService;
-}
-
-export function getCloudSyncService(): CloudSyncService {
-  if (!cloudSyncService) {
-    throw new Error('CloudSyncService not initialized. Call initCloudSyncService first.');
-  }
-  return cloudSyncService;
 }

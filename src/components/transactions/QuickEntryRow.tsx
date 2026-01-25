@@ -583,7 +583,11 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
           </IconButton>
         </Tooltip>
         <Tooltip title="Open full dialog for complex transactions">
-          <IconButton onClick={onOpenFullDialog} size="small" aria-label="Open full dialog for complex transactions">
+          <IconButton
+            onClick={onOpenFullDialog}
+            size="small"
+            aria-label="Open full dialog for complex transactions"
+          >
             <MoreIcon />
           </IconButton>
         </Tooltip>

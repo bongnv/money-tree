@@ -24,10 +24,3 @@ export function useArchivedYears(): ArchivedYearReference[] {
 export function useLastSynced(): string | null {
   return useLiveQuery(() => syncMetadata.getLastSynced()) ?? null;
 }
-
-/**
- * Hook to get cloud file name from Dexie
- */
-export function useCloudFileName(): string | null {
-  return useLiveQuery(() => syncMetadata.getFileName()) ?? null;
-}

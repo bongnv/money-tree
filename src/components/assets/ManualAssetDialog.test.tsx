@@ -10,7 +10,7 @@ jest.mock('../../hooks/mutations/useAssetMutations');
 // Mock cloudSync
 jest.mock('../../services/cloudSync.service', () => ({
   getCloudSyncService: jest.fn(() => ({
-    throttledSync: jest.fn(),
+    debouncedSync: jest.fn(),
   })),
 }));
 
@@ -26,7 +26,7 @@ describe('ManualAssetDialog', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     const { useAssetMutations } = require('../../hooks/mutations/useAssetMutations');
     useAssetMutations.mockReturnValue({
       addAsset: mockAddAsset,

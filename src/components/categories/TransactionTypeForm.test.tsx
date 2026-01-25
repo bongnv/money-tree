@@ -26,7 +26,7 @@ jest.mock('../../hooks/mutations/useTransactionTypeMutations', () => ({
 // Mock cloudSync
 jest.mock('../../services/cloudSync.service', () => ({
   getCloudSyncService: jest.fn(() => ({
-    throttledSync: jest.fn(),
+    debouncedSync: jest.fn(),
   })),
 }));
 

@@ -21,7 +21,8 @@ import {
 } from '@mui/material';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import WarningIcon from '@mui/icons-material/Warning';
-import { useSyncService, useArchiveService } from '../../contexts/ServiceProviders';
+import { useArchiveService } from '../../contexts/ServiceProviders';
+import { useSyncService } from '../../contexts/SyncProvider';
 import { useAppContext } from '../../contexts/AppContext';
 import { formatCurrency } from '../../utils/currency.utils';
 import type { YearEndSummary } from '../../types/models';
@@ -40,8 +41,25 @@ export const ArchiveManager: React.FC = () => {
     year: null,
   });
   const [yearSummaries, setYearSummaries] = useState<Record<number, YearEndSummary>>({});
+  const [archivableYear, setArchivableYear] = useState<number | null>(null);
 
-  const archivableYear = archiveService.identifyArchivableYear();
+  // Get archivable year
+  useEffect(() => {
+    let isMounted = true;
+
+    const getArchivableYear = async () => {
+      const year = await archiveService.identifyArchivableYear();
+      if (isMounted) {
+        setArchivableYear(year);
+      }
+    };
+
+    getArchivableYear();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [archiveService]);
 
   // Calculate summary for archivable year
   useEffect(() => {
@@ -90,7 +108,7 @@ export const ArchiveManager: React.FC = () => {
       archiveService.updateMainFileAfterArchive(year, archiveReference);
 
       // Sync changes to storage
-      await syncService.syncNow();
+      syncService.debouncedSync();
 
       showSnackbar(
         `Year ${year} archived successfully. Data has been removed from the main file.`,

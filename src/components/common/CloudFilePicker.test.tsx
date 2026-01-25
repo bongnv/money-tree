@@ -1,16 +1,11 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { CloudFilePicker, CloudItem, CloudFileInfo } from './CloudFilePicker';
-
-interface TestFileInfo extends CloudFileInfo {
-  fileId: string | null;
-  fileName: string;
-  parentId?: string;
-}
+import { CloudFilePicker } from './CloudFilePicker';
+import type { CloudItem } from '../../services/storage/IStorageProvider';
 
 describe('CloudFilePicker', () => {
-  const mockOnSelect = jest.fn();
+  const mockOnFileSelected = jest.fn();
   const mockOnCancel = jest.fn();
   const mockOnListItems = jest.fn();
 
@@ -25,24 +20,23 @@ describe('CloudFilePicker', () => {
     { id: 'file2', name: 'data.json', isFolder: false },
   ];
 
-  it('should render with custom title and root name', async () => {
+  it('should render with provider name in title', async () => {
     mockOnListItems.mockResolvedValue([]);
 
     render(
       <CloudFilePicker
         open={true}
-        title="Test Cloud Storage"
-        rootName="Test Drive"
-        onSelect={mockOnSelect}
-        onCancel={mockOnCancel}
+        providerName="OneDrive"
         onListItems={mockOnListItems}
+        onFileSelected={mockOnFileSelected}
+        onCancel={mockOnCancel}
       />
     );
 
-    expect(screen.getByText('Test Cloud Storage')).toBeInTheDocument();
+    expect(screen.getByText('Select OneDrive File Location')).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByText('Test Drive')).toBeInTheDocument();
+      expect(screen.getByText('OneDrive')).toBeInTheDocument();
     });
   });
 
@@ -52,15 +46,15 @@ describe('CloudFilePicker', () => {
     render(
       <CloudFilePicker
         open={true}
-        title="Test Storage"
-        onSelect={mockOnSelect}
-        onCancel={mockOnCancel}
+        providerName="Test Storage"
         onListItems={mockOnListItems}
+        onFileSelected={mockOnFileSelected}
+        onCancel={mockOnCancel}
       />
     );
 
     await waitFor(() => {
-      expect(mockOnListItems).toHaveBeenCalledWith(null);
+      expect(mockOnListItems).toHaveBeenCalledWith(undefined);
       expect(screen.getByText('Documents')).toBeInTheDocument();
       expect(screen.getByText('Pictures')).toBeInTheDocument();
       expect(screen.getByText('test.json')).toBeInTheDocument();
@@ -77,10 +71,10 @@ describe('CloudFilePicker', () => {
     render(
       <CloudFilePicker
         open={true}
-        title="Test Storage"
-        onSelect={mockOnSelect}
-        onCancel={mockOnCancel}
+        providerName="Test Storage"
         onListItems={mockOnListItems}
+        onFileSelected={mockOnFileSelected}
+        onCancel={mockOnCancel}
       />
     );
 
@@ -92,7 +86,7 @@ describe('CloudFilePicker', () => {
     await user.click(documentsFolder);
 
     await waitFor(() => {
-      expect(mockOnListItems).toHaveBeenCalledWith('folder1');
+      expect(mockOnListItems).toHaveBeenCalledWith(mockFolderItems[0]);
       expect(screen.getByText('document.json')).toBeInTheDocument();
     });
   });
@@ -107,11 +101,10 @@ describe('CloudFilePicker', () => {
     render(
       <CloudFilePicker
         open={true}
-        title="Test Storage"
-        rootName="Root"
-        onSelect={mockOnSelect}
-        onCancel={mockOnCancel}
+        providerName="Test Storage"
         onListItems={mockOnListItems}
+        onFileSelected={mockOnFileSelected}
+        onCancel={mockOnCancel}
       />
     );
 
@@ -127,7 +120,7 @@ describe('CloudFilePicker', () => {
     });
 
     // Click breadcrumb to go back
-    const rootBreadcrumb = screen.getByRole('button', { name: 'Root' });
+    const rootBreadcrumb = screen.getByRole('button', { name: 'Test Storage' });
     await user.click(rootBreadcrumb);
 
     await waitFor(() => {
@@ -144,10 +137,10 @@ describe('CloudFilePicker', () => {
     render(
       <CloudFilePicker
         open={true}
-        title="Test Storage"
-        onSelect={mockOnSelect}
-        onCancel={mockOnCancel}
+        providerName="Test Storage"
         onListItems={mockOnListItems}
+        onFileSelected={mockOnFileSelected}
+        onCancel={mockOnCancel}
       />
     );
 
@@ -163,7 +156,7 @@ describe('CloudFilePicker', () => {
     await user.click(selectButton);
 
     await waitFor(() => {
-      expect(mockOnSelect).toHaveBeenCalledWith('file1', 'test.json', null, expect.any(Array));
+      expect(mockOnFileSelected).toHaveBeenCalledWith(mockFolderItems[2]);
     });
   });
 
@@ -178,11 +171,11 @@ describe('CloudFilePicker', () => {
     render(
       <CloudFilePicker
         open={true}
-        title="Test Storage"
+        providerName="Test Storage"
         mode="create"
-        onSelect={mockOnSelect}
-        onCancel={mockOnCancel}
         onListItems={mockOnListItems}
+        onFileSelected={mockOnFileSelected}
+        onCancel={mockOnCancel}
         defaultFileName="new-file.json"
       />
     );
@@ -195,7 +188,7 @@ describe('CloudFilePicker', () => {
     await user.click(screen.getByText('Documents'));
 
     await waitFor(() => {
-      expect(mockOnListItems).toHaveBeenCalledWith('folder1');
+      expect(mockOnListItems).toHaveBeenCalledWith(mockFolders[0]);
     });
 
     // Click "Create Here" button (creates in current folder)
@@ -210,11 +203,11 @@ describe('CloudFilePicker', () => {
     await user.click(screen.getByRole('button', { name: 'Create' }));
 
     await waitFor(() => {
-      expect(mockOnSelect).toHaveBeenCalledWith(
-        null,
-        'new-file.json',
-        'folder1',
-        expect.any(Array)
+      expect(mockOnFileSelected).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'new-file.json',
+          isFolder: false,
+        })
       );
     });
   });
@@ -227,11 +220,11 @@ describe('CloudFilePicker', () => {
     render(
       <CloudFilePicker
         open={true}
-        title="Test Storage"
+        providerName="Test Storage"
         mode="create"
-        onSelect={mockOnSelect}
-        onCancel={mockOnCancel}
         onListItems={mockOnListItems}
+        onFileSelected={mockOnFileSelected}
+        onCancel={mockOnCancel}
       />
     );
 
@@ -243,7 +236,7 @@ describe('CloudFilePicker', () => {
     await user.click(screen.getByText('Documents'));
 
     await waitFor(() => {
-      expect(mockOnListItems).toHaveBeenCalledWith('folder1');
+      expect(mockOnListItems).toHaveBeenCalledWith(mockFolders[0]);
     });
 
     // Click "Create Here" button (creates in current folder)
@@ -274,11 +267,11 @@ describe('CloudFilePicker', () => {
     render(
       <CloudFilePicker
         open={true}
-        title="Test Storage"
+        providerName="Test Storage"
         mode="create"
-        onSelect={mockOnSelect}
-        onCancel={mockOnCancel}
         onListItems={mockOnListItems}
+        onFileSelected={mockOnFileSelected}
+        onCancel={mockOnCancel}
         defaultFileName="existing.json"
       />
     );
@@ -310,15 +303,15 @@ describe('CloudFilePicker', () => {
     render(
       <CloudFilePicker
         open={true}
-        title="Test Storage"
-        onSelect={mockOnSelect}
-        onCancel={mockOnCancel}
+        providerName="Test Storage"
         onListItems={mockOnListItems}
+        onFileSelected={mockOnFileSelected}
+        onCancel={mockOnCancel}
       />
     );
 
     await waitFor(() => {
-      expect(screen.getByText('My Drive')).toBeInTheDocument();
+      expect(screen.getByText('Test Storage')).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
@@ -332,41 +325,15 @@ describe('CloudFilePicker', () => {
     render(
       <CloudFilePicker
         open={true}
-        title="Test Storage"
-        onSelect={mockOnSelect}
-        onCancel={mockOnCancel}
+        providerName="Test Storage"
         onListItems={mockOnListItems}
+        onFileSelected={mockOnFileSelected}
+        onCancel={mockOnCancel}
       />
     );
 
     await waitFor(() => {
       expect(screen.getByText('Network error')).toBeInTheDocument();
-    });
-  });
-
-  it('should render additional info for items', async () => {
-    mockOnListItems.mockResolvedValue([
-      {
-        id: 'folder1',
-        name: 'Shared Folder',
-        isFolder: true,
-        additionalInfo: <span data-testid="shared-icon">🔗</span>,
-      },
-    ]);
-
-    render(
-      <CloudFilePicker
-        open={true}
-        title="Test Storage"
-        onSelect={mockOnSelect}
-        onCancel={mockOnCancel}
-        onListItems={mockOnListItems}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('Shared Folder')).toBeInTheDocument();
-      expect(screen.getByTestId('shared-icon')).toBeInTheDocument();
     });
   });
 
@@ -376,10 +343,10 @@ describe('CloudFilePicker', () => {
     render(
       <CloudFilePicker
         open={true}
-        title="Test Storage"
-        onSelect={mockOnSelect}
-        onCancel={mockOnCancel}
+        providerName="Test Storage"
         onListItems={mockOnListItems}
+        onFileSelected={mockOnFileSelected}
+        onCancel={mockOnCancel}
       />
     );
 
@@ -402,11 +369,11 @@ describe('CloudFilePicker', () => {
     render(
       <CloudFilePicker
         open={true}
-        title="Test Storage"
+        providerName="Test Storage"
         mode="open"
-        onSelect={mockOnSelect}
-        onCancel={mockOnCancel}
         onListItems={mockOnListItems}
+        onFileSelected={mockOnFileSelected}
+        onCancel={mockOnCancel}
       />
     );
 

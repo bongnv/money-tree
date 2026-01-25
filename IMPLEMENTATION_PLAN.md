@@ -1145,7 +1145,7 @@ These features will be implemented after the MVP is validated by users.
 - [x] Create `src/services/archive.service.ts`:
   - [x] `detectArchiveTrigger()`: Check if 3+ years exist in main file
   - [x] `calculateYearEndSummary(year)`: Compute counts and balances
-  - [x] `identifyArchivableYears()`: Return oldest years to archive
+  - [x] `identifyArchivableYear()`: Return oldest year to archive when >2 years exist (async)
   - [x] `shouldPromptArchive()`: Check conditions and user preferences
 - [x] Create `src/components/common/ArchivePrompt.tsx`:
   - [x] Dialog showing oldest year to archive

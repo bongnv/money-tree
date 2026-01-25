@@ -14,9 +14,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import LogoutIcon from '@mui/icons-material/Logout';
-import {
-  useStorageFactory,
-} from '../../contexts/ServiceProviders';
+import { useSyncService } from '../../contexts/SyncProvider';
 import { formatDistance } from 'date-fns';
 import { useAppContext } from '../../contexts/AppContext';
 import { useAccounts } from '../../hooks/queries/useAccounts';
@@ -25,17 +23,15 @@ import { useTransactionTypes } from '../../hooks/queries/useTransactionTypes';
 import { useTransactions } from '../../hooks/queries/useTransactions';
 import { useAssets } from '../../hooks/queries/useAssets';
 import { useBudgets } from '../../hooks/queries/useBudgets';
-import { useCloudFileName, useLastSynced } from '../../hooks/queries';
+import { useLastSynced } from '../../hooks/queries';
 import { db } from '../../db/database';
 
 export const DataSyncSettings: React.FC = () => {
   const navigate = useNavigate();
-  const storageFactory = useStorageFactory();
-  const cloudFileName = useCloudFileName();
+  const syncService = useSyncService();
+  const cloudFileName = syncService.fileName;
   const lastSynced = useLastSynced();
-  const {
-    setShouldShowWelcome,
-  } = useAppContext();
+  const { setWelcomeDismissed } = useAppContext();
   const accounts = useAccounts();
   const categories = useCategories();
   const transactionTypes = useTransactionTypes();
@@ -82,7 +78,6 @@ export const DataSyncSettings: React.FC = () => {
         result = `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
       }
 
-      console.log('[DataSyncSettings] fileSize:', result);
       return result;
     } catch (error) {
       console.error('[DataSyncSettings] fileSize error:', error);
@@ -100,12 +95,8 @@ export const DataSyncSettings: React.FC = () => {
   }, [lastSynced]);
 
   const storageLocation = useMemo(() => {
-    try {
-      return storageFactory.providerName || 'Not connected';
-    } catch {
-      return 'Not connected';
-    }
-  }, [storageFactory.providerName]);
+    return syncService.providerName || 'Not connected';
+  }, [syncService.providerName]);
 
   const handleDisconnect = async () => {
     setDisconnectDialogOpen(false);
@@ -113,13 +104,13 @@ export const DataSyncSettings: React.FC = () => {
     // Clear all data from IndexedDB
     await db.delete();
     await db.open();
-    
+
     // Disconnect from cloud storage
-    await storageFactory.disconnect();
+    await syncService.disconnect();
 
     // Redirect to dashboard and trigger welcome dialog
     navigate('/');
-    setShouldShowWelcome(true);
+    setWelcomeDismissed(false);
   };
 
   return (
@@ -161,7 +152,7 @@ export const DataSyncSettings: React.FC = () => {
                       Status
                     </Typography>
                     <Typography variant="body1">
-                      {cloudFileName ? 'Connected' : 'Not connected'}
+                      {syncService.providerName || 'Not connected'}
                     </Typography>
                   </Grid>
                 </Grid>

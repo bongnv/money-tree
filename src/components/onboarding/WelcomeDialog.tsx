@@ -22,11 +22,12 @@ import {
 } from '@mui/icons-material';
 import { isOneDriveConfigured } from '../../config/onedrive.config';
 import { isGoogleDriveConfigured } from '../../config/googledrive.config';
-import { OneDriveFilePicker } from '../onedrive/OneDriveFilePicker';
-import { GoogleDriveFilePicker } from '../googledrive/GoogleDriveFilePicker';
-import { useStorage, useSyncService } from '../../contexts/ServiceProviders';
-import { StorageProviderType } from '../../services/storage/StorageService';
+import { CloudFilePicker } from '../common/CloudFilePicker';
+import { useSyncService } from '../../contexts/SyncProvider';
+import { StorageProviderType } from '../../services/storage/StorageProviderFactory';
 import { isUserCancellationError } from '../../utils/error.utils';
+import type { CloudItem } from '../../services/storage/IStorageProvider';
+import { db } from '../../db/database';
 
 interface WelcomeDialogProps {
   open: boolean;
@@ -36,14 +37,12 @@ interface WelcomeDialogProps {
 export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const storage = useStorage();
   const syncService = useSyncService();
 
   const [state, setState] = useState({
     isConnecting: false,
     error: null as string | null,
-    showOneDrivePicker: false,
-    showGoogleDrivePicker: false,
+    showFilePicker: false,
     pickerMode: 'open' as 'open' | 'create',
   });
 
@@ -53,11 +52,10 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
 
       try {
         // Cloud: authenticate then show picker
-        await storage.connect({ type: provider });
+        await syncService.connect(provider);
         setState((s) => ({
           ...s,
-          showOneDrivePicker: provider === StorageProviderType.ONEDRIVE,
-          showGoogleDrivePicker: provider === StorageProviderType.GOOGLE_DRIVE,
+          showFilePicker: true,
         }));
       } catch (error: any) {
         setState((s) => ({ ...s, isConnecting: false }));
@@ -66,21 +64,21 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
         }
       }
     },
-    [storage]
+    [syncService]
   );
 
   const handleFileSelected = useCallback(
-    async (hasExistingFile: boolean) => {
-      setState((s) => ({ ...s, showOneDrivePicker: false, showGoogleDrivePicker: false }));
+    async (fileItem: CloudItem) => {
+      setState((s) => ({ ...s, showFilePicker: false }));
 
       try {
-        // Provider has already called setFile() in the picker
-        // Load existing file or create new
-        if (hasExistingFile) {
-          await syncService.loadDataFile();
-        } else {
-          await syncService.syncNow();
-        }
+        // Clear Dexie database for fresh start
+        await db.delete();
+        await db.open();
+
+        // Set the file in sync context
+        // SyncProvider will automatically trigger sync
+        syncService.setFile(fileItem);
 
         setState((s) => ({ ...s, isConnecting: false }));
         onClose();
@@ -97,8 +95,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
   const cancelPicker = useCallback(() => {
     setState((s) => ({
       ...s,
-      showOneDrivePicker: false,
-      showGoogleDrivePicker: false,
+      showFilePicker: false,
       isConnecting: false,
     }));
   }, []);
@@ -106,7 +103,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
   return (
     <>
       <Dialog
-        open={open && !state.showOneDrivePicker && !state.showGoogleDrivePicker}
+        open={open && !state.showFilePicker}
         maxWidth="md"
         fullWidth
         fullScreen={isMobile}
@@ -245,22 +242,14 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
         </DialogActions>
       </Dialog>
 
-      {/* OneDrive File Picker */}
-      {state.showOneDrivePicker && (
-        <OneDriveFilePicker
-          open={state.showOneDrivePicker}
+      {/* Generic Cloud File Picker */}
+      {state.showFilePicker && syncService.providerName && (
+        <CloudFilePicker
+          open={state.showFilePicker}
+          providerName={syncService.providerName}
+          onListItems={syncService.listItems}
           mode={state.pickerMode}
-          onComplete={handleFileSelected}
-          onCancel={cancelPicker}
-        />
-      )}
-
-      {/* Google Drive File Picker */}
-      {state.showGoogleDrivePicker && (
-        <GoogleDriveFilePicker
-          open={state.showGoogleDrivePicker}
-          mode={state.pickerMode}
-          onComplete={handleFileSelected}
+          onFileSelected={handleFileSelected}
           onCancel={cancelPicker}
         />
       )}

@@ -10,23 +10,13 @@ import {
   errorMessages,
   isOneDriveConfigured,
 } from '../../config/onedrive.config';
-import type { IStorageProvider } from './IStorageProvider';
-
-const CACHE_KEY = 'moneyTree.oneDriveFileInfo';
+import type { IStorageProvider, CloudItem } from './IStorageProvider';
 
 /**
- * OneDrive Storage Provider
+ * OneDrive Storage Provider - Stateless
  * Uses Microsoft Graph API to store data in OneDrive
- * Manages its own file state and caching via localStorage
+ * File state is managed by SyncContext, not by the provider
  */
-export interface OneDriveFileInfo {
-  fileId: string | null; // null for new files, actual ID for existing files
-  filePath: string; // Full path including filename
-  // For shared folders: need driveId and parent folder ID
-  driveId?: string;
-  parentItemId?: string;
-}
-
 export interface DriveItem {
   id: string;
   name: string;
@@ -51,7 +41,6 @@ export class OneDriveProvider implements IStorageProvider {
   private graphClient: Client | null = null;
   private account: AccountInfo | null = null;
   private initPromise: Promise<void> | null = null;
-  private currentFileInfo: OneDriveFileInfo | null = null;
 
   constructor() {
     if (isOneDriveConfigured()) {
@@ -77,25 +66,13 @@ export class OneDriveProvider implements IStorageProvider {
   }
 
   /**
-   * Initialize provider - load cached file and verify authentication
+   * Initialize provider - verify authentication only
    */
   async initialize(): Promise<boolean> {
     await this.initPromise;
 
-    // Load cached file info
-    const fileInfo = this.loadFileInfoFromCache();
-    if (!fileInfo) {
-      return false;
-    }
-
-    this.currentFileInfo = fileInfo;
-
     // Check if authenticated
-    if (!this.account) {
-      return false;
-    }
-
-    return true;
+    return this.account !== null;
   }
 
   /**
@@ -119,28 +96,16 @@ export class OneDriveProvider implements IStorageProvider {
   }
 
   /**
-   * Set the main file to work with
+   * Read file content
    */
-  async setFile(fileInfo: OneDriveFileInfo): Promise<void> {
-    this.currentFileInfo = fileInfo;
-    this.saveFileInfoToCache(fileInfo);
-  }
-
-  /**
-   * Read main file content
-   */
-  async readMainFile(): Promise<string> {
-    if (!this.currentFileInfo) {
-      throw new Error('No file selected. Please select a file first.');
-    }
-
-    if (!this.currentFileInfo.fileId) {
-      throw new Error('Cannot read file: fileId is null');
+  async readMainFile(fileItem: CloudItem): Promise<string> {
+    if (!fileItem?.id) {
+      throw new Error('Cannot read file: file id is missing');
     }
 
     try {
       const client = await this.getGraphClient();
-      const endpoint = this.buildContentUrl(this.currentFileInfo, this.currentFileInfo.fileId);
+      const endpoint = this.buildContentUrl(fileItem, fileItem.id);
       const response = await client.api(endpoint).get();
       return typeof response === 'string' ? response : JSON.stringify(response);
     } catch (error: any) {
@@ -149,27 +114,24 @@ export class OneDriveProvider implements IStorageProvider {
   }
 
   /**
-   * Write to main file
+   * Write to file - creates new file or updates existing
+   * Returns updated CloudItem with id populated for new files
    */
-  async writeMainFile(content: string): Promise<void> {
-    if (!this.currentFileInfo) {
-      throw new Error('No file selected. Please select a file first.');
+  async writeMainFile(fileItem: CloudItem, content: string): Promise<CloudItem> {
+    if (!fileItem) {
+      throw new Error('No file item provided');
     }
 
     try {
       const client = await this.getGraphClient();
-      const endpoint = this.buildUploadUrl(
-        this.currentFileInfo,
-        this.currentFileInfo.filePath,
-        this.currentFileInfo.fileId
-      );
+      const endpoint = this.buildUploadUrl(fileItem, fileItem.name, fileItem.id || null);
       const response = await client.api(endpoint).put(content);
 
-      // Update fileId if it was a new file
-      if (!this.currentFileInfo.fileId) {
-        this.currentFileInfo = { ...this.currentFileInfo, fileId: response.id };
-        this.saveFileInfoToCache(this.currentFileInfo);
+      // Return updated CloudItem with new id if it was a new file
+      if (!fileItem.id) {
+        return { ...fileItem, id: response.id };
       }
+      return fileItem;
     } catch (error: any) {
       throw this.createFriendlyError(error);
     }
@@ -179,43 +141,32 @@ export class OneDriveProvider implements IStorageProvider {
    * Save an additional file (backup, archive, etc.)
    * Saves in same folder as main file
    */
-  async saveAdditionalFile(filename: string, content: string | Blob): Promise<void> {
-    if (!this.currentFileInfo) {
-      throw new Error('No file selected. Please select a file first.');
+  async saveAdditionalFile(
+    mainFileItem: CloudItem,
+    filename: string,
+    content: string | Blob
+  ): Promise<void> {
+    if (!mainFileItem) {
+      throw new Error('No main file item provided');
     }
 
     try {
       const client = await this.getGraphClient();
 
-      // Create new file info in same folder as main file
-      const folderPath = this.currentFileInfo.filePath.substring(
-        0,
-        this.currentFileInfo.filePath.lastIndexOf('/')
-      );
-      const newFilePath = folderPath ? `${folderPath}/${filename}` : filename;
-
-      const newFileInfo: OneDriveFileInfo = {
-        fileId: null,
-        filePath: newFilePath,
-        driveId: this.currentFileInfo.driveId,
-        parentItemId: this.currentFileInfo.parentItemId,
+      // Create CloudItem for additional file in same folder
+      const newFileItem: CloudItem = {
+        id: '',
+        name: filename,
+        isFolder: false,
+        driveId: mainFileItem.driveId,
+        parentItemId: mainFileItem.parentItemId,
       };
 
-      const endpoint = this.buildUploadUrl(newFileInfo, newFilePath, null);
+      const endpoint = this.buildUploadUrl(newFileItem, filename, null);
       await client.api(endpoint).put(content);
     } catch (error: any) {
       throw this.createFriendlyError(error);
     }
-  }
-
-  /**
-   * Get main file name
-   */
-  getMainFileName(): string | null {
-    if (!this.currentFileInfo) {
-      return null;
-    }
-    return this.currentFileInfo.filePath.split('/').pop() || null;
   }
 
   /**
@@ -263,14 +214,62 @@ export class OneDriveProvider implements IStorageProvider {
   }
 
   /**
-   * Clear cached file
+   * List items for file picker - returns CloudItems with OneDrive-specific info
    */
-  async clearCache(): Promise<void> {
-    this.currentFileInfo = null;
-    localStorage.removeItem(CACHE_KEY);
+  async listItems(parent?: CloudItem): Promise<CloudItem[]> {
+    // For root, pass undefined to listDriveItems
+    // For nested folders, we need to reconstruct DriveItem-like structure
+    // But since listDriveItems accepts DriveItem, we'll need to refactor it
+    // For now, we'll store minimal info in parent and handle it
+    const parentItem = parent ? this.cloudItemToDriveItem(parent) : undefined;
+    const driveItems = await this.listDriveItems(parentItem);
+
+    // Convert to generic CloudItem format with metadata
+    return driveItems.map((item) => ({
+      id: item.id,
+      name: item.name,
+      isFolder: !!item.folder,
+      isSharedWithMe: !!item.remoteItem,
+      parentItemId: item.parentReference?.id,
+      driveId: item.remoteItem?.parentReference?.driveId || item.parentReference?.driveId,
+    }));
   }
 
   // ==================== PRIVATE METHODS ====================
+
+  /**
+   * Convert CloudItem to minimal DriveItem structure for API calls
+   */
+  private cloudItemToDriveItem(item: CloudItem): DriveItem {
+    const driveItem: DriveItem = {
+      id: item.id,
+      name: item.name,
+    };
+
+    if (item.isFolder) {
+      driveItem.folder = { childCount: 0 };
+    }
+
+    if (item.isSharedWithMe && item.driveId) {
+      driveItem.remoteItem = {
+        id: item.id,
+        name: item.name,
+        parentReference: {
+          driveId: item.driveId,
+        },
+      };
+    }
+
+    if (item.parentItemId) {
+      driveItem.parentReference = {
+        id: item.parentItemId,
+        path: '',
+        driveId: item.driveId,
+      };
+    }
+
+    return driveItem;
+  }
 
   /**
    * Get Graph client (creates lazily on first use)
@@ -337,16 +336,16 @@ export class OneDriveProvider implements IStorageProvider {
   /**
    * Check if we're using a shared folder
    */
-  private isSharedFolder(fileInfo: OneDriveFileInfo): boolean {
-    return !!(fileInfo?.driveId && fileInfo?.parentItemId);
+  private isSharedFolder(fileItem: CloudItem): boolean {
+    return !!(fileItem?.driveId && fileItem?.parentItemId);
   }
 
   /**
    * Build file content URL (for reading)
    */
-  private buildContentUrl(fileInfo: OneDriveFileInfo, fileId: string): string {
-    if (this.isSharedFolder(fileInfo)) {
-      return `/drives/${fileInfo.driveId}/items/${fileId}/content`;
+  private buildContentUrl(fileItem: CloudItem, fileId: string): string {
+    if (this.isSharedFolder(fileItem)) {
+      return `/drives/${fileItem.driveId}/items/${fileId}/content`;
     }
     return `/me/drive/items/${fileId}/content`;
   }
@@ -354,13 +353,9 @@ export class OneDriveProvider implements IStorageProvider {
   /**
    * Build upload URL (for writing)
    */
-  private buildUploadUrl(
-    fileInfo: OneDriveFileInfo,
-    filename: string,
-    fileId?: string | null
-  ): string {
+  private buildUploadUrl(fileItem: CloudItem, filename: string, fileId?: string | null): string {
     if (fileId) {
-      return this.buildContentUrl(fileInfo, fileId);
+      return this.buildContentUrl(fileItem, fileId);
     }
 
     const cleanPath = filename.replace(/^\/+|\/+$/g, '');
@@ -368,8 +363,8 @@ export class OneDriveProvider implements IStorageProvider {
       throw new Error('Invalid filename: cannot be empty');
     }
 
-    if (this.isSharedFolder(fileInfo)) {
-      return `/drives/${fileInfo.driveId}/items/${fileInfo.parentItemId}:/${cleanPath}:/content`;
+    if (this.isSharedFolder(fileItem)) {
+      return `/drives/${fileItem.driveId}/items/${fileItem.parentItemId}:/${cleanPath}:/content`;
     }
     return `/me/drive/root:/${cleanPath}:/content`;
   }
@@ -398,32 +393,5 @@ export class OneDriveProvider implements IStorageProvider {
     }
 
     return new Error(message || 'OneDrive operation failed');
-  }
-
-  /**
-   * Load file info from localStorage
-   */
-  private loadFileInfoFromCache(): OneDriveFileInfo | null {
-    try {
-      const cached = localStorage.getItem(CACHE_KEY);
-      if (!cached) {
-        return null;
-      }
-      return JSON.parse(cached) as OneDriveFileInfo;
-    } catch (error) {
-      console.warn('Failed to load cached OneDrive file info:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Save file info to localStorage
-   */
-  private saveFileInfoToCache(fileInfo: OneDriveFileInfo): void {
-    try {
-      localStorage.setItem(CACHE_KEY, JSON.stringify(fileInfo));
-    } catch (error) {
-      console.warn('Failed to cache OneDrive file info:', error);
-    }
   }
 }

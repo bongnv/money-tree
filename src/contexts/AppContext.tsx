@@ -11,8 +11,6 @@ interface AppContextValue {
   // Loading states
   isLoading: boolean;
   setLoading: (loading: boolean) => void;
-  isSyncing: boolean;
-  setIsSyncing: (syncing: boolean) => void;
 
   // Snackbar
   snackbar: SnackbarState;
@@ -20,16 +18,16 @@ interface AppContextValue {
   hideSnackbar: () => void;
 
   // Welcome dialog
-  shouldShowWelcome: boolean;
-  setShouldShowWelcome: (show: boolean) => void;
+  welcomeDismissed: boolean;
+  setWelcomeDismissed: (dismissed: boolean) => void;
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [isLoading, setLoading] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [shouldShowWelcome, setShouldShowWelcome] = useState(false);
+
+  const [welcomeDismissed, setWelcomeDismissed] = useState(false);
   const [snackbar, setSnackbar] = useState<SnackbarState>({
     open: false,
     message: '',
@@ -47,13 +45,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value: AppContextValue = {
     isLoading,
     setLoading,
-    isSyncing,
-    setIsSyncing,
     snackbar,
     showSnackbar,
     hideSnackbar,
-    shouldShowWelcome,
-    setShouldShowWelcome,
+    welcomeDismissed,
+    setWelcomeDismissed,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

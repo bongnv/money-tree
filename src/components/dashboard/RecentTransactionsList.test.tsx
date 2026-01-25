@@ -10,7 +10,9 @@ jest.mock('../../hooks/queries/useTransactions');
 jest.mock('../../hooks/queries/useTransactionTypes');
 
 const mockUseTransactions = useTransactions as jest.MockedFunction<typeof useTransactions>;
-const mockUseTransactionTypes = useTransactionTypes as jest.MockedFunction<typeof useTransactionTypes>;
+const mockUseTransactionTypes = useTransactionTypes as jest.MockedFunction<
+  typeof useTransactionTypes
+>;
 
 describe('RecentTransactionsList', () => {
   const mockTransactions = [

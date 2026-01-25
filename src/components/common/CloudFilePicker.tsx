@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -24,84 +24,63 @@ import {
   InsertDriveFile as FileIcon,
   NavigateNext as NavigateNextIcon,
   Cloud as CloudIcon,
+  People as PeopleIcon,
 } from '@mui/icons-material';
-
-// Generic file/folder interface for cloud providers
-export interface CloudItem {
-  id: string;
-  name: string;
-  isFolder: boolean;
-  additionalInfo?: React.ReactNode; // For provider-specific icons/badges
-}
-
-export interface CloudFileInfo {
-  fileId: string | null;
-  fileName?: string;
-  [key: string]: any; // Allow provider-specific fields
-}
-
-interface BreadcrumbItem {
-  id: string;
-  name: string;
-}
+import type { CloudItem } from '../../services/storage/IStorageProvider';
 
 interface CloudFilePickerProps {
   open: boolean;
-  title: string;
-  rootName?: string;
+  providerName: string;
+  onListItems: (parent?: CloudItem) => Promise<CloudItem[]>;
   mode?: 'open' | 'create'; // 'open' = select existing file, 'create' = select folder to create in
-  onSelect: (
-    fileId: string | null,
-    fileName: string,
-    currentFolderId: string | null,
-    breadcrumbs: BreadcrumbItem[]
-  ) => void;
+  onFileSelected: (fileItem: CloudItem) => void;
   onCancel: () => void;
-  onListItems: (parentId?: string | null) => Promise<CloudItem[]>;
   defaultFileName?: string;
 }
 
 export function CloudFilePicker({
   open,
-  title,
-  rootName = 'My Drive',
-  mode = 'open',
-  onSelect,
-  onCancel,
+  providerName,
   onListItems,
+  mode = 'open',
+  onFileSelected,
+  onCancel,
   defaultFileName = 'money-tree.json',
 }: CloudFilePickerProps) {
-  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
+  const [currentFolder, setCurrentFolder] = useState<CloudItem | undefined>(undefined);
   const [items, setItems] = useState<CloudItem[]>([]);
-  const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
+  const [breadcrumbs, setBreadcrumbs] = useState<CloudItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<CloudItem | null>(null);
   const [showFileNameDialog, setShowFileNameDialog] = useState(false);
   const [newFileName, setNewFileName] = useState(defaultFileName);
 
+  const title = `Select ${providerName} File Location`;
+  const rootName = providerName;
+
   // Load root folder on open
   useEffect(() => {
     if (open) {
-      loadFolder(null);
+      loadFolder(undefined);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const loadFolder = async (folderId: string | null) => {
+  const loadFolder = async (folder: CloudItem | undefined) => {
     setLoading(true);
     setError(null);
     setSelectedFile(null);
 
     try {
-      const folderItems = await onListItems(folderId);
+      const folderItems = await onListItems(folder);
       setItems(folderItems);
 
       // Update breadcrumbs
-      if (folderId === null) {
+      if (!folder) {
         // Root folder
-        setBreadcrumbs([{ id: 'root', name: rootName }]);
-        setCurrentFolderId(null);
+        setBreadcrumbs([{ id: 'root', name: rootName, isFolder: true }]);
+        setCurrentFolder(undefined);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load folder contents');
@@ -121,10 +100,10 @@ export function CloudFilePicker({
     setSelectedFile(null); // Clear selection when navigating
 
     try {
-      const folderItems = await onListItems(folder.id);
+      const folderItems = await onListItems(folder);
       setItems(folderItems);
-      setCurrentFolderId(folder.id);
-      setBreadcrumbs([...breadcrumbs, { id: folder.id, name: folder.name }]);
+      setCurrentFolder(folder);
+      setBreadcrumbs([...breadcrumbs, folder]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load folder contents');
     } finally {
@@ -140,10 +119,10 @@ export function CloudFilePicker({
     setError(null);
 
     try {
-      const folderId = targetBreadcrumb.id === 'root' ? null : targetBreadcrumb.id;
-      const folderItems = await onListItems(folderId);
+      const folder = targetBreadcrumb.id === 'root' ? undefined : targetBreadcrumb;
+      const folderItems = await onListItems(folder);
       setItems(folderItems);
-      setCurrentFolderId(folderId);
+      setCurrentFolder(folder);
       setBreadcrumbs(newBreadcrumbs);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load folder contents');
@@ -156,16 +135,23 @@ export function CloudFilePicker({
     setSelectedFile(file);
   };
 
-  const handleSelectFile = () => {
+  const handleSelectFile = async () => {
     if (selectedFile) {
-      // Existing file selected in open mode
-      onSelect(selectedFile.id, selectedFile.name, currentFolderId, breadcrumbs);
+      // Existing file selected - return it
+      onFileSelected(selectedFile);
     }
   };
 
-  const handleCreateHere = () => {
-    // Create new file in current folder
-    onSelect(null, newFileName, currentFolderId, breadcrumbs);
+  const handleCreateHere = async () => {
+    // Create new file - build CloudItem descriptor
+    const newFileItem: CloudItem = {
+      id: '', // Empty ID indicates new file
+      name: newFileName,
+      isFolder: false,
+      parentItemId: currentFolder?.id,
+      driveId: currentFolder?.driveId,
+    };
+    onFileSelected(newFileItem);
     setShowFileNameDialog(false);
   };
 
@@ -241,7 +227,13 @@ export function CloudFilePicker({
                     primary={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <span>{folder.name}</span>
-                        {folder.additionalInfo}
+                        {folder.isSharedWithMe && (
+                          <PeopleIcon
+                            fontSize="small"
+                            color="action"
+                            titleAccess="Shared with me"
+                          />
+                        )}
                       </Box>
                     }
                   />
@@ -263,7 +255,13 @@ export function CloudFilePicker({
                     primary={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <span>{file.name}</span>
-                        {file.additionalInfo}
+                        {file.isSharedWithMe && (
+                          <PeopleIcon
+                            fontSize="small"
+                            color="action"
+                            titleAccess="Shared with me"
+                          />
+                        )}
                       </Box>
                     }
                   />

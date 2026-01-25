@@ -167,9 +167,13 @@ describe('BudgetsPage', () => {
     mockGetCategoryById.mockImplementation((id: string) => mockCategories.find((c) => c.id === id));
 
     (useCategories as jest.MockedFunction<typeof useCategories>).mockReturnValue(mockCategories);
-    (useTransactionTypes as jest.MockedFunction<typeof useTransactionTypes>).mockReturnValue(mockTransactionTypes);
+    (useTransactionTypes as jest.MockedFunction<typeof useTransactionTypes>).mockReturnValue(
+      mockTransactionTypes
+    );
 
-    (useTransactions as jest.MockedFunction<typeof useTransactions>).mockReturnValue(mockTransactions);
+    (useTransactions as jest.MockedFunction<typeof useTransactions>).mockReturnValue(
+      mockTransactions
+    );
 
     (useAccounts as jest.MockedFunction<typeof useAccounts>).mockReturnValue([
       {
@@ -434,7 +438,10 @@ describe('BudgetsPage', () => {
   it('should show context-aware section titles for income vs expenses', async () => {
     const incomeBudget = { ...mockBudget, id: '2', transactionTypeId: 'tt2', amount: 5000 };
 
-    (useBudgets as jest.MockedFunction<typeof useBudgets>).mockReturnValue([mockBudget, incomeBudget]);
+    (useBudgets as jest.MockedFunction<typeof useBudgets>).mockReturnValue([
+      mockBudget,
+      incomeBudget,
+    ]);
     (useBudgetMutations as jest.MockedFunction<typeof useBudgetMutations>).mockReturnValue({
       addBudget: mockAddBudget,
       updateBudget: mockUpdateBudget,

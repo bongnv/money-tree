@@ -29,6 +29,9 @@ const mockSyncService = {
   isSyncing: false,
 };
 
+// Mock sync metadata mutations
+const mockAddArchivedYear = jest.fn();
+
 // Mock the hooks
 jest.mock('../../contexts/ServiceProviders', () => ({
   useArchiveService: () => mockArchiveService,
@@ -46,8 +49,18 @@ jest.mock('../../hooks/queries', () => ({
   useArchivedYears: () => mockUseArchivedYears(),
 }));
 
+jest.mock('../../hooks/mutations', () => ({
+  useSyncMetadataMutations: () => ({
+    addArchivedYear: mockAddArchivedYear,
+    setBaseCurrency: jest.fn(),
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 describe('ArchiveManager', () => {
   beforeEach(() => {
+    mockAddArchivedYear.mockClear();
     jest.clearAllMocks();
     mockArchiveService.identifyArchivableYear.mockResolvedValue(null);
     mockUseArchivedYears.mockReturnValue([]);
@@ -208,6 +221,12 @@ describe('ArchiveManager', () => {
       await waitFor(() => {
         expect(mockArchiveService.createArchiveFile).toHaveBeenCalledWith(2022, 'USD');
         expect(mockArchiveService.saveArchiveFile).toHaveBeenCalledWith(mockArchiveFile);
+        expect(mockAddArchivedYear).toHaveBeenCalledWith(
+          expect.objectContaining({
+            year: 2022,
+            archivedDate: '2024-01-15T00:00:00Z',
+          })
+        );
         expect(mockArchiveService.updateMainFileAfterArchive).toHaveBeenCalledWith(
           2022,
           expect.objectContaining({
@@ -215,7 +234,6 @@ describe('ArchiveManager', () => {
             archivedDate: '2024-01-15T00:00:00Z',
           })
         );
-        expect(mockSyncService.debouncedSync).toHaveBeenCalled();
       });
     });
 

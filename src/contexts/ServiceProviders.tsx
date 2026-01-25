@@ -146,7 +146,9 @@ class DexieArchiveService {
    * 2. Remove archived year transactions
    * 3. Update account initial balances to closing balances
    * 4. Remove archived year budgets
-   * 5. Add archive reference
+   * 
+   * Note: Archive reference is added via useSyncMetadataMutations hook in the component
+   * to ensure proper sync triggering
    */
   async saveArchiveFile(archiveFile: any): Promise<void> {
     const year = archiveFile.year;
@@ -181,15 +183,6 @@ class DexieArchiveService {
     for (const budget of budgetsToDelete) {
       await db.budgets.delete(budget.id);
     }
-
-    // Step 5: Add archive reference
-    const reference: ArchivedYearReference = {
-      year,
-      archivedDate: archiveFile.archivedDate,
-      summary,
-    };
-
-    await syncMetadata.addArchivedYear(reference);
 
     // Archive file is created but cloud storage handled by user download
     // User can manually download archive file if needed

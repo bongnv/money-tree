@@ -269,7 +269,7 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
       }
     };
 
-  const focusNextField = (currentRef: React.RefObject<HTMLInputElement>) => {
+  const focusNextField = (currentRef: React.RefObject<HTMLInputElement | null>) => {
     const fieldRefs = [dateRef, amountRef, typeRef];
 
     if (showFromAccount) fieldRefs.push(fromAccountRef);

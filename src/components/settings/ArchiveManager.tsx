@@ -22,15 +22,15 @@ import {
 import ArchiveIcon from '@mui/icons-material/Archive';
 import WarningIcon from '@mui/icons-material/Warning';
 import { useArchiveService } from '../../contexts/ServiceProviders';
-import { useSyncService } from '../../contexts/SyncProvider';
 import { useAppContext } from '../../contexts/AppContext';
 import { formatCurrency } from '../../utils/currency.utils';
 import type { YearEndSummary } from '../../types/models';
 import { useBaseCurrency, useArchivedYears } from '../../hooks/queries';
+import { useSyncMetadataMutations } from '../../hooks/mutations';
 
 export const ArchiveManager: React.FC = () => {
-  const syncService = useSyncService();
   const archiveService = useArchiveService();
+  const { addArchivedYear } = useSyncMetadataMutations();
   const { showSnackbar } = useAppContext();
   const baseCurrency = useBaseCurrency();
   const archivedYears = useArchivedYears();
@@ -94,21 +94,19 @@ export const ArchiveManager: React.FC = () => {
       // Create archive file
       const archiveFile = await archiveService.createArchiveFile(year, baseCurrency);
 
-      // Save archive file using storage provider
+      // Save archive (removes transactions, updates balances, removes budgets)
       await archiveService.saveArchiveFile(archiveFile);
 
-      // Create archive reference
+      // Create and add archive reference (triggers sync via hook)
       const archiveReference = {
         year,
         archivedDate: archiveFile.archivedDate,
         summary: archiveFile.summary,
       };
+      await addArchivedYear(archiveReference);
 
       // Update main file - remove archived data
       archiveService.updateMainFileAfterArchive(year, archiveReference);
-
-      // Sync changes to storage
-      syncService.debouncedSync();
 
       showSnackbar(
         `Year ${year} archived successfully. Data has been removed from the main file.`,

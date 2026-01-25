@@ -4,7 +4,6 @@ import {
   Paper,
   Typography,
   TextField,
-  Grid,
   Card,
   CardContent,
   ToggleButtonGroup,
@@ -15,6 +14,7 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import type { BalanceSheetData } from '../../services/report.service';
@@ -186,7 +186,7 @@ export const BalanceSheet: React.FC = () => {
       {/* Header with date selector and comparison options */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={3} alignItems="center">
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Typography variant="h5" gutterBottom>
               Balance Sheet
             </Typography>
@@ -199,7 +199,7 @@ export const BalanceSheet: React.FC = () => {
               fullWidth
             />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Typography variant="body2" color="text.secondary" gutterBottom>
               Comparison
             </Typography>
@@ -221,7 +221,7 @@ export const BalanceSheet: React.FC = () => {
               </ToggleButton>
             </ToggleButtonGroup>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <FormControl fullWidth>
               <InputLabel>Display Currency</InputLabel>
               <Select
@@ -247,7 +247,7 @@ export const BalanceSheet: React.FC = () => {
       {
         <>
           <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card>
                 <CardContent>
                   <Typography color="text.secondary" gutterBottom>
@@ -274,7 +274,7 @@ export const BalanceSheet: React.FC = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card>
                 <CardContent>
                   <Typography color="text.secondary" gutterBottom>
@@ -303,7 +303,7 @@ export const BalanceSheet: React.FC = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card sx={{ backgroundColor: 'primary.main', color: 'primary.contrastText' }}>
                 <CardContent>
                   <Typography gutterBottom>Net Worth</Typography>
@@ -370,11 +370,11 @@ export const BalanceSheet: React.FC = () => {
             sx={{ p: 3, mt: 3, backgroundColor: 'primary.main', color: 'primary.contrastText' }}
           >
             <Grid container justifyContent="space-between" alignItems="center">
-              <Grid item>
+              <Grid>
                 <Typography variant="h5">Net Worth</Typography>
                 <Typography variant="caption">Total Assets - Total Liabilities</Typography>
               </Grid>
-              <Grid item>
+              <Grid>
                 <Typography variant="h3">
                   {formatCurrency(balanceSheet.netWorth, conversionCurrency)}
                 </Typography>

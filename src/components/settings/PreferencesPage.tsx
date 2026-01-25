@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Box,
   Paper,
@@ -13,20 +13,14 @@ import { DEFAULT_CURRENCIES } from '../../constants/defaults';
 import { DataSyncSettings } from './DataSyncSettings';
 import { CurrencyCode } from '../../types/enums';
 import { useBaseCurrency } from '../../hooks/queries';
-import { syncMetadata } from '../../db/database';
+import { useSyncMetadataMutations } from '../../hooks/mutations';
 
 export const PreferencesPage: React.FC = () => {
-  const baseCurrencyFromDb = useBaseCurrency();
-  const [localCurrency, setLocalCurrency] = useState<CurrencyCode>(baseCurrencyFromDb);
-
-  // Sync local state with DB value
-  useEffect(() => {
-    setLocalCurrency(baseCurrencyFromDb);
-  }, [baseCurrencyFromDb]);
+  const baseCurrency = useBaseCurrency();
+  const { setBaseCurrency } = useSyncMetadataMutations();
 
   const handleCurrencyChange = async (newCurrency: CurrencyCode) => {
-    setLocalCurrency(newCurrency);
-    await syncMetadata.setBaseCurrency(newCurrency);
+    await setBaseCurrency(newCurrency);
   };
 
   return (
@@ -45,7 +39,7 @@ export const PreferencesPage: React.FC = () => {
           <Select
             labelId="base-currency-label"
             id="base-currency-select"
-            value={localCurrency}
+            value={baseCurrency}
             label="Base Currency"
             onChange={(e) => handleCurrencyChange(e.target.value as CurrencyCode)}
           >

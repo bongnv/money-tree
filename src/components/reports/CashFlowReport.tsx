@@ -4,7 +4,6 @@ import {
   Box,
   Paper,
   Typography,
-  Grid,
   Card,
   CardContent,
   Table,
@@ -22,6 +21,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import { useTransactions } from '../../hooks/queries/useTransactions';
@@ -353,7 +353,7 @@ export const CashFlowReport: React.FC = () => {
       {/* Period Selection */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <PeriodSelector
               startDate={startDate}
               endDate={endDate}
@@ -361,7 +361,7 @@ export const CashFlowReport: React.FC = () => {
               fullWidth
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={2.5}>
+          <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
             <FormControl fullWidth>
               <InputLabel>Currency</InputLabel>
               <Select
@@ -377,7 +377,7 @@ export const CashFlowReport: React.FC = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={6} md={4.5}>
+          <Grid size={{ xs: 12, sm: 6, md: 4.5 }}>
             <CategoryFilter
               categories={categories || []}
               selectedCategories={selectedCategories}
@@ -385,7 +385,7 @@ export const CashFlowReport: React.FC = () => {
               onClear={handleClearFilters}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={1}>
+          <Grid size={{ xs: 12, sm: 6, md: 1 }}>
             <Button
               variant="outlined"
               onClick={handleClearFilters}
@@ -400,7 +400,7 @@ export const CashFlowReport: React.FC = () => {
 
       {/* Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom>
@@ -415,7 +415,7 @@ export const CashFlowReport: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom>
@@ -430,7 +430,7 @@ export const CashFlowReport: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom>
@@ -492,7 +492,7 @@ export const CashFlowReport: React.FC = () => {
         }
       >
         {incomePieData.length > 0 && (
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>
                 Income by {groupingLabel}
@@ -506,7 +506,7 @@ export const CashFlowReport: React.FC = () => {
           </Grid>
         )}
         {expensesPieData.length > 0 && (
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>
                 Expenses by {groupingLabel}
@@ -524,7 +524,7 @@ export const CashFlowReport: React.FC = () => {
       {/* Detailed Tables */}
       <Grid container spacing={3}>
         {hasIncomeTypes && (
-          <Grid item xs={12} md={hasExpenseTypes ? 6 : 12}>
+          <Grid size={{ xs: 12, md: hasExpenseTypes ? 6 : 12 }}>
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>
                 Income Details
@@ -567,7 +567,7 @@ export const CashFlowReport: React.FC = () => {
           </Grid>
         )}
         {hasExpenseTypes && (
-          <Grid item xs={12} md={hasIncomeTypes ? 6 : 12}>
+          <Grid size={{ xs: 12, md: hasIncomeTypes ? 6 : 12 }}>
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>
                 Expense Details

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Grid, Alert } from '@mui/material';
+import Grid from '@mui/material/Grid';
+import { Box, Alert } from '@mui/material';
 import { FinancialSummaryCard } from './FinancialSummaryCard';
 import { useAccounts } from '../../hooks/queries/useAccounts';
 import { useTransactions } from '../../hooks/queries/useTransactions';
@@ -137,14 +138,14 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
         </Alert>
       )}
       <Grid container spacing={3}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <FinancialSummaryCard
             title="Net Worth"
             value={formatCurrency(netWorth, baseCurrency)}
             onClick={() => navigate('/reports/balance-sheet')}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <FinancialSummaryCard
             title="Cash Flow"
             value={formatCurrency(cashFlow, baseCurrency)}
@@ -152,7 +153,7 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
             onClick={() => navigate('/reports/cash-flow')}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <FinancialSummaryCard
             title="Savings Rate"
             value={`${savingsRate.toFixed(1)}%`}
@@ -160,7 +161,7 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
             onClick={() => navigate('/reports/cash-flow')}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <FinancialSummaryCard
             title="Budget Health"
             value={`${budgetHealth.toFixed(0)}%`}

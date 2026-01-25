@@ -4,7 +4,6 @@ import {
   Typography,
   Card,
   CardContent,
-  Grid,
   Button,
   Dialog,
   DialogTitle,
@@ -12,6 +11,7 @@ import {
   DialogContentText,
   DialogActions,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { useNavigate } from 'react-router-dom';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useSyncService } from '../../contexts/SyncProvider';
@@ -117,7 +117,7 @@ export const DataSyncSettings: React.FC = () => {
     <Box>
       <Grid container spacing={3}>
         {/* Current File Info */}
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -126,28 +126,28 @@ export const DataSyncSettings: React.FC = () => {
 
               <Box sx={{ mt: 2 }}>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <Typography variant="body2" color="text.secondary">
                       File Name
                     </Typography>
                     <Typography variant="body1">{cloudFileName || 'No file loaded'}</Typography>
                   </Grid>
 
-                  <Grid item xs={12} sm={6}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <Typography variant="body2" color="text.secondary">
                       Last Modified
                     </Typography>
                     <Typography variant="body1">{lastModifiedText}</Typography>
                   </Grid>
 
-                  <Grid item xs={12} sm={6}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <Typography variant="body2" color="text.secondary">
                       File Size (approximate)
                     </Typography>
                     <Typography variant="body1">{fileSize}</Typography>
                   </Grid>
 
-                  <Grid item xs={12} sm={6}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <Typography variant="body2" color="text.secondary">
                       Status
                     </Typography>
@@ -162,7 +162,7 @@ export const DataSyncSettings: React.FC = () => {
         </Grid>
 
         {/* Disconnect Section */}
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>

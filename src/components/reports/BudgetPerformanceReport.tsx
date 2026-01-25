@@ -4,7 +4,6 @@ import {
   Box,
   Paper,
   Typography,
-  Grid,
   Card,
   CardContent,
   Table,
@@ -24,6 +23,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -403,7 +403,7 @@ export const BudgetPerformanceReport: React.FC = () => {
       {/* Filters */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <PeriodSelector
               startDate={startDate}
               endDate={endDate}
@@ -411,7 +411,7 @@ export const BudgetPerformanceReport: React.FC = () => {
               fullWidth
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={2.5}>
+          <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
             <FormControl fullWidth>
               <InputLabel>Currency</InputLabel>
               <Select
@@ -427,7 +427,7 @@ export const BudgetPerformanceReport: React.FC = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={6} md={4.5}>
+          <Grid size={{ xs: 12, sm: 6, md: 4.5 }}>
             <CategoryFilter
               categories={categories || []}
               selectedCategories={selectedCategories}
@@ -435,7 +435,7 @@ export const BudgetPerformanceReport: React.FC = () => {
               onClear={handleClearFilters}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={1}>
+          <Grid size={{ xs: 12, sm: 6, md: 1 }}>
             <Button
               variant="outlined"
               onClick={handleClearFilters}
@@ -450,7 +450,7 @@ export const BudgetPerformanceReport: React.FC = () => {
 
       {/* Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom>
@@ -478,7 +478,7 @@ export const BudgetPerformanceReport: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom>
@@ -518,7 +518,7 @@ export const BudgetPerformanceReport: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom>

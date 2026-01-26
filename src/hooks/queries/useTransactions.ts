@@ -6,14 +6,3 @@ import type { Transaction } from '../../types/models';
 export function useTransactions(): Transaction[] | undefined {
   return useLiveQuery(() => db.transactions.toArray());
 }
-
-// Get transactions by date range
-export function useTransactionsByDateRange(
-  startDate: string,
-  endDate: string
-): Transaction[] | undefined {
-  return useLiveQuery(
-    () => db.transactions.where('date').between(startDate, endDate, true, true).toArray(),
-    [startDate, endDate]
-  );
-}

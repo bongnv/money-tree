@@ -23,14 +23,13 @@ import { useTransactionTypes } from '../../hooks/queries/useTransactionTypes';
 import { useTransactions } from '../../hooks/queries/useTransactions';
 import { useAssets } from '../../hooks/queries/useAssets';
 import { useBudgets } from '../../hooks/queries/useBudgets';
-import { useLastSynced } from '../../hooks/queries';
 import { db } from '../../db/database';
 
 export const DataSyncSettings: React.FC = () => {
   const navigate = useNavigate();
   const syncService = useSyncService();
   const cloudFileName = syncService.fileName;
-  const lastSynced = useLastSynced();
+  const lastSynced = syncService.lastSynced;
   const { setWelcomeDismissed } = useAppContext();
   const accounts = useAccounts();
   const categories = useCategories();

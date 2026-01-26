@@ -17,10 +17,3 @@ export function useBaseCurrency(): CurrencyCode {
 export function useArchivedYears(): ArchivedYearReference[] {
   return useLiveQuery(() => syncMetadata.getArchivedYears()) ?? [];
 }
-
-/**
- * Hook to get last synced timestamp from Dexie
- */
-export function useLastSynced(): string | null {
-  return useLiveQuery(() => syncMetadata.getLastSynced()) ?? null;
-}

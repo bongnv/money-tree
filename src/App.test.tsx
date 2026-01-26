@@ -34,7 +34,6 @@ jest.mock('./services/cloudSync.service', () => ({
     downloadFromCloud: jest.fn().mockResolvedValue(undefined),
     fullSync: jest.fn().mockResolvedValue(undefined),
     debouncedSync: jest.fn(),
-    loadInitialData: jest.fn().mockResolvedValue(undefined),
     setCallbacks: jest.fn(),
     syncing: false,
     pendingChanges: false,

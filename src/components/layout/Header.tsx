@@ -27,7 +27,6 @@ import {
   Menu as MenuIcon,
 } from '@mui/icons-material';
 import { useAppContext } from '../../contexts/AppContext';
-import { useLastSynced } from '../../hooks/queries';
 import { useSyncService } from '../../contexts/SyncProvider';
 import { formatDistance } from 'date-fns';
 
@@ -40,7 +39,7 @@ export const Header: React.FC = () => {
   const { isLoading } = useAppContext();
   const syncService = useSyncService();
   const cloudFileName = syncService.fileName;
-  const lastSynced = useLastSynced();
+  const lastSynced = syncService.lastSynced;
 
   const handleSync = async () => {
     try {

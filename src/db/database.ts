@@ -69,28 +69,12 @@ export const syncMetadata = {
     await db.syncMetadata.put({ key, value });
   },
 
-  async getLastSynced(): Promise<string | null> {
-    return this.get('lastSynced');
+  async getLastModified(): Promise<string | null> {
+    return this.get('lastModified');
   },
 
-  async setLastSynced(timestamp: string): Promise<void> {
-    await this.set('lastSynced', timestamp);
-  },
-
-  async getFileName(): Promise<string | null> {
-    return this.get('fileName');
-  },
-
-  async setFileName(name: string): Promise<void> {
-    await this.set('fileName', name);
-  },
-
-  async getCloudProvider(): Promise<'onedrive' | 'googledrive' | null> {
-    return this.get('cloudProvider');
-  },
-
-  async setCloudProvider(provider: 'onedrive' | 'googledrive' | null): Promise<void> {
-    await this.set('cloudProvider', provider);
+  async setLastModified(timestamp: string): Promise<void> {
+    await this.set('lastModified', timestamp);
   },
 
   async getBaseCurrency(): Promise<string | null> {
@@ -99,14 +83,7 @@ export const syncMetadata = {
 
   async setBaseCurrency(currency: string): Promise<void> {
     await this.set('baseCurrency', currency);
-  },
-
-  async getLastBackupDate(): Promise<string | null> {
-    return this.get('lastBackupDate');
-  },
-
-  async setLastBackupDate(date: string): Promise<void> {
-    await this.set('lastBackupDate', date);
+    await this.setLastModified(new Date().toISOString());
   },
 
   async getArchivedYears(): Promise<any[]> {
@@ -115,6 +92,7 @@ export const syncMetadata = {
 
   async setArchivedYears(years: any[]): Promise<void> {
     await this.set('archivedYears', years);
+    await this.setLastModified(new Date().toISOString());
   },
 
   async addArchivedYear(year: any): Promise<void> {

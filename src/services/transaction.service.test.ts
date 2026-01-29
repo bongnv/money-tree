@@ -1,13 +1,13 @@
 import { transactionService } from './transaction.service';
 import { db } from '../db/database';
+import type { Transaction } from '../types/models';
+import { syncMetadataService } from './syncMetadata.service';
 
 jest.mock('./syncMetadata.service', () => ({
   syncMetadataService: {
     setLastModified: jest.fn(),
   },
 }));
-
-import type { Transaction } from '../types/models';
 
 jest.mock('../db/database', () => ({
   db: {

@@ -1,13 +1,13 @@
 import { budgetService } from './budget.service';
 import { db } from '../db/database';
+import { syncMetadataService } from './syncMetadata.service';
+import type { Budget } from '../types/models';
 
 jest.mock('./syncMetadata.service', () => ({
   syncMetadataService: {
     setLastModified: jest.fn(),
   },
 }));
-
-import type { Budget } from '../types/models';
 
 jest.mock('../db/database', () => ({
   db: {

@@ -7,6 +7,7 @@ jest.mock('./syncMetadata.service', () => ({
   },
 }));
 
+import { syncMetadataService } from './syncMetadata.service';
 import type { TransactionType } from '../types/models';
 
 jest.mock('../db/database', () => ({

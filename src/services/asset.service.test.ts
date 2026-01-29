@@ -1,14 +1,14 @@
 import { assetService } from './asset.service';
 import { db } from '../db/database';
+import { syncMetadataService } from './syncMetadata.service';
+import { AssetType } from '../types/enums';
+import type { ManualAsset } from '../types/models';
 
 jest.mock('./syncMetadata.service', () => ({
   syncMetadataService: {
     setLastModified: jest.fn(),
   },
 }));
-
-import { AssetType } from '../types/enums';
-import type { ManualAsset } from '../types/models';
 
 jest.mock('../db/database', () => ({
   db: {

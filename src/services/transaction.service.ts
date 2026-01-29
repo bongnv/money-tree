@@ -1,6 +1,17 @@
 import { db } from '../db/database';
-import type { Transaction } from '../types/models';
+import type { Transaction, TransactionType } from '../types/models';
 import { syncMetadataService } from './syncMetadata.service';
+import type { Group } from '../types/enums';
+
+export interface TransactionFilters {
+  dateFrom: string;
+  dateTo: string;
+  accountIds: string[];
+  categoryIds: string[];
+  transactionTypeId: string;
+  searchText: string;
+  group: Group | '';
+}
 
 const addTimestamps = (entity: Partial<Transaction>, isUpdate = false): Partial<Transaction> => {
   const now = new Date().toISOString();
@@ -69,5 +80,70 @@ export const transactionService = {
     const deleted = addTimestamps(softDelete(existing), true);
     await db.transactions.update(id, deleted);
     await syncMetadataService.setLastModified(new Date().toISOString());
+  },
+
+  filterTransactions(
+    transactions: Transaction[],
+    filters: TransactionFilters,
+    transactionTypes: TransactionType[]
+  ): Transaction[] {
+    return transactions.filter((transaction) => {
+      // Date range filter
+      if (filters.dateFrom && transaction.date < filters.dateFrom) {
+        return false;
+      }
+      if (filters.dateTo && transaction.date > filters.dateTo) {
+        return false;
+      }
+
+      // Account filter (checks both from and to accounts)
+      if (filters.accountIds.length > 0) {
+        const matchesAccount =
+          (transaction.fromAccountId && filters.accountIds.includes(transaction.fromAccountId)) ||
+          (transaction.toAccountId && filters.accountIds.includes(transaction.toAccountId));
+        if (!matchesAccount) {
+          return false;
+        }
+      }
+
+      // Transaction type filter
+      if (
+        filters.transactionTypeId &&
+        transaction.transactionTypeId !== filters.transactionTypeId
+      ) {
+        return false;
+      }
+
+      // Category filter (via transaction type)
+      if (filters.categoryIds.length > 0) {
+        const transactionType = transactionTypes.find(
+          (t) => t.id === transaction.transactionTypeId
+        );
+        if (!transactionType || !filters.categoryIds.includes(transactionType.categoryId)) {
+          return false;
+        }
+      }
+
+      // Group filter (via transaction type)
+      if (filters.group) {
+        const transactionType = transactionTypes.find(
+          (t) => t.id === transaction.transactionTypeId
+        );
+        if (!transactionType || transactionType.group !== filters.group) {
+          return false;
+        }
+      }
+
+      // Search text filter
+      if (filters.searchText) {
+        const searchLower = filters.searchText.toLowerCase();
+        const descriptionMatch = transaction.description?.toLowerCase().includes(searchLower);
+        if (!descriptionMatch) {
+          return false;
+        }
+      }
+
+      return true;
+    });
   },
 };

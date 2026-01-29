@@ -105,6 +105,7 @@ describe('AccountForm', () => {
         initialBalance: 2500.5,
         description: 'My new account',
         isActive: true,
+        isDeleted: false,
       });
     });
   });

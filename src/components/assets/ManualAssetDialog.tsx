@@ -4,7 +4,7 @@ import { ManualAssetForm } from './ManualAssetForm';
 import { useAssetMutations } from '../../hooks/mutations/useAssetMutations';
 import type { ManualAsset } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
-import { formatDate } from '../../utils/date.utils';
+import { formatDate, getTodayDate } from '../../utils/date.utils';
 import { getAssetCurrentValue } from '../../utils/asset.utils';
 import { CurrencyCode } from '../../types/enums';
 
@@ -137,9 +137,7 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
             isUpdateMode
               ? {
                   ...asset!,
-                  valueHistory: [
-                    { value: 0, date: new Date().toISOString().split('T')[0], notes: '' },
-                  ],
+                  valueHistory: [{ value: 0, date: getTodayDate(), notes: '' }],
                 }
               : asset
           }

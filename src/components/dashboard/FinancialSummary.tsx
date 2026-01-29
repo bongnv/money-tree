@@ -11,6 +11,7 @@ import { useBudgets } from '../../hooks/queries/useBudgets';
 import { useCalculationService, useReportService } from '../../contexts/ServiceProviders';
 import type { PeriodOption } from '../common/PeriodSelector';
 import { formatCurrency } from '../../utils/currency.utils';
+import { getCurrentMonth } from '../../utils/date.utils';
 
 export interface FinancialSummaryProps {
   period: PeriodOption;
@@ -33,8 +34,8 @@ export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) =>
   const [savingsRate, setSavingsRate] = useState<number>(0);
   const [budgetHealth, setBudgetHealth] = useState<number>(0);
 
-  // Get current month in YYYY-MM format
-  const currentMonth = new Date().toISOString().slice(0, 7);
+  // Get current month in YYYY-MM format (local timezone)
+  const currentMonth = getCurrentMonth();
 
   // Calculate net worth with currency conversion
   useEffect(() => {

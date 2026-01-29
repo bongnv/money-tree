@@ -24,13 +24,21 @@ export const formatDate = (isoDate: string, formatString = 'MMM dd, yyyy'): stri
 };
 
 /**
- * Get current date in YYYY-MM-DD format
+ * Get current date in YYYY-MM-DD format (local timezone)
  * @returns Date string in YYYY-MM-DD format
  */
 export const getTodayDate = (): string => {
   const now = new Date();
-  const utcDate = toZonedTime(now, UTC);
-  return format(startOfDay(utcDate), 'yyyy-MM-dd');
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+};
+
+/**
+ * Get current month in YYYY-MM format (local timezone)
+ * @returns Month string in YYYY-MM format
+ */
+export const getCurrentMonth = (): string => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 };
 
 /**

@@ -28,6 +28,7 @@ import { DEFAULT_CURRENCIES } from '../../constants/defaults';
 import { AssetValueHistoryDialog } from '../assets/AssetValueHistoryDialog';
 import { LineChart } from '../common/charts/LineChart';
 import { formatCurrency } from '../../utils/currency.utils';
+import { getTodayDate } from '../../utils/date.utils';
 import type { CurrencyCode } from '../../types/enums';
 
 type ComparisonType = 'none' | 'month' | 'year';
@@ -40,7 +41,7 @@ export const BalanceSheet: React.FC = () => {
   const reportService = useReportService();
 
   // Use today as default date
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayDate();
   const [selectedDate, setSelectedDate] = useState<string>(today);
   const [comparisonType, setComparisonType] = useState<ComparisonType>('none');
   const [historyDialogAssetId, setHistoryDialogAssetId] = useState<string | null>(null);

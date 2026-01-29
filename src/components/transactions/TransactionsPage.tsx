@@ -173,7 +173,7 @@ export const TransactionsPage: React.FC = () => {
   };
 
   const handleSubmit = async (
-    transactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>
+    transactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
   ) => {
     if (selectedTransaction) {
       await updateTransaction(selectedTransaction.id, transactionData);
@@ -183,6 +183,7 @@ export const TransactionsPage: React.FC = () => {
         id: `txn-${Date.now()}`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        isDeleted: false,
       };
       await addTransaction(newTransaction);
     }

@@ -16,6 +16,7 @@ export function useAssetMutations() {
         const now = new Date().toISOString();
         const data = {
           ...asset,
+          isDeleted: false,
           createdAt: asset.createdAt || now,
           updatedAt: now,
         };
@@ -59,7 +60,11 @@ export function useAssetMutations() {
       setIsLoading(true);
       setError(null);
       try {
-        await db.manualAssets.delete(id);
+        // Soft delete: mark as deleted instead of removing
+        await db.manualAssets.update(id, {
+          isDeleted: true,
+          updatedAt: new Date().toISOString(),
+        });
         syncService.debouncedSync();
       } catch (err) {
         const error = err instanceof Error ? err : new Error('Failed to delete asset');

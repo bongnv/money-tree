@@ -7,7 +7,7 @@ import { getTodayDate, toDateString } from '../../utils/date.utils';
 
 interface ManualAssetFormProps {
   asset?: ManualAsset;
-  onSubmit: (asset: Omit<ManualAsset, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSubmit: (asset: Omit<ManualAsset, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>) => void;
   onCancel: () => void;
   updateValueOnly?: boolean;
 }

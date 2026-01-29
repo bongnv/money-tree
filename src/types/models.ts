@@ -35,6 +35,7 @@ export interface Category {
   id: string;
   name: string;
   description?: string;
+  isDeleted: boolean;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }
@@ -70,6 +71,7 @@ export interface Transaction {
   toAccountId?: string; // For income and transfers
   fromAssetId?: string; // For asset liquidation (asset → account)
   toAssetId?: string; // For asset purchase (account → asset)
+  isDeleted: boolean;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }
@@ -86,6 +88,7 @@ export interface Budget {
   period: 'monthly' | 'quarterly' | 'yearly'; // Period type for this budget
   startDate: string; // Start date (YYYY-MM-DD)
   endDate: string; // End date (YYYY-MM-DD)
+  isDeleted: boolean;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }
@@ -125,6 +128,7 @@ export interface ManualAsset {
   currencyCode: CurrencyCode;
   notes?: string;
   valueHistory: AssetValueHistory[]; // All historical values, sorted by date (latest is current)
+  isDeleted: boolean;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }

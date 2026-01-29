@@ -10,6 +10,7 @@ Object.defineProperty(global, 'crypto', {
   value: {
     subtle: webcrypto.subtle,
     randomUUID: webcrypto.randomUUID.bind(webcrypto),
+    getRandomValues: webcrypto.getRandomValues.bind(webcrypto),
   },
 });
 

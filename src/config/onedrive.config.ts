@@ -20,11 +20,13 @@
  *   ONEDRIVE_CLIENT_ID=your-client-id
  */
 
+import { Configuration } from '@azure/msal-browser';
+
 // Detect Safari browser
 const isSafari =
   typeof window !== 'undefined' && /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-export const msalConfig = {
+export const msalConfig: Configuration = {
   auth: {
     // Client ID must be injected via ONEDRIVE_CLIENT_ID environment variable at build time
     // Example: ONEDRIVE_CLIENT_ID=your-client-id npm run build
@@ -52,25 +54,6 @@ export const msalConfig = {
  */
 export const loginRequest = {
   scopes: ['Files.ReadWrite'],
-};
-
-/**
- * Microsoft Graph API configuration
- */
-export const graphConfig = {
-  // Graph API endpoint
-  graphMeEndpoint: 'https://graph.microsoft.com/v1.0/me',
-
-  // OneDrive file path - file will be stored in OneDrive root folder
-  dataFilePath: '/money-tree.json',
-
-  // Full URL for file operations
-  getFileUrl: (fileName: string = 'money-tree.json') =>
-    `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}`,
-
-  // URL for file content operations
-  getFileContentUrl: (fileName: string = 'money-tree.json') =>
-    `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/content`,
 };
 
 /**

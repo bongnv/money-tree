@@ -16,6 +16,7 @@ export function useTransactionMutations() {
         const now = new Date().toISOString();
         const data = {
           ...transaction,
+          isDeleted: false,
           createdAt: transaction.createdAt || now,
           updatedAt: now,
         };
@@ -61,7 +62,11 @@ export function useTransactionMutations() {
       setIsLoading(true);
       setError(null);
       try {
-        await db.transactions.delete(id);
+        // Soft delete: mark as deleted instead of removing
+        await db.transactions.update(id, {
+          isDeleted: true,
+          updatedAt: new Date().toISOString(),
+        });
         // Trigger debounced sync
         syncService.debouncedSync();
       } catch (err) {

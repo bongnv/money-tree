@@ -87,7 +87,9 @@ export const BudgetsPage: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (budgetData: Omit<Budget, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSubmit = async (
+    budgetData: Omit<Budget, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
+  ) => {
     try {
       if (editingBudget) {
         // Update existing budget item
@@ -99,6 +101,7 @@ export const BudgetsPage: React.FC = () => {
           ...budgetData,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
+          isDeleted: false,
         };
         await addBudget(newBudget);
       }

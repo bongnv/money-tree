@@ -18,7 +18,7 @@ interface BudgetDialogProps {
   open: boolean;
   budget?: Budget;
   onClose: () => void;
-  onSubmit: (budget: Omit<Budget, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSubmit: (budget: Omit<Budget, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>) => void;
 }
 
 export const BudgetDialog: React.FC<BudgetDialogProps> = ({ open, budget, onClose, onSubmit }) => {

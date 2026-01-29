@@ -12,7 +12,9 @@ interface TransactionFormProps {
   accounts: Account[];
   categories: Category[];
   transactionTypes: TransactionType[];
-  onSubmit: (transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSubmit: (
+    transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
+  ) => void;
   onCancel: () => void;
 }
 

@@ -1,7 +1,25 @@
 import { db, syncMetadata } from '../db/database';
 import { IStorageProvider, CloudItem } from './storage/IStorageProvider';
-import type { DataFile, ExchangeRate } from '../types/models';
+import type { DataFile, ExchangeRate, ArchivedYearReference } from '../types/models';
 import { CurrencyCode } from '../types/enums';
+
+/**
+ * Represents the complete local data snapshot (unfiltered)
+ * Contains all records including soft-deleted and archived items
+ * Different from DataFile which is filtered for cloud storage
+ */
+type LocalDataSnapshot = {
+  transactions: any[];
+  accounts: any[];
+  categories: any[];
+  transactionTypes: any[];
+  budgets: any[];
+  manualAssets: any[];
+  exchangeRates: ExchangeRate[];
+  baseCurrency: CurrencyCode;
+  archivedYears: ArchivedYearReference[];
+  lastModified: string;
+};
 
 /**
  * Cloud Sync Service with Last-Write-Wins strategy
@@ -18,34 +36,22 @@ export class CloudSyncService {
   }
 
   /**
-   * Upload current IndexedDB data to cloud (Last-Write-Wins)
+   * Upload merged data to cloud (Last-Write-Wins)
+   * Takes merged result to avoid reloading from DB
    * Returns updated CloudItem (may have new id if it was a new file)
    */
-  async uploadToCloud(): Promise<{ timestamp: string; fileItem: CloudItem }> {
-    // Gather all data from IndexedDB
-    const [
-      transactions,
-      accounts,
-      categories,
-      transactionTypes,
-      budgets,
-      manualAssets,
-      exchangeRates,
-    ] = await Promise.all([
-      db.transactions.toArray(),
-      db.accounts.toArray(),
-      db.categories.toArray(),
-      db.transactionTypes.toArray(),
-      db.budgets.toArray(),
-      db.manualAssets.toArray(),
-      db.exchangeRates.toArray(),
-    ]);
+  private async uploadToCloud(
+    mergedData: LocalDataSnapshot
+  ): Promise<{ timestamp: string; fileItem: CloudItem }> {
+    // Filter out soft-deleted resources
+    const transactions = mergedData.transactions.filter((t) => !t.isDeleted);
+    const categories = mergedData.categories.filter((c) => !c.isDeleted);
+    const budgets = mergedData.budgets.filter((b) => !b.isDeleted);
+    const manualAssets = mergedData.manualAssets.filter((a) => !a.isDeleted);
 
-    const baseCurrency =
-      ((await syncMetadata.getBaseCurrency()) as CurrencyCode) || CurrencyCode.USD;
-    const archivedYears = await syncMetadata.getArchivedYears();
-    // Use existing lastModified timestamp, or create new one if it doesn't exist
-    const lastModified = (await syncMetadata.getLastModified()) || new Date().toISOString();
+    // Filter out archived (inactive) resources
+    const accounts = mergedData.accounts.filter((account) => account.isActive !== false);
+    const transactionTypes = mergedData.transactionTypes.filter((type) => type.isActive !== false);
 
     const dataFile: DataFile = {
       version: '1.0',
@@ -55,10 +61,10 @@ export class CloudSyncService {
       transactionTypes,
       budgets,
       manualAssets,
-      exchangeRates,
-      archivedYears,
-      baseCurrency,
-      lastModified,
+      exchangeRates: mergedData.exchangeRates,
+      archivedYears: mergedData.archivedYears,
+      baseCurrency: mergedData.baseCurrency,
+      lastModified: mergedData.lastModified,
     };
 
     const content = JSON.stringify(dataFile);
@@ -69,12 +75,13 @@ export class CloudSyncService {
   }
 
   /**
-   * Download from cloud and merge with local data (Last-Write-Wins)
-   * Returns timestamp and whether local has newer changes
+   * Download from cloud and merge with local snapshot (Last-Write-Wins)
+   * Returns timestamp, whether local has newer changes, and merged results
    */
-  async downloadFromCloud(): Promise<{
+  private async downloadFromCloud(localSnapshot: LocalDataSnapshot): Promise<{
     timestamp: string;
     hasLocalChanges: boolean;
+    mergedData: LocalDataSnapshot;
   }> {
     const blob = await this.provider.readFile(this.fileItem);
     const content = await blob.text();
@@ -83,54 +90,49 @@ export class CloudSyncService {
       throw new Error('No data file found in cloud');
     }
 
-    // Merge with local data using Last-Write-Wins
-    const hasLocalChanges = await this.mergeData(cloudData);
+    // Merge with local snapshot using Last-Write-Wins
+    const { hasLocalChanges, mergedData } = await this.mergeData(cloudData, localSnapshot);
     const timestamp = new Date().toISOString();
-    return { timestamp, hasLocalChanges };
+    return { timestamp, hasLocalChanges, mergedData };
   }
 
   /**
-   * Merge cloud data with local data using Last-Write-Wins strategy
-   * Returns flag indicating if local has newer changes
+   * Merge cloud data with local snapshot using Last-Write-Wins strategy
+   * Returns flag indicating if local has newer changes and merged data
    */
-  private async mergeData(cloudData: DataFile): Promise<boolean> {
-    // Get local data
-    const [
-      localTransactions,
-      localAccounts,
-      localCategories,
-      localTransactionTypes,
-      localBudgets,
-      localAssets,
-      localExchangeRates,
-    ] = await Promise.all([
-      db.transactions.toArray(),
-      db.accounts.toArray(),
-      db.categories.toArray(),
-      db.transactionTypes.toArray(),
-      db.budgets.toArray(),
-      db.manualAssets.toArray(),
-      db.exchangeRates.toArray(),
-    ]);
-
+  private async mergeData(
+    cloudData: DataFile,
+    localSnapshot: LocalDataSnapshot
+  ): Promise<{
+    hasLocalChanges: boolean;
+    mergedData: LocalDataSnapshot;
+  }> {
     // Merge each entity type using Last-Write-Wins
-    const transactionsResult = this.mergeByTimestamp(localTransactions, cloudData.transactions);
-    const accountsResult = this.mergeByTimestamp(localAccounts, cloudData.accounts);
-    const categoriesResult = this.mergeByTimestamp(localCategories, cloudData.categories);
+    const transactionsResult = this.mergeByTimestamp(
+      localSnapshot.transactions,
+      cloudData.transactions
+    );
+    const accountsResult = this.mergeByTimestamp(localSnapshot.accounts, cloudData.accounts);
+    const categoriesResult = this.mergeByTimestamp(localSnapshot.categories, cloudData.categories);
     const transactionTypesResult = this.mergeByTimestamp(
-      localTransactionTypes,
+      localSnapshot.transactionTypes,
       cloudData.transactionTypes
     );
-    const budgetsResult = this.mergeByTimestamp(localBudgets, cloudData.budgets);
-    const assetsResult = this.mergeByTimestamp(localAssets, cloudData.manualAssets);
+    const budgetsResult = this.mergeByTimestamp(localSnapshot.budgets, cloudData.budgets);
+    const assetsResult = this.mergeByTimestamp(localSnapshot.manualAssets, cloudData.manualAssets);
     // Exchange rates don't have updatedAt, so just merge by ID
     const exchangeRatesResult = this.mergeExchangeRates(
-      localExchangeRates,
+      localSnapshot.exchangeRates,
       cloudData.exchangeRates
     );
 
     // Merge metadata using Last-Write-Wins
-    const metadataResult = await this.mergeMetadata(cloudData);
+    const metadataResult = this.mergeMetadata(
+      cloudData,
+      localSnapshot.baseCurrency,
+      localSnapshot.archivedYears,
+      localSnapshot.lastModified
+    );
 
     // Track if any local changes exist
     const hasLocalChanges =
@@ -154,7 +156,30 @@ export class CloudSyncService {
       db.exchangeRates.bulkPut(exchangeRatesResult.merged),
     ]);
 
-    return hasLocalChanges;
+    // Update metadata in IndexedDB if cloud is newer
+    if (!metadataResult.hasLocalChanges) {
+      await syncMetadata.setBaseCurrency(metadataResult.baseCurrency);
+      if (metadataResult.archivedYears.length > 0) {
+        await syncMetadata.setArchivedYears(metadataResult.archivedYears);
+      }
+      await syncMetadata.setLastModified(metadataResult.lastModified);
+    }
+
+    return {
+      hasLocalChanges,
+      mergedData: {
+        transactions: transactionsResult.merged,
+        accounts: accountsResult.merged,
+        categories: categoriesResult.merged,
+        transactionTypes: transactionTypesResult.merged,
+        budgets: budgetsResult.merged,
+        manualAssets: assetsResult.merged,
+        exchangeRates: exchangeRatesResult.merged,
+        baseCurrency: metadataResult.baseCurrency,
+        archivedYears: metadataResult.archivedYears,
+        lastModified: metadataResult.lastModified,
+      },
+    };
   }
 
   /**
@@ -248,32 +273,48 @@ export class CloudSyncService {
 
   /**
    * Merge metadata using Last-Write-Wins based on lastModified timestamp
-   * Returns flag indicating if local metadata is newer
+   * Returns flag indicating if local metadata is newer and the merged metadata
    */
-  private async mergeMetadata(cloudData: DataFile): Promise<{ hasLocalChanges: boolean }> {
-    const localLastModified = await syncMetadata.getLastModified();
+  private mergeMetadata(
+    cloudData: DataFile,
+    localBaseCurrency: CurrencyCode,
+    localArchivedYears: ArchivedYearReference[],
+    localLastModified: string
+  ): Pick<LocalDataSnapshot, 'baseCurrency' | 'archivedYears' | 'lastModified'> & {
+    hasLocalChanges: boolean;
+  } {
     const cloudLastModified = cloudData.lastModified;
 
-    // If cloud metadata is newer (or local has no lastModified), update from cloud
+    // If cloud metadata is newer (or local has no lastModified), use cloud data
     if (!localLastModified || cloudLastModified > localLastModified) {
-      await syncMetadata.setBaseCurrency(cloudData.baseCurrency);
-      if (cloudData.archivedYears && cloudData.archivedYears.length > 0) {
-        await syncMetadata.setArchivedYears(cloudData.archivedYears);
-      }
-      await syncMetadata.setLastModified(cloudLastModified);
-      return { hasLocalChanges: false };
+      return {
+        hasLocalChanges: false,
+        baseCurrency: cloudData.baseCurrency,
+        archivedYears: cloudData.archivedYears || [],
+        lastModified: cloudLastModified,
+      };
     } else if (localLastModified > cloudLastModified) {
       // Local metadata is newer
-      return { hasLocalChanges: true };
+      return {
+        hasLocalChanges: true,
+        baseCurrency: localBaseCurrency,
+        archivedYears: localArchivedYears,
+        lastModified: localLastModified,
+      };
     }
 
-    // Equal timestamps - no changes
-    return { hasLocalChanges: false };
+    // Equal timestamps - use local data
+    return {
+      hasLocalChanges: false,
+      baseCurrency: localBaseCurrency,
+      archivedYears: localArchivedYears,
+      lastModified: localLastModified,
+    };
   }
 
   /**
    * Full bidirectional sync
-   * Downloads from cloud, merges, then uploads (only if local changes exist)
+   * Fetches local snapshot, downloads from cloud, merges, then uploads (only if local changes exist)
    * Optimized: skips upload if only remote changes were merged (nothing new to upload)
    * Returns updated CloudItem from upload
    */
@@ -282,10 +323,48 @@ export class CloudSyncService {
     uploadTimestamp: string;
     fileItem: CloudItem;
   }> {
+    // Fetch local snapshot upfront
+    const [
+      allTransactions,
+      allAccounts,
+      allCategories,
+      allTransactionTypes,
+      allBudgets,
+      allManualAssets,
+      exchangeRates,
+      baseCurrency,
+      archivedYears,
+      lastModified,
+    ] = await Promise.all([
+      db.transactions.toArray(),
+      db.accounts.toArray(),
+      db.categories.toArray(),
+      db.transactionTypes.toArray(),
+      db.budgets.toArray(),
+      db.manualAssets.toArray(),
+      db.exchangeRates.toArray(),
+      syncMetadata.getBaseCurrency(),
+      syncMetadata.getArchivedYears(),
+      syncMetadata.getLastModified(),
+    ]);
+
+    const localSnapshot: LocalDataSnapshot = {
+      transactions: allTransactions,
+      accounts: allAccounts,
+      categories: allCategories,
+      transactionTypes: allTransactionTypes,
+      budgets: allBudgets,
+      manualAssets: allManualAssets,
+      exchangeRates,
+      baseCurrency: (baseCurrency as CurrencyCode) || CurrencyCode.USD,
+      archivedYears: archivedYears || [],
+      lastModified: lastModified || new Date().toISOString(),
+    };
+
     // If file doesn't have an ID yet, it's a new file that hasn't been uploaded
     // Skip download and upload directly to create the file
     if (!this.fileItem.id) {
-      const { timestamp: uploadTimestamp, fileItem } = await this.uploadToCloud();
+      const { timestamp: uploadTimestamp, fileItem } = await this.uploadToCloud(localSnapshot);
       return {
         downloadTimestamp: uploadTimestamp,
         uploadTimestamp,
@@ -293,11 +372,15 @@ export class CloudSyncService {
       };
     }
 
-    const { timestamp: downloadTimestamp, hasLocalChanges } = await this.downloadFromCloud();
+    const {
+      timestamp: downloadTimestamp,
+      hasLocalChanges,
+      mergedData,
+    } = await this.downloadFromCloud(localSnapshot);
 
     // Only upload if we have local changes that are newer than remote
     if (hasLocalChanges) {
-      const { timestamp: uploadTimestamp, fileItem } = await this.uploadToCloud();
+      const { timestamp: uploadTimestamp, fileItem } = await this.uploadToCloud(mergedData);
       return { downloadTimestamp, uploadTimestamp, fileItem };
     }
 

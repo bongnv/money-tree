@@ -33,7 +33,7 @@ export const CategoriesListPage: React.FC = () => {
   };
 
   const handleSubmitCategory = async (
-    categoryData: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>
+    categoryData: Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
   ) => {
     if (selectedCategory) {
       await updateCategory(selectedCategory.id, {
@@ -49,6 +49,7 @@ export const CategoriesListPage: React.FC = () => {
         id: crypto.randomUUID(),
         createdAt: now,
         updatedAt: now,
+        isDeleted: false,
       });
     }
     handleCloseCategoryDialog();

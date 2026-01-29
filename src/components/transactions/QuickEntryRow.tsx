@@ -19,7 +19,9 @@ interface QuickEntryRowProps {
   transactionTypes: TransactionType[];
   manualAssets: ManualAsset[];
   transactions: Transaction[];
-  onSubmit: (transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSubmit: (
+    transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
+  ) => void;
   onOpenFullDialog: () => void;
 }
 

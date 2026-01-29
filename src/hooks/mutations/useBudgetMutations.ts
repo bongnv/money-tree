@@ -16,6 +16,7 @@ export function useBudgetMutations() {
         const now = new Date().toISOString();
         const data = {
           ...budget,
+          isDeleted: false,
           createdAt: budget.createdAt || now,
           updatedAt: now,
         };
@@ -59,7 +60,11 @@ export function useBudgetMutations() {
       setIsLoading(true);
       setError(null);
       try {
-        await db.budgets.delete(id);
+        // Soft delete: mark as deleted instead of removing
+        await db.budgets.update(id, {
+          isDeleted: true,
+          updatedAt: new Date().toISOString(),
+        });
         syncService.debouncedSync();
       } catch (err) {
         const error = err instanceof Error ? err : new Error('Failed to delete budget');

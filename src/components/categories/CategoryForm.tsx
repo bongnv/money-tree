@@ -4,7 +4,7 @@ import type { Category } from '../../types/models';
 
 interface CategoryFormProps {
   category?: Category;
-  onSubmit: (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSubmit: (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>) => void;
   onCancel: () => void;
 }
 

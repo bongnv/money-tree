@@ -10,7 +10,9 @@ interface TransactionDialogProps {
   categories: Category[];
   transactionTypes: TransactionType[];
   onClose: () => void;
-  onSubmit: (transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSubmit: (
+    transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
+  ) => void;
 }
 
 export const TransactionDialog: React.FC<TransactionDialogProps> = ({
@@ -22,7 +24,9 @@ export const TransactionDialog: React.FC<TransactionDialogProps> = ({
   onClose,
   onSubmit,
 }) => {
-  const handleSubmit = (transactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSubmit = (
+    transactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
+  ) => {
     onSubmit(transactionData);
     onClose();
   };

@@ -34,6 +34,7 @@ export const CategorySchema = z.object({
   name: z.string().min(1, 'Category name is required'),
   parentId: z.string().optional(),
   description: z.string().optional(),
+  isDeleted: z.boolean().default(false),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -67,6 +68,7 @@ export const TransactionSchema = z.object({
   toAccountId: z.string().optional(),
   fromAssetId: z.string().optional(),
   toAssetId: z.string().optional(),
+  isDeleted: z.boolean().default(false),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -83,6 +85,7 @@ export const BudgetSchema = z
     period: z.enum(['monthly', 'quarterly', 'yearly']),
     startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Start date must be in YYYY-MM-DD format'),
     endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'End date must be in YYYY-MM-DD format'),
+    isDeleted: z.boolean().default(false),
     createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
   })
@@ -124,6 +127,7 @@ export const ManualAssetSchema = z
     valueHistory: z
       .array(AssetValueHistorySchema)
       .min(1, 'At least one value history entry is required'),
+    isDeleted: z.boolean().default(false),
     createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
   })

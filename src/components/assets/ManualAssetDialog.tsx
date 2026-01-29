@@ -42,7 +42,9 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
     onClose();
   };
 
-  const handleSubmit = async (assetData: Omit<ManualAsset, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSubmit = async (
+    assetData: Omit<ManualAsset, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
+  ) => {
     if (asset && isUpdateMode) {
       // Update value workflow: add new value to history
       const currentValue = getAssetCurrentValue(asset);
@@ -68,6 +70,7 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
         id: crypto.randomUUID(),
         createdAt: now,
         updatedAt: now,
+        isDeleted: false,
       };
       await addAsset(newAsset);
       handleClose();

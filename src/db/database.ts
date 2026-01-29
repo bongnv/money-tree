@@ -30,22 +30,22 @@ export class MoneyTreeDB extends Dexie {
     this.version(1).stores({
       // Transactions: indexed by date, type, accounts for fast queries
       transactions:
-        'id, date, transactionTypeId, fromAccountId, toAccountId, fromAssetId, toAssetId, [date+transactionTypeId], [fromAccountId+date], [toAccountId+date]',
+        'id, date, transactionTypeId, fromAccountId, toAccountId, fromAssetId, toAssetId, isDeleted, [date+transactionTypeId], [fromAccountId+date], [toAccountId+date]',
 
       // Accounts: indexed by type, currency, active status
       accounts: 'id, name, type, currencyCode, isActive, [type+isActive]',
 
-      // Categories: simple table
-      categories: 'id, name',
+      // Categories: indexed by deleted status
+      categories: 'id, name, isDeleted',
 
       // Transaction Types: indexed by category and group
       transactionTypes: 'id, name, categoryId, group, isActive, [categoryId+isActive]',
 
-      // Budgets: indexed by date range for fast queries
-      budgets: 'id, transactionTypeId, period, startDate, endDate, [startDate+endDate]',
+      // Budgets: indexed by date range and deleted status
+      budgets: 'id, transactionTypeId, period, startDate, endDate, isDeleted, [startDate+endDate]',
 
-      // Manual Assets: indexed by type and currency
-      manualAssets: 'id, name, type, currencyCode',
+      // Manual Assets: indexed by type, currency, and deleted status
+      manualAssets: 'id, name, type, currencyCode, isDeleted',
 
       // Exchange Rates: compound index for fast lookups
       exchangeRates: 'id, month, fromCurrency, toCurrency, [month+fromCurrency+toCurrency]',

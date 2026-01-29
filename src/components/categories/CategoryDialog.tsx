@@ -7,7 +7,7 @@ interface CategoryDialogProps {
   open: boolean;
   category?: Category;
   onClose: () => void;
-  onSubmit: (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSubmit: (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>) => void;
 }
 
 export const CategoryDialog: React.FC<CategoryDialogProps> = ({
@@ -16,7 +16,9 @@ export const CategoryDialog: React.FC<CategoryDialogProps> = ({
   onClose,
   onSubmit,
 }) => {
-  const handleSubmit = (categoryData: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSubmit = (
+    categoryData: Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
+  ) => {
     onSubmit(categoryData);
     onClose();
   };

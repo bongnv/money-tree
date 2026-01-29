@@ -16,6 +16,7 @@ export function useCategoryMutations() {
         const now = new Date().toISOString();
         const data = {
           ...category,
+          isDeleted: false,
           createdAt: category.createdAt || now,
           updatedAt: now,
         };
@@ -59,7 +60,11 @@ export function useCategoryMutations() {
       setIsLoading(true);
       setError(null);
       try {
-        await db.categories.delete(id);
+        // Soft delete: mark as deleted instead of removing
+        await db.categories.update(id, {
+          isDeleted: true,
+          updatedAt: new Date().toISOString(),
+        });
         syncService.debouncedSync();
       } catch (err) {
         const error = err instanceof Error ? err : new Error('Failed to delete category');

@@ -150,7 +150,13 @@ class DexieArchiveService {
    * Note: Archive reference is added via useSyncMetadataMutations hook in the component
    * to ensure proper sync triggering
    */
-  async saveArchiveFile(archiveFile: any): Promise<void> {
+  async saveArchiveFile(archiveFile: {
+    year: number;
+    summary: {
+      closingBalances: Record<string, number>;
+      closingAssetValuations: Record<string, number>;
+    };
+  }): Promise<void> {
     const year = archiveFile.year;
     const summary = archiveFile.summary;
 

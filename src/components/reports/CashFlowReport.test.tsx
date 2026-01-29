@@ -44,17 +44,23 @@ jest.mock('../../utils/date.utils', () => ({
 
 // Mock recharts
 jest.mock('recharts', () => ({
-  LineChart: ({ children }: any) => <div data-testid="line-chart">{children}</div>,
+  LineChart: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="line-chart">{children}</div>
+  ),
   Line: () => null,
-  BarChart: ({ children }: any) => <div data-testid="bar-chart">{children}</div>,
+  BarChart: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="bar-chart">{children}</div>
+  ),
   Bar: () => null,
-  PieChart: ({ children }: any) => <div data-testid="pie-chart">{children}</div>,
+  PieChart: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="pie-chart">{children}</div>
+  ),
   Pie: () => null,
   Cell: () => null,
   XAxis: () => null,
   YAxis: () => null,
   CartesianGrid: () => null,
-  ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Legend: () => null,
   Tooltip: () => null,
 }));

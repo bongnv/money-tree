@@ -130,10 +130,10 @@ export const BudgetsPage: React.FC = () => {
     Record<
       string,
       {
-        category: any;
+        category: { id: string; name: string };
         items: {
           budget: Budget;
-          transactionType: any;
+          transactionType: { id: string; name: string; group: string };
           proratedBudget: number;
           actualAmount: number;
           percentage: number;
@@ -290,7 +290,7 @@ export const BudgetsPage: React.FC = () => {
                 <Box sx={{ p: 2, backgroundColor: 'grey.100' }}>
                   <Typography variant="h6">
                     {category.name}{' '}
-                    {firstTransactionType && getSectionTitle(firstTransactionType.group)}
+                    {firstTransactionType && getSectionTitle(firstTransactionType.group as Group)}
                   </Typography>
                 </Box>
                 <List disablePadding>
@@ -387,7 +387,12 @@ export const BudgetsPage: React.FC = () => {
                           <LinearProgress
                             variant="determinate"
                             value={Math.min(percentage, 100)}
-                            color={getProgressColor(percentage, isIncome) as any}
+                            color={
+                              getProgressColor(percentage, isIncome) as
+                                | 'success'
+                                | 'warning'
+                                | 'error'
+                            }
                             sx={{ height: 6, borderRadius: 1 }}
                           />
                         </ListItem>
@@ -422,7 +427,12 @@ export const BudgetsPage: React.FC = () => {
                       <LinearProgress
                         variant="determinate"
                         value={Math.min(totalPercentage, 100)}
-                        color={getProgressColor(totalPercentage, isIncome) as any}
+                        color={
+                          getProgressColor(totalPercentage, isIncome) as
+                            | 'success'
+                            | 'warning'
+                            | 'error'
+                        }
                         sx={{ height: 8, borderRadius: 1 }}
                       />
                     </Box>

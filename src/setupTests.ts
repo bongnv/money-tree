@@ -16,5 +16,5 @@ Object.defineProperty(global, 'crypto', {
 
 // Polyfill structuredClone for Node.js environments that don't have it
 if (typeof globalThis.structuredClone === 'undefined') {
-  globalThis.structuredClone = (obj: any) => JSON.parse(JSON.stringify(obj));
+  globalThis.structuredClone = <T>(obj: T): T => JSON.parse(JSON.stringify(obj));
 }

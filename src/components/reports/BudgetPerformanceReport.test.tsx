@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
@@ -8,8 +8,7 @@ import { useBudgets } from '../../hooks/queries/useBudgets';
 import { useTransactions } from '../../hooks/queries/useTransactions';
 import { useCategories, useTransactionTypes } from '../../hooks/queries';
 import { useAccounts } from '../../hooks/queries/useAccounts';
-import { useAppContext } from '../../contexts/AppContext';
-import { AppProvider } from '../../contexts/AppContext';
+import { useAppContext, AppProvider } from '../../contexts/AppContext';
 import { Group, AccountType } from '../../types/enums';
 import type { Budget, Transaction, TransactionType, Category, Account } from '../../types/models';
 
@@ -39,7 +38,7 @@ jest.mock('../../contexts/AppContext', () => ({
 
 // Mock chart components
 jest.mock('../common/charts/LineChart', () => ({
-  LineChart: ({ data, lines }: any) => (
+  LineChart: ({ data }: { data: unknown[] }) => (
     <div data-testid="line-chart">
       <div data-testid="chart-data">{JSON.stringify(data)}</div>
     </div>
@@ -48,7 +47,16 @@ jest.mock('../common/charts/LineChart', () => ({
 
 // Mock PeriodSelector
 jest.mock('../common/PeriodSelector', () => ({
-  PeriodSelector: ({ startDate, endDate, onChange, fullWidth }: any) => (
+  PeriodSelector: ({
+    startDate,
+    endDate,
+    onChange,
+  }: {
+    startDate: string;
+    endDate: string;
+    onChange: (params: { startDate: string; endDate: string }) => void;
+    fullWidth?: boolean;
+  }) => (
     <div data-testid="period-selector">
       <select
         data-testid="period-preset-select"
@@ -79,18 +87,27 @@ jest.mock('../common/PeriodSelector', () => ({
 
 // Mock CategoryFilter
 jest.mock('../common/CategoryFilter', () => ({
-  CategoryFilter: ({ categories, selectedCategories, onChange, onClear }: any) => (
+  CategoryFilter: ({
+    categories,
+    selectedCategories,
+    onChange,
+  }: {
+    categories: Array<{ id: string; name: string }>;
+    selectedCategories: string[];
+    onChange: (e: { target: { value: string[] } }) => void;
+    onClear?: () => void;
+  }) => (
     <div data-testid="category-filter">
       <select
         multiple
         data-testid="category-select"
         value={selectedCategories}
         onChange={(e) => {
-          const options = Array.from(e.target.selectedOptions).map((opt: any) => opt.value);
+          const options = Array.from(e.target.selectedOptions).map((opt) => opt.value);
           onChange({ target: { value: options } });
         }}
       >
-        {categories.map((cat: any) => (
+        {categories.map((cat) => (
           <option key={cat.id} value={cat.id}>
             {cat.name}
           </option>

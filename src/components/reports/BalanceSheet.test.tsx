@@ -38,7 +38,7 @@ jest.mock('../../contexts/AppContext', () => ({
 
 // Mock chart components
 jest.mock('../common/charts/LineChart', () => ({
-  LineChart: ({ data, lines }: any) => (
+  LineChart: ({ data, lines }: { data: unknown[]; lines: unknown[] }) => (
     <div data-testid="line-chart">
       <div data-testid="chart-data">{JSON.stringify(data)}</div>
       <div data-testid="chart-lines">{JSON.stringify(lines)}</div>
@@ -48,13 +48,21 @@ jest.mock('../common/charts/LineChart', () => ({
 
 // Mock ManualAssetSection
 jest.mock('./ManualAssetSection', () => ({
-  ManualAssetSection: ({ title, groups, onManageHistory }: any) => (
+  ManualAssetSection: ({
+    title,
+    groups,
+    onManageHistory,
+  }: {
+    title: string;
+    groups: Array<{ group: string; items: Array<{ name: string; id?: string }> }>;
+    onManageHistory: (id: string) => void;
+  }) => (
     <div data-testid={`manual-asset-section-${title.toLowerCase()}`}>
       <h3>{title}</h3>
-      {groups.map((group: any, idx: number) => (
+      {groups.map((group, idx: number) => (
         <div key={idx} data-testid={`asset-group-${group.group}`}>
           <span>{group.group}</span>
-          {group.items.map((item: any, itemIdx: number) => (
+          {group.items.map((item, itemIdx: number) => (
             <div key={itemIdx}>
               <span>{item.name}</span>
               <button onClick={() => onManageHistory(item.id || 'test-id')}>Manage History</button>
@@ -68,7 +76,15 @@ jest.mock('./ManualAssetSection', () => ({
 
 // Mock AssetValueHistoryDialog
 jest.mock('../assets/AssetValueHistoryDialog', () => ({
-  AssetValueHistoryDialog: ({ open, asset, onClose }: any) =>
+  AssetValueHistoryDialog: ({
+    open,
+    asset,
+    onClose,
+  }: {
+    open: boolean;
+    asset?: { name: string } | null;
+    onClose: () => void;
+  }) =>
     open ? (
       <div data-testid="asset-history-dialog">
         <span>{asset?.name || 'No Asset'}</span>

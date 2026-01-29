@@ -79,8 +79,6 @@ describe('CategoryFilter', () => {
   });
 
   it('should display category name when one category selected', async () => {
-    const user = userEvent.setup();
-
     const { rerender } = render(
       <CategoryFilter
         categories={mockCategories}

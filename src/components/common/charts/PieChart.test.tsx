@@ -3,10 +3,12 @@ import { PieChart } from './PieChart';
 
 // Mock recharts
 jest.mock('recharts', () => ({
-  PieChart: ({ children }: any) => <div className="recharts-wrapper">{children}</div>,
+  PieChart: ({ children }: { children: React.ReactNode }) => (
+    <div className="recharts-wrapper">{children}</div>
+  ),
   Pie: () => <div className="recharts-pie" />,
   Cell: () => <div />,
-  ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Legend: () => <div className="recharts-legend-wrapper" />,
   Tooltip: () => <div />,
 }));

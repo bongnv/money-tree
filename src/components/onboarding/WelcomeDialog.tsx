@@ -57,10 +57,13 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
           ...s,
           showFilePicker: true,
         }));
-      } catch (error: any) {
+      } catch (error) {
         setState((s) => ({ ...s, isConnecting: false }));
         if (!isUserCancellationError(error)) {
-          setState((s) => ({ ...s, error: error.message }));
+          setState((s) => ({
+            ...s,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          }));
         }
       }
     },
@@ -82,10 +85,13 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
 
         setState((s) => ({ ...s, isConnecting: false }));
         onClose();
-      } catch (error: any) {
+      } catch (error) {
         setState((s) => ({ ...s, isConnecting: false }));
         if (!isUserCancellationError(error)) {
-          setState((s) => ({ ...s, error: error.message }));
+          setState((s) => ({
+            ...s,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          }));
         }
       }
     },

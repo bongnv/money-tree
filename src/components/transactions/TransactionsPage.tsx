@@ -60,15 +60,16 @@ export const TransactionsPage: React.FC = () => {
     const dateTo = searchParams.get('dateTo');
 
     // Read from location state (passed via navigate)
-    const stateFilters = (location.state as any)?.filters;
+    const stateFilters = (location.state as { filters?: Partial<TransactionFiltersState> })
+      ?.filters;
 
     if (categoryId || transactionTypeId || dateFrom || dateTo || stateFilters) {
       setFilters({
         dateFrom: dateFrom || stateFilters?.dateFrom || '',
         dateTo: dateTo || stateFilters?.dateTo || '',
-        accountIds: stateFilters?.account || [],
+        accountIds: stateFilters?.accountIds || [],
         categoryIds: categoryId ? [categoryId] : stateFilters?.categoryIds || [],
-        transactionTypeId: transactionTypeId || stateFilters?.transactionType?.[0] || '',
+        transactionTypeId: transactionTypeId || stateFilters?.transactionTypeId || '',
         searchText: stateFilters?.searchText || '',
         group: stateFilters?.group || '',
       });
@@ -137,7 +138,7 @@ export const TransactionsPage: React.FC = () => {
 
       return true;
     });
-  }, [transactions, filters, transactionTypes, categories]);
+  }, [transactions, filters, transactionTypes]);
 
   const handleOpenDialog = () => {
     setSelectedTransaction(undefined);

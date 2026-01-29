@@ -24,7 +24,12 @@ const AppContent: React.FC = () => {
     useAppContext();
 
   const [showArchivePrompt, setShowArchivePrompt] = useState(false);
-  const [archiveYearSummary, setArchiveYearSummary] = useState<any>(null);
+  const [archiveYearSummary, setArchiveYearSummary] = useState<{
+    transactionCount: number;
+    closingNetWorth: number;
+    closingBalances: Record<string, number>;
+    closingAssetValuations: Record<string, number>;
+  } | null>(null);
   const [archiveYear, setArchiveYear] = useState<number | null>(null);
 
   // Handle initial sync completion
@@ -46,7 +51,7 @@ const AppContent: React.FC = () => {
   const checkArchivePrompt = async () => {
     const archivableYear = await archiveService.identifyArchivableYear();
     if (archivableYear !== null) {
-      const summary = archiveService.calculateYearEndSummary(archivableYear, baseCurrency);
+      const summary = await archiveService.calculateYearEndSummary(archivableYear, baseCurrency);
       setArchiveYear(archivableYear);
       setArchiveYearSummary(summary);
       setShowArchivePrompt(true);

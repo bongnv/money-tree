@@ -102,7 +102,7 @@ describe('QuickEntryRow', () => {
     },
   ];
 
-  const mockTransactions: any[] = [];
+  const mockTransactions: Transaction[] = [];
 
   const mockOnSubmit = jest.fn();
   const mockOnOpenFullDialog = jest.fn();

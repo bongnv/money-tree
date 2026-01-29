@@ -30,17 +30,13 @@ jest.mock('../../services/cloudSync.service', () => ({
   })),
 }));
 
-const renderWithProviders = (ui: React.ReactElement) => {
-  return render(<AppProvider>{ui}</AppProvider>);
-};
-
 describe('TransactionTypeForm', () => {
   const mockAccounts: Account[] = [
     {
       id: 'acc-1',
       name: 'Checking Account',
-      type: 'bank_account' as any,
-      currencyCode: 'USD' as any,
+      type: 'bank_account',
+      currencyCode: 'USD',
       initialBalance: 1000,
       isActive: true,
       createdAt: '2024-01-01T00:00:00.000Z',
@@ -49,8 +45,8 @@ describe('TransactionTypeForm', () => {
     {
       id: 'acc-2',
       name: 'Savings Account',
-      type: 'bank_account' as any,
-      currencyCode: 'USD' as any,
+      type: 'bank_account',
+      currencyCode: 'USD',
       initialBalance: 5000,
       isActive: true,
       createdAt: '2024-01-01T00:00:00.000Z',

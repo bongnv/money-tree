@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { CategoryList } from './CategoryList';
 import type { Category, TransactionType } from '../../types/models';
+import { Group } from '../../types/enums';
 
 describe('CategoryList', () => {
   const mockCategories: Category[] = [
@@ -24,7 +25,7 @@ describe('CategoryList', () => {
       id: 'tt-1',
       name: 'Supermarket',
       categoryId: 'cat-1',
-      group: 'expense' as any,
+      group: Group.EXPENSE,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
@@ -32,7 +33,7 @@ describe('CategoryList', () => {
       id: 'tt-2',
       name: 'Restaurant',
       categoryId: 'cat-1',
-      group: 'expense' as any,
+      group: Group.EXPENSE,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },

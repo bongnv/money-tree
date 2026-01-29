@@ -12,10 +12,9 @@ describe('useConfirmDialog', () => {
 
   it('should open dialog with provided title and message', async () => {
     const { result } = renderHook(() => useConfirmDialog());
-    let confirmPromise: Promise<boolean>;
 
     act(() => {
-      confirmPromise = result.current.confirm({ title: 'Delete Item', message: 'Are you sure?' });
+      result.current.confirm({ title: 'Delete Item', message: 'Are you sure?' });
     });
 
     expect(result.current.open).toBe(true);

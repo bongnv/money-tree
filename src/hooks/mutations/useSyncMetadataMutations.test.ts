@@ -49,7 +49,7 @@ describe('useSyncMetadataMutations', () => {
       await act(async () => {
         try {
           await result.current.setBaseCurrency(CurrencyCode.EUR);
-        } catch (e) {
+        } catch {
           // Expected error
         }
       });
@@ -125,7 +125,7 @@ describe('useSyncMetadataMutations', () => {
       await act(async () => {
         try {
           await result.current.addArchivedYear(archiveReference);
-        } catch (e) {
+        } catch {
           // Expected error
         }
       });
@@ -153,7 +153,7 @@ describe('useSyncMetadataMutations', () => {
       await act(async () => {
         try {
           await result.current.addArchivedYear(archiveReference);
-        } catch (e) {
+        } catch {
           // Expected error
         }
       });
@@ -172,7 +172,7 @@ describe('useSyncMetadataMutations', () => {
       await act(async () => {
         try {
           await result.current.setBaseCurrency(CurrencyCode.EUR);
-        } catch (e) {
+        } catch {
           // Expected error
         }
       });

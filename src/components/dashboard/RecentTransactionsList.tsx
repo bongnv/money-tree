@@ -53,7 +53,10 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
     return type.group === Group.INCOME;
   };
 
-  const getTransactionCurrency = (transaction: any): CurrencyCode => {
+  const getTransactionCurrency = (transaction: {
+    toAccountId?: string;
+    fromAccountId?: string;
+  }): CurrencyCode => {
     // For income, use toAccountId; for expenses, use fromAccountId
     const accountId = transaction.toAccountId || transaction.fromAccountId;
     if (!accountId) return CurrencyCode.USD; // Fallback if no account

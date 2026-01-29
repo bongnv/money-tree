@@ -10,9 +10,9 @@ interface QuickEntryAutocompleteProps<T> {
   placeholder?: string;
   error?: boolean;
   helperText?: string;
-  sx?: any;
+  sx?: Record<string, unknown>;
   minWidth?: number;
-  inputRef?: React.Ref<any>;
+  inputRef?: React.Ref<HTMLDivElement>;
 }
 
 export function QuickEntryAutocomplete<T>({

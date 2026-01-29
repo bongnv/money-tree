@@ -11,7 +11,7 @@ import type {
 
 interface SyncMetadata {
   key: string;
-  value: any;
+  value: unknown;
 }
 
 export class MoneyTreeDB extends Dexie {
@@ -60,17 +60,17 @@ export const db = new MoneyTreeDB();
 
 // Helper functions for sync metadata
 export const syncMetadata = {
-  async get(key: string): Promise<any> {
+  async get(key: string): Promise<unknown> {
     const record = await db.syncMetadata.get(key);
     return record?.value;
   },
 
-  async set(key: string, value: any): Promise<void> {
+  async set(key: string, value: unknown): Promise<void> {
     await db.syncMetadata.put({ key, value });
   },
 
   async getLastModified(): Promise<string | null> {
-    return this.get('lastModified');
+    return (await this.get('lastModified')) as string | null;
   },
 
   async setLastModified(timestamp: string): Promise<void> {
@@ -78,7 +78,7 @@ export const syncMetadata = {
   },
 
   async getBaseCurrency(): Promise<string | null> {
-    return this.get('baseCurrency');
+    return (await this.get('baseCurrency')) as string | null;
   },
 
   async setBaseCurrency(currency: string): Promise<void> {
@@ -87,7 +87,7 @@ export const syncMetadata = {
   },
 
   async getArchivedYears(): Promise<any[]> {
-    return (await this.get('archivedYears')) || [];
+    return ((await this.get('archivedYears')) as any[]) || [];
   },
 
   async setArchivedYears(years: any[]): Promise<void> {

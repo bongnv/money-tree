@@ -46,7 +46,7 @@ describe('StorageProviderFactory', () => {
       getMainFileName: jest.fn().mockReturnValue('test.json'),
       getName: jest.fn().mockReturnValue('OneDrive'),
       clearCache: jest.fn().mockResolvedValue(undefined),
-    } as any;
+    } as unknown as jest.Mocked<OneDriveProvider>;
 
     mockGoogleDriveProvider = {
       initialize: jest.fn().mockResolvedValue(true),
@@ -58,7 +58,7 @@ describe('StorageProviderFactory', () => {
       getMainFileName: jest.fn().mockReturnValue('test.json'),
       getName: jest.fn().mockReturnValue('Google Drive'),
       clearCache: jest.fn().mockResolvedValue(undefined),
-    } as any;
+    } as unknown as jest.Mocked<GoogleDriveProvider>;
 
     // Mock provider constructors
     (OneDriveProvider as jest.Mock).mockImplementation(() => mockOneDriveProvider);

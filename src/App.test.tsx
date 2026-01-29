@@ -42,7 +42,7 @@ jest.mock('./services/cloudSync.service', () => ({
 
 // Mock SyncProvider
 jest.mock('./contexts/SyncProvider', () => ({
-  SyncProvider: ({ children }: any) => children,
+  SyncProvider: ({ children }: { children: React.ReactNode }) => children,
   useSyncService: () => ({
     isConnected: false,
     providerName: null,
@@ -96,15 +96,9 @@ const mockReportService = {
   }),
 };
 
-const mockSyncService = {
-  fullSync: jest.fn(),
-  downloadCurrentFile: jest.fn(),
-  uploadCurrentFile: jest.fn(),
-};
-
 // Mock ServiceProvider
 jest.mock('./contexts/ServiceProviders', () => ({
-  ServiceProvider: ({ children }: any) => children,
+  ServiceProvider: ({ children }: { children: React.ReactNode }) => children,
   useStorage: () => mockStorageFactory,
   useStorageFactory: () => mockStorageFactory,
   useArchiveService: () => mockArchiveService,

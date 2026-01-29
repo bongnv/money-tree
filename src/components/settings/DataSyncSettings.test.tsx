@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { DataSyncSettings } from './DataSyncSettings';
 import { AppProvider } from '../../contexts/AppContext';
@@ -67,11 +67,6 @@ const mockStorageFactory = {
   })),
   getCurrentFileName: jest.fn(() => 'test-file.json'),
   disconnect: jest.fn(),
-};
-
-const mockBackupService = {
-  shouldPromptBackup: jest.fn(() => false),
-  saveBackupToStorage: jest.fn(),
 };
 
 // Mock the hooks

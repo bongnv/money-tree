@@ -27,11 +27,19 @@ const mockCalculationService = {
       baseCurrency,
       getCategoryById
     ) => {
-      const grouped: any = {};
+      const grouped: Record<
+        string,
+        {
+          category: { id: string; name: string };
+          items: unknown[];
+          totalBudget: number;
+          totalActual: number;
+        }
+      > = {};
 
       for (const budget of budgets) {
         const transactionType = transactionTypes.find(
-          (tt: any) => tt.id === budget.transactionTypeId
+          (tt: { id: string }) => tt.id === budget.transactionTypeId
         );
         if (!transactionType) continue;
 
@@ -50,8 +58,10 @@ const mockCalculationService = {
 
         const proratedBudget = budget.amount;
         const actualAmount = transactions
-          .filter((t: any) => t.transactionTypeId === budget.transactionTypeId)
-          .reduce((sum: number, t: any) => sum + t.amount, 0);
+          .filter(
+            (t: { transactionTypeId: string }) => t.transactionTypeId === budget.transactionTypeId
+          )
+          .reduce((sum: number, t: { amount: number }) => sum + t.amount, 0);
         const percentage = proratedBudget > 0 ? (actualAmount / proratedBudget) * 100 : 0;
 
         grouped[categoryId].items.push({

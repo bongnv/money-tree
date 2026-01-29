@@ -446,15 +446,15 @@ export class CalculationService {
     accounts: Account[],
     selectedPeriod: { startDate: string; endDate: string },
     baseCurrency: CurrencyCode,
-    getCategoryById: (id: string) => any
+    getCategoryById: (id: string) => { id: string; name: string } | undefined
   ): Promise<
     Record<
       string,
       {
-        category: any;
+        category: { id: string; name: string };
         items: {
           budget: Budget;
-          transactionType: any;
+          transactionType: { id: string; name: string; group: string };
           proratedBudget: number;
           actualAmount: number;
           percentage: number;
@@ -467,10 +467,10 @@ export class CalculationService {
     const grouped: Record<
       string,
       {
-        category: any;
+        category: { id: string; name: string };
         items: {
           budget: Budget;
-          transactionType: any;
+          transactionType: { id: string; name: string; group: string };
           proratedBudget: number;
           actualAmount: number;
           percentage: number;

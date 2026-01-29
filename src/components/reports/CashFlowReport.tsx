@@ -183,32 +183,36 @@ export const CashFlowReport: React.FC = () => {
     let cumulativeExpenses = 0;
     let cumulativeNet = 0;
 
-    return trendData.map((point: any) => {
-      cumulativeIncome += point.income;
-      cumulativeExpenses += point.expenses;
-      cumulativeNet += point.netCashFlow;
+    return trendData.map(
+      (point: { date: string; income: number; expenses: number; netCashFlow: number }) => {
+        cumulativeIncome += point.income;
+        cumulativeExpenses += point.expenses;
+        cumulativeNet += point.netCashFlow;
 
-      return {
-        date: point.date,
-        income: cumulativeIncome,
-        expenses: cumulativeExpenses,
-        netCashFlow: cumulativeNet,
-      };
-    });
+        return {
+          date: point.date,
+          income: cumulativeIncome,
+          expenses: cumulativeExpenses,
+          netCashFlow: cumulativeNet,
+        };
+      }
+    );
   }, [trendData]);
 
   // Prepare chart data based on view mode
   const chartData = useMemo(() => {
     const dataSource = viewMode === 'cumulative' ? cumulativeData : trendData;
-    return dataSource.map((point: any) => ({
-      name: new Date(point.date).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-      }),
-      Income: point.income,
-      Expenses: point.expenses,
-      'Net Cash Flow': point.netCashFlow,
-    }));
+    return dataSource.map(
+      (point: { date: string; income: number; expenses: number; netCashFlow: number }) => ({
+        name: new Date(point.date).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+        }),
+        Income: point.income,
+        Expenses: point.expenses,
+        'Net Cash Flow': point.netCashFlow,
+      })
+    );
   }, [trendData, cumulativeData, viewMode]);
 
   const handleCurrencyChange = (newCurrency: CurrencyCode) => {

@@ -29,7 +29,7 @@ const mockCalculationService = {
   calculateBudgetUsage: jest.fn().mockReturnValue(0),
   convertBudgetAmount: jest.fn(async (budget) => budget.amount),
   sumTransactionAmounts: jest.fn(async (transactions) => {
-    return transactions.reduce((sum: number, t: any) => sum + t.amount, 0);
+    return transactions.reduce((sum: number, t: { amount: number }) => sum + t.amount, 0);
   }),
 };
 

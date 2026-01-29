@@ -109,7 +109,7 @@ export class OneDriveProvider implements IStorageProvider {
       const response = await client.api(endpoint).get();
       const content = typeof response === 'string' ? response : JSON.stringify(response);
       return new Blob([content], { type: 'application/json' });
-    } catch (error: any) {
+    } catch (error) {
       throw this.createFriendlyError(error);
     }
   }
@@ -133,7 +133,7 @@ export class OneDriveProvider implements IStorageProvider {
         return { ...fileItem, id: response.id };
       }
       return fileItem;
-    } catch (error: any) {
+    } catch (error) {
       throw this.createFriendlyError(error);
     }
   }
@@ -173,7 +173,7 @@ export class OneDriveProvider implements IStorageProvider {
       }
 
       return items;
-    } catch (error: any) {
+    } catch (error) {
       throw this.createFriendlyError(error);
     }
   }
@@ -341,13 +341,13 @@ export class OneDriveProvider implements IStorageProvider {
   /**
    * Create user-friendly error messages from Graph API errors
    */
-  private createFriendlyError(error: any): Error {
+  private createFriendlyError(error: unknown): Error {
     // Log the original error first to preserve debugging information
     console.error('OneDrive API error:', error);
 
-    const statusCode = error?.statusCode;
-    const code = error?.code;
-    const message = error?.message;
+    const statusCode = (error as { statusCode?: number })?.statusCode;
+    const code = (error as { code?: string })?.code;
+    const message = (error as { message?: string })?.message;
 
     if (statusCode === 401 || code === 'InvalidAuthenticationToken') {
       return new Error('Authentication expired. Please reconnect to OneDrive.');

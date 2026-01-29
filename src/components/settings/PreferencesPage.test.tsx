@@ -3,8 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { PreferencesPage } from './PreferencesPage';
 import { AppProvider } from '../../contexts/AppContext';
-import { CurrencyCode } from '../../types/enums';
-
 // Mock CloudSyncService class
 jest.mock('../../services/cloudSync.service', () => ({
   CloudSyncService: jest.fn().mockImplementation(() => ({
@@ -47,11 +45,6 @@ const mockStorageFactory = {
     getName: () => 'OneDrive',
   })),
   getCurrentFileName: jest.fn(() => 'test.json'),
-};
-
-const mockBackupService = {
-  shouldPromptBackup: jest.fn(() => false),
-  saveBackupToStorage: jest.fn(),
 };
 
 // Mock the hooks

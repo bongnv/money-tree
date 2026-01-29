@@ -3,7 +3,6 @@ import {
   Box,
   Paper,
   Typography,
-  TextField,
   Card,
   CardContent,
   ToggleButtonGroup,
@@ -12,7 +11,6 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
@@ -29,6 +27,7 @@ import { AssetValueHistoryDialog } from '../assets/AssetValueHistoryDialog';
 import { LineChart } from '../common/charts/LineChart';
 import { formatCurrency } from '../../utils/currency.utils';
 import { getTodayDate } from '../../utils/date.utils';
+import { FormDatePicker } from '../common/FormDatePicker';
 import type { CurrencyCode } from '../../types/enums';
 
 type ComparisonType = 'none' | 'month' | 'year';
@@ -196,13 +195,11 @@ export const BalanceSheet: React.FC = () => {
             <Typography variant="h5" gutterBottom>
               Balance Sheet
             </Typography>
-            <TextField
+            <FormDatePicker
               label="As of Date"
-              type="date"
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              fullWidth
+              onChange={setSelectedDate}
+              sx={{ mt: 0 }}
             />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
@@ -228,11 +225,12 @@ export const BalanceSheet: React.FC = () => {
             </ToggleButtonGroup>
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Display Currency
+            </Typography>
             <FormControl fullWidth>
-              <InputLabel>Display Currency</InputLabel>
               <Select
                 value={conversionCurrency}
-                label="Display Currency"
                 onChange={(e) => handleCurrencyChange(e.target.value as CurrencyCode)}
               >
                 {DEFAULT_CURRENCIES.map((curr) => (
@@ -242,9 +240,6 @@ export const BalanceSheet: React.FC = () => {
                 ))}
               </Select>
             </FormControl>
-            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-              Converting all amounts to {conversionCurrency.toUpperCase()}
-            </Typography>
           </Grid>
         </Grid>
       </Paper>

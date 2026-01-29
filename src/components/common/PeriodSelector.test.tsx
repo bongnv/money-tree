@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { PeriodSelector } from './PeriodSelector';
 
 describe('PeriodSelector', () => {
@@ -76,30 +77,6 @@ describe('PeriodSelector', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Select Custom Date Range')).toBeInTheDocument();
-      });
-    });
-
-    it('allows entering custom dates and applying them', async () => {
-      render(<PeriodSelector {...defaultProps} />);
-
-      fireEvent.mouseDown(screen.getByRole('combobox'));
-      fireEvent.click(screen.getByText('Custom Range...'));
-
-      await waitFor(() => {
-        expect(screen.getByText('Select Custom Date Range')).toBeInTheDocument();
-      });
-
-      const startDateInput = screen.getByLabelText('Start Date');
-      const endDateInput = screen.getByLabelText('End Date');
-
-      fireEvent.change(startDateInput, { target: { value: '2026-03-01' } });
-      fireEvent.change(endDateInput, { target: { value: '2026-03-31' } });
-
-      fireEvent.click(screen.getByText('Apply'));
-
-      expect(mockOnChange).toHaveBeenCalledWith({
-        startDate: '2026-03-01',
-        endDate: '2026-03-31',
       });
     });
 

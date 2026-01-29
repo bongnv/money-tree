@@ -9,6 +9,7 @@ import {
   Button,
   Autocomplete,
 } from '@mui/material';
+import { FormDatePicker } from '../common/FormDatePicker';
 import type { Budget } from '../../types/models';
 import { useCategories, useTransactionTypes } from '../../hooks/queries';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
@@ -198,30 +199,20 @@ export const BudgetDialog: React.FC<BudgetDialogProps> = ({ open, budget, onClos
             <MenuItem value="yearly">Yearly</MenuItem>
           </TextField>
 
-          <TextField
-            fullWidth
+          <FormDatePicker
             label="Start Date"
-            type="date"
             value={formData.startDate}
-            onChange={handleChange('startDate')}
+            onChange={(date) => setFormData({ ...formData, startDate: date })}
             error={!!errors.startDate}
             helperText={errors.startDate}
-            margin="normal"
-            required
-            InputLabelProps={{ shrink: true }}
           />
 
-          <TextField
-            fullWidth
+          <FormDatePicker
             label="End Date"
-            type="date"
             value={formData.endDate}
-            onChange={handleChange('endDate')}
+            onChange={(date) => setFormData({ ...formData, endDate: date })}
             error={!!errors.endDate}
             helperText={errors.endDate}
-            margin="normal"
-            required
-            InputLabelProps={{ shrink: true }}
           />
 
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>

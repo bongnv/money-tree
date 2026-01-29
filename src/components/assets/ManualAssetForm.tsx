@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { TextField, MenuItem, Box, Button } from '@mui/material';
+import { FormDatePicker } from '../common/FormDatePicker';
 import type { ManualAsset } from '../../types/models';
 import { AssetType, CurrencyCode } from '../../types/enums';
 import { getAllCurrencies } from '../../utils/currency.utils';
@@ -171,17 +172,18 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
         ))}
       </TextField>
 
-      <TextField
-        fullWidth
+      <FormDatePicker
         label="Date"
-        type="date"
         value={formData.date}
-        onChange={handleChange('date')}
+        onChange={(date) => {
+          setFormData({ ...formData, date });
+          if (errors.date) {
+            setErrors({ ...errors, date: '' });
+          }
+        }}
         error={!!errors.date}
         helperText={errors.date}
-        margin="normal"
         required
-        InputLabelProps={{ shrink: true }}
       />
 
       <TextField

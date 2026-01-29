@@ -10,11 +10,11 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  TextField,
   Box,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import { getTodayDate } from '../../utils/date.utils';
+import { FormDatePicker } from './FormDatePicker';
 
 export interface PeriodOption {
   label: string;
@@ -207,22 +207,12 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
           <DialogTitle>Select Custom Date Range</DialogTitle>
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1, minWidth: 300 }}>
-              <TextField
+              <FormDatePicker
                 label="Start Date"
-                type="date"
                 value={tempStartDate}
-                onChange={(e) => setTempStartDate(e.target.value)}
-                fullWidth
-                InputLabelProps={{ shrink: true }}
+                onChange={setTempStartDate}
               />
-              <TextField
-                label="End Date"
-                type="date"
-                value={tempEndDate}
-                onChange={(e) => setTempEndDate(e.target.value)}
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-              />
+              <FormDatePicker label="End Date" value={tempEndDate} onChange={setTempEndDate} />
             </Box>
           </DialogContent>
           <DialogActions>

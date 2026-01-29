@@ -50,11 +50,19 @@ Mark task as complete only if all three pass.
 - Focus on testing critical business logic, edge cases, and error handling
 - Use coverage gaps as a guide for identifying untested scenarios
 
+## Architecture
+
+**3-layer**: UI (`src/components/`, `src/hooks/`) → Services/Utils (`src/services/`, `src/utils/`) → Database (`src/db/`)
+- **UI**: Components render, hooks wrap DB+sync. NO direct DB. NO business logic.
+- **Services**: Pure logic, calculations, validation. NO React. NO database access.
+- **Database**: Schema, tables, IndexedDB. NO React. Hooks wrap all DB calls.
+
 ## Code Style
 
 - Self-documenting code with clear names
 - Small, focused functions
 - Minimal comments (only for non-obvious logic)
+- Respect layer boundaries (no cross-layer violations)
 
 ## Implementation Approach
 

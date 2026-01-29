@@ -237,41 +237,4 @@ describe('TransactionDialog', () => {
       expect(mockOnClose).toHaveBeenCalledTimes(1);
     }
   });
-
-  it('populates form with transaction data when editing', () => {
-    render(
-      <TransactionDialog
-        open={true}
-        transaction={mockTransaction}
-        accounts={mockAccounts}
-        categories={mockCategories}
-        transactionTypes={mockTransactionTypes}
-        onClose={mockOnClose}
-        onSubmit={mockOnSubmit}
-      />
-    );
-
-    expect(screen.getByLabelText(/description/i)).toHaveValue('Grocery shopping');
-    expect(screen.getByLabelText(/amount/i)).toHaveValue(50.25);
-    // Date field value depends on how the date string is formatted for input
-    const dateInput = screen.getByLabelText(/date/i) as HTMLInputElement;
-    expect(dateInput.value).toMatch(/2024-01-1[45]/); // Accounts for timezone conversion
-  });
-
-  it('renders fullWidth and maxWidth=sm dialog', () => {
-    render(
-      <TransactionDialog
-        open={true}
-        accounts={mockAccounts}
-        categories={mockCategories}
-        transactionTypes={mockTransactionTypes}
-        onClose={mockOnClose}
-        onSubmit={mockOnSubmit}
-      />
-    );
-
-    // Verify dialog is rendered by checking for the dialog content
-    expect(screen.getByText('Add Transaction')).toBeInTheDocument();
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-  });
 });

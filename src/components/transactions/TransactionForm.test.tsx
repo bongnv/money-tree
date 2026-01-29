@@ -168,7 +168,7 @@ describe('TransactionForm', () => {
   it('should render all required fields', () => {
     render(<TransactionForm {...defaultProps} />);
 
-    expect(screen.getByLabelText(/date/i)).toBeInTheDocument();
+    expect(screen.getAllByLabelText(/date/i)[0]).toBeInTheDocument();
     expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/amount/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/transaction type/i)).toBeInTheDocument();

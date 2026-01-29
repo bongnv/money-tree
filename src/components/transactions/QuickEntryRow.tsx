@@ -2,6 +2,7 @@ import React, { useState, useRef, useMemo } from 'react';
 import { Box, TextField, IconButton, Tooltip, Chip } from '@mui/material';
 import { Add as AddIcon, Clear as ClearIcon, MoreHoriz as MoreIcon } from '@mui/icons-material';
 import { QuickEntryAutocomplete } from './QuickEntryAutocomplete';
+import { FormDatePicker } from '../common/FormDatePicker';
 import type {
   Transaction,
   Account,
@@ -338,17 +339,11 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
         alignItems: 'flex-start',
       }}
     >
-      <TextField
-        inputRef={dateRef}
-        type="date"
+      <FormDatePicker
+        label=""
         value={formData.date}
-        onChange={(e) => {
-          const value = e.target.value;
-          // Only update if value is not empty or is valid date format
-          // This prevents clearing the date when user types incomplete input
-          if (value === '' || /^\d{4}-\d{2}-\d{2}$/.test(value)) {
-            setFormData({ ...formData, date: value });
-          }
+        onChange={(date) => {
+          setFormData({ ...formData, date });
           if (errors.date) {
             setErrors({ ...errors, date: '' });
           }
@@ -356,7 +351,7 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
         error={!!errors.date}
         helperText={errors.date}
         size="small"
-        InputLabelProps={{ shrink: true }}
+        fullWidth={false}
         sx={{ width: 150 }}
       />
 

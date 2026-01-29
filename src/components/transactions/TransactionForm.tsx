@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { Box, Button, MenuItem, Alert, Autocomplete, TextField } from '@mui/material';
 import { FormTextField } from '../common/FormTextField';
+import { FormDatePicker } from '../common/FormDatePicker';
 import type { Transaction, Account, TransactionType, Category } from '../../types/models';
 import { Group } from '../../types/enums';
-import { toDateString, getTodayDate } from '../../utils/date.utils';
+import { getTodayDate } from '../../utils/date.utils';
 import { validationService, ValidationError } from '../../services/validation.service';
 import { useAssets } from '../../hooks/queries/useAssets';
 
@@ -185,13 +186,11 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         </Alert>
       )}
 
-      <FormTextField
+      <FormDatePicker
         label="Date"
-        type="date"
         value={formData.date}
-        onChange={(e) => {
-          const dateStr = toDateString(e.target.value);
-          setFormData({ ...formData, date: dateStr });
+        onChange={(date) => {
+          setFormData({ ...formData, date });
           if (errors.date) {
             setErrors({ ...errors, date: '' });
           }
@@ -199,7 +198,6 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         error={!!errors.date}
         helperText={errors.date}
         required
-        InputLabelProps={{ shrink: true }}
       />
 
       <FormTextField

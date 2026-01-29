@@ -18,16 +18,6 @@ jest.mock('../../hooks/queries', () => ({
   useBaseCurrency: jest.fn(() => 'USD'),
 }));
 
-jest.mock('../../hooks/mutations/useTransactionTypeMutations', () => ({
-  useTransactionTypeMutations: () => ({
-    addTransactionType: mockAddTransactionType,
-    updateTransactionType: mockUpdateTransactionType,
-    deleteTransactionType: mockDeleteTransactionType,
-    archiveTransactionType: mockArchiveTransactionType,
-    unarchiveTransactionType: mockUnarchiveTransactionType,
-  }),
-}));
-
 // Mock the navigate function and useParams
 const mockNavigate = jest.fn();
 const mockUseParams = jest.fn();

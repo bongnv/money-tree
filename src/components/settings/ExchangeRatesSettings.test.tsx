@@ -5,12 +5,6 @@ import type { ExchangeRate } from '../../types/models';
 import { useExchangeRates } from '../../hooks/queries/useExchangeRates';
 
 // Mock exchange rates hook
-jest.mock('../../hooks/queries/useExchangeRates');
-const mockUseExchangeRates = useExchangeRates as jest.MockedFunction<typeof useExchangeRates>;
-
-jest.mock('../../hooks/queries', () => ({
-  useBaseCurrency: jest.fn(() => 'USD'),
-}));
 
 // Mock cloudSync service
 jest.mock('../../services/cloudSync.service', () => ({

@@ -1,7 +1,9 @@
-import { db, syncMetadata } from '../db/database';
+import { db } from '../db/database';
 import { IStorageProvider, CloudItem } from './storage/IStorageProvider';
 import type { DataFile, ExchangeRate, ArchivedYearReference } from '../types/models';
 import { CurrencyCode } from '../types/enums';
+import { syncMetadataService } from './syncMetadata.service';
+import { DataFileSchema } from '../schemas/models.schema';
 
 /**
  * Represents the complete local data snapshot (unfiltered)
@@ -85,10 +87,18 @@ export class CloudSyncService {
   }> {
     const blob = await this.provider.readFile(this.fileItem);
     const content = await blob.text();
-    const cloudData = JSON.parse(content) as DataFile;
-    if (!cloudData) {
-      throw new Error('No data file found in cloud');
+    const rawData = JSON.parse(content);
+
+    // Validate cloud data with Zod schema
+    const parseResult = DataFileSchema.safeParse(rawData);
+    if (!parseResult.success) {
+      console.error('Cloud data validation errors:', parseResult.error);
+      throw new Error(
+        `Invalid cloud data format: ${parseResult.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`
+      );
     }
+
+    const cloudData = parseResult.data as DataFile;
 
     // Merge with local snapshot using Last-Write-Wins
     const { hasLocalChanges, mergedData } = await this.mergeData(cloudData, localSnapshot);
@@ -158,11 +168,11 @@ export class CloudSyncService {
 
     // Update metadata in IndexedDB if cloud is newer
     if (!metadataResult.hasLocalChanges) {
-      await syncMetadata.setBaseCurrency(metadataResult.baseCurrency);
+      await syncMetadataService.setBaseCurrency(metadataResult.baseCurrency);
       if (metadataResult.archivedYears.length > 0) {
-        await syncMetadata.setArchivedYears(metadataResult.archivedYears);
+        await syncMetadataService.setArchivedYears(metadataResult.archivedYears);
       }
-      await syncMetadata.setLastModified(metadataResult.lastModified);
+      await syncMetadataService.setLastModified(metadataResult.lastModified);
     }
 
     return {
@@ -343,9 +353,9 @@ export class CloudSyncService {
       db.budgets.toArray(),
       db.manualAssets.toArray(),
       db.exchangeRates.toArray(),
-      syncMetadata.getBaseCurrency(),
-      syncMetadata.getArchivedYears(),
-      syncMetadata.getLastModified(),
+      syncMetadataService.getBaseCurrency(),
+      syncMetadataService.getArchivedYears(),
+      syncMetadataService.getLastModified(),
     ]);
 
     const localSnapshot: LocalDataSnapshot = {

@@ -3,6 +3,7 @@ import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
+import importPlugin from 'eslint-plugin-import';
 import prettierConfig from 'eslint-config-prettier';
 import globals from 'globals';
 
@@ -39,6 +40,7 @@ export default [
       '@typescript-eslint': tsPlugin,
       react: reactPlugin,
       'react-hooks': reactHooksPlugin,
+      import: importPlugin,
     },
     rules: {
       // Base recommended rules
@@ -74,6 +76,9 @@ export default [
       // General rules
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'prefer-const': 'warn',
+
+      // Import rules - enforce path aliases over relative imports
+      'import/no-relative-parent-imports': 'warn',
     },
     settings: {
       react: {

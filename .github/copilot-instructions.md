@@ -53,9 +53,9 @@ Mark task as complete only if all three pass.
 ## Architecture
 
 **3-layer**: UI (`src/components/`, `src/hooks/`) → Services/Utils (`src/services/`, `src/utils/`) → Database (`src/db/`)
-- **UI**: Components render, hooks wrap DB+sync. NO direct DB. NO business logic.
-- **Services**: Pure logic, calculations, validation. NO React. NO database access.
-- **Database**: Schema, tables, IndexedDB. NO React. Hooks wrap all DB calls.
+- **UI**: UI logic. NO direct DB. NO business logic.
+- **Services**: Stateless, Pure logic. NO React. Dependencies injected via constructor for easier testing.
+- **Database**: Schema, tables, IndexedDB. NO React. No business logic.
 
 ## Code Style
 
@@ -63,6 +63,7 @@ Mark task as complete only if all three pass.
 - Small, focused functions
 - Minimal comments (only for non-obvious logic)
 - Respect layer boundaries (no cross-layer violations)
+- Use path aliases (`@/components/`, `@/hooks/`, `@/services/`, etc.) instead of relative imports
 
 ## Implementation Approach
 

@@ -61,6 +61,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({ account, onSubmit, onC
       initialBalance: parseFloat(formData.initialBalance),
       description: formData.description.trim() || undefined,
       isActive: formData.isActive,
+      isDeleted: false,
     });
   };
 

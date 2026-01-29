@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { accountService } from '../../services/account.service';
 import { TextField, MenuItem, Box, Button } from '@mui/material';
 import type { TransactionType, Category } from '../../types/models';
 import { Group } from '../../types/enums';
-import { useAccounts } from '../../hooks/queries/useAccounts';
 
 interface TransactionTypeFormProps {
   transactionType?: TransactionType;
@@ -19,7 +20,7 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
-  const accounts = useAccounts();
+  const accounts = useLiveQuery(() => accountService.getActive()) ?? [];
 
   const [formData, setFormData] = useState({
     name: transactionType?.name || '',
@@ -65,6 +66,8 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
       description: formData.description.trim() || undefined,
       defaultFromAccountId: formData.defaultFromAccountId || undefined,
       defaultToAccountId: formData.defaultToAccountId || undefined,
+      isActive: true,
+      isDeleted: false,
     });
   };
 

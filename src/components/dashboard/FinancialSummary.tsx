@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { budgetService } from '../../services/budget.service';
+import { categoryService } from '../../services/category.service';
+import { transactionTypeService } from '../../services/transactionType.service';
+import { accountService } from '../../services/account.service';
+import { assetService } from '../../services/asset.service';
+import { transactionService } from '../../services/transaction.service';
+import { syncMetadataService } from '../../services/syncMetadata.service';
+import { CurrencyCode } from '../../types/enums';
 import { useNavigate } from 'react-router-dom';
 import Grid from '@mui/material/Grid';
 import { Box, Alert } from '@mui/material';
 import { FinancialSummaryCard } from './FinancialSummaryCard';
-import { useAccounts } from '../../hooks/queries/useAccounts';
-import { useTransactions } from '../../hooks/queries/useTransactions';
-import { useAssets } from '../../hooks/queries/useAssets';
-import { useCategories, useTransactionTypes, useBaseCurrency } from '../../hooks/queries';
-import { useBudgets } from '../../hooks/queries/useBudgets';
 import { useCalculationService, useReportService } from '../../contexts/ServiceProviders';
 import type { PeriodOption } from '../common/PeriodSelector';
 import { formatCurrency } from '../../utils/currency.utils';
@@ -19,13 +23,14 @@ export interface FinancialSummaryProps {
 
 export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) => {
   const navigate = useNavigate();
-  const accounts = useAccounts();
-  const transactions = useTransactions();
-  const manualAssets = useAssets();
-  const budgets = useBudgets();
-  const categories = useCategories();
-  const transactionTypes = useTransactionTypes();
-  const baseCurrency = useBaseCurrency();
+  const accounts = useLiveQuery(() => accountService.getActive()) ?? [];
+  const transactions = useLiveQuery(() => transactionService.getActive()) ?? [];
+  const manualAssets = useLiveQuery(() => assetService.getActive()) ?? [];
+  const budgets = useLiveQuery(() => budgetService.getActive()) ?? [];
+  const categories = useLiveQuery(() => categoryService.getActive()) ?? [];
+  const transactionTypes = useLiveQuery(() => transactionTypeService.getActive()) ?? [];
+  const baseCurrency =
+    useLiveQuery(() => syncMetadataService.getBaseCurrency()) || CurrencyCode.USD;
   const calculationService = useCalculationService();
   const reportService = useReportService();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);

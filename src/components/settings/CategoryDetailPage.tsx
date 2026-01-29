@@ -1,25 +1,19 @@
 import React, { useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { categoryService } from '../../services/category.service';
+import { transactionTypeService } from '../../services/transactionType.service';
 import { Container, Typography, Box, Button, Breadcrumbs, Link } from '@mui/material';
 import { Add as AddIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TransactionTypeList } from '../categories/TransactionTypeList';
 import { TransactionTypeDialog } from '../categories/TransactionTypeDialog';
-import { useCategories, useTransactionTypes } from '../../hooks/queries';
-import { useTransactionTypeMutations } from '../../hooks/mutations/useTransactionTypeMutations';
 import type { TransactionType } from '../../types/models';
 
 export const CategoryDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const categories = useCategories();
-  const allTransactionTypes = useTransactionTypes();
-  const {
-    addTransactionType,
-    updateTransactionType,
-    deleteTransactionType,
-    archiveTransactionType,
-    unarchiveTransactionType,
-  } = useTransactionTypeMutations();
+  const categories = useLiveQuery(() => categoryService.getActive()) ?? [];
+  const allTransactionTypes = useLiveQuery(() => transactionTypeService.getActive()) ?? [];
 
   const category = categories?.find((c) => c.id === id);
   const categoryTransactionTypes = allTransactionTypes?.filter((tt) => tt.categoryId === id) || [];
@@ -58,22 +52,10 @@ export const CategoryDetailPage: React.FC = () => {
   const handleSubmitTransactionType = async (
     transactionType: Omit<TransactionType, 'id' | 'createdAt' | 'updatedAt'>
   ) => {
-    if (selectedTransactionType) {
-      await updateTransactionType(selectedTransactionType.id, {
-        ...transactionType,
-        id: selectedTransactionType.id,
-        createdAt: selectedTransactionType.createdAt,
-        updatedAt: new Date().toISOString(),
-      });
+    if (selectedTransactionType?.id) {
+      await transactionTypeService.update(selectedTransactionType.id, transactionType);
     } else {
-      const now = new Date().toISOString();
-      await addTransactionType({
-        ...transactionType,
-        id: crypto.randomUUID(),
-        isActive: true,
-        createdAt: now,
-        updatedAt: now,
-      });
+      await transactionTypeService.create(transactionType);
     }
     handleCloseTransactionTypeDialog();
   };
@@ -84,15 +66,15 @@ export const CategoryDetailPage: React.FC = () => {
         `Are you sure you want to delete the transaction type "${transactionType.name}"? This action cannot be undone.`
       )
     ) {
-      await deleteTransactionType(transactionType.id);
+      await transactionTypeService.delete(transactionType.id);
     }
   };
 
   const handleArchiveTransactionType = async (transactionType: TransactionType) => {
     if (transactionType.isActive) {
-      await archiveTransactionType(transactionType.id);
+      await transactionTypeService.archive(transactionType.id);
     } else {
-      await unarchiveTransactionType(transactionType.id);
+      await transactionTypeService.unarchive(transactionType.id);
     }
   };
 

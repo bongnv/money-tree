@@ -1,10 +1,11 @@
 import React from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { accountService } from '../../services/account.service';
+import { transactionService } from '../../services/transaction.service';
+import { transactionTypeService } from '../../services/transactionType.service';
 import { Box, Typography, Button, Paper, IconButton, Chip } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { useTransactions } from '../../hooks/queries/useTransactions';
-import { useTransactionTypes } from '../../hooks/queries/useTransactionTypes';
-import { useAccounts } from '../../hooks/queries/useAccounts';
 import { formatDate } from '../../utils/date.utils';
 import { formatCurrency } from '../../utils/currency.utils';
 import { Group, CurrencyCode } from '../../types/enums';
@@ -20,9 +21,9 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const transactions = useTransactions();
-  const transactionTypes = useTransactionTypes();
-  const accounts = useAccounts();
+  const transactions = useLiveQuery(() => transactionService.getActive()) ?? [];
+  const transactionTypes = useLiveQuery(() => transactionTypeService.getActive()) ?? [];
+  const accounts = useLiveQuery(() => accountService.getActive()) ?? [];
 
   // Get recent transactions sorted by date (newest first)
   const recentTransactions = transactions

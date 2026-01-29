@@ -1,4 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { categoryService } from '../../services/category.service';
+import { transactionTypeService } from '../../services/transactionType.service';
+import { accountService } from '../../services/account.service';
+import { transactionService } from '../../services/transaction.service';
+import { syncMetadataService } from '../../services/syncMetadata.service';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -24,9 +30,6 @@ import {
 import Grid from '@mui/material/Grid';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
-import { useTransactions } from '../../hooks/queries/useTransactions';
-import { useCategories, useTransactionTypes, useBaseCurrency } from '../../hooks/queries';
-import { useAccounts } from '../../hooks/queries/useAccounts';
 import { useReportService, useCalculationService } from '../../contexts/ServiceProviders';
 import { LineChart } from '../common/charts/LineChart';
 import { PieChart } from '../common/charts/PieChart';
@@ -36,7 +39,7 @@ import { formatCurrency } from '../../utils/currency.utils';
 import { getTodayDate } from '../../utils/date.utils';
 import { hasTransactionTypesInGroup } from '../../utils/report.utils';
 import { CHART_COLORS } from '../../theme';
-import type { CurrencyCode } from '../../types/enums';
+import { CurrencyCode } from '../../types/enums';
 import { Group } from '../../types/enums';
 import type { CashFlowData } from '../../services/report.service';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
@@ -64,11 +67,12 @@ const buildCashFlowTrendLines = (hasIncomeTypes: boolean, hasExpenseTypes: boole
 
 export const CashFlowReport: React.FC = () => {
   const navigate = useNavigate();
-  const transactions = useTransactions();
-  const transactionTypes = useTransactionTypes();
-  const categories = useCategories();
-  const accounts = useAccounts();
-  const baseCurrency = useBaseCurrency();
+  const transactions = useLiveQuery(() => transactionService.getActive()) ?? [];
+  const transactionTypes = useLiveQuery(() => transactionTypeService.getActive()) ?? [];
+  const categories = useLiveQuery(() => categoryService.getActive()) ?? [];
+  const accounts = useLiveQuery(() => accountService.getActive()) ?? [];
+  const baseCurrency =
+    useLiveQuery(() => syncMetadataService.getBaseCurrency()) || CurrencyCode.USD;
   const reportService = useReportService();
   const calculationService = useCalculationService();
 

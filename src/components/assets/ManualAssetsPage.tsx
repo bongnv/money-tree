@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { assetService } from '../../services/asset.service';
 import {
   Box,
   Typography,
@@ -11,14 +13,11 @@ import {
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import type { ManualAsset } from '../../types/models';
-import { useAssets } from '../../hooks/queries/useAssets';
-import { useAssetMutations } from '../../hooks/mutations/useAssetMutations';
 import { ManualAssetList } from './ManualAssetList';
 import { ManualAssetDialog } from './ManualAssetDialog';
 
 export const ManualAssetsPage: React.FC = () => {
-  const manualAssets = useAssets();
-  const { deleteAsset } = useAssetMutations();
+  const manualAssets = useLiveQuery(() => assetService.getActive()) ?? [];
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<ManualAsset | undefined>();
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'update-value'>('create');
@@ -55,8 +54,8 @@ export const ManualAssetsPage: React.FC = () => {
   };
 
   const handleConfirmDelete = async () => {
-    if (assetToDelete) {
-      await deleteAsset(assetToDelete.id);
+    if (assetToDelete?.id) {
+      await assetService.delete(assetToDelete.id);
     }
     setDeleteDialogOpen(false);
     setAssetToDelete(undefined);

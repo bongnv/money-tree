@@ -1,4 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { accountService } from '../../services/account.service';
+import { assetService } from '../../services/asset.service';
+import { transactionService } from '../../services/transaction.service';
+import { syncMetadataService } from '../../services/syncMetadata.service';
 import {
   Box,
   Paper,
@@ -16,10 +21,6 @@ import Grid from '@mui/material/Grid';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import type { BalanceSheetData } from '../../services/report.service';
-import { useAccounts } from '../../hooks/queries/useAccounts';
-import { useAssets } from '../../hooks/queries/useAssets';
-import { useTransactions } from '../../hooks/queries/useTransactions';
-import { useBaseCurrency } from '../../hooks/queries';
 import { useReportService } from '../../contexts/ServiceProviders';
 import { ManualAssetSection } from './ManualAssetSection';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
@@ -28,15 +29,16 @@ import { LineChart } from '../common/charts/LineChart';
 import { formatCurrency } from '../../utils/currency.utils';
 import { getTodayDate } from '../../utils/date.utils';
 import { FormDatePicker } from '../common/FormDatePicker';
-import type { CurrencyCode } from '../../types/enums';
+import { CurrencyCode } from '../../types/enums';
 
 type ComparisonType = 'none' | 'month' | 'year';
 
 export const BalanceSheet: React.FC = () => {
-  const accounts = useAccounts();
-  const manualAssets = useAssets();
-  const transactions = useTransactions();
-  const baseCurrency = useBaseCurrency();
+  const accounts = useLiveQuery(() => accountService.getActive()) ?? [];
+  const manualAssets = useLiveQuery(() => assetService.getActive()) ?? [];
+  const transactions = useLiveQuery(() => transactionService.getActive()) ?? [];
+  const baseCurrency =
+    useLiveQuery(() => syncMetadataService.getBaseCurrency()) || CurrencyCode.USD;
   const reportService = useReportService();
 
   // Use today as default date

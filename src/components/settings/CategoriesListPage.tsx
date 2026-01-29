@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { categoryService } from '../../services/category.service';
+import { transactionTypeService } from '../../services/transactionType.service';
 import { Container, Typography, Box, Button } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { CategoryList } from '../categories/CategoryList';
 import { CategoryDialog } from '../categories/CategoryDialog';
-import { useCategories, useTransactionTypes } from '../../hooks/queries';
-import { useCategoryMutations } from '../../hooks/mutations/useCategoryMutations';
 import type { Category } from '../../types/models';
 
 export const CategoriesListPage: React.FC = () => {
   const navigate = useNavigate();
-  const categories = useCategories();
-  const transactionTypes = useTransactionTypes();
-  const { addCategory, updateCategory, deleteCategory } = useCategoryMutations();
+  const categories = useLiveQuery(() => categoryService.getActive()) ?? [];
+  const transactionTypes = useLiveQuery(() => transactionTypeService.getActive()) ?? [];
 
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | undefined>();
@@ -35,22 +35,10 @@ export const CategoriesListPage: React.FC = () => {
   const handleSubmitCategory = async (
     categoryData: Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
   ) => {
-    if (selectedCategory) {
-      await updateCategory(selectedCategory.id, {
-        ...categoryData,
-        id: selectedCategory.id,
-        createdAt: selectedCategory.createdAt,
-        updatedAt: new Date().toISOString(),
-      });
+    if (selectedCategory?.id) {
+      await categoryService.update(selectedCategory.id, categoryData);
     } else {
-      const now = new Date().toISOString();
-      await addCategory({
-        ...categoryData,
-        id: crypto.randomUUID(),
-        createdAt: now,
-        updatedAt: now,
-        isDeleted: false,
-      });
+      await categoryService.create(categoryData);
     }
     handleCloseCategoryDialog();
   };
@@ -61,7 +49,7 @@ export const CategoriesListPage: React.FC = () => {
         `Are you sure you want to delete the category "${category.name}"? This action cannot be undone.`
       )
     ) {
-      await deleteCategory(category.id);
+      await categoryService.delete(category.id);
     }
   };
 

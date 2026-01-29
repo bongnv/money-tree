@@ -1,4 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { budgetService } from '../../services/budget.service';
+import { categoryService } from '../../services/category.service';
+import { transactionTypeService } from '../../services/transactionType.service';
+import { accountService } from '../../services/account.service';
+import { transactionService } from '../../services/transaction.service';
+import { syncMetadataService } from '../../services/syncMetadata.service';
 import {
   Box,
   Typography,
@@ -11,11 +18,6 @@ import {
   LinearProgress,
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { useBudgets } from '../../hooks/queries/useBudgets';
-import { useBudgetMutations } from '../../hooks/mutations/useBudgetMutations';
-import { useCategories, useTransactionTypes, useBaseCurrency } from '../../hooks/queries';
-import { useTransactions } from '../../hooks/queries/useTransactions';
-import { useAccounts } from '../../hooks/queries/useAccounts';
 import { BudgetDialog } from './BudgetDialog';
 import { PeriodSelector } from '../common/PeriodSelector';
 import { CategoryFilter } from '../common/CategoryFilter';
@@ -23,16 +25,16 @@ import { getBudgetPresets } from './periodPresets';
 import type { Budget } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
 import { useCalculationService } from '../../contexts/ServiceProviders';
-import { Group } from '../../types/enums';
+import { Group, CurrencyCode } from '../../types/enums';
 
 export const BudgetsPage: React.FC = () => {
-  const budgets = useBudgets();
-  const { addBudget, updateBudget, deleteBudget } = useBudgetMutations();
-  const transactionTypes = useTransactionTypes();
-  const categories = useCategories();
-  const transactions = useTransactions();
-  const accounts = useAccounts();
-  const baseCurrency = useBaseCurrency();
+  const budgets = useLiveQuery(() => budgetService.getActive()) ?? [];
+  const transactionTypes = useLiveQuery(() => transactionTypeService.getActive()) ?? [];
+  const categories = useLiveQuery(() => categoryService.getActive()) ?? [];
+  const transactions = useLiveQuery(() => transactionService.getActive()) ?? [];
+  const accounts = useLiveQuery(() => accountService.getActive()) ?? [];
+  const baseCurrency =
+    useLiveQuery(() => syncMetadataService.getBaseCurrency()) || CurrencyCode.USD;
   const calculationService = useCalculationService();
 
   // Helper to get category by id - memoized to prevent infinite loops
@@ -83,7 +85,7 @@ export const BudgetsPage: React.FC = () => {
     const confirmMessage = `Are you sure you want to delete the budget for "${transactionType?.name}"?`;
 
     if (window.confirm(confirmMessage)) {
-      await deleteBudget(budget.id);
+      await budgetService.delete(budget.id);
     }
   };
 
@@ -91,19 +93,12 @@ export const BudgetsPage: React.FC = () => {
     budgetData: Omit<Budget, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
   ) => {
     try {
-      if (editingBudget) {
+      if (editingBudget?.id) {
         // Update existing budget item
-        await updateBudget(editingBudget.id, budgetData);
+        await budgetService.update(editingBudget.id, budgetData);
       } else {
         // Add new budget item
-        const newBudget: Budget = {
-          id: `budget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          ...budgetData,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          isDeleted: false,
-        };
-        await addBudget(newBudget);
+        await budgetService.create(budgetData);
       }
       setDialogOpen(false);
     } catch (error) {

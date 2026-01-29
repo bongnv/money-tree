@@ -1,4 +1,8 @@
 import React, { useState, useMemo } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { syncMetadataService } from '../../services/syncMetadata.service';
+import { exchangeRateService } from '../../services/exchangeRate.service';
+import { CurrencyCode } from '../../types/enums';
 import {
   Box,
   Paper,
@@ -15,12 +19,11 @@ import {
   InputLabel,
   Alert,
 } from '@mui/material';
-import { useExchangeRates } from '../../hooks/queries/useExchangeRates';
-import { useBaseCurrency } from '../../hooks/queries';
 
 export const ExchangeRatesSettings: React.FC = () => {
-  const baseCurrency = useBaseCurrency();
-  const rates = useExchangeRates();
+  const baseCurrency =
+    useLiveQuery(() => syncMetadataService.getBaseCurrency()) || CurrencyCode.USD;
+  const rates = useLiveQuery(() => exchangeRateService.getAll()) ?? [];
 
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);

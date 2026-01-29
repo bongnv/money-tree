@@ -167,7 +167,11 @@ export const TransactionList: React.FC<TransactionListProps> = ({
         rowHeight={52}
         autoHeight={false}
         scrollbarSize={10}
-        hideFooter
+        pagination
+        pageSizeOptions={[25, 50, 100]}
+        initialState={{
+          pagination: { paginationModel: { pageSize: 50 } },
+        }}
       />
     </Box>
   );

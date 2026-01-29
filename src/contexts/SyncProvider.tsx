@@ -8,11 +8,13 @@ import React, {
   useRef,
   ReactNode,
 } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { CloudSyncService } from '../services/cloudSync.service';
 import { StorageProviderFactory } from '../services/storage/StorageProviderFactory';
 import { IStorageProvider, CloudItem } from '../services/storage/IStorageProvider';
 import type { StorageProviderType } from '../services/storage/StorageProviderFactory';
 import { useAppContext } from './AppContext';
+import { db } from '../db/database';
 
 const FILE_CACHE_KEY = 'moneyTree.currentFile';
 
@@ -33,7 +35,7 @@ export interface SyncContextValue {
 
   // Sync methods
   fullSync: () => Promise<void>;
-  debouncedSync: () => void;
+  // debouncedSync removed - internal only, auto-triggered by lastModified changes
 
   // Connection methods
   connect: (type: StorageProviderType) => Promise<void>;
@@ -120,12 +122,24 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onReconnec
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
+  // Watch lastModified timestamp for changes
+  const lastModified = useLiveQuery(() =>
+    db.syncMetadata.get('lastModified').then((r) => r?.value as string | null)
+  );
+
   // Auto-sync whenever we have a connected file (handles both initial load and file changes)
   useEffect(() => {
     if (!isConnected || isSyncing || isInitializing) return;
     fullSync();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnected]); // Trigger when connection state changes (provider + file both available)
+
+  // Auto-sync whenever lastModified changes (triggered by any data write)
+  useEffect(() => {
+    if (!isConnected || !lastModified || isInitializing) return;
+    debouncedSync();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastModified]); // Trigger when data changes
 
   // Cleanup timers on unmount
   useEffect(() => {
@@ -243,7 +257,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onReconnec
 
     // Sync methods
     fullSync,
-    debouncedSync,
+    // debouncedSync removed - internal only, auto-triggered by lastModified changes
 
     // Connection methods
     connect,

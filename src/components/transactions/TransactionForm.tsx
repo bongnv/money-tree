@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { assetService } from '../../services/asset.service';
 import { Box, Button, MenuItem, Alert, Autocomplete, TextField } from '@mui/material';
 import { FormTextField } from '../common/FormTextField';
 import { FormDatePicker } from '../common/FormDatePicker';
@@ -6,7 +8,6 @@ import type { Transaction, Account, TransactionType, Category } from '../../type
 import { Group } from '../../types/enums';
 import { getTodayDate } from '../../utils/date.utils';
 import { validationService, ValidationError } from '../../services/validation.service';
-import { useAssets } from '../../hooks/queries/useAssets';
 
 interface TransactionFormProps {
   transaction?: Transaction;
@@ -40,7 +41,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const manualAssets = useAssets();
+  const manualAssets = useLiveQuery(() => assetService.getActive()) ?? [];
 
   // Derive selected group from transaction type
   const selectedGroup = useMemo(() => {

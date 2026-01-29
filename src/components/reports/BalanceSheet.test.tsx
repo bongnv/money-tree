@@ -25,16 +25,6 @@ jest.mock('../../contexts/ServiceProviders', () => ({
 }));
 
 // Mock hooks
-jest.mock('../../hooks/queries/useAccounts');
-jest.mock('../../hooks/queries', () => ({
-  useBaseCurrency: jest.fn(() => 'USD'),
-}));
-jest.mock('../../hooks/queries/useAssets');
-jest.mock('../../hooks/queries/useTransactions');
-jest.mock('../../contexts/AppContext', () => ({
-  ...jest.requireActual('../../contexts/AppContext'),
-  useAppContext: jest.fn(),
-}));
 
 // Mock chart components
 jest.mock('../common/charts/LineChart', () => ({

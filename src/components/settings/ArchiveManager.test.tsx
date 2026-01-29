@@ -20,25 +20,16 @@ const mockArchiveService = {
   updateMainFileAfterArchive: jest.fn(),
 };
 
-// Mock sync service
-const mockSyncService = {
-  fullSync: jest.fn(),
-  debouncedSync: jest.fn(),
-  isConnected: true,
-  isInitializing: false,
-  isSyncing: false,
-};
-
-// Mock sync metadata mutations
-const mockAddArchivedYear = jest.fn();
-
-// Mock the hooks
+// Mock the hooks and services
 jest.mock('../../contexts/ServiceProviders', () => ({
   useArchiveService: () => mockArchiveService,
 }));
 
-jest.mock('../../contexts/SyncProvider', () => ({
-  useSyncService: () => mockSyncService,
+jest.mock('../../services/syncMetadata.service', () => ({
+  syncMetadataService: {
+    addArchivedYear: jest.fn(),
+    setBaseCurrency: jest.fn(),
+  },
 }));
 
 const mockUseBaseCurrency = jest.fn(() => 'USD');
@@ -49,18 +40,11 @@ jest.mock('../../hooks/queries', () => ({
   useArchivedYears: () => mockUseArchivedYears(),
 }));
 
-jest.mock('../../hooks/mutations', () => ({
-  useSyncMetadataMutations: () => ({
-    addArchivedYear: mockAddArchivedYear,
-    setBaseCurrency: jest.fn(),
-    isLoading: false,
-    error: null,
-  }),
-}));
+// Import the mocked service to access in tests
+import { syncMetadataService } from '../../services/syncMetadata.service';
 
 describe('ArchiveManager', () => {
   beforeEach(() => {
-    mockAddArchivedYear.mockClear();
     jest.clearAllMocks();
     mockArchiveService.identifyArchivableYear.mockResolvedValue(null);
     mockUseArchivedYears.mockReturnValue([]);
@@ -221,7 +205,7 @@ describe('ArchiveManager', () => {
       await waitFor(() => {
         expect(mockArchiveService.createArchiveFile).toHaveBeenCalledWith(2022, 'USD');
         expect(mockArchiveService.saveArchiveFile).toHaveBeenCalledWith(mockArchiveFile);
-        expect(mockAddArchivedYear).toHaveBeenCalledWith(
+        expect(syncMetadataService.addArchivedYear).toHaveBeenCalledWith(
           expect.objectContaining({
             year: 2022,
             archivedDate: '2024-01-15T00:00:00Z',

@@ -3,10 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { TransactionForm } from './TransactionForm';
 import type { Transaction, Account, TransactionType, Category } from '../../types/models';
 import { Group, AccountType } from '../../types/enums';
-import { useAssets } from '../../hooks/queries/useAssets';
 
-jest.mock('../../hooks/queries/useAssets');
-const mockUseAssets = useAssets as jest.MockedFunction<typeof useAssets>;
 
 beforeEach(() => {
   mockUseAssets.mockReturnValue([

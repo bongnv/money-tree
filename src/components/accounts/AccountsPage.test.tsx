@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AccountsPage } from './AccountsPage';
 import { useAccounts } from '../../hooks/queries/useAccounts';
-import { useAccountMutations } from '../../hooks/mutations/useAccountMutations';
+import { accountService } from '../../services/account.service';
 import { AccountType } from '../../types/enums';
 import type { Account } from '../../types/models';
 
@@ -16,7 +16,7 @@ jest.mock('../../contexts/ServiceProviders', () => ({
 }));
 
 jest.mock('../../hooks/queries/useAccounts');
-jest.mock('../../hooks/mutations/useAccountMutations');
+jest.mock('../../services/account.service');
 
 describe('AccountsPage', () => {
   const mockAccounts: Account[] = [
@@ -32,18 +32,16 @@ describe('AccountsPage', () => {
     },
   ];
 
-  const mockAddAccount = jest.fn();
-  const mockUpdateAccount = jest.fn();
-  const mockDeleteAccount = jest.fn();
+  const mockCreate = jest.fn();
+  const mockUpdate = jest.fn();
+  const mockDelete = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
     (useAccounts as jest.Mock).mockReturnValue(mockAccounts);
-    (useAccountMutations as jest.Mock).mockReturnValue({
-      addAccount: mockAddAccount,
-      updateAccount: mockUpdateAccount,
-      deleteAccount: mockDeleteAccount,
-    });
+    (accountService.create as jest.Mock) = mockCreate;
+    (accountService.update as jest.Mock) = mockUpdate;
+    (accountService.delete as jest.Mock) = mockDelete;
   });
 
   it('should render accounts page with title', () => {
@@ -98,10 +96,11 @@ describe('AccountsPage', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockAddAccount).toHaveBeenCalled();
-      const addedAccount = mockAddAccount.mock.calls[0][0];
-      expect(addedAccount.name).toBe('New Account');
-      expect(addedAccount.id).toMatch(/^acc-/);
+      expect(mockCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'New Account',
+        })
+      );
     });
   });
 
@@ -131,7 +130,7 @@ describe('AccountsPage', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockUpdateAccount).toHaveBeenCalledWith(
+      expect(mockUpdate).toHaveBeenCalledWith(
         'acc-1',
         expect.objectContaining({
           name: 'Updated Account',
@@ -164,7 +163,7 @@ describe('AccountsPage', () => {
     await user.click(confirmButton);
 
     await waitFor(() => {
-      expect(mockDeleteAccount).toHaveBeenCalledWith('acc-1');
+      expect(mockDelete).toHaveBeenCalledWith('acc-1');
     });
   });
 
@@ -179,7 +178,7 @@ describe('AccountsPage', () => {
     await user.click(cancelButton);
 
     await waitFor(() => {
-      expect(mockDeleteAccount).not.toHaveBeenCalled();
+      expect(mockDelete).not.toHaveBeenCalled();
     });
   });
 

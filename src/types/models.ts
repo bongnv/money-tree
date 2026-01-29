@@ -23,6 +23,7 @@ export interface Account {
   initialBalance: number;
   description?: string;
   isActive: boolean;
+  isDeleted: boolean;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }
@@ -50,7 +51,8 @@ export interface TransactionType {
   categoryId: string;
   group: Group;
   description?: string;
-  isActive?: boolean;
+  isActive: boolean;
+  isDeleted: boolean;
   defaultFromAccountId?: string; // Default from account (TRANSFER group only)
   defaultToAccountId?: string; // Default to account (TRANSFER group only)
   createdAt: string; // ISO date string

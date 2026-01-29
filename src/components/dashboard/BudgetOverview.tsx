@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { budgetService } from '../../services/budget.service';
+import { transactionTypeService } from '../../services/transactionType.service';
+import { accountService } from '../../services/account.service';
+import { transactionService } from '../../services/transaction.service';
+import { syncMetadataService } from '../../services/syncMetadata.service';
 import { Box, Typography, Button, Paper } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { BudgetProgressBar } from './BudgetProgressBar';
-import { useBudgets } from '../../hooks/queries/useBudgets';
-import { useTransactions } from '../../hooks/queries/useTransactions';
-import { useTransactionTypes } from '../../hooks/queries/useTransactionTypes';
-import { useAccounts } from '../../hooks/queries/useAccounts';
-import { useBaseCurrency } from '../../hooks/queries';
 import { useCalculationService } from '../../contexts/ServiceProviders';
 import type { PeriodOption } from '../common/PeriodSelector';
-import { Group } from '../../types/enums';
+import { Group, CurrencyCode } from '../../types/enums';
 
 export interface BudgetOverviewProps {
   period: PeriodOption;
@@ -25,11 +26,12 @@ interface BudgetWithUsage {
 }
 
 export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ period }) => {
-  const budgets = useBudgets();
-  const transactions = useTransactions();
-  const transactionTypes = useTransactionTypes();
-  const accounts = useAccounts();
-  const baseCurrency = useBaseCurrency();
+  const budgets = useLiveQuery(() => budgetService.getActive()) ?? [];
+  const transactions = useLiveQuery(() => transactionService.getActive()) ?? [];
+  const transactionTypes = useLiveQuery(() => transactionTypeService.getActive()) ?? [];
+  const accounts = useLiveQuery(() => accountService.getActive()) ?? [];
+  const baseCurrency =
+    useLiveQuery(() => syncMetadataService.getBaseCurrency()) || CurrencyCode.USD;
   const calculationService = useCalculationService();
 
   const [budgetsWithUsage, setBudgetsWithUsage] = useState<BudgetWithUsage[]>([]);

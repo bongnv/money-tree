@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import {
   Box,
   Paper,
@@ -12,15 +13,14 @@ import {
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
 import { DataSyncSettings } from './DataSyncSettings';
 import { CurrencyCode } from '../../types/enums';
-import { useBaseCurrency } from '../../hooks/queries';
-import { useSyncMetadataMutations } from '../../hooks/mutations';
+import { syncMetadataService } from '../../services/syncMetadata.service';
 
 export const PreferencesPage: React.FC = () => {
-  const baseCurrency = useBaseCurrency();
-  const { setBaseCurrency } = useSyncMetadataMutations();
-
+  const baseCurrency =
+    useLiveQuery(() => syncMetadataService.getBaseCurrency()) || CurrencyCode.USD;
   const handleCurrencyChange = async (newCurrency: CurrencyCode) => {
-    await setBaseCurrency(newCurrency);
+    await syncMetadataService.setBaseCurrency(newCurrency);
+    // Sync triggered automatically by SyncProvider watching lastModified
   };
 
   return (

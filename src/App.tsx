@@ -1,4 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { syncMetadataService } from './services/syncMetadata.service';
+import { CurrencyCode } from './types/enums';
 import { BrowserRouter, useNavigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -13,13 +16,13 @@ import { AppRoutes } from './routes';
 import { AppProvider, useAppContext } from './contexts/AppContext';
 import { ServiceProvider, useArchiveService } from './contexts/ServiceProviders';
 import { SyncProvider, useSyncService } from './contexts/SyncProvider';
-import { useBaseCurrency } from './hooks/queries';
 
 const AppContent: React.FC = () => {
   const navigate = useNavigate();
   const syncService = useSyncService();
   const archiveService = useArchiveService();
-  const baseCurrency = useBaseCurrency();
+  const baseCurrency =
+    useLiveQuery(() => syncMetadataService.getBaseCurrency()) || CurrencyCode.USD;
   const { snackbar, hideSnackbar, isLoading, welcomeDismissed, setWelcomeDismissed } =
     useAppContext();
 

@@ -20,11 +20,17 @@ jest.mock('./db/database', () => ({
   },
 }));
 
-// Mock Dexie hooks
-jest.mock('./hooks/queries', () => ({
-  ...jest.requireActual('./hooks/queries'),
-  useBaseCurrency: jest.fn(() => 'USD'),
-  useLastSynced: jest.fn(() => null),
+// Mock dexie-react-hooks
+jest.mock('dexie-react-hooks', () => ({
+  useLiveQuery: jest.fn((queryFn) => {
+    // Mock the query function to return default values
+    const result = queryFn?.();
+    if (result?.then) {
+      // If it's a promise, we can't resolve it synchronously in tests
+      return undefined;
+    }
+    return result;
+  }),
 }));
 
 // Mock cloudSync service

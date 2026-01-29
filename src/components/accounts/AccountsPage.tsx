@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { accountService } from '../../services/account.service';
 import {
   Box,
   Typography,
@@ -11,14 +13,11 @@ import {
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import type { Account } from '../../types/models';
-import { useAccounts } from '../../hooks/queries/useAccounts';
-import { useAccountMutations } from '../../hooks/mutations/useAccountMutations';
 import { AccountList } from './AccountList';
 import { AccountDialog } from './AccountDialog';
 
 export const AccountsPage: React.FC = () => {
-  const accounts = useAccounts();
-  const { addAccount, updateAccount, deleteAccount } = useAccountMutations();
+  const accounts = useLiveQuery(() => accountService.getActive()) ?? [];
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | undefined>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -45,8 +44,8 @@ export const AccountsPage: React.FC = () => {
   };
 
   const handleConfirmDelete = async () => {
-    if (accountToDelete) {
-      await deleteAccount(accountToDelete.id);
+    if (accountToDelete?.id) {
+      await accountService.delete(accountToDelete.id);
     }
     setDeleteDialogOpen(false);
     setAccountToDelete(undefined);
@@ -58,16 +57,10 @@ export const AccountsPage: React.FC = () => {
   };
 
   const handleSubmit = async (accountData: Omit<Account, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (selectedAccount) {
-      await updateAccount(selectedAccount.id, accountData);
+    if (selectedAccount?.id) {
+      await accountService.update(selectedAccount.id, accountData);
     } else {
-      const newAccount: Account = {
-        ...accountData,
-        id: `acc-${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      await addAccount(newAccount);
+      await accountService.create(accountData);
     }
   };
 

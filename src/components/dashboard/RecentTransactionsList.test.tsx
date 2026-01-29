@@ -2,17 +2,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { RecentTransactionsList } from './RecentTransactionsList';
-import { useTransactions } from '../../hooks/queries/useTransactions';
-import { useTransactionTypes } from '../../hooks/queries/useTransactionTypes';
 import { Group } from '../../types/enums';
 
-jest.mock('../../hooks/queries/useTransactions');
-jest.mock('../../hooks/queries/useTransactionTypes');
 
-const mockUseTransactions = useTransactions as jest.MockedFunction<typeof useTransactions>;
-const mockUseTransactionTypes = useTransactionTypes as jest.MockedFunction<
-  typeof useTransactionTypes
->;
 
 describe('RecentTransactionsList', () => {
   const mockTransactions = [
@@ -70,8 +62,6 @@ describe('RecentTransactionsList', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockUseTransactions.mockReturnValue(mockTransactions);
-    mockUseTransactionTypes.mockReturnValue(mockTransactionTypes);
   });
 
   it('renders recent transactions sorted by date', () => {
@@ -123,7 +113,6 @@ describe('RecentTransactionsList', () => {
       updatedAt: `2026-01-${String(i + 1).padStart(2, '0')}T00:00:00.000Z`,
     }));
 
-    mockUseTransactions.mockReturnValue(manyTransactions);
 
     render(
       <BrowserRouter>
@@ -136,7 +125,6 @@ describe('RecentTransactionsList', () => {
   });
 
   it('shows empty state when no transactions', () => {
-    mockUseTransactions.mockReturnValue([]);
 
     render(
       <BrowserRouter>

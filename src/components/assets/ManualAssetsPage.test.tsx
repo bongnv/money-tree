@@ -1,21 +1,19 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ManualAssetsPage } from './ManualAssetsPage';
 import { useAssets } from '../../hooks/queries/useAssets';
-import { useAssetMutations } from '../../hooks/mutations/useAssetMutations';
+import { assetService } from '../../services/asset.service';
 import { AssetType } from '../../types/enums';
 
 jest.mock('../../hooks/queries/useAssets');
-jest.mock('../../hooks/mutations/useAssetMutations');
+jest.mock('../../services/asset.service');
 
 describe('ManualAssetsPage', () => {
-  const mockDeleteManualAsset = jest.fn();
+  const mockDelete = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
     (useAssets as jest.Mock).mockReturnValue([]);
-    (useAssetMutations as jest.Mock).mockReturnValue({
-      deleteAsset: mockDeleteManualAsset,
-    });
+    (assetService.delete as jest.Mock) = mockDelete;
   });
 
   it('should render page title', () => {
@@ -122,7 +120,7 @@ describe('ManualAssetsPage', () => {
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
-      expect(mockDeleteManualAsset).toHaveBeenCalledWith('asset-1');
+      expect(mockDelete).toHaveBeenCalledWith('asset-1');
     });
   });
 
@@ -148,7 +146,7 @@ describe('ManualAssetsPage', () => {
     fireEvent.click(cancelButton);
 
     await waitFor(() => {
-      expect(mockDeleteManualAsset).not.toHaveBeenCalled();
+      expect(mockDelete).not.toHaveBeenCalled();
       expect(screen.queryByText('Delete Asset')).not.toBeInTheDocument();
     });
   });

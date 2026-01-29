@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { syncMetadataService } from '../../services/syncMetadata.service';
+import { CurrencyCode } from '../../types/enums';
 import {
   Box,
   Paper,
@@ -25,15 +28,13 @@ import { useArchiveService } from '../../contexts/ServiceProviders';
 import { useAppContext } from '../../contexts/AppContext';
 import { formatCurrency } from '../../utils/currency.utils';
 import type { YearEndSummary } from '../../types/models';
-import { useBaseCurrency, useArchivedYears } from '../../hooks/queries';
-import { useSyncMetadataMutations } from '../../hooks/mutations';
 
 export const ArchiveManager: React.FC = () => {
   const archiveService = useArchiveService();
-  const { addArchivedYear } = useSyncMetadataMutations();
   const { showSnackbar } = useAppContext();
-  const baseCurrency = useBaseCurrency();
-  const archivedYears = useArchivedYears();
+  const baseCurrency =
+    useLiveQuery(() => syncMetadataService.getBaseCurrency()) || CurrencyCode.USD;
+  const archivedYears = useLiveQuery(() => syncMetadataService.getArchivedYears()) ?? [];
   const [isExporting, setIsExporting] = useState(false);
   const [exportingYear, setExportingYear] = useState<number | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; year: number | null }>({
@@ -97,13 +98,14 @@ export const ArchiveManager: React.FC = () => {
       // Save archive (removes transactions, updates balances, removes budgets)
       await archiveService.saveArchiveFile(archiveFile);
 
-      // Create and add archive reference (triggers sync via hook)
+      // Create and add archive reference (sync triggered automatically)
       const archiveReference = {
         year,
         archivedDate: archiveFile.archivedDate,
         summary: archiveFile.summary,
       };
-      await addArchivedYear(archiveReference);
+      await syncMetadataService.addArchivedYear(archiveReference);
+      // Sync triggered automatically by SyncProvider watching lastModified
 
       // Update main file - remove archived data
       archiveService.updateMainFileAfterArchive(year, archiveReference);

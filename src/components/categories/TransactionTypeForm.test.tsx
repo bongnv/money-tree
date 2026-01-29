@@ -10,18 +10,6 @@ const mockAddTransactionType = jest.fn();
 const mockUpdateTransactionType = jest.fn();
 const mockDeleteTransactionType = jest.fn();
 
-jest.mock('../../hooks/queries/useAccounts', () => ({
-  useAccounts: () => mockUseAccounts(),
-}));
-
-jest.mock('../../hooks/mutations/useTransactionTypeMutations', () => ({
-  useTransactionTypeMutations: () => ({
-    addTransactionType: mockAddTransactionType,
-    updateTransactionType: mockUpdateTransactionType,
-    deleteTransactionType: mockDeleteTransactionType,
-  }),
-}));
-
 // Mock cloudSync
 jest.mock('../../services/cloudSync.service', () => ({
   getCloudSyncService: jest.fn(() => ({

@@ -57,30 +57,6 @@ jest.mock('../../hooks/queries', () => ({
   useBaseCurrency: jest.fn(() => 'USD'),
 }));
 
-jest.mock('../../hooks/queries/useAccounts', () => ({
-  useAccounts: jest.fn(() => []),
-}));
-
-jest.mock('../../hooks/queries/useCategories', () => ({
-  useCategories: jest.fn(() => []),
-}));
-
-jest.mock('../../hooks/queries/useTransactionTypes', () => ({
-  useTransactionTypes: jest.fn(() => []),
-}));
-
-jest.mock('../../hooks/queries/useTransactions', () => ({
-  useTransactions: jest.fn(() => []),
-}));
-
-jest.mock('../../hooks/queries/useAssets', () => ({
-  useAssets: jest.fn(() => []),
-}));
-
-jest.mock('../../hooks/queries/useBudgets', () => ({
-  useBudgets: jest.fn(() => []),
-}));
-
 describe('PreferencesPage', () => {
   const renderComponent = () =>
     render(

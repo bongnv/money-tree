@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import {
   Box,
@@ -12,11 +13,11 @@ import {
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import type { Transaction } from '../../types/models';
-import { useTransactions } from '../../hooks/queries/useTransactions';
-import { useTransactionMutations } from '../../hooks/mutations/useTransactionMutations';
-import { useAccounts } from '../../hooks/queries/useAccounts';
-import { useCategories, useTransactionTypes } from '../../hooks/queries';
-import { useAssets } from '../../hooks/queries/useAssets';
+import { transactionService } from '../../services/transaction.service';
+import { accountService } from '../../services/account.service';
+import { assetService } from '../../services/asset.service';
+import { categoryService } from '../../services/category.service';
+import { transactionTypeService } from '../../services/transactionType.service';
 import { TransactionDialog } from './TransactionDialog';
 import { TransactionList } from './TransactionList';
 import { TransactionFilters, TransactionFiltersState } from './TransactionFilters';
@@ -26,12 +27,11 @@ import { getTodayDate } from '../../utils/date.utils';
 export const TransactionsPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  const transactions = useTransactions();
-  const { addTransaction, updateTransaction, deleteTransaction } = useTransactionMutations();
-  const accounts = useAccounts();
-  const categories = useCategories();
-  const transactionTypes = useTransactionTypes();
-  const manualAssets = useAssets();
+  const transactions = useLiveQuery(() => transactionService.getActive()) ?? [];
+  const accounts = useLiveQuery(() => accountService.getActive()) ?? [];
+  const categories = useLiveQuery(() => categoryService.getActive()) ?? [];
+  const transactionTypes = useLiveQuery(() => transactionTypeService.getActive()) ?? [];
+  const manualAssets = useLiveQuery(() => assetService.getActive()) ?? [];
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | undefined>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -161,8 +161,8 @@ export const TransactionsPage: React.FC = () => {
   };
 
   const handleConfirmDelete = async () => {
-    if (transactionToDelete) {
-      await deleteTransaction(transactionToDelete.id);
+    if (transactionToDelete?.id) {
+      await transactionService.delete(transactionToDelete.id);
     }
     setDeleteDialogOpen(false);
     setTransactionToDelete(undefined);
@@ -176,17 +176,10 @@ export const TransactionsPage: React.FC = () => {
   const handleSubmit = async (
     transactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
   ) => {
-    if (selectedTransaction) {
-      await updateTransaction(selectedTransaction.id, transactionData);
+    if (selectedTransaction?.id) {
+      await transactionService.update(selectedTransaction.id, transactionData);
     } else {
-      const newTransaction: Transaction = {
-        ...transactionData,
-        id: `txn-${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        isDeleted: false,
-      };
-      await addTransaction(newTransaction);
+      await transactionService.create(transactionData);
     }
   };
 

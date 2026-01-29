@@ -11,14 +11,6 @@ import { useAccounts } from '../../hooks/queries/useAccounts';
 import { useTransactionTypes } from '../../hooks/queries/useTransactionTypes';
 
 // Mock Dexie hooks
-jest.mock('../../hooks/queries/useBudgets');
-jest.mock('../../hooks/queries/useTransactions');
-jest.mock('../../hooks/queries/useCategories');
-jest.mock('../../hooks/queries/useAccounts');
-jest.mock('../../hooks/queries/useTransactionTypes');
-jest.mock('../../hooks/queries', () => ({
-  useBaseCurrency: jest.fn(() => 'USD'),
-}));
 
 // Mock services
 const mockCalculationService = {

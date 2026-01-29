@@ -1,4 +1,11 @@
 import React, { useMemo } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { budgetService } from '../../services/budget.service';
+import { categoryService } from '../../services/category.service';
+import { transactionTypeService } from '../../services/transactionType.service';
+import { accountService } from '../../services/account.service';
+import { assetService } from '../../services/asset.service';
+import { transactionService } from '../../services/transaction.service';
 import {
   Box,
   Typography,
@@ -17,12 +24,6 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { useSyncService } from '../../contexts/SyncProvider';
 import { formatDistance } from 'date-fns';
 import { useAppContext } from '../../contexts/AppContext';
-import { useAccounts } from '../../hooks/queries/useAccounts';
-import { useCategories } from '../../hooks/queries/useCategories';
-import { useTransactionTypes } from '../../hooks/queries/useTransactionTypes';
-import { useTransactions } from '../../hooks/queries/useTransactions';
-import { useAssets } from '../../hooks/queries/useAssets';
-import { useBudgets } from '../../hooks/queries/useBudgets';
 import { db } from '../../db/database';
 
 export const DataSyncSettings: React.FC = () => {
@@ -31,12 +32,12 @@ export const DataSyncSettings: React.FC = () => {
   const cloudFileName = syncService.fileName;
   const lastSynced = syncService.lastSynced;
   const { setWelcomeDismissed } = useAppContext();
-  const accounts = useAccounts();
-  const categories = useCategories();
-  const transactionTypes = useTransactionTypes();
-  const transactions = useTransactions();
-  const assets = useAssets();
-  const budgets = useBudgets();
+  const accounts = useLiveQuery(() => accountService.getActive()) ?? [];
+  const categories = useLiveQuery(() => categoryService.getActive()) ?? [];
+  const transactionTypes = useLiveQuery(() => transactionTypeService.getActive()) ?? [];
+  const transactions = useLiveQuery(() => transactionService.getActive()) ?? [];
+  const assets = useLiveQuery(() => assetService.getActive()) ?? [];
+  const budgets = useLiveQuery(() => budgetService.getActive()) ?? [];
 
   const [disconnectDialogOpen, setDisconnectDialogOpen] = React.useState(false);
 

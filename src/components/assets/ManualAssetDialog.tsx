@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, Box, Typography, Alert } from '@mui/material';
 import { ManualAssetForm } from './ManualAssetForm';
-import { useAssetMutations } from '../../hooks/mutations/useAssetMutations';
+import { assetService } from '../../services/asset.service';
 import type { ManualAsset } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
 import { formatDate, getTodayDate } from '../../utils/date.utils';
@@ -21,7 +21,6 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
   onClose,
   mode = 'create',
 }) => {
-  const { addAsset, updateAsset, updateAssetValue } = useAssetMutations();
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [previousValue, setPreviousValue] = useState<{ value: number; date: string } | null>(null);
 
@@ -52,27 +51,23 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
       setPreviousValue({ value: currentValue, date: latestEntry.date });
       // Extract the new value entry from assetData
       const newEntry = assetData.valueHistory[assetData.valueHistory.length - 1];
-      await updateAssetValue(asset.id, newEntry.value, newEntry.date, newEntry.notes);
+      await assetService.addValueHistory(asset.id, {
+        value: newEntry.value,
+        date: newEntry.date,
+        notes: newEntry.notes,
+      });
       setShowSuccessMessage(true);
       // Auto-close after showing success message
       setTimeout(() => {
         handleClose();
       }, 2000);
-    } else if (asset) {
+    } else if (asset?.id) {
       // Regular edit workflow
-      await updateAsset(asset.id, assetData);
+      await assetService.update(asset.id, assetData);
       handleClose();
     } else {
       // Create new asset
-      const now = new Date().toISOString();
-      const newAsset: ManualAsset = {
-        ...assetData,
-        id: crypto.randomUUID(),
-        createdAt: now,
-        updatedAt: now,
-        isDeleted: false,
-      };
-      await addAsset(newAsset);
+      await assetService.create(assetData);
       handleClose();
     }
   };

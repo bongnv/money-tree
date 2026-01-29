@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useMemo, ReactNode } from 'react';
 import { CalculationService } from '../services/calculation.service';
 import { ReportService } from '../services/report.service';
-import { db, syncMetadata } from '../db/database';
+import { db } from '../db/database';
+import { syncMetadataService } from '../services/syncMetadata.service';
 import type { ArchivedYearReference, YearEndSummary } from '../types/models';
 import { CurrencyCode } from '../types/enums';
 
@@ -99,7 +100,7 @@ class DexieArchiveService {
    * Get list of archived years
    */
   async getArchivedYears(): Promise<ArchivedYearReference[]> {
-    return await syncMetadata.getArchivedYears();
+    return await syncMetadataService.getArchivedYears();
   }
 
   /**

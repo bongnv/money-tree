@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { assetService } from '../../services/asset.service';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -24,7 +26,6 @@ import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import { AssetGroup } from '../../services/report.service';
 import { formatCurrency } from '../../utils/currency.utils';
 import { LineChart } from '../common/charts/LineChart';
-import { useAssets } from '../../hooks/queries/useAssets';
 import { getCompleteValueHistory, calculateAssetValueGrowth } from '../../utils/asset.utils';
 import type { CurrencyCode } from '../../types/enums';
 
@@ -46,7 +47,7 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
   const navigate = useNavigate();
   const [expandedAssetId, setExpandedAssetId] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>('1y');
-  const manualAssets = useAssets();
+  const manualAssets = useLiveQuery(() => assetService.getActive()) ?? [];
 
   const total = groups.reduce((sum, group) => sum + group.total, 0);
 

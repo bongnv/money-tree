@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { TransactionsPage } from './TransactionsPage';
 import { useTransactions } from '../../hooks/queries/useTransactions';
-import { useTransactionMutations } from '../../hooks/mutations/useTransactionMutations';
+import { transactionService } from '../../services/transaction.service';
 import { useAccounts } from '../../hooks/queries/useAccounts';
 import { useCategories } from '../../hooks/queries/useCategories';
 import { useTransactionTypes } from '../../hooks/queries/useTransactionTypes';
@@ -13,14 +13,14 @@ import type { Transaction, Account, Category, TransactionType } from '../../type
 import { Group, AccountType, CurrencyCode } from '../../types/enums';
 
 jest.mock('../../hooks/queries/useTransactions');
-jest.mock('../../hooks/mutations/useTransactionMutations');
+jest.mock('../../services/transaction.service');
 jest.mock('../../hooks/queries/useAccounts');
 jest.mock('../../hooks/queries/useCategories');
 jest.mock('../../hooks/queries/useTransactionTypes');
 jest.mock('../../hooks/queries/useAssets');
 
 const mockUseTransactions = useTransactions as jest.Mock;
-const mockUseTransactionMutations = useTransactionMutations as jest.Mock;
+// Transaction service is mocked at module level
 const mockUseAccounts = useAccounts as jest.Mock;
 const mockUseCategories = useCategories as jest.Mock;
 const mockUseTransactionTypes = useTransactionTypes as jest.Mock;
@@ -86,11 +86,9 @@ describe('TransactionsPage', () => {
     jest.clearAllMocks();
 
     mockUseTransactions.mockReturnValue([]);
-    mockUseTransactionMutations.mockReturnValue({
-      addTransaction: mockAddTransaction,
-      updateTransaction: mockUpdateTransaction,
-      deleteTransaction: mockDeleteTransaction,
-    });
+    (transactionService.create as jest.Mock) = mockAddTransaction;
+    (transactionService.update as jest.Mock) = mockUpdateTransaction;
+    (transactionService.delete as jest.Mock) = mockDeleteTransaction;
 
     mockUseAccounts.mockReturnValue(mockAccounts);
     mockUseCategories.mockReturnValue(mockCategories);

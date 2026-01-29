@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BudgetsPage } from './BudgetsPage';
 import { useBudgets } from '../../hooks/queries/useBudgets';
-import { useBudgetMutations } from '../../hooks/mutations/useBudgetMutations';
+import { budgetService } from '../../services/budget.service';
 import { useCategories } from '../../hooks/queries/useCategories';
 import { useTransactionTypes } from '../../hooks/queries/useTransactionTypes';
 import { useTransactions } from '../../hooks/queries/useTransactions';
@@ -87,7 +87,7 @@ jest.mock('../../contexts/ServiceProviders', () => ({
 
 // Mock the hooks
 jest.mock('../../hooks/queries/useBudgets');
-jest.mock('../../hooks/mutations/useBudgetMutations');
+jest.mock('../../services/budget.service');
 jest.mock('../../hooks/queries/useCategories');
 jest.mock('../../hooks/queries/useTransactionTypes');
 jest.mock('../../hooks/queries/useTransactions');
@@ -207,12 +207,9 @@ describe('BudgetsPage', () => {
 
   it('should render page title and Add Budget button', () => {
     (useBudgets as jest.MockedFunction<typeof useBudgets>).mockReturnValue([]);
-    (useBudgetMutations as jest.MockedFunction<typeof useBudgetMutations>).mockReturnValue({
-      addBudget: mockAddBudget,
-      updateBudget: mockUpdateBudget,
-      deleteBudget: mockDeleteBudget,
-      getBudgetByTransactionTypeId: mockGetBudgetByTransactionTypeId,
-    });
+    (budgetService.create as jest.Mock) = mockAddBudget;
+    (budgetService.update as jest.Mock) = mockUpdateBudget;
+    (budgetService.delete as jest.Mock) = mockDeleteBudget;
 
     render(<BudgetsPage />);
 
@@ -223,12 +220,9 @@ describe('BudgetsPage', () => {
 
   it('should show empty state when no budgets exist', () => {
     (useBudgets as jest.MockedFunction<typeof useBudgets>).mockReturnValue([]);
-    (useBudgetMutations as jest.MockedFunction<typeof useBudgetMutations>).mockReturnValue({
-      addBudget: mockAddBudget,
-      updateBudget: mockUpdateBudget,
-      deleteBudget: mockDeleteBudget,
-      getBudgetByTransactionTypeId: mockGetBudgetByTransactionTypeId,
-    });
+    (budgetService.create as jest.Mock) = mockAddBudget;
+    (budgetService.update as jest.Mock) = mockUpdateBudget;
+    (budgetService.delete as jest.Mock) = mockDeleteBudget;
 
     render(<BudgetsPage />);
 
@@ -240,12 +234,9 @@ describe('BudgetsPage', () => {
 
   it('should display budget items grouped by category', async () => {
     (useBudgets as jest.MockedFunction<typeof useBudgets>).mockReturnValue([mockBudget]);
-    (useBudgetMutations as jest.MockedFunction<typeof useBudgetMutations>).mockReturnValue({
-      addBudget: mockAddBudget,
-      updateBudget: mockUpdateBudget,
-      deleteBudget: mockDeleteBudget,
-      getBudgetByTransactionTypeId: mockGetBudgetByTransactionTypeId,
-    });
+    (budgetService.create as jest.Mock) = mockAddBudget;
+    (budgetService.update as jest.Mock) = mockUpdateBudget;
+    (budgetService.delete as jest.Mock) = mockDeleteBudget;
 
     render(<BudgetsPage />);
 
@@ -260,12 +251,9 @@ describe('BudgetsPage', () => {
 
   it('should open dialog when Add Budget button is clicked', () => {
     (useBudgets as jest.MockedFunction<typeof useBudgets>).mockReturnValue([]);
-    (useBudgetMutations as jest.MockedFunction<typeof useBudgetMutations>).mockReturnValue({
-      addBudget: mockAddBudget,
-      updateBudget: mockUpdateBudget,
-      deleteBudget: mockDeleteBudget,
-      getBudgetByTransactionTypeId: mockGetBudgetByTransactionTypeId,
-    });
+    (budgetService.create as jest.Mock) = mockAddBudget;
+    (budgetService.update as jest.Mock) = mockUpdateBudget;
+    (budgetService.delete as jest.Mock) = mockDeleteBudget;
 
     render(<BudgetsPage />);
 
@@ -278,12 +266,9 @@ describe('BudgetsPage', () => {
 
   it('should show edit dialog when edit button is clicked', async () => {
     (useBudgets as jest.MockedFunction<typeof useBudgets>).mockReturnValue([mockBudget]);
-    (useBudgetMutations as jest.MockedFunction<typeof useBudgetMutations>).mockReturnValue({
-      addBudget: mockAddBudget,
-      updateBudget: mockUpdateBudget,
-      deleteBudget: mockDeleteBudget,
-      getBudgetByTransactionTypeId: mockGetBudgetByTransactionTypeId,
-    });
+    (budgetService.create as jest.Mock) = mockAddBudget;
+    (budgetService.update as jest.Mock) = mockUpdateBudget;
+    (budgetService.delete as jest.Mock) = mockDeleteBudget;
 
     render(<BudgetsPage />);
 
@@ -296,12 +281,9 @@ describe('BudgetsPage', () => {
 
   it('should call deleteBudget when delete button is clicked and confirmed', async () => {
     (useBudgets as jest.MockedFunction<typeof useBudgets>).mockReturnValue([mockBudget]);
-    (useBudgetMutations as jest.MockedFunction<typeof useBudgetMutations>).mockReturnValue({
-      addBudget: mockAddBudget,
-      updateBudget: mockUpdateBudget,
-      deleteBudget: mockDeleteBudget,
-      getBudgetByTransactionTypeId: mockGetBudgetByTransactionTypeId,
-    });
+    (budgetService.create as jest.Mock) = mockAddBudget;
+    (budgetService.update as jest.Mock) = mockUpdateBudget;
+    (budgetService.delete as jest.Mock) = mockDeleteBudget;
 
     render(<BudgetsPage />);
 
@@ -316,12 +298,9 @@ describe('BudgetsPage', () => {
     window.confirm = jest.fn(() => false);
 
     (useBudgets as jest.MockedFunction<typeof useBudgets>).mockReturnValue([mockBudget]);
-    (useBudgetMutations as jest.MockedFunction<typeof useBudgetMutations>).mockReturnValue({
-      addBudget: mockAddBudget,
-      updateBudget: mockUpdateBudget,
-      deleteBudget: mockDeleteBudget,
-      getBudgetByTransactionTypeId: mockGetBudgetByTransactionTypeId,
-    });
+    (budgetService.create as jest.Mock) = mockAddBudget;
+    (budgetService.update as jest.Mock) = mockUpdateBudget;
+    (budgetService.delete as jest.Mock) = mockDeleteBudget;
 
     render(<BudgetsPage />);
 
@@ -364,12 +343,9 @@ describe('BudgetsPage', () => {
       quarterlyBudget,
       yearlyBudget,
     ]);
-    (useBudgetMutations as jest.MockedFunction<typeof useBudgetMutations>).mockReturnValue({
-      addBudget: mockAddBudget,
-      updateBudget: mockUpdateBudget,
-      deleteBudget: mockDeleteBudget,
-      getBudgetByTransactionTypeId: mockGetBudgetByTransactionTypeId,
-    });
+    (budgetService.create as jest.Mock) = mockAddBudget;
+    (budgetService.update as jest.Mock) = mockUpdateBudget;
+    (budgetService.delete as jest.Mock) = mockDeleteBudget;
 
     render(<BudgetsPage />);
 
@@ -386,12 +362,9 @@ describe('BudgetsPage', () => {
 
   it('should display progress bars with actual spending', async () => {
     (useBudgets as jest.MockedFunction<typeof useBudgets>).mockReturnValue([mockBudget]);
-    (useBudgetMutations as jest.MockedFunction<typeof useBudgetMutations>).mockReturnValue({
-      addBudget: mockAddBudget,
-      updateBudget: mockUpdateBudget,
-      deleteBudget: mockDeleteBudget,
-      getBudgetByTransactionTypeId: mockGetBudgetByTransactionTypeId,
-    });
+    (budgetService.create as jest.Mock) = mockAddBudget;
+    (budgetService.update as jest.Mock) = mockUpdateBudget;
+    (budgetService.delete as jest.Mock) = mockDeleteBudget;
 
     render(<BudgetsPage />);
 
@@ -409,12 +382,9 @@ describe('BudgetsPage', () => {
     const quarterlyBudget = { ...mockBudget, amount: 4500, period: 'quarterly' as const };
 
     (useBudgets as jest.MockedFunction<typeof useBudgets>).mockReturnValue([quarterlyBudget]);
-    (useBudgetMutations as jest.MockedFunction<typeof useBudgetMutations>).mockReturnValue({
-      addBudget: mockAddBudget,
-      updateBudget: mockUpdateBudget,
-      deleteBudget: mockDeleteBudget,
-      getBudgetByTransactionTypeId: mockGetBudgetByTransactionTypeId,
-    });
+    (budgetService.create as jest.Mock) = mockAddBudget;
+    (budgetService.update as jest.Mock) = mockUpdateBudget;
+    (budgetService.delete as jest.Mock) = mockDeleteBudget;
 
     render(<BudgetsPage />);
 
@@ -429,12 +399,9 @@ describe('BudgetsPage', () => {
     const yearlyBudget = { ...mockBudget, amount: 18000, period: 'yearly' as const };
 
     (useBudgets as jest.MockedFunction<typeof useBudgets>).mockReturnValue([yearlyBudget]);
-    (useBudgetMutations as jest.MockedFunction<typeof useBudgetMutations>).mockReturnValue({
-      addBudget: mockAddBudget,
-      updateBudget: mockUpdateBudget,
-      deleteBudget: mockDeleteBudget,
-      getBudgetByTransactionTypeId: mockGetBudgetByTransactionTypeId,
-    });
+    (budgetService.create as jest.Mock) = mockAddBudget;
+    (budgetService.update as jest.Mock) = mockUpdateBudget;
+    (budgetService.delete as jest.Mock) = mockDeleteBudget;
 
     render(<BudgetsPage />);
 
@@ -452,12 +419,9 @@ describe('BudgetsPage', () => {
       mockBudget,
       incomeBudget,
     ]);
-    (useBudgetMutations as jest.MockedFunction<typeof useBudgetMutations>).mockReturnValue({
-      addBudget: mockAddBudget,
-      updateBudget: mockUpdateBudget,
-      deleteBudget: mockDeleteBudget,
-      getBudgetByTransactionTypeId: mockGetBudgetByTransactionTypeId,
-    });
+    (budgetService.create as jest.Mock) = mockAddBudget;
+    (budgetService.update as jest.Mock) = mockUpdateBudget;
+    (budgetService.delete as jest.Mock) = mockDeleteBudget;
 
     render(<BudgetsPage />);
 
@@ -473,12 +437,9 @@ describe('BudgetsPage', () => {
 
   it('should display total row per category', async () => {
     (useBudgets as jest.MockedFunction<typeof useBudgets>).mockReturnValue([mockBudget]);
-    (useBudgetMutations as jest.MockedFunction<typeof useBudgetMutations>).mockReturnValue({
-      addBudget: mockAddBudget,
-      updateBudget: mockUpdateBudget,
-      deleteBudget: mockDeleteBudget,
-      getBudgetByTransactionTypeId: mockGetBudgetByTransactionTypeId,
-    });
+    (budgetService.create as jest.Mock) = mockAddBudget;
+    (budgetService.update as jest.Mock) = mockUpdateBudget;
+    (budgetService.delete as jest.Mock) = mockDeleteBudget;
 
     render(<BudgetsPage />);
 

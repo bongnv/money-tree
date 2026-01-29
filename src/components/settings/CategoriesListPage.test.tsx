@@ -16,14 +16,6 @@ jest.mock('../../hooks/queries', () => ({
   useBaseCurrency: jest.fn(() => 'USD'),
 }));
 
-jest.mock('../../hooks/mutations/useCategoryMutations', () => ({
-  useCategoryMutations: () => ({
-    addCategory: mockAddCategory,
-    updateCategory: mockUpdateCategory,
-    deleteCategory: mockDeleteCategory,
-  }),
-}));
-
 // Mock the navigate function
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({

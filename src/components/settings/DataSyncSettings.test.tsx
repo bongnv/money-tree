@@ -2,42 +2,6 @@ import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { DataSyncSettings } from './DataSyncSettings';
 import { AppProvider } from '../../contexts/AppContext';
-import { useAccounts } from '../../hooks/queries/useAccounts';
-import { useCategories } from '../../hooks/queries/useCategories';
-import { useTransactionTypes } from '../../hooks/queries/useTransactionTypes';
-import { useTransactions } from '../../hooks/queries/useTransactions';
-import { useAssets } from '../../hooks/queries/useAssets';
-import { useBudgets } from '../../hooks/queries/useBudgets';
-
-// Mock data hooks
-jest.mock('../../hooks/queries/useAccounts');
-jest.mock('../../hooks/queries/useCategories');
-jest.mock('../../hooks/queries/useTransactionTypes');
-jest.mock('../../hooks/queries/useTransactions');
-jest.mock('../../hooks/queries/useAssets');
-jest.mock('../../hooks/queries/useBudgets');
-
-const mockUseAccounts = useAccounts as jest.MockedFunction<typeof useAccounts>;
-const mockUseCategories = useCategories as jest.MockedFunction<typeof useCategories>;
-const mockUseTransactionTypes = useTransactionTypes as jest.MockedFunction<
-  typeof useTransactionTypes
->;
-const mockUseTransactions = useTransactions as jest.MockedFunction<typeof useTransactions>;
-const mockUseAssets = useAssets as jest.MockedFunction<typeof useAssets>;
-const mockUseBudgets = useBudgets as jest.MockedFunction<typeof useBudgets>;
-
-// Mock CloudSyncService class
-jest.mock('../../services/cloudSync.service', () => ({
-  CloudSyncService: jest.fn().mockImplementation(() => ({
-    uploadToCloud: jest.fn().mockResolvedValue(undefined),
-    downloadFromCloud: jest.fn().mockResolvedValue(undefined),
-    fullSync: jest.fn().mockResolvedValue(undefined),
-    debouncedSync: jest.fn(),
-    setCallbacks: jest.fn(),
-    syncing: false,
-    pendingChanges: false,
-  })),
-}));
 
 // Mock SyncProvider
 jest.mock('../../contexts/SyncProvider', () => ({
@@ -89,14 +53,6 @@ jest.mock('react-router-dom', () => ({
 describe('DataSyncSettings', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-
-    // Setup default mock return values
-    mockUseAccounts.mockReturnValue([]);
-    mockUseCategories.mockReturnValue([]);
-    mockUseTransactionTypes.mockReturnValue([]);
-    mockUseTransactions.mockReturnValue([]);
-    mockUseAssets.mockReturnValue([]);
-    mockUseBudgets.mockReturnValue([]);
   });
 
   const renderComponent = () => {

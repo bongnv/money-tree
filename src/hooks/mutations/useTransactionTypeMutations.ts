@@ -51,7 +51,7 @@ export function useTransactionTypeMutations() {
         setIsLoading(false);
       }
     },
-    []
+    [syncService]
   );
 
   const deleteTransactionType = useCallback(

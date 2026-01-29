@@ -75,7 +75,7 @@ export const BalanceSheet: React.FC = () => {
     };
 
     calculateBalanceSheet();
-  }, [accounts, manualAssets, transactions, selectedDate, conversionCurrency]);
+  }, [accounts, manualAssets, transactions, selectedDate, conversionCurrency, reportService]);
 
   // Calculate comparison data
   const [comparison, setComparison] = useState<{
@@ -113,11 +113,26 @@ export const BalanceSheet: React.FC = () => {
     };
 
     calculateComparison();
-  }, [accounts, manualAssets, transactions, selectedDate, comparisonType, conversionCurrency]);
+  }, [
+    accounts,
+    manualAssets,
+    transactions,
+    selectedDate,
+    comparisonType,
+    conversionCurrency,
+    reportService,
+  ]);
   // effectiveGetRateForMonth is stable from Zustand store
 
   // Calculate net worth trend for the past year
-  const [trendData, setTrendData] = useState<any[]>([]);
+  const [trendData, setTrendData] = useState<
+    Array<{
+      name: string;
+      'Net Worth': number;
+      Assets: number;
+      Liabilities: number;
+    }>
+  >([]);
 
   useEffect(() => {
     if (!accounts || !manualAssets || !transactions) return;
@@ -161,7 +176,7 @@ export const BalanceSheet: React.FC = () => {
     };
 
     calculateTrend();
-  }, [accounts, manualAssets, transactions, selectedDate, conversionCurrency]);
+  }, [accounts, manualAssets, transactions, selectedDate, conversionCurrency, reportService]);
 
   const handleComparisonChange = (
     _event: React.MouseEvent<HTMLElement>,

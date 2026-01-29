@@ -1,10 +1,18 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DashboardPage } from './DashboardPage';
 
 // Mock child components
 jest.mock('../common/PeriodSelector', () => ({
-  PeriodSelector: ({ startDate, endDate, onChange }: any) => (
+  PeriodSelector: ({
+    startDate,
+    endDate,
+    onChange,
+  }: {
+    startDate: string;
+    endDate: string;
+    onChange: (value: { startDate: string; endDate: string }) => void;
+  }) => (
     <select
       data-testid="period-selector"
       value={`${startDate}-${endDate}`}
@@ -24,7 +32,7 @@ jest.mock('../common/PeriodSelector', () => ({
 }));
 
 jest.mock('./FinancialSummary', () => ({
-  FinancialSummary: ({ period }: any) => (
+  FinancialSummary: ({ period }: { period: { startDate: string; endDate: string } }) => (
     <div data-testid="financial-summary">
       Financial Summary: {period.startDate} to {period.endDate}
     </div>
@@ -32,7 +40,7 @@ jest.mock('./FinancialSummary', () => ({
 }));
 
 jest.mock('./BudgetOverview', () => ({
-  BudgetOverview: ({ period }: any) => (
+  BudgetOverview: ({ period }: { period: { startDate: string; endDate: string } }) => (
     <div data-testid="budget-overview">
       Budget Overview: {period.startDate} to {period.endDate}
     </div>
@@ -40,7 +48,7 @@ jest.mock('./BudgetOverview', () => ({
 }));
 
 jest.mock('./RecentTransactionsList', () => ({
-  RecentTransactionsList: ({ limit }: any) => (
+  RecentTransactionsList: ({ limit }: { limit: number }) => (
     <div data-testid="recent-transactions">Recent Transactions (limit: {limit})</div>
   ),
 }));

@@ -140,7 +140,9 @@ export const CashFlowReport: React.FC = () => {
   ]);
 
   // Calculate trend data
-  const [trendData, setTrendData] = useState<any>([]);
+  const [trendData, setTrendData] = useState<
+    import('../../services/report.service').CashFlowTrendPoint[]
+  >([]);
 
   useEffect(() => {
     if (!filteredTransactions || !transactionTypes || !categories || !accounts) return;
@@ -268,8 +270,20 @@ export const CashFlowReport: React.FC = () => {
   const [filteredChartData, setFilteredChartData] = useState<{
     incomePieData: { name: string; value: number }[];
     expensesPieData: { name: string; value: number }[];
-    incomeDetailData: any[];
-    expenseDetailData: any[];
+    incomeDetailData: Array<{
+      isTransactionType: boolean;
+      categoryId: string;
+      categoryName: string;
+      total: number;
+      transactionCount: number;
+    }>;
+    expenseDetailData: Array<{
+      isTransactionType: boolean;
+      categoryId: string;
+      categoryName: string;
+      total: number;
+      transactionCount: number;
+    }>;
     groupingLabel: string;
   } | null>(null);
 

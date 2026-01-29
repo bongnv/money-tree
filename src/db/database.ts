@@ -86,16 +86,18 @@ export const syncMetadata = {
     await this.setLastModified(new Date().toISOString());
   },
 
-  async getArchivedYears(): Promise<any[]> {
-    return ((await this.get('archivedYears')) as any[]) || [];
+  async getArchivedYears(): Promise<import('../types/models').ArchivedYearReference[]> {
+    return (
+      ((await this.get('archivedYears')) as import('../types/models').ArchivedYearReference[]) || []
+    );
   },
 
-  async setArchivedYears(years: any[]): Promise<void> {
+  async setArchivedYears(years: import('../types/models').ArchivedYearReference[]): Promise<void> {
     await this.set('archivedYears', years);
     await this.setLastModified(new Date().toISOString());
   },
 
-  async addArchivedYear(year: any): Promise<void> {
+  async addArchivedYear(year: import('../types/models').ArchivedYearReference): Promise<void> {
     const current = await this.getArchivedYears();
     await this.setArchivedYears([...current, year]);
   },

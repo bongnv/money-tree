@@ -105,7 +105,10 @@ class DexieArchiveService {
   /**
    * Create archive file containing all data for the year
    */
-  async createArchiveFile(year: number, baseCurrency: CurrencyCode): Promise<any> {
+  async createArchiveFile(
+    year: number,
+    baseCurrency: CurrencyCode
+  ): Promise<import('../types/models').ArchiveFile> {
     const summary = await this.calculateYearEndSummary(year, baseCurrency);
 
     // Get all data for the year
@@ -126,6 +129,10 @@ class DexieArchiveService {
 
     const assets = await db.manualAssets.toArray();
 
+    const exchangeRates = await db.exchangeRates
+      .filter((er) => er.month.startsWith(year.toString()))
+      .toArray();
+
     return {
       version: '1.0',
       year,
@@ -135,6 +142,7 @@ class DexieArchiveService {
       categories: JSON.parse(JSON.stringify(categories)),
       transactionTypes: JSON.parse(JSON.stringify(transactionTypes)),
       budgets,
+      exchangeRates,
       manualAssets: assets,
       archivedDate: new Date().toISOString(),
     };

@@ -102,7 +102,7 @@ export function useAssetMutations() {
         setIsLoading(false);
       }
     },
-    []
+    [syncService]
   );
 
   return {

@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TransactionTypeForm } from './TransactionTypeForm';
-import { AppProvider } from '../../contexts/AppContext';
 import { Group } from '../../types/enums';
 import type { Category, TransactionType, Account } from '../../types/models';
 

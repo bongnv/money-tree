@@ -9,12 +9,12 @@ import { CurrencyCode } from '../types/enums';
  * Different from DataFile which is filtered for cloud storage
  */
 type LocalDataSnapshot = {
-  transactions: any[];
-  accounts: any[];
-  categories: any[];
-  transactionTypes: any[];
-  budgets: any[];
-  manualAssets: any[];
+  transactions: DataFile['transactions'];
+  accounts: DataFile['accounts'];
+  categories: DataFile['categories'];
+  transactionTypes: DataFile['transactionTypes'];
+  budgets: DataFile['budgets'];
+  manualAssets: DataFile['manualAssets'];
   exchangeRates: ExchangeRate[];
   baseCurrency: CurrencyCode;
   archivedYears: ArchivedYearReference[];

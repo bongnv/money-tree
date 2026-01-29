@@ -184,10 +184,13 @@ export const BudgetPerformanceReport: React.FC = () => {
     endDate,
     accounts,
     conversionCurrency,
+    reportService,
   ]);
 
   // Calculate trend data
-  const [rawTrendData, setRawTrendData] = useState<any[]>([]);
+  const [rawTrendData, setRawTrendData] = useState<
+    import('../../services/report.service').BudgetTrendPoint[]
+  >([]);
 
   useEffect(() => {
     if (!filteredBudgets || !filteredTransactions || !transactionTypes || !categories || !accounts)
@@ -223,6 +226,7 @@ export const BudgetPerformanceReport: React.FC = () => {
     categories,
     startDate,
     endDate,
+    reportService,
     accounts,
     conversionCurrency,
   ]);

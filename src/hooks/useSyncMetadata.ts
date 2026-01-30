@@ -22,3 +22,11 @@ export function useArchivedYears(): ArchivedYearReference[] {
   const syncMetadataService = useSyncMetadataService();
   return useLiveQuery(() => syncMetadataService.getArchivedYears()) ?? [];
 }
+
+/**
+ * Get last modified timestamp
+ */
+export function useLastModified(): string | null {
+  const syncMetadataService = useSyncMetadataService();
+  return useLiveQuery(() => syncMetadataService.getLastModified()) ?? null;
+}

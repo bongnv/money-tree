@@ -29,7 +29,7 @@ export const DataSyncSettings: React.FC = () => {
   const navigate = useNavigate();
   const syncService = useSyncService();
   const cloudFileName = syncService.fileName;
-  const lastSynced = syncService.lastSynced;
+  const remoteLastModified = syncService.remoteLastModified;
   const { setWelcomeDismissed } = useAppContext();
   const accounts = useActiveAccounts();
   const categories = useCategories();
@@ -85,13 +85,13 @@ export const DataSyncSettings: React.FC = () => {
   }, [accounts, categories, transactionTypes, transactions, budgets, assets]);
 
   const lastModifiedText = useMemo(() => {
-    if (!lastSynced) return 'Never';
+    if (!remoteLastModified) return 'Never';
     try {
-      return formatDistance(new Date(lastSynced), new Date(), { addSuffix: true });
+      return formatDistance(new Date(remoteLastModified), new Date(), { addSuffix: true });
     } catch {
       return 'Unknown';
     }
-  }, [lastSynced]);
+  }, [remoteLastModified]);
 
   const storageLocation = useMemo(() => {
     return syncService.providerName || 'Not connected';

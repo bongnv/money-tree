@@ -335,11 +335,10 @@ export class CloudSyncService {
    * Full bidirectional sync
    * Fetches local snapshot, downloads from cloud, merges, then uploads (only if local changes exist)
    * Optimized: skips upload if only remote changes were merged (nothing new to upload)
-   * Returns updated CloudItem from upload
+   * Returns updated CloudItem from upload and the merged lastModified timestamp
    */
   async fullSync(): Promise<{
-    downloadTimestamp: string;
-    uploadTimestamp: string;
+    mergedLastModified: string;
     fileItem: CloudItem;
   }> {
     // Fetch local snapshot upfront
@@ -383,30 +382,24 @@ export class CloudSyncService {
     // If file doesn't have an ID yet, it's a new file that hasn't been uploaded
     // Skip download and upload directly to create the file
     if (!this.fileItem.id) {
-      const { timestamp: uploadTimestamp, fileItem } = await this.uploadToCloud(localSnapshot);
+      const { fileItem } = await this.uploadToCloud(localSnapshot);
       return {
-        downloadTimestamp: uploadTimestamp,
-        uploadTimestamp,
+        mergedLastModified: localSnapshot.lastModified,
         fileItem,
       };
     }
 
-    const {
-      timestamp: downloadTimestamp,
-      hasLocalChanges,
-      mergedData,
-    } = await this.downloadFromCloud(localSnapshot);
+    const { hasLocalChanges, mergedData } = await this.downloadFromCloud(localSnapshot);
 
     // Only upload if we have local changes that are newer than remote
     if (hasLocalChanges) {
-      const { timestamp: uploadTimestamp, fileItem } = await this.uploadToCloud(mergedData);
-      return { downloadTimestamp, uploadTimestamp, fileItem };
+      const { fileItem } = await this.uploadToCloud(mergedData);
+      return { mergedLastModified: mergedData.lastModified, fileItem };
     }
 
     // No local changes - data is in sync
     return {
-      downloadTimestamp,
-      uploadTimestamp: downloadTimestamp,
+      mergedLastModified: mergedData.lastModified,
       fileItem: this.fileItem,
     };
   }

@@ -28,7 +28,8 @@ export interface SyncContextValue {
   // Sync state
   isInitializing: boolean;
   isSyncing: boolean;
-  lastSynced: string | null;
+  remoteLastModified: string | null;
+  lastSyncError: string | null;
 
   // File management
   setFile: (fileItem: CloudItem) => void;
@@ -62,7 +63,8 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onReconnec
 
   // Sync state
   const [isSyncing, setIsSyncing] = useState(false);
-  const [lastSynced, setLastSynced] = useState<string | null>(null);
+  const [remoteLastModified, setRemoteLastModified] = useState<string | null>(null);
+  const [lastSyncError, setLastSyncError] = useState<string | null>(null);
 
   // Debounce timers (use refs to avoid recreating callbacks)
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -174,14 +176,16 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onReconnec
 
     try {
       setIsSyncing(true);
+      setLastSyncError(null);
       const result = await syncService.fullSync();
-      setLastSynced(result.uploadTimestamp);
+      setRemoteLastModified(result.mergedLastModified);
       // Update file item if it changed (new file got ID)
       if (result.fileItem.id !== currentFileItem!.id) {
         setFile(result.fileItem);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to sync with cloud';
+      setLastSyncError(errorMessage);
       console.error('Sync failed:', error);
       showSnackbar(errorMessage, 'warning');
       throw error;
@@ -251,7 +255,8 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onReconnec
     // Sync state
     isInitializing,
     isSyncing,
-    lastSynced,
+    remoteLastModified,
+    lastSyncError,
 
     // File management
     setFile,

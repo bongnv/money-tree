@@ -3,6 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import { Header } from './Header';
 import { AppProvider } from '../../contexts/AppContext';
+import { ServiceProvider } from '../../contexts/ServiceProviders';
 
 // Mock CloudSyncService class
 jest.mock('../../services/cloudSync.service', () => ({
@@ -44,11 +45,13 @@ jest.mock('../../contexts/SyncProvider', () => ({
 const renderWithRouter = (component: React.ReactElement, initialRoute = '/') => {
   return render(
     <AppProvider>
-      <MemoryRouter initialEntries={[initialRoute]}>
-        <Routes>
-          <Route path="*" element={component} />
-        </Routes>
-      </MemoryRouter>
+      <ServiceProvider>
+        <MemoryRouter initialEntries={[initialRoute]}>
+          <Routes>
+            <Route path="*" element={component} />
+          </Routes>
+        </MemoryRouter>
+      </ServiceProvider>
     </AppProvider>
   );
 };

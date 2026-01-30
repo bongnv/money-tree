@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { MainLayout } from './MainLayout';
 import { AppProvider } from '../../contexts/AppContext';
+import { ServiceProvider } from '../../contexts/ServiceProviders';
 
 // Mock CloudSyncService class
 jest.mock('../../services/cloudSync.service', () => ({
@@ -39,7 +40,9 @@ jest.mock('../../contexts/SyncProvider', () => ({
 const renderWithProviders = (ui: React.ReactElement) => {
   return render(
     <AppProvider>
-      <BrowserRouter>{ui}</BrowserRouter>
+      <ServiceProvider>
+        <BrowserRouter>{ui}</BrowserRouter>
+      </ServiceProvider>
     </AppProvider>
   );
 };

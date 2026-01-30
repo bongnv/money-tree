@@ -173,16 +173,8 @@ export class CloudSyncService {
       this.db.budgets.bulkPut(budgetsResult.merged),
       this.db.manualAssets.bulkPut(assetsResult.merged),
       this.db.exchangeRates.bulkPut(exchangeRatesResult.merged),
+      this.updateMetadataIfNewer(metadataResult),
     ]);
-
-    // Update metadata in IndexedDB if cloud is newer
-    if (!metadataResult.hasLocalChanges) {
-      await this.syncMetadata.setBaseCurrency(metadataResult.baseCurrency);
-      if (metadataResult.archivedYears.length > 0) {
-        await this.syncMetadata.setArchivedYears(metadataResult.archivedYears);
-      }
-      await this.syncMetadata.setLastModifiedIfNewer(metadataResult.lastModified);
-    }
 
     return {
       hasLocalChanges,
@@ -199,6 +191,32 @@ export class CloudSyncService {
         lastModified: metadataResult.lastModified,
       },
     };
+  }
+
+  /**
+   * Update metadata in DB directly if cloud is newer
+   * Bypasses service layer to avoid triggering useLiveQuery watchers on lastModified
+   */
+  private async updateMetadataIfNewer(
+    metadataResult: Pick<LocalDataSnapshot, 'baseCurrency' | 'archivedYears' | 'lastModified'> & {
+      hasLocalChanges: boolean;
+    }
+  ): Promise<void> {
+    if (!metadataResult.hasLocalChanges) {
+      await this.db.syncMetadata.put({ key: 'baseCurrency', value: metadataResult.baseCurrency });
+      if (metadataResult.archivedYears.length > 0) {
+        await this.db.syncMetadata.put({
+          key: 'archivedYears',
+          value: metadataResult.archivedYears,
+        });
+      }
+    }
+
+    const current = await this.db.syncMetadata.get('lastModified');
+    const currentLastModified = current?.value ? (current.value as string) : null;
+    if (!currentLastModified || metadataResult.lastModified > currentLastModified) {
+      await this.db.syncMetadata.put({ key: 'lastModified', value: metadataResult.lastModified });
+    }
   }
 
   /**

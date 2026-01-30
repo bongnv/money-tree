@@ -55,14 +55,13 @@ Mark task as complete only if all three pass.
 **3-layer**: UI (`src/components/`, `src/hooks/`, `src/contexts/`) → Services/Utils (`src/services/`, `src/utils/`) → Database (`src/db/`)
 
 ### UI Layer
-- **Pages** (smart components): Coordinate data fetching, queries, and updates. Handle routing and page-level state.
-- **Components**: Presentation only. All dependencies injected via props. NO direct service calls. NO business logic.
-- **Hooks** (`src/hooks/`): Custom hooks for data access using `useLiveQuery` (queries) and service methods (mutations). Bridge between UI and services.
-- **Contexts** (`src/contexts/`): React Context providers for dependency injection (ServiceProviders, SyncProvider, AppContext). Create and provide service instances.
-- NO direct DB access from any UI code.
+- **Pages**: Composition and page-level UI state (dialogs, filters). Use custom hooks for data. Handle routing.
+- **Components**: Pure presentation. Props only. NO business logic. NO data fetching.
+- **Hooks** (`src/hooks/`): ALL data fetching and React integration logic. Use `useLiveQuery` for queries, call services for calculations/mutations. Return data ready for rendering.
+- **Contexts** (`src/contexts/`): Dependency injection (ServiceProviders, SyncProvider). Provide service instances.
 
 ### Services Layer
-- **Services** (`src/services/`): Stateless, pure business logic. NO React dependencies. Dependencies injected via constructor for easier testing.
+- **Services** (`src/services/`): Stateless, pure business logic. NO React dependencies. Dependencies injected via constructor.
 - **Utils** (`src/utils/`): Pure utility functions. No state, no dependencies.
 
 ### Database Layer

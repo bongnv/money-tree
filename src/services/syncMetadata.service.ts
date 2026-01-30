@@ -26,11 +26,14 @@ export class SyncMetadataService {
   }
 
   /**
-   * Set last modified to a specific timestamp
-   * Used during cloud sync to restore remote timestamp
+   * Set last modified to a specific timestamp only if newer than current
+   * Used during cloud sync to restore remote timestamp without overwriting newer local changes
    */
-  async setLastModifiedTimestamp(timestamp: string): Promise<void> {
-    await this.db.syncMetadata.put({ key: 'lastModified', value: timestamp });
+  async setLastModifiedIfNewer(timestamp: string): Promise<void> {
+    const current = await this.getLastModified();
+    if (!current || new Date(timestamp) > new Date(current)) {
+      await this.db.syncMetadata.put({ key: 'lastModified', value: timestamp });
+    }
   }
 
   /**

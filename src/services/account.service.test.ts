@@ -13,7 +13,7 @@ const mockSyncMetadataService = {
   setArchivedYears: jest.fn(),
   addArchivedYear: jest.fn(),
   clear: jest.fn(),
-  setLastModifiedTimestamp: jest.fn(),
+  setLastModifiedIfNewer: jest.fn(),
 } as unknown as SyncMetadataService;
 
 jest.mock('../db/database', () => ({

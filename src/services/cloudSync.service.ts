@@ -181,7 +181,7 @@ export class CloudSyncService {
       if (metadataResult.archivedYears.length > 0) {
         await this.syncMetadata.setArchivedYears(metadataResult.archivedYears);
       }
-      await this.syncMetadata.setLastModifiedTimestamp(metadataResult.lastModified);
+      await this.syncMetadata.setLastModifiedIfNewer(metadataResult.lastModified);
     }
 
     return {

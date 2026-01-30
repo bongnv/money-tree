@@ -68,13 +68,11 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onReconnec
 
   // Debounce timers (use refs to avoid recreating callbacks)
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const backgroundSyncIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const isConnected = Boolean(provider && currentFileItem);
 
   // Constants
   const DEBOUNCE_MS = 30000; // 30 seconds for all syncs
-  const BACKGROUND_SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
   // Memoize CloudSyncService to avoid creating it on every sync
   const syncService = useMemo(() => {
@@ -141,6 +139,8 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onReconnec
   // Auto-sync whenever lastModified changes (triggered by any data write)
   useEffect(() => {
     if (!isConnected || !lastModified || isInitializing) return;
+    // Skip if local and remote are already in sync
+    if (lastModified === remoteLastModified) return;
     debouncedSync();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastModified]); // Trigger when data changes
@@ -149,7 +149,6 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onReconnec
   useEffect(() => {
     return () => {
       if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
-      if (backgroundSyncIntervalRef.current) clearInterval(backgroundSyncIntervalRef.current);
     };
   }, []);
 
@@ -228,23 +227,6 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onReconnec
       }
     }, DEBOUNCE_MS);
   }, [syncService, DEBOUNCE_MS, fullSync]);
-
-  // Set up background sync (5 minutes interval) - uses shared debounced sync
-  useEffect(() => {
-    if (!isConnected) return;
-
-    // Set up interval to trigger debounced sync periodically
-    backgroundSyncIntervalRef.current = setInterval(() => {
-      debouncedSync();
-    }, BACKGROUND_SYNC_INTERVAL_MS);
-
-    return () => {
-      if (backgroundSyncIntervalRef.current) {
-        clearInterval(backgroundSyncIntervalRef.current);
-        backgroundSyncIntervalRef.current = null;
-      }
-    };
-  }, [isConnected, BACKGROUND_SYNC_INTERVAL_MS, debouncedSync]);
 
   const value: SyncContextValue = {
     // Connection state (derived from provider and currentFileItem)

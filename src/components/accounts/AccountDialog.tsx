@@ -7,7 +7,7 @@ interface AccountDialogProps {
   open: boolean;
   account?: Account;
   onClose: () => void;
-  onSubmit: (account: Omit<Account, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSubmit: (account: Omit<Account, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
 }
 
 export const AccountDialog: React.FC<AccountDialogProps> = ({
@@ -16,8 +16,8 @@ export const AccountDialog: React.FC<AccountDialogProps> = ({
   onClose,
   onSubmit,
 }) => {
-  const handleSubmit = (accountData: Omit<Account, 'id' | 'createdAt' | 'updatedAt'>) => {
-    onSubmit(accountData);
+  const handleSubmit = async (accountData: Omit<Account, 'id' | 'createdAt' | 'updatedAt'>) => {
+    await onSubmit(accountData);
     onClose();
   };
 

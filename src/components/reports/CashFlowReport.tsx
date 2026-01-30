@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -24,24 +24,22 @@ import {
 import Grid from '@mui/material/Grid';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
-import { useReportService, useCalculationService } from '../../contexts/ServiceProviders';
+import { useCashFlowReport } from '@/hooks/reports/useCashFlowReport';
+import { useTransactionTypes } from '@/hooks/useTransactionTypes';
+import { useCategories } from '@/hooks/useCategories';
+import { useTransactions } from '@/hooks/useTransactions';
+import { useActiveAccounts } from '@/hooks/useAccounts';
+import { useCalculationService } from '@/hooks/useServices';
 import { LineChart } from '../common/charts/LineChart';
 import { PieChart } from '../common/charts/PieChart';
 import { PeriodSelector } from '../common/PeriodSelector';
 import { CategoryFilter } from '../common/CategoryFilter';
 import { formatCurrency } from '../../utils/currency.utils';
-import { getTodayDate } from '../../utils/date.utils';
 import { hasTransactionTypesInGroup } from '../../utils/report.utils';
 import { CHART_COLORS } from '../../theme';
 import { CurrencyCode } from '../../types/enums';
 import { Group } from '../../types/enums';
-import type { CashFlowData } from '../../services/report.service';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
-import { useActiveAccounts } from '../../hooks/useAccounts';
-import { useTransactions } from '../../hooks/useTransactions';
-import { useCategories } from '../../hooks/useCategories';
-import { useTransactionTypes } from '../../hooks/useTransactionTypes';
-import { useBaseCurrency } from '../../hooks/useSyncMetadata';
 
 /**
  * Build chart lines for cash flow trend based on available income/expense types
@@ -66,128 +64,56 @@ const buildCashFlowTrendLines = (hasIncomeTypes: boolean, hasExpenseTypes: boole
 
 export const CashFlowReport: React.FC = () => {
   const navigate = useNavigate();
-  const transactions = useTransactions();
+  const allTransactions = useTransactions();
   const transactionTypes = useTransactionTypes();
   const categories = useCategories();
   const accounts = useActiveAccounts();
-  const baseCurrency = useBaseCurrency();
-  const reportService = useReportService();
   const calculationService = useCalculationService();
-
-  // Date range state - default to Year to Date
-  const today = getTodayDate();
-  const yearStart = `${today.slice(0, 4)}-01-01`;
-  const [startDate, setStartDate] = useState<string>(yearStart);
-  const [endDate, setEndDate] = useState<string>(today);
-  const [conversionCurrency, setConversionCurrency] = useState<CurrencyCode>(baseCurrency);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  
+  const {
+    cashFlow,
+    cashFlowTrend,
+    startDate,
+    setStartDate,
+    endDate,
+    setEndDate,
+    conversionCurrency,
+    setConversionCurrency,
+    filters,
+    setFilter,
+    applyFilters,
+    resetFilters,
+  } = useCashFlowReport();
+  
+  // UI state
   const [viewMode, setViewMode] = useState<'period' | 'cumulative'>('period');
-
-  // Update conversion currency when base currency changes from DB
-  useEffect(() => {
-    setConversionCurrency(baseCurrency);
-  }, [baseCurrency]);
+  
+  // Calculate filtered transactions for the pie charts
+  const filteredTransactions = React.useMemo(() => {
+    if (!allTransactions || !transactionTypes) return [];
+    if (filters.categoryIds.length === 0) {
+      return allTransactions;
+    }
+    return allTransactions.filter((tx) => {
+      const txType = transactionTypes.find((tt) => tt.id === tx.transactionTypeId);
+      return txType && filters.categoryIds.includes(txType.categoryId);
+    });
+  }, [allTransactions, transactionTypes, filters.categoryIds]);
 
   const handleDateRangeChange = (range: { startDate: string; endDate: string }) => {
     setStartDate(range.startDate);
     setEndDate(range.endDate);
   };
 
-  // Calculate cash flow for selected period
-  const filteredTransactions = useMemo(() => {
-    if (!transactions || !transactionTypes) return [];
-    if (selectedCategories.length === 0) {
-      return transactions;
-    }
-    return transactions.filter((tx) => {
-      const txType = transactionTypes.find((tt) => tt.id === tx.transactionTypeId);
-      return txType && selectedCategories.includes(txType.categoryId);
-    });
-  }, [transactions, transactionTypes, selectedCategories]);
-
-  const [cashFlow, setCashFlow] = useState<CashFlowData>({
-    totalIncome: 0,
-    totalExpenses: 0,
-    netCashFlow: 0,
-    income: [],
-    expenses: [],
-  });
-
-  useEffect(() => {
-    if (!filteredTransactions || !transactionTypes || !categories || !accounts) return;
-
-    const calculateCashFlow = async () => {
-      const data = await reportService.calculateCashFlow(
-        filteredTransactions,
-        transactionTypes,
-        categories,
-        startDate,
-        endDate,
-        accounts,
-        conversionCurrency
-      );
-      setCashFlow(data);
-    };
-
-    calculateCashFlow();
-  }, [
-    filteredTransactions,
-    transactionTypes,
-    categories,
-    accounts,
-    startDate,
-    endDate,
-    conversionCurrency,
-    reportService,
-  ]);
-
-  // Calculate trend data
-  const [trendData, setTrendData] = useState<
-    import('../../services/report.service').CashFlowTrendPoint[]
-  >([]);
-
-  useEffect(() => {
-    if (!filteredTransactions || !transactionTypes || !categories || !accounts) return;
-
-    const calculateTrend = async () => {
-      // Determine interval based on date range duration
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-      const intervalDays = daysDiff > 180 ? 30 : daysDiff > 60 ? 7 : 1;
-
-      const trend = await reportService.calculateCashFlowTrend(
-        filteredTransactions,
-        transactionTypes,
-        categories,
-        startDate,
-        endDate,
-        intervalDays,
-        accounts,
-        conversionCurrency
-      );
-      setTrendData(trend);
-    };
-
-    calculateTrend();
-  }, [
-    filteredTransactions,
-    transactionTypes,
-    categories,
-    accounts,
-    startDate,
-    endDate,
-    conversionCurrency,
-    reportService,
-  ]);
-
   // Calculate cumulative data
-  const cumulativeData = useMemo(() => {
+  const cumulativeData = React.useMemo(() => {
+    if (!cashFlowTrend) return [];
+    
     let cumulativeIncome = 0;
     let cumulativeExpenses = 0;
     let cumulativeNet = 0;
 
-    return trendData.map(
+    return cashFlowTrend.map(
       (point: { date: string; income: number; expenses: number; netCashFlow: number }) => {
         cumulativeIncome += point.income;
         cumulativeExpenses += point.expenses;
@@ -201,11 +127,11 @@ export const CashFlowReport: React.FC = () => {
         };
       }
     );
-  }, [trendData]);
+  }, [cashFlowTrend]);
 
   // Prepare chart data based on view mode
-  const chartData = useMemo(() => {
-    const dataSource = viewMode === 'cumulative' ? cumulativeData : trendData;
+  const chartData = React.useMemo(() => {
+    const dataSource = viewMode === 'cumulative' ? cumulativeData : (cashFlowTrend || []);
     return dataSource.map(
       (point: { date: string; income: number; expenses: number; netCashFlow: number }) => ({
         name: new Date(point.date).toLocaleDateString('en-US', {
@@ -217,7 +143,7 @@ export const CashFlowReport: React.FC = () => {
         'Net Cash Flow': point.netCashFlow,
       })
     );
-  }, [trendData, cumulativeData, viewMode]);
+  }, [cashFlowTrend, cumulativeData, viewMode]);
 
   const handleCurrencyChange = (newCurrency: CurrencyCode) => {
     setConversionCurrency(newCurrency);
@@ -225,7 +151,9 @@ export const CashFlowReport: React.FC = () => {
 
   const handleCategoryChange = (event: SelectChangeEvent<string[]>) => {
     const value = event.target.value;
-    setSelectedCategories(typeof value === 'string' ? value.split(',') : value);
+    const categoryIds = typeof value === 'string' ? value.split(',') : value;
+    setFilter('categoryIds', categoryIds);
+    applyFilters();
   };
 
   const handleCategoryClick = (categoryId: string, isTransactionType: boolean = false) => {
@@ -238,21 +166,22 @@ export const CashFlowReport: React.FC = () => {
       navigate(`/transactions?${params.toString()}`);
     } else {
       // Filter on same page for category clicks
-      setSelectedCategories([categoryId]);
+      setFilter('categoryIds', [categoryId]);
+      applyFilters();
     }
   };
 
   const handleClearFilters = () => {
-    setSelectedCategories([]);
+    resetFilters();
   };
 
   // Prepare pie chart and table data - derive from cashFlow when no filter
   // When filter is applied, calculate by transaction type
-  const hasFilter = selectedCategories.length > 0;
+  const hasFilter = filters.categoryIds.length > 0;
 
   // For no filter case - use cashFlow data directly
-  const unfiltered = useMemo(() => {
-    if (hasFilter) return null;
+  const unfiltered = React.useMemo(() => {
+    if (hasFilter || !cashFlow) return null;
     return {
       incomePieData: cashFlow.income.map((cat) => ({
         name: cat.categoryName,
@@ -266,7 +195,7 @@ export const CashFlowReport: React.FC = () => {
       expenseDetailData: cashFlow.expenses.map((cat) => ({ ...cat, isTransactionType: false })),
       groupingLabel: 'Category',
     };
-  }, [hasFilter, cashFlow.income, cashFlow.expenses]);
+  }, [hasFilter, cashFlow]);
 
   // For filtered case - group by transaction type
   const [filteredChartData, setFilteredChartData] = useState<{
@@ -335,7 +264,7 @@ export const CashFlowReport: React.FC = () => {
 
     calculateFiltered();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasFilter, selectedCategories, conversionCurrency, startDate, endDate]);
+  }, [hasFilter, filters.categoryIds, conversionCurrency, startDate, endDate]);
   // filteredTransactions, transactionTypes, and accounts are stable or captured in closure
 
   // Use the appropriate data source
@@ -350,14 +279,14 @@ export const CashFlowReport: React.FC = () => {
     };
 
   // Determine which transaction types exist in filtered categories
-  const hasIncomeTypes = useMemo(
-    () => hasTransactionTypesInGroup(selectedCategories, transactionTypes || [], Group.INCOME),
-    [selectedCategories, transactionTypes]
+  const hasIncomeTypes = React.useMemo(
+    () => hasTransactionTypesInGroup(filters.categoryIds, transactionTypes || [], Group.INCOME),
+    [filters.categoryIds, transactionTypes]
   );
 
-  const hasExpenseTypes = useMemo(
-    () => hasTransactionTypesInGroup(selectedCategories, transactionTypes || [], Group.EXPENSE),
-    [selectedCategories, transactionTypes]
+  const hasExpenseTypes = React.useMemo(
+    () => hasTransactionTypesInGroup(filters.categoryIds, transactionTypes || [], Group.EXPENSE),
+    [filters.categoryIds, transactionTypes]
   );
 
   // Dynamically build chart lines based on what exists
@@ -405,7 +334,7 @@ export const CashFlowReport: React.FC = () => {
           <Grid size={{ xs: 12, sm: 6, md: 4.5 }}>
             <CategoryFilter
               categories={categories || []}
-              selectedCategories={selectedCategories}
+              selectedCategories={filters.categoryIds}
               onChange={handleCategoryChange}
               onClear={handleClearFilters}
             />
@@ -414,7 +343,7 @@ export const CashFlowReport: React.FC = () => {
             <Button
               variant="outlined"
               onClick={handleClearFilters}
-              disabled={selectedCategories.length === 0}
+              disabled={filters.categoryIds.length === 0}
               fullWidth
             >
               Clear
@@ -424,7 +353,13 @@ export const CashFlowReport: React.FC = () => {
       </Paper>
 
       {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      {!cashFlow ? (
+        <Paper sx={{ p: 3, textAlign: 'center', mb: 3 }}>
+          <Typography color="text.secondary">Loading cash flow data...</Typography>
+        </Paper>
+      ) : (
+        <>
+          <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
@@ -473,7 +408,7 @@ export const CashFlowReport: React.FC = () => {
       </Grid>
 
       {/* Trend Chart */}
-      {trendData.length > 0 && (
+      {cashFlowTrend && cashFlowTrend.length > 0 && (
         <Paper sx={{ p: 3, mb: 3 }}>
           <Box
             sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
@@ -635,6 +570,8 @@ export const CashFlowReport: React.FC = () => {
           </Grid>
         )}
       </Grid>
+        </>
+      )}
     </Box>
   );
 };

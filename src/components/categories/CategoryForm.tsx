@@ -1,63 +1,32 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { TextField, Box, Button } from '@mui/material';
 import type { Category } from '../../types/models';
+import { useCategoryForm } from '@/hooks/categories/useCategoryForm';
 
 interface CategoryFormProps {
   category?: Category;
-  onSubmit: (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>) => void;
+  onSubmit: (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
   onCancel: () => void;
 }
 
 export const CategoryForm: React.FC<CategoryFormProps> = ({ category, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState({
-    name: category?.name || '',
-    description: category?.description || '',
+  const { formData, errors, setField, handleSubmit } = useCategoryForm({
+    category,
+    onSubmit,
   });
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const validate = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Category name is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validate()) {
-      return;
-    }
-
-    onSubmit({
-      name: formData.name.trim(),
-      description: formData.description.trim() || undefined,
-    });
+    handleSubmit();
   };
-
-  const handleChange =
-    (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setFormData({
-        ...formData,
-        [field]: e.target.value,
-      });
-      if (errors[field]) {
-        setErrors({ ...errors, [field]: '' });
-      }
-    };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} noValidate>
+    <Box component="form" onSubmit={handleFormSubmit} noValidate>
       <TextField
         fullWidth
         label="Category Name"
         value={formData.name}
-        onChange={handleChange('name')}
+        onChange={(e) => setField('name', e.target.value)}
         error={!!errors.name}
         helperText={errors.name || 'Categories are organizational labels'}
         margin="normal"
@@ -67,8 +36,8 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({ category, onSubmit, 
       <TextField
         fullWidth
         label="Description"
-        value={formData.description}
-        onChange={handleChange('description')}
+        value={formData.description || ''}
+        onChange={(e) => setField('description', e.target.value)}
         margin="normal"
         multiline
         rows={3}

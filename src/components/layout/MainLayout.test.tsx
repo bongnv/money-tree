@@ -1,8 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { MainLayout } from './MainLayout';
-import { AppProvider } from '../../contexts/AppContext';
-import { ServiceProvider } from '../../contexts/ServiceProviders';
 
 // Mock CloudSyncService class
 jest.mock('../../services/cloudSync.service', () => ({
@@ -18,8 +16,8 @@ jest.mock('../../services/cloudSync.service', () => ({
 }));
 
 // Mock SyncProvider
-jest.mock('../../contexts/SyncProvider', () => ({
-  useSyncService: jest.fn(() => ({
+jest.mock('@/hooks/useSync', () => ({
+  useSync: jest.fn(() => ({
     isConnected: false,
     providerName: null,
     fileName: null,
@@ -34,17 +32,11 @@ jest.mock('../../contexts/SyncProvider', () => ({
     connect: jest.fn().mockResolvedValue(undefined),
     disconnect: jest.fn().mockResolvedValue(undefined),
   })),
-  SyncProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useSyncService: jest.fn(() => ({ isConnected: false, isSyncing: false })),
 }));
 
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(
-    <AppProvider>
-      <ServiceProvider>
-        <BrowserRouter>{ui}</BrowserRouter>
-      </ServiceProvider>
-    </AppProvider>
-  );
+  return render(<BrowserRouter>{ui}</BrowserRouter>);
 };
 
 describe('MainLayout', () => {

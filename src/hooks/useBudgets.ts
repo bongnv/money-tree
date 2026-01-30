@@ -3,7 +3,7 @@
  * Uses useLiveQuery for reactive database queries
  */
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useBudgetService } from '../contexts/ServiceProviders';
+import { useBudgetService } from './useServices';
 import type { Budget } from '../types/models';
 
 /**

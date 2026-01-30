@@ -3,7 +3,7 @@ import { Card, CardContent, CardActions, Typography, IconButton, Box, Chip } fro
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import type { Account } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
-import { useCalculationService } from '../../contexts/ServiceProviders';
+import { useCalculationService } from '@/hooks/useServices';
 import { useTransactions } from '../../hooks/useTransactions';
 
 interface AccountCardProps {

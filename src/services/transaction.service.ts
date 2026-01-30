@@ -1,8 +1,20 @@
 import type { MoneyTreeDB } from '../db/database';
-import type { Transaction, TransactionType } from '../types/models';
+import type { Transaction, TransactionType, Account } from '../types/models';
 import type { Group } from '../types/enums';
 import type { SyncMetadataService } from './syncMetadata.service';
 import { generateId } from '../utils/id.utils';
+import { validationService, ValidationError } from './validation.service';
+
+export interface TransactionFormData {
+  date: string;
+  description: string;
+  amount: string;
+  transactionTypeId: string;
+  fromAccountId?: string;
+  toAccountId?: string;
+  fromAssetId?: string;
+  toAssetId?: string;
+}
 
 export interface TransactionFilters {
   dateFrom: string;
@@ -156,5 +168,80 @@ export class TransactionService {
 
       return true;
     });
+  }
+
+  /**
+   * Validate transaction form data
+   * @param formData Form data to validate
+   * @param transactionType Transaction type details
+   * @param accounts All available accounts
+   * @returns Array of validation errors
+   */
+  validateTransactionForm(
+    formData: TransactionFormData,
+    transactionType?: TransactionType,
+    accounts?: Account[]
+  ): ValidationError[] {
+    // Parse form data
+    const partialTransaction: Partial<Transaction> = {
+      date: formData.date,
+      description: formData.description,
+      amount: parseFloat(formData.amount),
+      transactionTypeId: formData.transactionTypeId || undefined,
+      fromAccountId: formData.fromAccountId || undefined,
+      toAccountId: formData.toAccountId || undefined,
+      fromAssetId: formData.fromAssetId || undefined,
+      toAssetId: formData.toAssetId || undefined,
+    };
+
+    // Find related accounts
+    const fromAccount = formData.fromAccountId
+      ? accounts?.find((a) => a.id === formData.fromAccountId)
+      : undefined;
+    const toAccount = formData.toAccountId
+      ? accounts?.find((a) => a.id === formData.toAccountId)
+      : undefined;
+
+    // Delegate to validation service
+    return validationService.validateTransaction(
+      partialTransaction,
+      transactionType,
+      fromAccount,
+      toAccount
+    );
+  }
+
+  /**
+   * Transform form data to Transaction entity
+   * @param formData Form data to transform
+   * @returns Transaction data ready for create/update
+   */
+  transformFormToTransaction(
+    formData: TransactionFormData
+  ): Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'> {
+    return {
+      date: formData.date,
+      description: formData.description.trim() || undefined,
+      amount: parseFloat(formData.amount),
+      transactionTypeId: formData.transactionTypeId,
+      fromAccountId: formData.fromAccountId || undefined,
+      toAccountId: formData.toAccountId || undefined,
+      fromAssetId: formData.fromAssetId || undefined,
+      toAssetId: formData.toAssetId || undefined,
+    };
+  }
+
+  /**
+   * Derive transaction type group based on form data
+   * @param formData Form data
+   * @param transactionTypes All transaction types
+   * @returns Transaction group or null
+   */
+  deriveTransactionType(
+    formData: TransactionFormData,
+    transactionTypes: TransactionType[]
+  ): TransactionType | null {
+    if (!formData.transactionTypeId) return null;
+    return transactionTypes.find((tt) => tt.id === formData.transactionTypeId) || null;
   }
 }

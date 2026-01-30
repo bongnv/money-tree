@@ -3,7 +3,7 @@
  * Uses useLiveQuery for reactive database queries
  */
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useSyncMetadataService } from '../contexts/ServiceProviders';
+import { useSyncMetadataService } from './useServices';
 import { CurrencyCode } from '../types/enums';
 import type { ArchivedYearReference } from '../types/models';
 

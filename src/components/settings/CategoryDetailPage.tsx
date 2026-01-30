@@ -7,7 +7,7 @@ import { TransactionTypeDialog } from '../categories/TransactionTypeDialog';
 import type { TransactionType } from '../../types/models';
 import { useCategories } from '../../hooks/useCategories';
 import { useTransactionTypes } from '../../hooks/useTransactionTypes';
-import { useTransactionTypeService } from '../../contexts/ServiceProviders';
+import { useTransactionTypeService } from '@/hooks/useServices';
 
 export const CategoryDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

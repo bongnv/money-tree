@@ -115,4 +115,57 @@ describe('categoryService', () => {
       );
     });
   });
+
+  describe('validateCategoryForm', () => {
+    it('should return no errors for valid form data', () => {
+      const formData = {
+        name: 'Groceries',
+      };
+
+      const errors = categoryService.validateCategoryForm(formData);
+      expect(errors).toEqual([]);
+    });
+
+    it('should return error for empty name', () => {
+      const formData = {
+        name: '   ',
+      };
+
+      const errors = categoryService.validateCategoryForm(formData);
+      expect(errors).toContainEqual({ field: 'name', message: 'Category name is required' });
+    });
+
+    it('should return error for missing name', () => {
+      const formData = {
+        name: '',
+      };
+
+      const errors = categoryService.validateCategoryForm(formData);
+      expect(errors).toContainEqual({ field: 'name', message: 'Category name is required' });
+    });
+  });
+
+  describe('transformFormToCategory', () => {
+    it('should transform form data to category object', () => {
+      const formData = {
+        name: '  Groceries  ',
+      };
+
+      const result = categoryService.transformFormToCategory(formData);
+
+      expect(result).toEqual({
+        name: 'Groceries',
+      });
+    });
+
+    it('should trim whitespace from name', () => {
+      const formData = {
+        name: '  Dining Out  ',
+      };
+
+      const result = categoryService.transformFormToCategory(formData);
+
+      expect(result.name).toBe('Dining Out');
+    });
+  });
 });

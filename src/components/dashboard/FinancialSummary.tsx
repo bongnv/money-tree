@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Grid from '@mui/material/Grid';
 import { Box, Alert } from '@mui/material';
 import { FinancialSummaryCard } from './FinancialSummaryCard';
-import { useCalculationService, useReportService } from '../../contexts/ServiceProviders';
+import { useCalculationService, useReportService } from '@/hooks/useServices';
 import type { PeriodOption } from '../common/PeriodSelector';
 import { formatCurrency } from '../../utils/currency.utils';
 import { getCurrentMonth } from '../../utils/date.utils';

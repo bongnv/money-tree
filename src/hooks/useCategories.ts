@@ -3,7 +3,7 @@
  * Uses useLiveQuery for reactive database queries
  */
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useCategoryService } from '../contexts/ServiceProviders';
+import { useCategoryService } from './useServices';
 import type { Category } from '../types/models';
 
 /**

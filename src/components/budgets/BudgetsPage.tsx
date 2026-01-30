@@ -17,7 +17,7 @@ import { CategoryFilter } from '../common/CategoryFilter';
 import { getBudgetPresets } from './periodPresets';
 import type { Budget } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
-import { useCalculationService } from '../../contexts/ServiceProviders';
+import { useCalculationService } from '@/hooks/useServices';
 import { Group } from '../../types/enums';
 import { useActiveAccounts } from '../../hooks/useAccounts';
 import { useTransactions } from '../../hooks/useTransactions';
@@ -25,7 +25,7 @@ import { useCategories } from '../../hooks/useCategories';
 import { useTransactionTypes } from '../../hooks/useTransactionTypes';
 import { useBudgets } from '../../hooks/useBudgets';
 import { useBaseCurrency } from '../../hooks/useSyncMetadata';
-import { useBudgetService } from '../../contexts/ServiceProviders';
+import { useBudgetService } from '@/hooks/useServices';
 
 export const BudgetsPage: React.FC = () => {
   const budgets = useBudgets();

@@ -23,7 +23,8 @@ import {
 import { isOneDriveConfigured } from '../../config/onedrive.config';
 import { isGoogleDriveConfigured } from '../../config/googledrive.config';
 import { CloudFilePicker } from '../common/CloudFilePicker';
-import { useSyncService } from '../../contexts/SyncProvider';
+import { useSync } from '@/hooks/useSync';
+import { useApp } from '@/hooks/useApp';
 import { StorageProviderType } from '../../services/storage/StorageProviderFactory';
 import { isUserCancellationError } from '../../utils/error.utils';
 import type { CloudItem } from '../../services/storage/IStorageProvider';
@@ -37,7 +38,8 @@ interface WelcomeDialogProps {
 export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const syncService = useSyncService();
+  const { syncConnection } = useApp();
+  const syncOps = useSync();
 
   const [state, setState] = useState({
     isConnecting: false,
@@ -52,7 +54,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
 
       try {
         // Cloud: authenticate then show picker
-        await syncService.connect(provider);
+        await syncOps.connect(provider);
         setState((s) => ({
           ...s,
           showFilePicker: true,
@@ -67,7 +69,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
         }
       }
     },
-    [syncService]
+    [syncOps]
   );
 
   const handleFileSelected = useCallback(
@@ -81,7 +83,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
 
         // Set the file in sync context
         // SyncProvider will automatically trigger sync
-        syncService.setFile(fileItem);
+        syncOps.setFile(fileItem);
 
         setState((s) => ({ ...s, isConnecting: false }));
         onClose();
@@ -95,7 +97,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
         }
       }
     },
-    [syncService, onClose]
+    [syncOps, onClose]
   );
 
   const cancelPicker = useCallback(() => {
@@ -249,11 +251,11 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
       </Dialog>
 
       {/* Generic Cloud File Picker */}
-      {state.showFilePicker && syncService.providerName && (
+      {state.showFilePicker && syncConnection.providerName && (
         <CloudFilePicker
           open={state.showFilePicker}
-          providerName={syncService.providerName}
-          onListItems={syncService.listItems}
+          providerName={syncConnection.providerName}
+          onListItems={syncOps.listItems}
           mode={state.pickerMode}
           onFileSelected={handleFileSelected}
           onCancel={cancelPicker}

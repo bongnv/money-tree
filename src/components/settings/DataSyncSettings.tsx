@@ -14,9 +14,9 @@ import {
 import Grid from '@mui/material/Grid';
 import { useNavigate } from 'react-router-dom';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { useSyncService } from '../../contexts/SyncProvider';
+import { useSync } from '@/hooks/useSync';
 import { formatDistance } from 'date-fns';
-import { useAppContext } from '../../contexts/AppContext';
+import { useAppContext } from '@/hooks/useApp';
 import { db } from '../../db/database';
 import { useActiveAccounts } from '../../hooks/useAccounts';
 import { useTransactions } from '../../hooks/useTransactions';
@@ -27,10 +27,10 @@ import { useAssets } from '../../hooks/useAssets';
 
 export const DataSyncSettings: React.FC = () => {
   const navigate = useNavigate();
-  const syncService = useSyncService();
-  const cloudFileName = syncService.fileName;
-  const remoteLastModified = syncService.remoteLastModified;
-  const { setWelcomeDismissed } = useAppContext();
+  const syncOps = useSync();
+  const { syncConnection, syncStatus, setWelcomeDismissed } = useAppContext();
+  const cloudFileName = syncConnection.fileName;
+  const remoteLastModified = syncStatus.remoteLastModified;
   const accounts = useActiveAccounts();
   const categories = useCategories();
   const transactionTypes = useTransactionTypes();
@@ -94,8 +94,8 @@ export const DataSyncSettings: React.FC = () => {
   }, [remoteLastModified]);
 
   const storageLocation = useMemo(() => {
-    return syncService.providerName || 'Not connected';
-  }, [syncService.providerName]);
+    return syncConnection.providerName || 'Not connected';
+  }, [syncConnection.providerName]);
 
   const handleDisconnect = async () => {
     setDisconnectDialogOpen(false);
@@ -105,7 +105,7 @@ export const DataSyncSettings: React.FC = () => {
     await db.open();
 
     // Disconnect from cloud storage
-    await syncService.disconnect();
+    await syncOps.disconnect();
 
     // Redirect to dashboard and trigger welcome dialog
     navigate('/');
@@ -151,7 +151,7 @@ export const DataSyncSettings: React.FC = () => {
                       Status
                     </Typography>
                     <Typography variant="body1">
-                      {syncService.providerName || 'Not connected'}
+                      {syncConnection.providerName || 'Not connected'}
                     </Typography>
                   </Grid>
                 </Grid>

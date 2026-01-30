@@ -52,7 +52,8 @@ const mockSyncService = {
 };
 
 // Mock SyncProvider context
-jest.mock('../../contexts/SyncProvider', () => ({
+jest.mock('@/hooks/useSync', () => ({
+  useSync: () => mockSyncService,
   useSyncService: () => mockSyncService,
 }));
 

@@ -13,7 +13,7 @@ import { DEFAULT_CURRENCIES } from '../../constants/defaults';
 import { DataSyncSettings } from './DataSyncSettings';
 import { CurrencyCode } from '../../types/enums';
 import { useBaseCurrency } from '../../hooks/useSyncMetadata';
-import { useSyncMetadataService } from '../../contexts/ServiceProviders';
+import { useSyncMetadataService } from '@/hooks/useServices';
 
 export const PreferencesPage: React.FC = () => {
   const syncMetadataService = useSyncMetadataService();

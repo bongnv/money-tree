@@ -3,7 +3,7 @@
  * Uses useLiveQuery for reactive database queries
  */
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useAssetService } from '../contexts/ServiceProviders';
+import { useAssetService } from './useServices';
 import type { ManualAsset } from '../types/models';
 
 /**

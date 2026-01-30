@@ -1,95 +1,39 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { TextField, MenuItem, FormControlLabel, Switch, Box, Button } from '@mui/material';
 import type { Account } from '../../types/models';
 import { AccountType, CurrencyCode } from '../../types/enums';
 import { getAllCurrencies } from '../../utils/currency.utils';
+import { useAccountForm } from '@/hooks/accounts/useAccountForm';
 
 interface AccountFormProps {
   account?: Account;
-  onSubmit: (account: Omit<Account, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSubmit: (account: Omit<Account, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   onCancel: () => void;
 }
 
 export const AccountForm: React.FC<AccountFormProps> = ({ account, onSubmit, onCancel }) => {
   const currencies = getAllCurrencies();
-  const [formData, setFormData] = useState({
-    name: account?.name || '',
-    type: account?.type || AccountType.BANK_ACCOUNT,
-    currencyCode: account?.currencyCode || CurrencyCode.USD,
-    initialBalance: account?.initialBalance?.toString() || '0',
-    description: account?.description || '',
-    isActive: account?.isActive ?? true,
+  const { formData, errors, isSubmitting, setField, handleSubmit } = useAccountForm({
+    account,
+    onSubmit,
   });
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const validate = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Account name is required';
-    }
-
-    if (!formData.type) {
-      newErrors.type = 'Account type is required';
-    }
-
-    if (!formData.currencyCode) {
-      newErrors.currencyCode = 'Currency is required';
-    }
-
-    const balance = parseFloat(formData.initialBalance);
-    if (isNaN(balance)) {
-      newErrors.initialBalance = 'Initial balance must be a valid number';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validate()) {
-      return;
-    }
-
-    onSubmit({
-      name: formData.name.trim(),
-      type: formData.type,
-      currencyCode: formData.currencyCode as CurrencyCode,
-      initialBalance: parseFloat(formData.initialBalance),
-      description: formData.description.trim() || undefined,
-      isActive: formData.isActive,
-      isDeleted: false,
-    });
+    handleSubmit();
   };
-
-  const handleChange =
-    (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setFormData({
-        ...formData,
-        [field]: e.target.value,
-      });
-      if (errors[field]) {
-        setErrors({ ...errors, [field]: '' });
-      }
-    };
 
   const handleSwitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      isActive: e.target.checked,
-    });
+    setField('isActive', e.target.checked);
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} noValidate>
+    <Box component="form" onSubmit={handleFormSubmit} noValidate>
       <TextField
         fullWidth
         label="Account Name"
         value={formData.name}
-        onChange={handleChange('name')}
+        onChange={(e) => setField('name', e.target.value)}
         error={!!errors.name}
         helperText={errors.name}
         margin="normal"
@@ -101,7 +45,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({ account, onSubmit, onC
         select
         label="Account Type"
         value={formData.type}
-        onChange={handleChange('type')}
+        onChange={(e) => setField('type', e.target.value as AccountType)}
         error={!!errors.type}
         helperText={errors.type}
         margin="normal"
@@ -119,7 +63,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({ account, onSubmit, onC
         select
         label="Currency"
         value={formData.currencyCode}
-        onChange={handleChange('currencyCode')}
+        onChange={(e) => setField('currencyCode', e.target.value as CurrencyCode)}
         error={!!errors.currencyCode}
         helperText={errors.currencyCode}
         margin="normal"
@@ -137,7 +81,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({ account, onSubmit, onC
         label="Initial Balance"
         type="number"
         value={formData.initialBalance}
-        onChange={handleChange('initialBalance')}
+        onChange={(e) => setField('initialBalance', e.target.value)}
         error={!!errors.initialBalance}
         helperText={errors.initialBalance}
         margin="normal"
@@ -149,7 +93,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({ account, onSubmit, onC
         fullWidth
         label="Description"
         value={formData.description}
-        onChange={handleChange('description')}
+        onChange={(e) => setField('description', e.target.value)}
         margin="normal"
         multiline
         rows={3}
@@ -162,10 +106,10 @@ export const AccountForm: React.FC<AccountFormProps> = ({ account, onSubmit, onC
       />
 
       <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-        <Button type="submit" variant="contained" fullWidth>
+        <Button type="submit" variant="contained" fullWidth disabled={isSubmitting}>
           {account ? 'Update Account' : 'Create Account'}
         </Button>
-        <Button onClick={onCancel} variant="outlined" fullWidth>
+        <Button onClick={onCancel} variant="outlined" fullWidth disabled={isSubmitting}>
           Cancel
         </Button>
       </Box>

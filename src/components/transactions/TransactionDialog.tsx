@@ -12,7 +12,7 @@ interface TransactionDialogProps {
   onClose: () => void;
   onSubmit: (
     transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
-  ) => void;
+  ) => Promise<void>;
 }
 
 export const TransactionDialog: React.FC<TransactionDialogProps> = ({
@@ -24,10 +24,10 @@ export const TransactionDialog: React.FC<TransactionDialogProps> = ({
   onClose,
   onSubmit,
 }) => {
-  const handleSubmit = (
+  const handleSubmit = async (
     transactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
   ) => {
-    onSubmit(transactionData);
+    await onSubmit(transactionData);
     onClose();
   };
 

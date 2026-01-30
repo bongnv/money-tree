@@ -173,7 +173,7 @@ export class CloudSyncService {
       this.db.budgets.bulkPut(budgetsResult.merged),
       this.db.manualAssets.bulkPut(assetsResult.merged),
       this.db.exchangeRates.bulkPut(exchangeRatesResult.merged),
-      this.updateMetadataIfNewer(metadataResult),
+      this.updateMetadata(metadataResult),
     ]);
 
     return {
@@ -194,23 +194,21 @@ export class CloudSyncService {
   }
 
   /**
-   * Update metadata in DB directly if cloud is newer
-   * Bypasses service layer to avoid triggering useLiveQuery watchers on lastModified
+   * Update metadata in DB directly
+   * Bypasses service layer to avoid updating lastModified
    */
-  private async updateMetadataIfNewer(
+  private async updateMetadata(
     metadataResult: Pick<LocalDataSnapshot, 'baseCurrency' | 'archivedYears' | 'lastModified'> & {
       hasLocalChanges: boolean;
     }
   ): Promise<void> {
-    if (!metadataResult.hasLocalChanges) {
-      await this.db.syncMetadata.put({ key: 'baseCurrency', value: metadataResult.baseCurrency });
-      if (metadataResult.archivedYears.length > 0) {
-        await this.db.syncMetadata.put({
-          key: 'archivedYears',
-          value: metadataResult.archivedYears,
-        });
+    await this.db.syncMetadata.bulkPut([
+      { key: 'baseCurrency', value: metadataResult.baseCurrency },
+      {
+        key: 'archivedYears',
+        value: metadataResult.archivedYears,
       }
-    }
+    ]);
 
     const current = await this.db.syncMetadata.get('lastModified');
     const currentLastModified = current?.value ? (current.value as string) : null;

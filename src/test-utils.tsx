@@ -1,7 +1,5 @@
 import { render, RenderOptions } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { AppProvider } from './contexts/AppContext';
-import { ServiceProvider } from './contexts/ServiceProviders';
 import React from 'react';
 
 // Mock CloudSyncService class
@@ -19,23 +17,15 @@ jest.mock('./services/cloudSync.service', () => {
   };
 });
 
-// Mock SyncProvider for all tests
-jest.mock('./contexts/SyncProvider', () => ({
-  useSyncService: jest.fn(() => ({
-    isConnected: false,
-    providerName: null,
-    fileName: null,
-    isInitializing: false,
-    isSyncing: false,
-    lastSynced: null,
+// Mock useSync for all tests (operations only)
+jest.mock('./hooks/useSync', () => ({
+  useSync: jest.fn(() => ({
     setFile: jest.fn(),
     listItems: jest.fn().mockResolvedValue([]),
     fullSync: jest.fn().mockResolvedValue(undefined),
-    debouncedSync: jest.fn(),
     connect: jest.fn().mockResolvedValue(undefined),
     disconnect: jest.fn().mockResolvedValue(undefined),
   })),
-  SyncProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
@@ -43,7 +33,7 @@ interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
 }
 
 /**
- * Custom render that wraps components with AppProvider and BrowserRouter
+ * Custom render that wraps components with BrowserRouter
  */
 export function renderWithProviders(ui: React.ReactElement, options?: CustomRenderOptions) {
   const { initialRoute = '/', ...renderOptions } = options || {};
@@ -54,13 +44,7 @@ export function renderWithProviders(ui: React.ReactElement, options?: CustomRend
   }
 
   function Wrapper({ children }: { children: React.ReactNode }) {
-    return (
-      <AppProvider>
-        <ServiceProvider>
-          <BrowserRouter>{children}</BrowserRouter>
-        </ServiceProvider>
-      </AppProvider>
-    );
+    return <BrowserRouter>{children}</BrowserRouter>;
   }
 
   return render(ui, { wrapper: Wrapper, ...renderOptions });

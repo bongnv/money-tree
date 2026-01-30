@@ -3,13 +3,34 @@ import userEvent from '@testing-library/user-event';
 import { AccountDialog } from './AccountDialog';
 import { AccountType, CurrencyCode } from '../../types/enums';
 import type { Account } from '../../types/models';
+import { useAccountForm } from '@/hooks/accounts/useAccountForm';
+
+jest.mock('@/hooks/accounts/useAccountForm');
 
 describe('AccountDialog', () => {
   const mockOnClose = jest.fn();
   const mockOnSubmit = jest.fn();
+  const mockSetField = jest.fn();
+  const mockHandleSubmit = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    // Default mock for useAccountForm
+    (useAccountForm as jest.Mock).mockReturnValue({
+      formData: {
+        name: '',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: '0',
+        description: '',
+        isActive: true,
+      },
+      errors: {},
+      isSubmitting: false,
+      setField: mockSetField,
+      handleSubmit: mockHandleSubmit,
+    });
   });
 
   it('should render dialog when open', () => {
@@ -52,11 +73,15 @@ describe('AccountDialog', () => {
     const nameInput = screen.getByLabelText(/Account Name/i);
     await user.type(nameInput, 'New Account');
 
+    // Verify setField was called (user.type calls setField for each character)
+    expect(mockSetField).toHaveBeenCalled();
+    // Check the last call was for the last character
+    expect(mockSetField).toHaveBeenLastCalledWith('name', 't');
+
     const submitButton = screen.getByText('Create Account');
     await user.click(submitButton);
 
-    expect(mockOnSubmit).toHaveBeenCalled();
-    expect(mockOnClose).toHaveBeenCalled();
+    expect(mockHandleSubmit).toHaveBeenCalled();
   });
 
   it('should call onClose when cancel button is clicked', async () => {

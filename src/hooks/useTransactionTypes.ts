@@ -3,7 +3,7 @@
  * Uses useLiveQuery for reactive database queries
  */
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useTransactionTypeService } from '../contexts/ServiceProviders';
+import { useTransactionTypeService } from './useServices';
 import type { TransactionType } from '../types/models';
 
 /**

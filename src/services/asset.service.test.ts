@@ -177,4 +177,241 @@ describe('assetService', () => {
       ).rejects.toThrow('Asset with id 999 not found');
     });
   });
+
+  describe('validateAssetForm', () => {
+    it('should return no errors for valid form data', () => {
+      const formData = {
+        name: 'House',
+        type: AssetType.REAL_ESTATE,
+        currencyCode: CurrencyCode.USD,
+        value: '500000',
+        date: '2024-01-01',
+        notes: 'Primary residence',
+      };
+
+      const errors = assetService.validateAssetForm(formData);
+      expect(errors).toEqual([]);
+    });
+
+    it('should return error for empty name', () => {
+      const formData = {
+        name: '   ',
+        type: AssetType.REAL_ESTATE,
+        currencyCode: CurrencyCode.USD,
+        value: '500000',
+        date: '2024-01-01',
+      };
+
+      const errors = assetService.validateAssetForm(formData);
+      expect(errors).toContainEqual({ field: 'name', message: 'Asset name is required' });
+    });
+
+    it('should return error for missing type', () => {
+      const formData = {
+        name: 'House',
+        type: '' as AssetType,
+        currencyCode: CurrencyCode.USD,
+        value: '500000',
+        date: '2024-01-01',
+      };
+
+      const errors = assetService.validateAssetForm(formData);
+      expect(errors).toContainEqual({ field: 'type', message: 'Asset type is required' });
+    });
+
+    it('should return error for missing currency', () => {
+      const formData = {
+        name: 'House',
+        type: AssetType.REAL_ESTATE,
+        currencyCode: '' as CurrencyCode,
+        value: '500000',
+        date: '2024-01-01',
+      };
+
+      const errors = assetService.validateAssetForm(formData);
+      expect(errors).toContainEqual({ field: 'currencyCode', message: 'Currency is required' });
+    });
+
+    it('should return error for invalid value', () => {
+      const formData = {
+        name: 'House',
+        type: AssetType.REAL_ESTATE,
+        currencyCode: CurrencyCode.USD,
+        value: 'not a number',
+        date: '2024-01-01',
+      };
+
+      const errors = assetService.validateAssetForm(formData);
+      expect(errors).toContainEqual({ field: 'value', message: 'Value must be a valid number' });
+    });
+
+    it('should return error for missing date', () => {
+      const formData = {
+        name: 'House',
+        type: AssetType.REAL_ESTATE,
+        currencyCode: CurrencyCode.USD,
+        value: '500000',
+        date: '',
+      };
+
+      const errors = assetService.validateAssetForm(formData);
+      expect(errors).toContainEqual({ field: 'date', message: 'Date is required' });
+    });
+
+    it('should return multiple errors for multiple invalid fields', () => {
+      const formData = {
+        name: '',
+        type: AssetType.REAL_ESTATE,
+        currencyCode: CurrencyCode.USD,
+        value: 'invalid',
+        date: '',
+      };
+
+      const errors = assetService.validateAssetForm(formData);
+      expect(errors.length).toBe(3);
+      expect(errors).toContainEqual({ field: 'name', message: 'Asset name is required' });
+      expect(errors).toContainEqual({ field: 'value', message: 'Value must be a valid number' });
+      expect(errors).toContainEqual({ field: 'date', message: 'Date is required' });
+    });
+  });
+
+  describe('transformFormToAsset', () => {
+    it('should transform form data to asset object with valueHistory', () => {
+      const formData = {
+        name: '  House  ',
+        type: AssetType.REAL_ESTATE,
+        currencyCode: CurrencyCode.USD,
+        value: '500000.50',
+        date: '2024-01-15',
+        notes: '  Primary residence  ',
+      };
+
+      const result = assetService.transformFormToAsset(formData);
+
+      expect(result).toEqual({
+        name: 'House',
+        type: AssetType.REAL_ESTATE,
+        currencyCode: CurrencyCode.USD,
+        valueHistory: [
+          {
+            date: '2024-01-15',
+            value: 500000.5,
+            notes: 'Primary residence',
+          },
+        ],
+      });
+    });
+
+    it('should handle form data without notes', () => {
+      const formData = {
+        name: 'Car',
+        type: AssetType.OTHER,
+        currencyCode: CurrencyCode.USD,
+        value: '25000',
+        date: '2024-01-01',
+      };
+
+      const result = assetService.transformFormToAsset(formData);
+
+      expect(result).toEqual({
+        name: 'Car',
+        type: AssetType.OTHER,
+        currencyCode: CurrencyCode.USD,
+        valueHistory: [
+          {
+            date: '2024-01-01',
+            value: 25000,
+            notes: undefined,
+          },
+        ],
+      });
+    });
+
+    it('should handle form data with empty notes', () => {
+      const formData = {
+        name: 'Investment',
+        type: AssetType.OTHER,
+        currencyCode: CurrencyCode.SGD,
+        value: '10000',
+        date: '2024-01-01',
+        notes: '   ',
+      };
+
+      const result = assetService.transformFormToAsset(formData);
+
+      expect(result.valueHistory[0].notes).toBeUndefined();
+    });
+  });
+
+  describe('validateAssetValueUpdate', () => {
+    const asset: ManualAsset = {
+      id: '1',
+      name: 'House',
+      type: AssetType.REAL_ESTATE,
+      currencyCode: CurrencyCode.USD,
+      valueHistory: [{ date: '2024-01-01', value: 500000 }],
+      isDeleted: false,
+      createdAt: '2024-01-01T00:00:00.000Z',
+      updatedAt: '2024-01-01T00:00:00.000Z',
+    };
+
+    it('should return no errors for valid value update', () => {
+      const formData = {
+        date: '2024-02-01',
+        value: '510000',
+        note: 'Market increase',
+      };
+
+      const errors = assetService.validateAssetValueUpdate(formData, asset);
+      expect(errors).toEqual([]);
+    });
+
+    it('should return error for missing date', () => {
+      const formData = {
+        date: '',
+        value: '510000',
+      };
+
+      const errors = assetService.validateAssetValueUpdate(formData, asset);
+      expect(errors).toContainEqual({ field: 'date', message: 'Date is required' });
+    });
+
+    it('should return error for invalid value', () => {
+      const formData = {
+        date: '2024-02-01',
+        value: 'not a number',
+      };
+
+      const errors = assetService.validateAssetValueUpdate(formData, asset);
+      expect(errors).toContainEqual({ field: 'value', message: 'Value must be a valid number' });
+    });
+
+    it('should return error for duplicate date', () => {
+      const formData = {
+        date: '2024-01-01',
+        value: '510000',
+      };
+
+      const errors = assetService.validateAssetValueUpdate(formData, asset);
+      expect(errors).toContainEqual({
+        field: 'date',
+        message: 'An entry already exists for this date',
+      });
+    });
+
+    it('should return multiple errors for multiple invalid fields', () => {
+      const formData = {
+        date: '2024-01-01',
+        value: 'invalid',
+      };
+
+      const errors = assetService.validateAssetValueUpdate(formData, asset);
+      expect(errors.length).toBe(2);
+      expect(errors).toContainEqual({ field: 'value', message: 'Value must be a valid number' });
+      expect(errors).toContainEqual({
+        field: 'date',
+        message: 'An entry already exists for this date',
+      });
+    });
+  });
 });

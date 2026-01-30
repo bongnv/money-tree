@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Paper,
@@ -15,175 +15,43 @@ import {
 import Grid from '@mui/material/Grid';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
-import type { BalanceSheetData } from '../../services/report.service';
-import { useReportService } from '../../contexts/ServiceProviders';
 import { ManualAssetSection } from './ManualAssetSection';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
 import { AssetValueHistoryDialog } from '../assets/AssetValueHistoryDialog';
 import { LineChart } from '../common/charts/LineChart';
 import { formatCurrency } from '../../utils/currency.utils';
-import { getTodayDate } from '../../utils/date.utils';
 import { FormDatePicker } from '../common/FormDatePicker';
 import { CurrencyCode } from '../../types/enums';
-import { useActiveAccounts } from '../../hooks/useAccounts';
-import { useTransactions } from '../../hooks/useTransactions';
-import { useAssets } from '../../hooks/useAssets';
-import { useBaseCurrency } from '../../hooks/useSyncMetadata';
+import { useBalanceSheet } from '@/hooks/reports/useBalanceSheet';
 
 type ComparisonType = 'none' | 'month' | 'year';
 
 export const BalanceSheet: React.FC = () => {
-  const accounts = useActiveAccounts();
-  const manualAssets = useAssets();
-  const transactions = useTransactions();
-  const baseCurrency = useBaseCurrency();
-  const reportService = useReportService();
-
-  // Use today as default date
-  const today = getTodayDate();
-  const [selectedDate, setSelectedDate] = useState<string>(today);
-  const [comparisonType, setComparisonType] = useState<ComparisonType>('none');
   const [historyDialogAssetId, setHistoryDialogAssetId] = useState<string | null>(null);
-  const [conversionCurrency, setConversionCurrency] = useState<CurrencyCode>(baseCurrency);
-
-  // Update conversion currency when base currency changes from DB
-  useEffect(() => {
-    setConversionCurrency(baseCurrency);
-  }, [baseCurrency]);
-
-  // Calculate balance sheet for selected date with currency conversion
-  const [balanceSheet, setBalanceSheet] = useState<BalanceSheetData>({
-    assets: [],
-    liabilities: [],
-    netWorth: 0,
-    totalAssets: 0,
-    totalLiabilities: 0,
-  });
-
-  useEffect(() => {
-    if (!accounts || !manualAssets || !transactions) return;
-
-    const calculateBalanceSheet = async () => {
-      const data = await reportService.calculateBalanceSheet(
-        accounts,
-        manualAssets,
-        transactions,
-        selectedDate,
-        conversionCurrency
-      );
-      setBalanceSheet(data);
-    };
-
-    calculateBalanceSheet();
-  }, [accounts, manualAssets, transactions, selectedDate, conversionCurrency, reportService]);
-
-  // Calculate comparison data
-  const [comparison, setComparison] = useState<{
-    current: BalanceSheetData;
-    previous: BalanceSheetData;
-    change: number;
-    changePercent: number;
-  } | null>(null);
-
-  useEffect(() => {
-    if (!accounts || !manualAssets || !transactions) return;
-
-    const calculateComparison = async () => {
-      if (comparisonType === 'month') {
-        const data = await reportService.calculateMonthOverMonthComparison(
-          accounts,
-          manualAssets,
-          transactions,
-          selectedDate,
-          conversionCurrency
-        );
-        setComparison(data);
-      } else if (comparisonType === 'year') {
-        const data = await reportService.calculateYearOverYearComparison(
-          accounts,
-          manualAssets,
-          transactions,
-          selectedDate,
-          conversionCurrency
-        );
-        setComparison(data);
-      } else {
-        setComparison(null);
-      }
-    };
-
-    calculateComparison();
-  }, [
-    accounts,
-    manualAssets,
-    transactions,
-    selectedDate,
-    comparisonType,
+  const [uiComparisonType, setUiComparisonType] = useState<ComparisonType>('none');
+  
+  const {
+    balanceSheet,
+    netWorthTrend,
+    comparison,
+    reportDate,
+    setReportDate,
+    setComparisonType: setHookComparisonType,
     conversionCurrency,
-    reportService,
-  ]);
-  // effectiveGetRateForMonth is stable from Zustand store
-
-  // Calculate net worth trend for the past year
-  const [trendData, setTrendData] = useState<
-    Array<{
-      name: string;
-      'Net Worth': number;
-      Assets: number;
-      Liabilities: number;
-    }>
-  >([]);
-
-  useEffect(() => {
-    if (!accounts || !manualAssets || !transactions) return;
-
-    const calculateTrend = async () => {
-      // Parse date components to avoid timezone issues
-      const [year, month, day] = selectedDate.split('-').map(Number);
-      const endDate = new Date(year, month - 1, day);
-      const startDate = new Date(endDate);
-      startDate.setFullYear(startDate.getFullYear() - 1);
-
-      // Format dates as YYYY-MM-DD in local timezone
-      const formatLocalDate = (date: Date): string => {
-        const y = date.getFullYear();
-        const m = String(date.getMonth() + 1).padStart(2, '0');
-        const d = String(date.getDate()).padStart(2, '0');
-        return `${y}-${m}-${d}`;
-      };
-
-      const trend = await reportService.calculateNetWorthTrend(
-        accounts,
-        manualAssets,
-        transactions,
-        formatLocalDate(startDate),
-        selectedDate,
-        30, // Monthly data points
-        conversionCurrency
-      );
-
-      setTrendData(
-        trend.map((point) => ({
-          name: new Date(point.date).toLocaleDateString('en-US', {
-            month: 'short',
-            year: 'numeric',
-          }),
-          'Net Worth': point.netWorth,
-          Assets: point.assets,
-          Liabilities: point.liabilities,
-        }))
-      );
-    };
-
-    calculateTrend();
-  }, [accounts, manualAssets, transactions, selectedDate, conversionCurrency, reportService]);
+    setConversionCurrency,
+    isLoadingBalanceSheet,
+    manualAssets,
+  } = useBalanceSheet();
 
   const handleComparisonChange = (
     _event: React.MouseEvent<HTMLElement>,
     newValue: ComparisonType | null
   ) => {
     if (newValue !== null) {
-      setComparisonType(newValue);
+      setUiComparisonType(newValue);
+      if (newValue !== 'none') {
+        setHookComparisonType(newValue);
+      }
     }
   };
 
@@ -198,8 +66,14 @@ export const BalanceSheet: React.FC = () => {
   const handleCloseHistoryDialog = () => {
     setHistoryDialogAssetId(null);
   };
-
-  const selectedAsset = manualAssets?.find((asset) => asset.id === historyDialogAssetId);
+  
+  // Transform netWorthTrend data for LineChart
+  const chartData = netWorthTrend?.map(point => ({
+    name: point.date,
+    'Net Worth': point.netWorth,
+    'Assets': point.assets,
+    'Liabilities': point.liabilities,
+  })) || [];
 
   return (
     <Box>
@@ -212,8 +86,8 @@ export const BalanceSheet: React.FC = () => {
             </Typography>
             <FormDatePicker
               label="As of Date"
-              value={selectedDate}
-              onChange={setSelectedDate}
+              value={reportDate}
+              onChange={setReportDate}
               sx={{ mt: 0 }}
             />
           </Grid>
@@ -222,7 +96,7 @@ export const BalanceSheet: React.FC = () => {
               Comparison
             </Typography>
             <ToggleButtonGroup
-              value={comparisonType}
+              value={uiComparisonType}
               exclusive
               onChange={handleComparisonChange}
               aria-label="comparison type"
@@ -260,7 +134,13 @@ export const BalanceSheet: React.FC = () => {
       </Paper>
 
       {/* Summary Cards */}
-      {
+      {!balanceSheet ? (
+        <Paper sx={{ p: 3, textAlign: 'center' }}>
+          <Typography color="text.secondary">
+            {isLoadingBalanceSheet ? 'Loading balance sheet...' : 'No data available for selected date'}
+          </Typography>
+        </Paper>
+      ) : (
         <>
           <Grid container spacing={3} sx={{ mb: 3 }}>
             <Grid size={{ xs: 12, md: 4 }}>
@@ -272,7 +152,7 @@ export const BalanceSheet: React.FC = () => {
                   <Typography variant="h4" component="div">
                     {formatCurrency(balanceSheet.totalAssets, conversionCurrency)}
                   </Typography>
-                  {comparison && (
+                  {uiComparisonType !== 'none' && comparison && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                       {comparison.current.totalAssets >= comparison.previous.totalAssets ? (
                         <TrendingUpIcon color="success" fontSize="small" />
@@ -299,7 +179,7 @@ export const BalanceSheet: React.FC = () => {
                   <Typography variant="h4" component="div">
                     {formatCurrency(balanceSheet.totalLiabilities, conversionCurrency)}
                   </Typography>
-                  {comparison && (
+                  {uiComparisonType !== 'none' && comparison && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                       {comparison.current.totalLiabilities <=
                       comparison.previous.totalLiabilities ? (
@@ -326,7 +206,7 @@ export const BalanceSheet: React.FC = () => {
                   <Typography variant="h4" component="div">
                     {formatCurrency(balanceSheet.netWorth, conversionCurrency)}
                   </Typography>
-                  {comparison && (
+                  {uiComparisonType !== 'none' && comparison && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                       {comparison.change >= 0 ? (
                         <TrendingUpIcon fontSize="small" />
@@ -345,13 +225,13 @@ export const BalanceSheet: React.FC = () => {
           </Grid>
 
           {/* Net Worth Trend Chart */}
-          {trendData.length > 1 && (
+          {chartData.length > 1 && (
             <Paper sx={{ p: 3, mb: 3 }}>
               <Typography variant="h6" gutterBottom>
                 Net Worth Trend (Past 12 Months)
               </Typography>
               <LineChart
-                data={trendData}
+                data={chartData}
                 lines={[
                   { dataKey: 'Net Worth', name: 'Net Worth', color: '#2e7d32' },
                   { dataKey: 'Assets', name: 'Assets', color: '#1976d2' },
@@ -398,12 +278,12 @@ export const BalanceSheet: React.FC = () => {
             </Grid>
           </Paper>
         </>
-      }
+      )}
 
       {/* Asset Value History Dialog */}
       <AssetValueHistoryDialog
         open={historyDialogAssetId !== null}
-        asset={selectedAsset || null}
+        asset={manualAssets?.find((asset) => asset.id === historyDialogAssetId) || null}
         onClose={handleCloseHistoryDialog}
       />
     </Box>

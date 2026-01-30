@@ -2,8 +2,6 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import { Header } from './Header';
-import { AppProvider } from '../../contexts/AppContext';
-import { ServiceProvider } from '../../contexts/ServiceProviders';
 
 // Mock CloudSyncService class
 jest.mock('../../services/cloudSync.service', () => ({
@@ -19,8 +17,8 @@ jest.mock('../../services/cloudSync.service', () => ({
 }));
 
 // Mock SyncProvider
-jest.mock('../../contexts/SyncProvider', () => ({
-  useSyncService: jest.fn(() => ({
+jest.mock('@/hooks/useSync', () => ({
+  useSync: jest.fn(() => ({
     isConnected: false,
     providerName: null,
     fileName: null,
@@ -39,20 +37,16 @@ jest.mock('../../contexts/SyncProvider', () => ({
     saveDataFile: jest.fn().mockResolvedValue(undefined),
     loadDataFile: jest.fn().mockResolvedValue(undefined),
   })),
-  SyncProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useSyncService: jest.fn(() => ({ isConnected: false, isSyncing: false })),
 }));
 
 const renderWithRouter = (component: React.ReactElement, initialRoute = '/') => {
   return render(
-    <AppProvider>
-      <ServiceProvider>
-        <MemoryRouter initialEntries={[initialRoute]}>
-          <Routes>
-            <Route path="*" element={component} />
-          </Routes>
-        </MemoryRouter>
-      </ServiceProvider>
-    </AppProvider>
+    <MemoryRouter initialEntries={[initialRoute]}>
+      <Routes>
+        <Route path="*" element={component} />
+      </Routes>
+    </MemoryRouter>
   );
 };
 

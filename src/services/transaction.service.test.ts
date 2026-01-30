@@ -1,7 +1,8 @@
 import { TransactionService } from './transaction.service';
 import { db } from '../db/database';
-import type { Transaction } from '../types/models';
+import type { Transaction, TransactionType, Account } from '../types/models';
 import type { SyncMetadataService } from './syncMetadata.service';
+import { Group, AccountType, CurrencyCode } from '../types/enums';
 
 const mockSyncMetadataService = {
   setLastModified: jest.fn(),
@@ -146,6 +147,237 @@ describe('transactionService', () => {
           updatedAt: expect.any(String),
         })
       );
+    });
+  });
+
+  describe('validateTransactionForm', () => {
+    const mockTransactionType: TransactionType = {
+      id: 'type-1',
+      name: 'Groceries',
+      categoryId: 'cat-1',
+      group: Group.EXPENSE,
+      isActive: true,
+      isDeleted: false,
+      createdAt: '2024-01-01T00:00:00.000Z',
+      updatedAt: '2024-01-01T00:00:00.000Z',
+    };
+
+    const mockAccounts: Account[] = [
+      {
+        id: 'acc-1',
+        name: 'Checking',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: 1000,
+        isActive: true,
+        isDeleted: false,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+    ];
+
+    it('should return no errors for valid form data', () => {
+      const formData = {
+        date: '2024-03-15',
+        description: 'Weekly groceries',
+        amount: '150.50',
+        transactionTypeId: 'type-1',
+        fromAccountId: 'acc-1',
+      };
+
+      const errors = transactionService.validateTransactionForm(
+        formData,
+        mockTransactionType,
+        mockAccounts
+      );
+
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should return error when date is missing', () => {
+      const formData = {
+        date: '',
+        description: 'Test',
+        amount: '100',
+        transactionTypeId: 'type-1',
+        fromAccountId: 'acc-1',
+      };
+
+      const errors = transactionService.validateTransactionForm(
+        formData,
+        mockTransactionType,
+        mockAccounts
+      );
+
+      expect(errors).toContainEqual({
+        field: 'date',
+        message: 'Date is required',
+      });
+    });
+
+    it('should return error when amount is invalid', () => {
+      const formData = {
+        date: '2024-03-15',
+        description: 'Test',
+        amount: 'invalid',
+        transactionTypeId: 'type-1',
+        fromAccountId: 'acc-1',
+      };
+
+      const errors = transactionService.validateTransactionForm(
+        formData,
+        mockTransactionType,
+        mockAccounts
+      );
+
+      expect(errors).toContainEqual({
+        field: 'amount',
+        message: 'Amount is required',
+      });
+    });
+
+    it('should return error when transaction type is missing', () => {
+      const formData = {
+        date: '2024-03-15',
+        description: 'Test',
+        amount: '100',
+        transactionTypeId: '',
+        fromAccountId: 'acc-1',
+      };
+
+      const errors = transactionService.validateTransactionForm(formData, undefined, mockAccounts);
+
+      expect(errors).toContainEqual({
+        field: 'transactionTypeId',
+        message: 'Transaction type is required',
+      });
+    });
+  });
+
+  describe('transformFormToTransaction', () => {
+    it('should transform form data to transaction entity', () => {
+      const formData = {
+        date: '2024-03-15',
+        description: '  Coffee shop  ',
+        amount: '4.50',
+        transactionTypeId: 'type-1',
+        fromAccountId: 'acc-1',
+      };
+
+      const result = transactionService.transformFormToTransaction(formData);
+
+      expect(result).toEqual({
+        date: '2024-03-15',
+        description: 'Coffee shop',
+        amount: 4.5,
+        transactionTypeId: 'type-1',
+        fromAccountId: 'acc-1',
+        toAccountId: undefined,
+        fromAssetId: undefined,
+        toAssetId: undefined,
+      });
+    });
+
+    it('should handle empty description', () => {
+      const formData = {
+        date: '2024-03-15',
+        description: '   ',
+        amount: '100',
+        transactionTypeId: 'type-1',
+        fromAccountId: 'acc-1',
+      };
+
+      const result = transactionService.transformFormToTransaction(formData);
+
+      expect(result.description).toBeUndefined();
+    });
+
+    it('should handle transfer between accounts', () => {
+      const formData = {
+        date: '2024-03-15',
+        description: 'Transfer',
+        amount: '500',
+        transactionTypeId: 'type-transfer',
+        fromAccountId: 'acc-1',
+        toAccountId: 'acc-2',
+      };
+
+      const result = transactionService.transformFormToTransaction(formData);
+
+      expect(result).toEqual({
+        date: '2024-03-15',
+        description: 'Transfer',
+        amount: 500,
+        transactionTypeId: 'type-transfer',
+        fromAccountId: 'acc-1',
+        toAccountId: 'acc-2',
+        fromAssetId: undefined,
+        toAssetId: undefined,
+      });
+    });
+  });
+
+  describe('deriveTransactionType', () => {
+    const mockTransactionTypes: TransactionType[] = [
+      {
+        id: 'type-1',
+        name: 'Groceries',
+        categoryId: 'cat-1',
+        group: Group.EXPENSE,
+        isActive: true,
+        isDeleted: false,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+      {
+        id: 'type-2',
+        name: 'Salary',
+        categoryId: 'cat-2',
+        group: Group.INCOME,
+        isActive: true,
+        isDeleted: false,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+    ];
+
+    it('should return transaction type when found', () => {
+      const formData = {
+        date: '2024-03-15',
+        description: 'Test',
+        amount: '100',
+        transactionTypeId: 'type-1',
+      };
+
+      const result = transactionService.deriveTransactionType(formData, mockTransactionTypes);
+
+      expect(result).toEqual(mockTransactionTypes[0]);
+    });
+
+    it('should return null when transaction type ID is empty', () => {
+      const formData = {
+        date: '2024-03-15',
+        description: 'Test',
+        amount: '100',
+        transactionTypeId: '',
+      };
+
+      const result = transactionService.deriveTransactionType(formData, mockTransactionTypes);
+
+      expect(result).toBeNull();
+    });
+
+    it('should return null when transaction type not found', () => {
+      const formData = {
+        date: '2024-03-15',
+        description: 'Test',
+        amount: '100',
+        transactionTypeId: 'invalid-id',
+      };
+
+      const result = transactionService.deriveTransactionType(formData, mockTransactionTypes);
+
+      expect(result).toBeNull();
     });
   });
 });

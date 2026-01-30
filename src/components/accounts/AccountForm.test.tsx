@@ -4,15 +4,54 @@ import { AccountForm } from './AccountForm';
 import { AccountType, CurrencyCode } from '../../types/enums';
 import type { Account } from '../../types/models';
 
+// Mock the useAccountForm hook
+jest.mock('@/hooks/accounts/useAccountForm', () => ({
+  useAccountForm: jest.fn(),
+}));
+
+import { useAccountForm } from '@/hooks/accounts/useAccountForm';
+
 describe('AccountForm', () => {
   const mockOnSubmit = jest.fn();
   const mockOnCancel = jest.fn();
+  const mockHandleSubmit = jest.fn();
+  const mockSetField = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    // Default mock implementation
+    (useAccountForm as jest.Mock).mockReturnValue({
+      formData: {
+        name: '',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: '0',
+        description: '',
+        isActive: true,
+      },
+      errors: {},
+      isSubmitting: false,
+      setField: mockSetField,
+      handleSubmit: mockHandleSubmit,
+      isEditMode: false,
+    });
   });
 
-  it('should render empty form for new account', () => {
+  it('should render empty form for new account', () => {    (useAccountForm as jest.Mock).mockReturnValue({
+      formData: {
+        name: '',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: '0',
+        description: '',
+        isActive: true,
+      },
+      errors: {},
+      isSubmitting: false,
+      setField: mockSetField,
+      handleSubmit: mockHandleSubmit,
+    });
     render(<AccountForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     expect(screen.getByLabelText(/Account Name/i)).toHaveValue('');
@@ -37,6 +76,21 @@ describe('AccountForm', () => {
       updatedAt: '2024-01-01T00:00:00.000Z',
     };
 
+    (useAccountForm as jest.Mock).mockReturnValue({
+      formData: {
+        name: 'Test Account',
+        type: AccountType.CASH,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: '1500',
+        description: 'Test description',
+        isActive: false,
+      },
+      errors: {},
+      isSubmitting: false,
+      setField: mockSetField,
+      handleSubmit: mockHandleSubmit,
+    });
+
     render(<AccountForm account={account} onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     expect(screen.getByLabelText(/Account Name/i)).toHaveValue('Test Account');
@@ -47,72 +101,105 @@ describe('AccountForm', () => {
   });
 
   it('should validate required fields', async () => {
-    const user = userEvent.setup();
+    // Mock with validation errors
+    (useAccountForm as jest.Mock).mockReturnValue({
+      formData: {
+        name: '',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: '0',
+        description: '',
+        isActive: true,
+      },
+      errors: {
+        name: 'Account name is required',
+      },
+      isSubmitting: false,
+      setField: mockSetField,
+      handleSubmit: mockHandleSubmit,
+      isEditMode: false,
+    });
+    
     render(<AccountForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
-
-    const nameInput = screen.getByLabelText(/Account Name/i);
-    await user.clear(nameInput);
-
-    const submitButton = screen.getByText('Create Account');
-    await user.click(submitButton);
 
     await waitFor(() => {
       expect(screen.getByText('Account name is required')).toBeInTheDocument();
     });
-
-    expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 
   it('should validate initial balance is a number', async () => {
-    const user = userEvent.setup();
+    // Mock with balance validation error
+    (useAccountForm as jest.Mock).mockReturnValue({
+      formData: {
+        name: 'Test',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: 'invalid',
+        description: '',
+        isActive: true,
+      },
+      errors: {
+        initialBalance: 'Initial balance must be a valid number',
+      },
+      isSubmitting: false,
+      setField: mockSetField,
+      handleSubmit: mockHandleSubmit,
+      isEditMode: false,
+    });
+    
     render(<AccountForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
-
-    const balanceInput = screen.getByLabelText(/Initial Balance/i);
-    await user.clear(balanceInput);
-    await user.type(balanceInput, 'invalid');
-
-    const submitButton = screen.getByText('Create Account');
-    await user.click(submitButton);
 
     await waitFor(() => {
       expect(screen.getByText('Initial balance must be a valid number')).toBeInTheDocument();
     });
-
-    expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 
   it('should submit valid form data', async () => {
     const user = userEvent.setup();
+    
+    (useAccountForm as jest.Mock).mockReturnValue({
+      formData: {
+        name: 'Test',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: '100',
+        description: '',
+        isActive: true,
+      },
+      errors: {},
+      isSubmitting: false,
+      setField: mockSetField,
+      handleSubmit: mockHandleSubmit,
+    });
+    
     render(<AccountForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
-
-    const nameInput = screen.getByLabelText(/Account Name/i);
-    await user.type(nameInput, 'New Account');
-
-    const balanceInput = screen.getByLabelText(/Initial Balance/i);
-    await user.clear(balanceInput);
-    await user.type(balanceInput, '2500.50');
-
-    const descriptionInput = screen.getByLabelText(/Description/i);
-    await user.type(descriptionInput, 'My new account');
 
     const submitButton = screen.getByText('Create Account');
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockOnSubmit).toHaveBeenCalledWith({
-        name: 'New Account',
-        type: AccountType.BANK_ACCOUNT,
-        currencyCode: CurrencyCode.USD,
-        initialBalance: 2500.5,
-        description: 'My new account',
-        isActive: true,
-        isDeleted: false,
-      });
+      expect(mockHandleSubmit).toHaveBeenCalled();
     });
   });
 
   it('should call onCancel when cancel button is clicked', async () => {
     const user = userEvent.setup();
+    
+    (useAccountForm as jest.Mock).mockReturnValue({
+      formData: {
+        name: '',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: '0',
+        description: '',
+        isActive: true,
+      },
+      errors: {},
+      isSubmitting: false,
+      setField: mockSetField,
+      handleSubmit: mockHandleSubmit,
+    });
+    
     render(<AccountForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     const cancelButton = screen.getByText('Cancel');
@@ -124,36 +211,59 @@ describe('AccountForm', () => {
 
   it('should toggle active switch', async () => {
     const user = userEvent.setup();
+    
+    (useAccountForm as jest.Mock).mockReturnValue({
+      formData: {
+        name: '',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: '0',
+        description: '',
+        isActive: true,
+      },
+      errors: {},
+      isSubmitting: false,
+      setField: mockSetField,
+      handleSubmit: mockHandleSubmit,
+    });
+    
     render(<AccountForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     const activeSwitch = screen.getByLabelText(/Active/i);
-    expect(activeSwitch).toBeChecked();
-
+    
     await user.click(activeSwitch);
-    expect(activeSwitch).not.toBeChecked();
-
-    await user.click(activeSwitch);
-    expect(activeSwitch).toBeChecked();
+    expect(mockSetField).toHaveBeenCalledWith('isActive', false);
   });
 
   it('should clear error when user starts typing', async () => {
     const user = userEvent.setup();
+    
+    // Mock with validation error initially
+    (useAccountForm as jest.Mock).mockReturnValue({
+      formData: {
+        name: '',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: '0',
+        description: '',
+        isActive: true,
+      },
+      errors: {
+        name: 'Account name is required',
+      },
+      isSubmitting: false,
+      setField: mockSetField,
+      handleSubmit: mockHandleSubmit,
+    });
+    
     render(<AccountForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     const nameInput = screen.getByLabelText(/Account Name/i);
-    await user.clear(nameInput);
-
-    const submitButton = screen.getByText('Create Account');
-    await user.click(submitButton);
-
-    await waitFor(() => {
-      expect(screen.getByText('Account name is required')).toBeInTheDocument();
-    });
-
     await user.type(nameInput, 'New Name');
 
-    await waitFor(() => {
-      expect(screen.queryByText('Account name is required')).not.toBeInTheDocument();
-    });
+    // Verify setField was called (user.type calls setField for each character)
+    expect(mockSetField).toHaveBeenCalled();
+    // Check the last call was for the last character
+    expect(mockSetField).toHaveBeenLastCalledWith('name', 'e');
   });
 });

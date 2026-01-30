@@ -29,8 +29,8 @@ import {
   CloudOff as CloudOffIcon,
   Error as ErrorIcon,
 } from '@mui/icons-material';
-import { useAppContext } from '../../contexts/AppContext';
-import { useSyncService } from '../../contexts/SyncProvider';
+import { useAppContext, useApp } from '@/hooks/useApp';
+import { useSync } from '@/hooks/useSync';
 import { useLastModified } from '../../hooks/useSyncMetadata';
 import { formatDistance } from 'date-fns';
 
@@ -41,17 +41,18 @@ export const Header: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isLoading } = useAppContext();
-  const syncService = useSyncService();
-  const cloudFileName = syncService.fileName;
-  const remoteLastModified = syncService.remoteLastModified;
-  const lastSyncError = syncService.lastSyncError;
+  const { syncConnection, syncStatus } = useApp();
+  const syncOps = useSync();
+  const cloudFileName = syncConnection.fileName;
+  const remoteLastModified = syncStatus.remoteLastModified;
+  const lastSyncError = syncStatus.lastSyncError;
 
   // Watch local lastModified to determine if we're truly in sync
   const lastModified = useLastModified();
 
   const handleSync = async () => {
     try {
-      await syncService.fullSync();
+      await syncOps.fullSync();
     } catch (error) {
       console.error('Sync failed:', error);
     }
@@ -69,7 +70,7 @@ export const Header: React.FC = () => {
   };
 
   const getSyncStatus = (): 'syncing' | 'synced' | 'not-synced' | 'error' => {
-    if (syncService.isSyncing) return 'syncing';
+    if (syncStatus.isSyncing) return 'syncing';
     if (lastSyncError) return 'error';
     if (!remoteLastModified) return 'not-synced';
     // Only show synced if remote matches local
@@ -217,7 +218,7 @@ export const Header: React.FC = () => {
               <IconButton
                 color="inherit"
                 onClick={handleSync}
-                disabled={isLoading || syncService.isSyncing}
+                disabled={isLoading || syncStatus.isSyncing}
                 aria-label={getSyncLabel()}
                 sx={{
                   color: getSyncColor(),

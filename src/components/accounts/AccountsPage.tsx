@@ -1,65 +1,46 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   Typography,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import type { Account } from '../../types/models';
 import { AccountList } from './AccountList';
 import { AccountDialog } from './AccountDialog';
 import { useActiveAccounts } from '../../hooks/useAccounts';
-import { useAccountService } from '@/contexts/ServiceProviders';
+import { useAccountService } from '@/hooks/useServices';
+import { useAccountDialog } from '@/hooks/accounts/useAccountDialog';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 
 export const AccountsPage: React.FC = () => {
   const accounts = useActiveAccounts();
   const accountService = useAccountService();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedAccount, setSelectedAccount] = useState<Account | undefined>();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [accountToDelete, setAccountToDelete] = useState<Account | undefined>();
+  const accountDialog = useAccountDialog();
+  const [deleteAccount, setDeleteAccount] = React.useState<Account | null>(null);
 
   const handleOpenDialog = () => {
-    setSelectedAccount(undefined);
-    setDialogOpen(true);
-  };
-
-  const handleCloseDialog = () => {
-    setDialogOpen(false);
-    setSelectedAccount(undefined);
+    accountDialog.openCreate();
   };
 
   const handleEdit = (account: Account) => {
-    setSelectedAccount(account);
-    setDialogOpen(true);
+    accountDialog.openEdit(account);
   };
 
   const handleDelete = (account: Account) => {
-    setAccountToDelete(account);
-    setDeleteDialogOpen(true);
+    setDeleteAccount(account);
   };
-
+  
   const handleConfirmDelete = async () => {
-    if (accountToDelete?.id) {
-      await accountService.delete(accountToDelete.id);
+    if (deleteAccount?.id) {
+      await accountService.delete(deleteAccount.id);
+      setDeleteAccount(null);
     }
-    setDeleteDialogOpen(false);
-    setAccountToDelete(undefined);
-  };
-
-  const handleCancelDelete = () => {
-    setDeleteDialogOpen(false);
-    setAccountToDelete(undefined);
   };
 
   const handleSubmit = async (accountData: Omit<Account, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (selectedAccount?.id) {
-      await accountService.update(selectedAccount.id, accountData);
+    if (accountDialog.selectedItem?.id) {
+      await accountService.update(accountDialog.selectedItem.id, accountData);
     } else {
       await accountService.create(accountData);
     }
@@ -79,27 +60,21 @@ export const AccountsPage: React.FC = () => {
       <AccountList accounts={accounts || []} onEdit={handleEdit} onDelete={handleDelete} />
 
       <AccountDialog
-        open={dialogOpen}
-        account={selectedAccount}
-        onClose={handleCloseDialog}
+        open={accountDialog.isOpen}
+        account={accountDialog.selectedItem || undefined}
+        onClose={accountDialog.close}
         onSubmit={handleSubmit}
       />
-
-      <Dialog open={deleteDialogOpen} onClose={handleCancelDelete}>
-        <DialogTitle>Delete Account</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete &quot;{accountToDelete?.name}&quot;? This action cannot
-            be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelDelete}>Cancel</Button>
-          <Button onClick={handleConfirmDelete} color="error" variant="contained">
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      
+      <ConfirmDialog
+        open={!!deleteAccount}
+        title="Delete Account"
+        message={`Are you sure you want to delete "${deleteAccount?.name}"? This will also remove all associated transactions.`}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteAccount(null)}
+        confirmText="Delete"
+        severity="error"
+      />
     </Box>
   );
 };

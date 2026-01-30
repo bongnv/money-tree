@@ -215,4 +215,161 @@ describe('accountService', () => {
       );
     });
   });
+
+  describe('validateAccountForm', () => {
+    it('should return no errors for valid form data', () => {
+      const formData = {
+        name: 'Savings Account',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: '1000.50',
+        description: 'My savings',
+        isActive: true,
+      };
+
+      const errors = accountService.validateAccountForm(formData);
+
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should return error when name is empty', () => {
+      const formData = {
+        name: '   ',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: '1000',
+        isActive: true,
+      };
+
+      const errors = accountService.validateAccountForm(formData);
+
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toEqual({
+        field: 'name',
+        message: 'Account name is required',
+      });
+    });
+
+    it('should return error when type is missing', () => {
+      const formData = {
+        name: 'Test Account',
+        type: '' as AccountType,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: '1000',
+        isActive: true,
+      };
+
+      const errors = accountService.validateAccountForm(formData);
+
+      expect(errors).toContainEqual({
+        field: 'type',
+        message: 'Account type is required',
+      });
+    });
+
+    it('should return error when currency is missing', () => {
+      const formData = {
+        name: 'Test Account',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: '' as CurrencyCode,
+        initialBalance: '1000',
+        isActive: true,
+      };
+
+      const errors = accountService.validateAccountForm(formData);
+
+      expect(errors).toContainEqual({
+        field: 'currencyCode',
+        message: 'Currency is required',
+      });
+    });
+
+    it('should return error when initial balance is not a number', () => {
+      const formData = {
+        name: 'Test Account',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: 'invalid',
+        isActive: true,
+      };
+
+      const errors = accountService.validateAccountForm(formData);
+
+      expect(errors).toContainEqual({
+        field: 'initialBalance',
+        message: 'Initial balance must be a valid number',
+      });
+    });
+
+    it('should return multiple errors when multiple fields are invalid', () => {
+      const formData = {
+        name: '',
+        type: '' as AccountType,
+        currencyCode: '' as CurrencyCode,
+        initialBalance: 'abc',
+        isActive: true,
+      };
+
+      const errors = accountService.validateAccountForm(formData);
+
+      expect(errors).toHaveLength(4);
+      expect(errors.map((e) => e.field)).toEqual(
+        expect.arrayContaining(['name', 'type', 'currencyCode', 'initialBalance'])
+      );
+    });
+  });
+
+  describe('transformFormToAccount', () => {
+    it('should transform form data to account entity', () => {
+      const formData = {
+        name: '  Savings Account  ',
+        type: AccountType.INVESTMENT,
+        currencyCode: CurrencyCode.AUD,
+        initialBalance: '2500.75',
+        description: '  Emergency fund  ',
+        isActive: false,
+      };
+
+      const result = accountService.transformFormToAccount(formData);
+
+      expect(result).toEqual({
+        name: 'Savings Account',
+        type: AccountType.INVESTMENT,
+        currencyCode: CurrencyCode.AUD,
+        initialBalance: 2500.75,
+        description: 'Emergency fund',
+        isActive: false,
+        isDeleted: false,
+      });
+    });
+
+    it('should handle missing description', () => {
+      const formData = {
+        name: 'Checking',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: '0',
+        isActive: true,
+      };
+
+      const result = accountService.transformFormToAccount(formData);
+
+      expect(result.description).toBeUndefined();
+    });
+
+    it('should handle empty description', () => {
+      const formData = {
+        name: 'Checking',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: '0',
+        description: '   ',
+        isActive: true,
+      };
+
+      const result = accountService.transformFormToAccount(formData);
+
+      expect(result.description).toBeUndefined();
+    });
+  });
 });

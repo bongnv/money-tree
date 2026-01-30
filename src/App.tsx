@@ -10,18 +10,27 @@ import { NotificationSnackbar } from './components/common/NotificationSnackbar';
 import ReconnectDialog from './components/common/ReconnectDialog';
 import { ArchivePrompt } from './components/common/ArchivePrompt';
 import { AppRoutes } from './routes';
-import { AppProvider, useAppContext } from './contexts/AppContext';
-import { ServiceProvider, useArchiveService } from './contexts/ServiceProviders';
-import { SyncProvider, useSyncService } from './contexts/SyncProvider';
 import { useBaseCurrency } from '@hooks/useSyncMetadata';
+import { useArchiveService } from '@/hooks/useServices';
+import { useApp } from '@/hooks/useApp';
+import { useSync } from '@/hooks/useSync';
 
-const AppContent: React.FC = () => {
+const AppContent: React.FC<{
+  onReconnectNeeded: (providerName: string) => Promise<'reconnect' | 'dismiss'>;
+}> = ({ onReconnectNeeded }) => {
   const navigate = useNavigate();
-  const syncService = useSyncService();
+  useSync(onReconnectNeeded);
   const archiveService = useArchiveService();
   const baseCurrency = useBaseCurrency();
-  const { snackbar, hideSnackbar, isLoading, welcomeDismissed, setWelcomeDismissed } =
-    useAppContext();
+  const {
+    snackbar,
+    hideSnackbar,
+    isLoading,
+    welcomeDismissed,
+    setWelcomeDismissed,
+    syncStatus,
+    isConnected,
+  } = useApp();
 
   const [showArchivePrompt, setShowArchivePrompt] = useState(false);
   const [archiveYearSummary, setArchiveYearSummary] = useState<{
@@ -34,15 +43,15 @@ const AppContent: React.FC = () => {
 
   // Handle initial sync completion
   useEffect(() => {
-    // Wait for SyncProvider to finish initializing
-    if (syncService.isInitializing) return;
+    // Wait for sync to finish initializing
+    if (syncStatus.isInitializing) return;
 
     // Connected and synced, check for archive prompt
-    if (syncService.isConnected) {
+    if (isConnected) {
       checkArchivePrompt();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [syncService.isInitializing, syncService.isConnected]);
+  }, [syncStatus.isInitializing, isConnected]);
 
   const handleWelcomeClose = () => {
     setWelcomeDismissed(true);
@@ -70,7 +79,7 @@ const AppContent: React.FC = () => {
         <AppRoutes />
       </MainLayout>
       <WelcomeDialog
-        open={!syncService.isInitializing && !syncService.isConnected && !welcomeDismissed}
+        open={!syncStatus.isInitializing && !isConnected && !welcomeDismissed}
         onClose={handleWelcomeClose}
       />
       <NotificationSnackbar
@@ -135,21 +144,15 @@ const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AppProvider>
-        <BrowserRouter>
-          <SyncProvider onReconnectNeeded={handleReconnectNeeded}>
-            <ServiceProvider>
-              <AppContent />
-            </ServiceProvider>
-          </SyncProvider>
-        </BrowserRouter>
-        <ReconnectDialog
-          open={reconnectDialogState.open}
-          providerName={reconnectDialogState.providerName}
-          onReconnect={handleReconnect}
-          onDismiss={handleReconnectDismiss}
-        />
-      </AppProvider>
+      <BrowserRouter>
+        <AppContent onReconnectNeeded={handleReconnectNeeded} />
+      </BrowserRouter>
+      <ReconnectDialog
+        open={reconnectDialogState.open}
+        providerName={reconnectDialogState.providerName}
+        onReconnect={handleReconnect}
+        onDismiss={handleReconnectDismiss}
+      />
     </ThemeProvider>
   );
 };

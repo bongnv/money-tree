@@ -7,7 +7,7 @@ import { CategoryDialog } from '../categories/CategoryDialog';
 import type { Category } from '../../types/models';
 import { useCategories } from '../../hooks/useCategories';
 import { useTransactionTypes } from '../../hooks/useTransactionTypes';
-import { useCategoryService } from '../../contexts/ServiceProviders';
+import { useCategoryService } from '@/hooks/useServices';
 
 export const CategoriesListPage: React.FC = () => {
   const navigate = useNavigate();

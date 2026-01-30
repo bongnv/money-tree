@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, Box, Typography, Alert } from '@mui/material';
 import { ManualAssetForm } from './ManualAssetForm';
-import { useAssetService } from '../../contexts/ServiceProviders';
+import { useAssetService } from '@/hooks/useServices';
 import type { ManualAsset } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
 import { formatDate, getTodayDate } from '../../utils/date.utils';

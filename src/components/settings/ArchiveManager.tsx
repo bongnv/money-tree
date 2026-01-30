@@ -21,12 +21,12 @@ import {
 } from '@mui/material';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import WarningIcon from '@mui/icons-material/Warning';
-import { useArchiveService } from '../../contexts/ServiceProviders';
-import { useAppContext } from '../../contexts/AppContext';
+import { useArchiveService } from '@/hooks/useServices';
+import { useAppContext } from '@/hooks/useApp';
 import { formatCurrency } from '../../utils/currency.utils';
 import type { YearEndSummary } from '../../types/models';
 import { useBaseCurrency, useArchivedYears } from '../../hooks/useSyncMetadata';
-import { useSyncMetadataService } from '../../contexts/ServiceProviders';
+import { useSyncMetadataService } from '@/hooks/useServices';
 
 export const ArchiveManager: React.FC = () => {
   const syncMetadataService = useSyncMetadataService();

@@ -1,12 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Box, Button, MenuItem, Alert, Autocomplete, TextField } from '@mui/material';
 import { FormTextField } from '../common/FormTextField';
 import { FormDatePicker } from '../common/FormDatePicker';
 import type { Transaction, Account, TransactionType, Category } from '../../types/models';
 import { Group } from '../../types/enums';
-import { getTodayDate } from '../../utils/date.utils';
-import { validationService, ValidationError } from '../../services/validation.service';
 import { useAssets } from '../../hooks/useAssets';
+import { useTransactionForm } from '@/hooks/transactions/useTransactionForm';
 
 interface TransactionFormProps {
   transaction?: Transaction;
@@ -15,7 +14,7 @@ interface TransactionFormProps {
   transactionTypes: TransactionType[];
   onSubmit: (
     transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
-  ) => void;
+  ) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -27,18 +26,10 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
-  const [formData, setFormData] = useState({
-    date: transaction?.date || getTodayDate(),
-    description: transaction?.description || '',
-    amount: transaction?.amount?.toString() || '',
-    transactionTypeId: transaction?.transactionTypeId || '',
-    fromAccountId: transaction?.fromAccountId || '',
-    toAccountId: transaction?.toAccountId || '',
-    fromAssetId: transaction?.fromAssetId || '',
-    toAssetId: transaction?.toAssetId || '',
+  const { formData, errors, setField, handleSubmit } = useTransactionForm({
+    transaction,
+    onSubmit,
   });
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const manualAssets = useAssets();
 
@@ -62,71 +53,10 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   const fromAccountIsDefault = selectedTransactionType?.defaultFromAccountId;
   const toAccountIsDefault = selectedTransactionType?.defaultToAccountId;
 
-  const validate = (): boolean => {
-    const transactionType = transactionTypes.find((tt) => tt.id === formData.transactionTypeId);
-    const fromAccount = formData.fromAccountId
-      ? accounts.find((a) => a.id === formData.fromAccountId)
-      : undefined;
-    const toAccount = formData.toAccountId
-      ? accounts.find((a) => a.id === formData.toAccountId)
-      : undefined;
-
-    const partialTransaction: Partial<Transaction> = {
-      date: formData.date,
-      description: formData.description,
-      amount: parseFloat(formData.amount),
-      transactionTypeId: formData.transactionTypeId || undefined,
-      fromAccountId: formData.fromAccountId || undefined,
-      toAccountId: formData.toAccountId || undefined,
-      fromAssetId: formData.fromAssetId || undefined,
-      toAssetId: formData.toAssetId || undefined,
-    };
-
-    const validationErrors = validationService.validateTransaction(
-      partialTransaction,
-      transactionType,
-      fromAccount,
-      toAccount
-    );
-
-    const errorMap: Record<string, string> = {};
-    validationErrors.forEach((err: ValidationError) => {
-      errorMap[err.field] = err.message;
-    });
-
-    setErrors(errorMap);
-    return validationErrors.length === 0;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validate()) {
-      return;
-    }
-
-    onSubmit({
-      date: formData.date,
-      description: formData.description.trim() || undefined,
-      amount: parseFloat(formData.amount),
-      transactionTypeId: formData.transactionTypeId,
-      fromAccountId: formData.fromAccountId || undefined,
-      toAccountId: formData.toAccountId || undefined,
-      fromAssetId: formData.fromAssetId || undefined,
-      toAssetId: formData.toAssetId || undefined,
-    });
+    handleSubmit();
   };
-
-  const handleChange =
-    (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setFormData({
-        ...formData,
-        [field]: e.target.value,
-      });
-      if (errors[field]) {
-        setErrors({ ...errors, [field]: '' });
-      }
-    };
 
   // Group transaction types by category
   const groupedTransactionTypes = categories
@@ -172,7 +102,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   const showToAsset = selectedGroup === Group.ASSET_PURCHASE;
 
   return (
-    <Box component="form" onSubmit={handleSubmit} noValidate>
+    <Box component="form" onSubmit={handleFormSubmit} noValidate>
       {selectedGroup === Group.ASSET_PURCHASE && (
         <Alert severity="info" sx={{ mb: 2 }}>
           <strong>Asset Purchase:</strong> Buying or depositing into an asset. Money flows from an
@@ -189,12 +119,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
       <FormDatePicker
         label="Date"
         value={formData.date}
-        onChange={(date) => {
-          setFormData({ ...formData, date });
-          if (errors.date) {
-            setErrors({ ...errors, date: '' });
-          }
-        }}
+        onChange={(date) => setField('date', date)}
         error={!!errors.date}
         helperText={errors.date}
         required
@@ -203,7 +128,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
       <FormTextField
         label="Description"
         value={formData.description}
-        onChange={handleChange('description')}
+        onChange={(e) => setField('description', e.target.value)}
         error={!!errors.description}
         helperText={errors.description}
       />
@@ -212,7 +137,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         label="Amount"
         type="number"
         value={formData.amount}
-        onChange={handleChange('amount')}
+        onChange={(e) => setField('amount', e.target.value)}
         error={!!errors.amount}
         helperText={errors.amount}
         required
@@ -228,23 +153,17 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           const newId = newValue?.id || '';
           const newTransactionType = transactionTypes.find((tt) => tt.id === newId);
 
-          // Apply default accounts when transaction type changes
-          const updates: Partial<typeof formData> = {
-            transactionTypeId: newId,
-          };
+          // Update transaction type ID
+          setField('transactionTypeId', newId);
 
+          // Apply default accounts when transaction type changes
           if (newTransactionType) {
             if (newTransactionType.defaultFromAccountId) {
-              updates.fromAccountId = newTransactionType.defaultFromAccountId;
+              setField('fromAccountId', newTransactionType.defaultFromAccountId);
             }
             if (newTransactionType.defaultToAccountId) {
-              updates.toAccountId = newTransactionType.defaultToAccountId;
+              setField('toAccountId', newTransactionType.defaultToAccountId);
             }
-          }
-
-          setFormData({ ...formData, ...updates });
-          if (errors.transactionTypeId) {
-            setErrors({ ...errors, transactionTypeId: '' });
           }
         }}
         isOptionEqualToValue={(option, value) => option.id === value.id}
@@ -266,7 +185,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           select
           label="From Account"
           value={formData.fromAccountId}
-          onChange={handleChange('fromAccountId')}
+          onChange={(e) => setField('fromAccountId', e.target.value)}
           error={!!errors.fromAccountId}
           helperText={
             fromAccountIsDefault ? 'Account is set by transaction type' : errors.fromAccountId
@@ -290,7 +209,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           select
           label="From Asset"
           value={formData.fromAssetId}
-          onChange={handleChange('fromAssetId')}
+          onChange={(e) => setField('fromAssetId', e.target.value)}
           error={!!errors.fromAssetId}
           helperText={
             errors.fromAssetId ||
@@ -314,7 +233,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           select
           label="To Account"
           value={formData.toAccountId}
-          onChange={handleChange('toAccountId')}
+          onChange={(e) => setField('toAccountId', e.target.value)}
           error={!!errors.toAccountId}
           helperText={
             toAccountIsDefault ? 'Account is set by transaction type' : errors.toAccountId
@@ -338,7 +257,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           select
           label="To Asset"
           value={formData.toAssetId}
-          onChange={handleChange('toAssetId')}
+          onChange={(e) => setField('toAssetId', e.target.value)}
           error={!!errors.toAssetId}
           helperText={
             errors.toAssetId ||

@@ -3,68 +3,43 @@ import {
   Box,
   Typography,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import type { ManualAsset } from '../../types/models';
 import { ManualAssetList } from './ManualAssetList';
 import { ManualAssetDialog } from './ManualAssetDialog';
 import { useAssets } from '../../hooks/useAssets';
-import { useAssetService } from '../../contexts/ServiceProviders';
+import { useAssetService } from '@/hooks/useServices';
+import { useAssetDialog } from '@/hooks/assets/useAssetDialog';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 
 export const ManualAssetsPage: React.FC = () => {
   const manualAssets = useAssets();
   const assetService = useAssetService();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedAsset, setSelectedAsset] = useState<ManualAsset | undefined>();
-  const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'update-value'>('create');
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [assetToDelete, setAssetToDelete] = useState<ManualAsset | undefined>();
+  const assetDialog = useAssetDialog();
+  const [deleteAsset, setDeleteAsset] = useState<ManualAsset | null>(null);
 
   const handleOpenDialog = () => {
-    setSelectedAsset(undefined);
-    setDialogMode('create');
-    setDialogOpen(true);
-  };
-
-  const handleCloseDialog = () => {
-    setDialogOpen(false);
-    setSelectedAsset(undefined);
-    setDialogMode('create');
+    assetDialog.openCreate();
   };
 
   const handleEdit = (asset: ManualAsset) => {
-    setSelectedAsset(asset);
-    setDialogMode('edit');
-    setDialogOpen(true);
+    assetDialog.openEdit(asset);
   };
 
   const handleUpdateValue = (asset: ManualAsset) => {
-    setSelectedAsset(asset);
-    setDialogMode('update-value');
-    setDialogOpen(true);
+    assetDialog.openView(asset);
   };
 
   const handleDelete = (asset: ManualAsset) => {
-    setAssetToDelete(asset);
-    setDeleteDialogOpen(true);
+    setDeleteAsset(asset);
   };
 
   const handleConfirmDelete = async () => {
-    if (assetToDelete?.id) {
-      await assetService.delete(assetToDelete.id);
+    if (deleteAsset?.id) {
+      await assetService.delete(deleteAsset.id);
+      setDeleteAsset(null);
     }
-    setDeleteDialogOpen(false);
-    setAssetToDelete(undefined);
-  };
-
-  const handleCancelDelete = () => {
-    setDeleteDialogOpen(false);
-    setAssetToDelete(undefined);
   };
 
   return (
@@ -86,27 +61,21 @@ export const ManualAssetsPage: React.FC = () => {
       />
 
       <ManualAssetDialog
-        open={dialogOpen}
-        asset={selectedAsset}
-        onClose={handleCloseDialog}
-        mode={dialogMode}
+        open={assetDialog.isOpen}
+        asset={assetDialog.selectedItem || undefined}
+        onClose={assetDialog.close}
+        mode={assetDialog.mode === 'view' ? 'update-value' : assetDialog.mode}
       />
 
-      <Dialog open={deleteDialogOpen} onClose={handleCancelDelete}>
-        <DialogTitle>Delete Asset</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete &quot;{assetToDelete?.name}&quot;? This action cannot be
-            undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelDelete}>Cancel</Button>
-          <Button onClick={handleConfirmDelete} color="error">
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDialog
+        open={!!deleteAsset}
+        title="Delete Asset"
+        message={`Are you sure you want to delete "${deleteAsset?.name}"? This action cannot be undone.`}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteAsset(null)}
+        confirmText="Delete"
+        severity="error"
+      />
     </Box>
   );
 };

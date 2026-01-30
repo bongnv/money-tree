@@ -52,20 +52,30 @@ Mark task as complete only if all three pass.
 
 ## Architecture
 
-**3-layer**: UI (`src/components/`, `src/hooks/`, `src/contexts/`) → Services/Utils (`src/services/`, `src/utils/`) → Database (`src/db/`)
+**3-layer**: Components → Hooks → Services
 
-### UI Layer
-- **Pages**: Composition and page-level UI state (dialogs, filters). Use custom hooks for data. Handle routing.
-- **Components**: Pure presentation. Props only. NO business logic. NO data fetching.
-- **Hooks** (`src/hooks/`): ALL data fetching and React integration logic. Use `useLiveQuery` for queries, call services for calculations/mutations. Return data ready for rendering.
-- **Contexts** (`src/contexts/`): Dependency injection (ServiceProviders, SyncProvider). Provide service instances.
+### Components (`src/components/`) - Presentation Only
+- Render UI, call hooks, handle events
+- NO useState/useEffect (except trivial UI state like menu open)
+- NO business logic, NO calculations, NO validation
 
-### Services Layer
-- **Services** (`src/services/`): Stateless, pure business logic. NO React dependencies. Dependencies injected via constructor.
-- **Utils** (`src/utils/`): Pure utility functions. No state, no dependencies.
+### Hooks (`src/hooks/`) - UI Logic
+**Structure**:
+- `primitives/` - Generic patterns: `useFormState`, `useDialogState`, `useAsyncComputation`, `useFilterState`
+- `[domain]/` - Domain hooks: `accounts/`, `transactions/`, `assets/`, `reports/`
+- Root - Data hooks: `useAccounts`, `useTransactions`, etc.
 
-### Database Layer
-- **Database** (`src/db/`): Dexie schema, tables, IndexedDB operations. NO React. NO business logic.
+**Do**: UI state, data fetching (`useLiveQuery`), orchestration, call services
+**Don't**: Business logic (delegate to services)
+
+### Services (`src/services/`) - Business Logic
+- All calculations, validations, transformations, domain rules
+- NO React imports, NO hooks, NO JSX
+- Stateless, pure functions, constructor-injected dependencies
+
+### Supporting
+- **Utils** (`src/utils/`): Pure functions, no state
+- **Database** (`src/db/`): Dexie schema, IndexedDB only
 
 ## Code Style
 

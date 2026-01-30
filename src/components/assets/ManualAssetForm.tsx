@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { TextField, MenuItem, Box, Button } from '@mui/material';
 import { FormDatePicker } from '../common/FormDatePicker';
 import type { ManualAsset } from '../../types/models';
 import { AssetType, CurrencyCode } from '../../types/enums';
 import { getAllCurrencies } from '../../utils/currency.utils';
-import { getTodayDate, toDateString } from '../../utils/date.utils';
+import { useAssetForm } from '@/hooks/assets/useAssetForm';
 
 interface ManualAssetFormProps {
   asset?: ManualAsset;
-  onSubmit: (asset: Omit<ManualAsset, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>) => void;
+  onSubmit: (asset: Omit<ManualAsset, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
   onCancel: () => void;
   updateValueOnly?: boolean;
 }
@@ -20,84 +20,18 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
   updateValueOnly = false,
 }) => {
   const currencies = getAllCurrencies();
-  const latestEntry =
-    asset?.valueHistory && asset.valueHistory.length > 0
-      ? [...asset.valueHistory].sort((a, b) => b.date.localeCompare(a.date))[0]
-      : { value: 0, date: getTodayDate(), notes: '' };
-  const [formData, setFormData] = useState({
-    name: asset?.name || '',
-    type: asset?.type || AssetType.OTHER,
-    value: latestEntry.value?.toString() || '0',
-    currencyCode: asset?.currencyCode || CurrencyCode.USD,
-    date: latestEntry.date || getTodayDate(),
-    notes: latestEntry.notes || '',
+  const mode = updateValueOnly ? 'update-value' : asset ? 'edit' : 'create';
+  
+  const { formData, errors, setField, handleSubmit } = useAssetForm({
+    asset,
+    mode,
+    onSubmit,
   });
 
-  // Form data is initialized from asset prop
-  // Parent component should use key prop to reset form when asset changes
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const validate = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Asset name is required';
-    }
-
-    if (!formData.type) {
-      newErrors.type = 'Asset type is required';
-    }
-
-    const value = parseFloat(formData.value);
-    if (isNaN(value)) {
-      newErrors.value = 'Value must be a valid number';
-    }
-
-    if (!formData.currencyCode) {
-      newErrors.currencyCode = 'Currency is required';
-    }
-
-    if (!formData.date) {
-      newErrors.date = 'Date is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validate()) {
-      return;
-    }
-
-    onSubmit({
-      name: formData.name.trim(),
-      type: formData.type,
-      currencyCode: formData.currencyCode as CurrencyCode,
-      valueHistory: [
-        ...(updateValueOnly ? asset?.valueHistory || [] : []),
-        {
-          value: parseFloat(formData.value),
-          date: toDateString(formData.date),
-          notes: formData.notes.trim() || undefined,
-        },
-      ],
-    });
+    handleSubmit();
   };
-
-  const handleChange =
-    (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setFormData({
-        ...formData,
-        [field]: e.target.value,
-      });
-      if (errors[field]) {
-        setErrors({ ...errors, [field]: '' });
-      }
-    };
 
   const assetTypeLabels: Record<AssetType, string> = {
     [AssetType.REAL_ESTATE]: 'Real Estate',
@@ -108,12 +42,12 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} noValidate>
+    <Box component="form" onSubmit={handleFormSubmit} noValidate>
       <TextField
         fullWidth
         label="Asset Name"
         value={formData.name}
-        onChange={handleChange('name')}
+        onChange={(e) => setField('name', e.target.value)}
         error={!!errors.name}
         helperText={errors.name}
         margin="normal"
@@ -126,7 +60,7 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
         select
         label="Asset Type"
         value={formData.type}
-        onChange={handleChange('type')}
+        onChange={(e) => setField('type', e.target.value as AssetType)}
         error={!!errors.type}
         helperText={errors.type}
         margin="normal"
@@ -145,7 +79,7 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
         label="Value"
         type="number"
         value={formData.value}
-        onChange={handleChange('value')}
+        onChange={(e) => setField('value', e.target.value)}
         error={!!errors.value}
         helperText={errors.value}
         margin="normal"
@@ -158,7 +92,7 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
         select
         label="Currency"
         value={formData.currencyCode}
-        onChange={handleChange('currencyCode')}
+        onChange={(e) => setField('currencyCode', e.target.value as CurrencyCode)}
         error={!!errors.currencyCode}
         helperText={errors.currencyCode}
         margin="normal"
@@ -175,12 +109,7 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
       <FormDatePicker
         label="Date"
         value={formData.date}
-        onChange={(date) => {
-          setFormData({ ...formData, date });
-          if (errors.date) {
-            setErrors({ ...errors, date: '' });
-          }
-        }}
+        onChange={(date) => setField('date', date)}
         error={!!errors.date}
         helperText={errors.date}
         required
@@ -189,8 +118,8 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
       <TextField
         fullWidth
         label="Notes"
-        value={formData.notes}
-        onChange={handleChange('notes')}
+        value={formData.notes || ''}
+        onChange={(e) => setField('notes', e.target.value)}
         margin="normal"
         multiline
         rows={3}

@@ -4,11 +4,6 @@ import {
   Box,
   Typography,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import type { Transaction } from '../../types/models';
@@ -22,7 +17,9 @@ import { useTransactions } from '../../hooks/useTransactions';
 import { useCategories } from '../../hooks/useCategories';
 import { useTransactionTypes } from '../../hooks/useTransactionTypes';
 import { useAssets } from '../../hooks/useAssets';
-import { useTransactionService } from '../../contexts/ServiceProviders';
+import { useTransactionService } from '@/hooks/useServices';
+import { useTransactionDialog } from '@/hooks/transactions/useTransactionDialog';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 
 export const TransactionsPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -33,10 +30,8 @@ export const TransactionsPage: React.FC = () => {
   const transactionTypes = useTransactionTypes();
   const manualAssets = useAssets();
   const transactionService = useTransactionService();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | undefined>();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [transactionToDelete, setTransactionToDelete] = useState<Transaction | undefined>();
+  const transactionDialog = useTransactionDialog();
+  const [deleteTransaction, setDeleteTransaction] = useState<Transaction | null>(null);
 
   // Default to Year to Date
   const today = getTodayDate();
@@ -87,43 +82,29 @@ export const TransactionsPage: React.FC = () => {
   }, [transactions, filters, transactionTypes]);
 
   const handleOpenDialog = () => {
-    setSelectedTransaction(undefined);
-    setDialogOpen(true);
-  };
-
-  const handleCloseDialog = () => {
-    setDialogOpen(false);
-    setSelectedTransaction(undefined);
+    transactionDialog.openCreate();
   };
 
   const handleEdit = (transaction: Transaction) => {
-    setSelectedTransaction(transaction);
-    setDialogOpen(true);
+    transactionDialog.openEdit(transaction);
   };
 
   const handleDelete = (transaction: Transaction) => {
-    setTransactionToDelete(transaction);
-    setDeleteDialogOpen(true);
+    setDeleteTransaction(transaction);
   };
 
   const handleConfirmDelete = async () => {
-    if (transactionToDelete?.id) {
-      await transactionService.delete(transactionToDelete.id);
+    if (deleteTransaction?.id) {
+      await transactionService.delete(deleteTransaction.id);
+      setDeleteTransaction(null);
     }
-    setDeleteDialogOpen(false);
-    setTransactionToDelete(undefined);
-  };
-
-  const handleCancelDelete = () => {
-    setDeleteDialogOpen(false);
-    setTransactionToDelete(undefined);
   };
 
   const handleSubmit = async (
     transactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
   ) => {
-    if (selectedTransaction?.id) {
-      await transactionService.update(selectedTransaction.id, transactionData);
+    if (transactionDialog.selectedItem?.id) {
+      await transactionService.update(transactionDialog.selectedItem.id, transactionData);
     } else {
       await transactionService.create(transactionData);
     }
@@ -175,29 +156,24 @@ export const TransactionsPage: React.FC = () => {
       />
 
       <TransactionDialog
-        open={dialogOpen}
-        transaction={selectedTransaction}
+        open={transactionDialog.isOpen}
+        transaction={transactionDialog.selectedItem || undefined}
         accounts={accounts || []}
         categories={categories || []}
         transactionTypes={transactionTypes || []}
-        onClose={handleCloseDialog}
+        onClose={transactionDialog.close}
         onSubmit={handleSubmit}
       />
 
-      <Dialog open={deleteDialogOpen} onClose={handleCancelDelete}>
-        <DialogTitle>Delete Transaction</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete this transaction? This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelDelete}>Cancel</Button>
-          <Button onClick={handleConfirmDelete} color="error" variant="contained">
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDialog
+        open={!!deleteTransaction}
+        title="Delete Transaction"
+        message="Are you sure you want to delete this transaction? This action cannot be undone."
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTransaction(null)}
+        confirmText="Delete"
+        severity="error"
+      />
     </Box>
   );
 };

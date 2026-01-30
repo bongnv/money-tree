@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, Button, Paper } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { BudgetProgressBar } from './BudgetProgressBar';
-import { useCalculationService } from '../../contexts/ServiceProviders';
+import { useCalculationService } from '@/hooks/useServices';
 import type { PeriodOption } from '../common/PeriodSelector';
 import { Group } from '../../types/enums';
 import { useActiveAccounts } from '../../hooks/useAccounts';

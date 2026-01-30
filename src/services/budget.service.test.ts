@@ -1,7 +1,7 @@
 import { BudgetService } from './budget.service';
 import { db } from '../db/database';
 import type { Budget } from '../types/models';
-import { CurrencyCode } from '../types/enums';
+import { CurrencyCode, BudgetPeriod } from '../types/enums';
 import type { SyncMetadataService } from './syncMetadata.service';
 
 const mockSyncMetadataService = {
@@ -31,7 +31,7 @@ describe('budgetService', () => {
     transactionTypeId: '1',
     amount: 1000,
     currencyCode: CurrencyCode.USD,
-    period: 'monthly',
+    period: BudgetPeriod.MONTHLY,
     startDate: '2024-01-01',
     endDate: '2024-12-31',
     isDeleted: false,
@@ -73,7 +73,7 @@ describe('budgetService', () => {
         transactionTypeId: '2',
         amount: 500,
         currencyCode: CurrencyCode.USD,
-        period: 'monthly' as const,
+        period: BudgetPeriod.MONTHLY,
         startDate: '2024-02-01',
         endDate: '2024-12-31',
       };
@@ -132,6 +132,224 @@ describe('budgetService', () => {
           isDeleted: true,
         })
       );
+    });
+  });
+
+  describe('validateBudgetForm', () => {
+    it('should return no errors for valid form data', () => {
+      const formData = {
+        transactionTypeId: 'type-1',
+        amount: '1000',
+        currencyCode: CurrencyCode.USD,
+        period: 'monthly',
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+      };
+
+      const errors = budgetService.validateBudgetForm(formData);
+      expect(errors).toEqual([]);
+    });
+
+    it('should return error for missing transaction type', () => {
+      const formData = {
+        transactionTypeId: '',
+        amount: '1000',
+        currencyCode: CurrencyCode.USD,
+        period: 'monthly',
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+      };
+
+      const errors = budgetService.validateBudgetForm(formData);
+      expect(errors).toContainEqual({
+        field: 'transactionTypeId',
+        message: 'Transaction type is required',
+      });
+    });
+
+    it('should return error for missing currency', () => {
+      const formData = {
+        transactionTypeId: 'type-1',
+        amount: '1000',
+        currencyCode: '',
+        period: 'monthly',
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+      };
+
+      const errors = budgetService.validateBudgetForm(formData);
+      expect(errors).toContainEqual({ field: 'currencyCode', message: 'Currency is required' });
+    });
+
+    it('should return error for invalid amount', () => {
+      const formData = {
+        transactionTypeId: 'type-1',
+        amount: 'not a number',
+        currencyCode: CurrencyCode.USD,
+        period: 'monthly',
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+      };
+
+      const errors = budgetService.validateBudgetForm(formData);
+      expect(errors).toContainEqual({ field: 'amount', message: 'Amount must be greater than 0' });
+    });
+
+    it('should return error for zero amount', () => {
+      const formData = {
+        transactionTypeId: 'type-1',
+        amount: '0',
+        currencyCode: CurrencyCode.USD,
+        period: 'monthly',
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+      };
+
+      const errors = budgetService.validateBudgetForm(formData);
+      expect(errors).toContainEqual({ field: 'amount', message: 'Amount must be greater than 0' });
+    });
+
+    it('should return error for negative amount', () => {
+      const formData = {
+        transactionTypeId: 'type-1',
+        amount: '-500',
+        currencyCode: CurrencyCode.USD,
+        period: 'monthly',
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+      };
+
+      const errors = budgetService.validateBudgetForm(formData);
+      expect(errors).toContainEqual({ field: 'amount', message: 'Amount must be greater than 0' });
+    });
+
+    it('should return error for missing period', () => {
+      const formData = {
+        transactionTypeId: 'type-1',
+        amount: '1000',
+        currencyCode: CurrencyCode.USD,
+        period: '',
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+      };
+
+      const errors = budgetService.validateBudgetForm(formData);
+      expect(errors).toContainEqual({ field: 'period', message: 'Period is required' });
+    });
+
+    it('should return error for missing start date', () => {
+      const formData = {
+        transactionTypeId: 'type-1',
+        amount: '1000',
+        currencyCode: CurrencyCode.USD,
+        period: 'monthly',
+        startDate: '',
+        endDate: '2024-12-31',
+      };
+
+      const errors = budgetService.validateBudgetForm(formData);
+      expect(errors).toContainEqual({ field: 'startDate', message: 'Start date is required' });
+    });
+
+    it('should return error for missing end date', () => {
+      const formData = {
+        transactionTypeId: 'type-1',
+        amount: '1000',
+        currencyCode: CurrencyCode.USD,
+        period: 'monthly',
+        startDate: '2024-01-01',
+        endDate: '',
+      };
+
+      const errors = budgetService.validateBudgetForm(formData);
+      expect(errors).toContainEqual({ field: 'endDate', message: 'End date is required' });
+    });
+
+    it('should return error for end date before start date', () => {
+      const formData = {
+        transactionTypeId: 'type-1',
+        amount: '1000',
+        currencyCode: CurrencyCode.USD,
+        period: 'monthly',
+        startDate: '2024-12-31',
+        endDate: '2024-01-01',
+      };
+
+      const errors = budgetService.validateBudgetForm(formData);
+      expect(errors).toContainEqual({
+        field: 'endDate',
+        message: 'End date must be on or after start date',
+      });
+    });
+
+    it('should return multiple errors for multiple invalid fields', () => {
+      const formData = {
+        transactionTypeId: '',
+        amount: '-100',
+        currencyCode: '',
+        period: 'monthly',
+        startDate: '',
+        endDate: '',
+      };
+
+      const errors = budgetService.validateBudgetForm(formData);
+      expect(errors.length).toBe(5);
+    });
+  });
+
+  describe('transformFormToBudget', () => {
+    it('should transform form data to budget object', () => {
+      const formData = {
+        transactionTypeId: 'type-1',
+        amount: '1000.50',
+        currencyCode: CurrencyCode.USD,
+        period: 'monthly',
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+      };
+
+      const result = budgetService.transformFormToBudget(formData);
+
+      expect(result).toEqual({
+        transactionTypeId: 'type-1',
+        amount: 1000.5,
+        currencyCode: CurrencyCode.USD,
+        period: 'monthly',
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+      });
+    });
+
+    it('should handle quarterly period', () => {
+      const formData = {
+        transactionTypeId: 'type-1',
+        amount: '5000',
+        currencyCode: CurrencyCode.SGD,
+        period: 'quarterly',
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+      };
+
+      const result = budgetService.transformFormToBudget(formData);
+
+      expect(result.period).toBe('quarterly');
+      expect(result.currencyCode).toBe(CurrencyCode.SGD);
+    });
+
+    it('should handle yearly period', () => {
+      const formData = {
+        transactionTypeId: 'type-1',
+        amount: '12000',
+        currencyCode: CurrencyCode.AUD,
+        period: 'yearly',
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+      };
+
+      const result = budgetService.transformFormToBudget(formData);
+
+      expect(result.period).toBe('yearly');
+      expect(result.currencyCode).toBe(CurrencyCode.AUD);
     });
   });
 });

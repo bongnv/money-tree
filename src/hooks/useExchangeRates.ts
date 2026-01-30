@@ -3,7 +3,7 @@
  * Uses useLiveQuery for reactive database queries
  */
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useExchangeRateService } from '../contexts/ServiceProviders';
+import { useExchangeRateService } from './useServices';
 import type { ExchangeRate } from '../types/models';
 
 /**

@@ -122,7 +122,7 @@ async function getToUsdRate(month: string, currency: CurrencyCode): Promise<numb
       rateValue = await fetchRateFromAPI(currency);
     } catch (error) {
       console.error(`Failed to fetch rate for ${currency}:`, error);
-      return 1; // Fallback to 1:1
+      throw new Error(`Unable to get exchange rate for ${currency} to USD`);
     }
   }
 

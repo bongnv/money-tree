@@ -1,6 +1,6 @@
 import type { MoneyTreeDB } from '../db/database';
-import { db } from '../db/database';
 import type { ExchangeRate } from '../types/models';
+import type { SyncMetadataService } from './syncMetadata.service';
 
 const addTimestamps = (entity: Partial<ExchangeRate>, isUpdate = false): Partial<ExchangeRate> => {
   const now = new Date().toISOString();
@@ -11,7 +11,10 @@ const addTimestamps = (entity: Partial<ExchangeRate>, isUpdate = false): Partial
 };
 
 export class ExchangeRateService {
-  constructor(private db: MoneyTreeDB) {}
+  constructor(
+    private db: MoneyTreeDB,
+    private syncMetadata: SyncMetadataService
+  ) {}
 
   async getAll(): Promise<ExchangeRate[]> {
     return await this.db.exchangeRates.toArray();
@@ -39,6 +42,7 @@ export class ExchangeRateService {
   async create(data: Omit<ExchangeRate, 'id' | 'createdAt'>): Promise<string> {
     const exchangeRate = addTimestamps(data);
     const id = await this.db.exchangeRates.add(exchangeRate as ExchangeRate);
+    await this.syncMetadata.setLastModified();
     return id as string;
   }
 
@@ -50,10 +54,12 @@ export class ExchangeRateService {
 
     const updated = addTimestamps(data, true);
     await this.db.exchangeRates.update(id, updated);
+    await this.syncMetadata.setLastModified();
   }
 
   async delete(id: string): Promise<void> {
     await this.db.exchangeRates.delete(id);
+    await this.syncMetadata.setLastModified();
   }
 
   async upsert(data: Omit<ExchangeRate, 'id' | 'createdAt'>): Promise<string> {
@@ -71,6 +77,3 @@ export class ExchangeRateService {
     return await this.create(data);
   }
 }
-
-// Singleton instance for backward compatibility
-export const exchangeRateService = new ExchangeRateService(db);

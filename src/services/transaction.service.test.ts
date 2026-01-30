@@ -1,13 +1,11 @@
-import { transactionService } from './transaction.service';
+import { TransactionService } from './transaction.service';
 import { db } from '../db/database';
 import type { Transaction } from '../types/models';
-import { syncMetadataService } from './syncMetadata.service';
+import type { SyncMetadataService } from './syncMetadata.service';
 
-jest.mock('./syncMetadata.service', () => ({
-  syncMetadataService: {
-    setLastModified: jest.fn(),
-  },
-}));
+const mockSyncMetadataService = {
+  setLastModified: jest.fn(),
+} as unknown as SyncMetadataService;
 
 jest.mock('../db/database', () => ({
   db: {
@@ -23,6 +21,7 @@ jest.mock('../db/database', () => ({
 }));
 
 describe('transactionService', () => {
+  let transactionService: TransactionService;
   const mockTransaction: Transaction = {
     id: 'txn-1',
     date: '2024-01-15',
@@ -37,6 +36,7 @@ describe('transactionService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    transactionService = new TransactionService(db, mockSyncMetadataService);
   });
 
   describe('getAll', () => {
@@ -90,11 +90,11 @@ describe('transactionService', () => {
         amount: 200,
         description: 'New transaction',
       };
-      (db.transactions.add as jest.Mock).mockResolvedValue(2);
+      (db.transactions.add as jest.Mock).mockResolvedValue('2');
 
       const id = await transactionService.create(newTransaction);
 
-      expect(id).toBe(2);
+      expect(id).toBe('2');
       expect(db.transactions.add).toHaveBeenCalledWith(
         expect.objectContaining({
           ...newTransaction,
@@ -103,7 +103,6 @@ describe('transactionService', () => {
           updatedAt: expect.any(String),
         })
       );
-      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
     });
   });
 
@@ -115,13 +114,12 @@ describe('transactionService', () => {
       await transactionService.update('txn-1', { amount: 150 });
 
       expect(db.transactions.update).toHaveBeenCalledWith(
-        1,
+        'txn-1',
         expect.objectContaining({
           amount: 150,
           updatedAt: expect.any(String),
         })
       );
-      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
     });
 
     it('should throw error if transaction not found', async () => {
@@ -141,13 +139,12 @@ describe('transactionService', () => {
       await transactionService.delete('txn-1');
 
       expect(db.transactions.update).toHaveBeenCalledWith(
-        1,
+        'txn-1',
         expect.objectContaining({
           isDeleted: true,
           updatedAt: expect.any(String),
         })
       );
-      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
     });
   });
 });

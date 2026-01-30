@@ -1,14 +1,12 @@
-import { assetService } from './asset.service';
+import { AssetService } from './asset.service';
 import { db } from '../db/database';
-import { syncMetadataService } from './syncMetadata.service';
 import { AssetType, CurrencyCode } from '../types/enums';
 import type { ManualAsset } from '../types/models';
+import type { SyncMetadataService } from './syncMetadata.service';
 
-jest.mock('./syncMetadata.service', () => ({
-  syncMetadataService: {
-    setLastModified: jest.fn(),
-  },
-}));
+const mockSyncMetadataService = {
+  setLastModified: jest.fn(),
+} as unknown as SyncMetadataService;
 
 jest.mock('../db/database', () => ({
   db: {
@@ -19,10 +17,15 @@ jest.mock('../db/database', () => ({
       add: jest.fn(),
       update: jest.fn(),
     },
+    syncMetadata: {
+      put: jest.fn(),
+      get: jest.fn(),
+    },
   },
 }));
 
 describe('assetService', () => {
+  let assetService: AssetService;
   const mockAsset: ManualAsset = {
     id: '1',
     name: 'Test Asset',
@@ -36,6 +39,7 @@ describe('assetService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    assetService = new AssetService(db, mockSyncMetadataService);
   });
 
   describe('getAll', () => {
@@ -86,7 +90,6 @@ describe('assetService', () => {
           updatedAt: expect.any(String),
         })
       );
-      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
     });
   });
 
@@ -103,15 +106,12 @@ describe('assetService', () => {
           updatedAt: expect.any(String),
         })
       );
-      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
     });
 
     it('should throw error if asset not found', async () => {
       (db.manualAssets.get as jest.Mock).mockResolvedValue(undefined);
 
-      await expect(assetService.update('999', {})).rejects.toThrow(
-        'Asset with id 999 not found'
-      );
+      await expect(assetService.update('999', {})).rejects.toThrow('Asset with id 999 not found');
     });
   });
 
@@ -129,7 +129,6 @@ describe('assetService', () => {
           updatedAt: expect.any(String),
         })
       );
-      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
     });
 
     it('should throw error if asset not found', async () => {

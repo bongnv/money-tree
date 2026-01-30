@@ -1,4 +1,4 @@
-import { syncMetadataService } from './syncMetadata.service';
+import { SyncMetadataService } from './syncMetadata.service';
 import { db } from '../db/database';
 import { CurrencyCode } from '../types/enums';
 import type { ArchivedYearReference } from '../types/models';
@@ -14,8 +14,11 @@ jest.mock('../db/database', () => ({
 }));
 
 describe('syncMetadataService', () => {
+  let syncMetadataService: SyncMetadataService;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    syncMetadataService = new SyncMetadataService(db);
   });
 
   describe('setBaseCurrency', () => {
@@ -42,7 +45,7 @@ describe('syncMetadataService', () => {
           transactionCount: 0,
           closingNetWorth: 0,
           closingBalances: {},
-          closingAssetValuations: {}
+          closingAssetValuations: {},
         },
       };
 
@@ -110,12 +113,13 @@ describe('syncMetadataService', () => {
   });
 
   describe('setLastModified', () => {
-    it('should set last modified timestamp', async () => {
-      const timestamp = '2024-01-01T00:00:00.000Z';
+    it('should set last modified timestamp to current time', async () => {
+      await syncMetadataService.setLastModified();
 
-      await syncMetadataService.setLastModified(timestamp);
-
-      expect(db.syncMetadata.put).toHaveBeenCalledWith({ key: 'lastModified', value: timestamp });
+      expect(db.syncMetadata.put).toHaveBeenCalledWith({
+        key: 'lastModified',
+        value: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/),
+      });
     });
   });
 

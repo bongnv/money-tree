@@ -1,6 +1,6 @@
 import type { MoneyTreeDB } from '../db/database';
-import { db } from '../db/database';
 import type { Category } from '../types/models';
+import type { SyncMetadataService } from './syncMetadata.service';
 
 const addTimestamps = (entity: Partial<Category>, isUpdate = false): Partial<Category> => {
   const now = new Date().toISOString();
@@ -17,7 +17,10 @@ const softDelete = (entity: Partial<Category>): Partial<Category> => ({
 });
 
 export class CategoryService {
-  constructor(private db: MoneyTreeDB) {}
+  constructor(
+    private db: MoneyTreeDB,
+    private syncMetadata: SyncMetadataService
+  ) {}
 
   async getAll(): Promise<Category[]> {
     return await this.db.categories.toArray();
@@ -40,6 +43,7 @@ export class CategoryService {
     });
 
     const id = await this.db.categories.add(category as Category);
+    await this.syncMetadata.setLastModified();
     return id as string;
   }
 
@@ -54,6 +58,7 @@ export class CategoryService {
 
     const updated = addTimestamps(data, true);
     await this.db.categories.update(id, updated);
+    await this.syncMetadata.setLastModified();
   }
 
   async delete(id: string): Promise<void> {
@@ -64,8 +69,6 @@ export class CategoryService {
 
     const deleted = addTimestamps(softDelete(existing), true);
     await this.db.categories.update(id, deleted);
+    await this.syncMetadata.setLastModified();
   }
 }
-
-// Singleton instance for backward compatibility
-export const categoryService = new CategoryService(db);

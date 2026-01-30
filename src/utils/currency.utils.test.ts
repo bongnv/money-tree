@@ -75,7 +75,7 @@ describe('currency.utils', () => {
     });
 
     it('should handle unknown currency gracefully', () => {
-      const formatted = formatCurrency(1234.56, 'unknown' as any);
+      const formatted = formatCurrency(1234.56, 'UNKNOWN' as CurrencyCode);
       expect(formatted).toBe('1,234.56');
     });
 
@@ -137,7 +137,7 @@ describe('currency.utils', () => {
     });
 
     it('should handle unknown currency', () => {
-      const parsed = parseCurrency('1234.56', 'unknown' as any);
+      const parsed = parseCurrency('1234.56', 'UNKNOWN' as CurrencyCode);
       expect(parsed).toBe(1234.56);
     });
   });
@@ -191,7 +191,7 @@ describe('currency.utils', () => {
     });
 
     it('should return false for unknown currency', () => {
-      expect(isValidCurrencyAmount(1234.56, 'unknown' as any)).toBe(false);
+      expect(isValidCurrencyAmount(1234.56, 'UNKNOWN' as CurrencyCode)).toBe(false);
     });
 
     it('should return true for negative amounts', () => {

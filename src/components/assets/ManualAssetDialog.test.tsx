@@ -3,10 +3,23 @@ import { ManualAssetDialog } from './ManualAssetDialog';
 import { AppProvider } from '../../contexts/AppContext';
 import { AssetType, CurrencyCode } from '../../types/enums';
 import type { ManualAsset } from '../../types/models';
-import { assetService } from '../../services/asset.service';
+import type { AssetService } from '../../services/asset.service';
 
-// Mock services
-jest.mock('../../services/asset.service');
+// Mock ServiceProvider hooks
+const mockAssetService = {
+  create: jest.fn(),
+  update: jest.fn(),
+  addValueHistory: jest.fn(),
+  getAll: jest.fn(),
+  getById: jest.fn(),
+  getActive: jest.fn(),
+  delete: jest.fn(),
+} as unknown as AssetService;
+
+jest.mock('../../contexts/ServiceProviders', () => ({
+  ...jest.requireActual('../../contexts/ServiceProviders'),
+  useAssetService: () => mockAssetService,
+}));
 
 // Mock cloudSync
 jest.mock('../../services/cloudSync.service', () => ({
@@ -20,17 +33,10 @@ const renderWithProviders = (ui: React.ReactElement) => {
 };
 
 describe('ManualAssetDialog', () => {
-  const mockCreate = jest.fn();
-  const mockUpdate = jest.fn();
-  const mockAddValueHistory = jest.fn();
   const mockOnClose = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    (assetService.create as jest.Mock) = mockCreate;
-    (assetService.update as jest.Mock) = mockUpdate;
-    (assetService.addValueHistory as jest.Mock) = mockAddValueHistory;
   });
 
   describe('Create mode', () => {
@@ -66,7 +72,7 @@ describe('ManualAssetDialog', () => {
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(mockCreate).toHaveBeenCalledWith(
+        expect(mockAssetService.create).toHaveBeenCalledWith(
           expect.objectContaining({
             name: 'House',
             type: AssetType.REAL_ESTATE,
@@ -109,7 +115,7 @@ describe('ManualAssetDialog', () => {
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(mockUpdate).toHaveBeenCalledWith(
+        expect(mockAssetService.update).toHaveBeenCalledWith(
           'asset-1',
           expect.objectContaining({
             valueHistory: expect.arrayContaining([expect.objectContaining({ value: 600000 })]),
@@ -179,7 +185,7 @@ describe('ManualAssetDialog', () => {
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(mockAddValueHistory).toHaveBeenCalledWith(
+        expect(mockAssetService.addValueHistory).toHaveBeenCalledWith(
           'asset-1',
           expect.objectContaining({
             value: 510000,

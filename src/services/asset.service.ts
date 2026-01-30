@@ -1,6 +1,6 @@
 import type { MoneyTreeDB } from '../db/database';
-import { db } from '../db/database';
 import type { ManualAsset, AssetValueHistory } from '../types/models';
+import type { SyncMetadataService } from './syncMetadata.service';
 
 const addTimestamps = (entity: Partial<ManualAsset>, isUpdate = false): Partial<ManualAsset> => {
   const now = new Date().toISOString();
@@ -17,7 +17,10 @@ const softDelete = (entity: Partial<ManualAsset>): Partial<ManualAsset> => ({
 });
 
 export class AssetService {
-  constructor(private db: MoneyTreeDB) {}
+  constructor(
+    private db: MoneyTreeDB,
+    private syncMetadata: SyncMetadataService
+  ) {}
 
   async getAll(): Promise<ManualAsset[]> {
     return await this.db.manualAssets.toArray();
@@ -41,6 +44,7 @@ export class AssetService {
     });
 
     const id = await this.db.manualAssets.add(asset as ManualAsset);
+    await this.syncMetadata.setLastModified();
     return id as string;
   }
 
@@ -55,6 +59,7 @@ export class AssetService {
 
     const updated = addTimestamps(data, true);
     await this.db.manualAssets.update(id, updated);
+    await this.syncMetadata.setLastModified();
   }
 
   async delete(id: string): Promise<void> {
@@ -65,6 +70,7 @@ export class AssetService {
 
     const deleted = addTimestamps(softDelete(existing), true);
     await this.db.manualAssets.update(id, deleted);
+    await this.syncMetadata.setLastModified();
   }
 
   async addValueHistory(assetId: string, entry: AssetValueHistory): Promise<void> {
@@ -80,6 +86,3 @@ export class AssetService {
     });
   }
 }
-
-// Singleton instance for backward compatibility
-export const assetService = new AssetService(db);

@@ -1,5 +1,4 @@
 import type { MoneyTreeDB } from '../db/database';
-import { db } from '../db/database';
 import type { ArchivedYearReference } from '../types/models';
 import { CurrencyCode } from '../types/enums';
 
@@ -20,9 +19,17 @@ export class SyncMetadataService {
   }
 
   /**
-   * Set last modified timestamp
+   * Set last modified timestamp to current time
    */
-  async setLastModified(timestamp: string): Promise<void> {
+  async setLastModified(): Promise<void> {
+    await this.db.syncMetadata.put({ key: 'lastModified', value: new Date().toISOString() });
+  }
+
+  /**
+   * Set last modified to a specific timestamp
+   * Used during cloud sync to restore remote timestamp
+   */
+  async setLastModifiedTimestamp(timestamp: string): Promise<void> {
     await this.db.syncMetadata.put({ key: 'lastModified', value: timestamp });
   }
 
@@ -39,7 +46,7 @@ export class SyncMetadataService {
    */
   async setBaseCurrency(currency: CurrencyCode): Promise<void> {
     await this.db.syncMetadata.put({ key: 'baseCurrency', value: currency });
-    await this.setLastModified(new Date().toISOString());
+    await this.setLastModified();
   }
 
   /**
@@ -63,7 +70,7 @@ export class SyncMetadataService {
   async addArchivedYear(year: ArchivedYearReference): Promise<void> {
     const current = await this.getArchivedYears();
     await this.db.syncMetadata.put({ key: 'archivedYears', value: [...current, year] });
-    await this.setLastModified(new Date().toISOString());
+    await this.setLastModified();
   }
 
   /**
@@ -73,6 +80,3 @@ export class SyncMetadataService {
     await this.db.syncMetadata.clear();
   }
 }
-
-// Singleton instance for backward compatibility
-export const syncMetadataService = new SyncMetadataService(db);

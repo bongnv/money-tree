@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import { renderWithProviders as render } from '../../test-utils';
 import userEvent from '@testing-library/user-event';
 import { TransactionDialog } from './TransactionDialog';
 import type { Transaction, Account, TransactionType, Category } from '../../types/models';
@@ -55,7 +56,7 @@ describe('TransactionDialog', () => {
       group: Group.EXPENSE,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
-      isActive: false,
+      isActive: true,
       isDeleted: false,
     },
     {
@@ -65,7 +66,7 @@ describe('TransactionDialog', () => {
       group: Group.INCOME,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
-      isActive: false,
+      isActive: true,
       isDeleted: false,
     },
   ];

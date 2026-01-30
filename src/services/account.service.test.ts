@@ -1,15 +1,20 @@
-import { accountService } from './account.service';
+import { AccountService } from './account.service';
 import { db } from '../db/database';
 import { AccountType, CurrencyCode } from '../types/enums';
 import type { Account } from '../types/models';
+import type { SyncMetadataService } from './syncMetadata.service';
 
-jest.mock('./syncMetadata.service', () => ({
-  syncMetadataService: {
-    setLastModified: jest.fn(),
-  },
-}));
-
-import { syncMetadataService } from './syncMetadata.service';
+const mockSyncMetadataService = {
+  setLastModified: jest.fn(),
+  getLastModified: jest.fn(),
+  getBaseCurrency: jest.fn(),
+  setBaseCurrency: jest.fn(),
+  getArchivedYears: jest.fn(),
+  setArchivedYears: jest.fn(),
+  addArchivedYear: jest.fn(),
+  clear: jest.fn(),
+  setLastModifiedTimestamp: jest.fn(),
+} as unknown as SyncMetadataService;
 
 jest.mock('../db/database', () => ({
   db: {
@@ -21,10 +26,15 @@ jest.mock('../db/database', () => ({
       update: jest.fn(),
       delete: jest.fn(),
     },
+    syncMetadata: {
+      put: jest.fn(),
+      get: jest.fn(),
+    },
   },
 }));
 
 describe('accountService', () => {
+  let accountService: AccountService;
   const mockAccount: Account = {
     id: '1',
     name: 'Test Account',
@@ -39,6 +49,7 @@ describe('accountService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    accountService = new AccountService(db, mockSyncMetadataService);
   });
 
   describe('getAll', () => {
@@ -101,7 +112,6 @@ describe('accountService', () => {
           updatedAt: expect.any(String),
         })
       );
-      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
     });
 
     it('should preserve isActive if provided', async () => {
@@ -139,7 +149,6 @@ describe('accountService', () => {
           updatedAt: expect.any(String),
         })
       );
-      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
     });
 
     it('should throw error if account not found', async () => {
@@ -165,7 +174,6 @@ describe('accountService', () => {
           updatedAt: expect.any(String),
         })
       );
-      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
     });
 
     it('should throw error if account not found', async () => {

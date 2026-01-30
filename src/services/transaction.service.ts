@@ -1,7 +1,7 @@
 import type { MoneyTreeDB } from '../db/database';
-import { db } from '../db/database';
 import type { Transaction, TransactionType } from '../types/models';
 import type { Group } from '../types/enums';
+import type { SyncMetadataService } from './syncMetadata.service';
 
 export interface TransactionFilters {
   dateFrom: string;
@@ -28,7 +28,10 @@ const softDelete = (entity: Partial<Transaction>): Partial<Transaction> => ({
 });
 
 export class TransactionService {
-  constructor(private db: MoneyTreeDB) {}
+  constructor(
+    private db: MoneyTreeDB,
+    private syncMetadata: SyncMetadataService
+  ) {}
 
   async getAll(): Promise<Transaction[]> {
     return await this.db.transactions.toArray();
@@ -58,6 +61,7 @@ export class TransactionService {
     });
 
     const id = await this.db.transactions.add(transaction as Transaction);
+    await this.syncMetadata.setLastModified();
     return id as string;
   }
 
@@ -72,6 +76,7 @@ export class TransactionService {
 
     const updated = addTimestamps(data, true);
     await this.db.transactions.update(id, updated);
+    await this.syncMetadata.setLastModified();
   }
 
   async delete(id: string): Promise<void> {
@@ -82,6 +87,7 @@ export class TransactionService {
 
     const deleted = addTimestamps(softDelete(existing), true);
     await this.db.transactions.update(id, deleted);
+    await this.syncMetadata.setLastModified();
   }
 
   filterTransactions(
@@ -149,6 +155,3 @@ export class TransactionService {
     });
   }
 }
-
-// Singleton instance for backward compatibility
-export const transactionService = new TransactionService(db);

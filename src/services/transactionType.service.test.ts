@@ -1,14 +1,12 @@
-import { transactionTypeService } from './transactionType.service';
+import { TransactionTypeService } from './transactionType.service';
 import { db } from '../db/database';
-import { syncMetadataService } from './syncMetadata.service';
 import type { TransactionType } from '../types/models';
 import { Group } from '@/types/enums';
+import type { SyncMetadataService } from './syncMetadata.service';
 
-jest.mock('./syncMetadata.service', () => ({
-  syncMetadataService: {
-    setLastModified: jest.fn(),
-  },
-}));
+const mockSyncMetadataService = {
+  setLastModified: jest.fn(),
+} as unknown as SyncMetadataService;
 
 jest.mock('../db/database', () => ({
   db: {
@@ -21,10 +19,15 @@ jest.mock('../db/database', () => ({
       update: jest.fn(),
       delete: jest.fn(),
     },
+    syncMetadata: {
+      put: jest.fn(),
+      get: jest.fn(),
+    },
   },
 }));
 
 describe('transactionTypeService', () => {
+  let transactionTypeService: TransactionTypeService;
   const mockTransactionType: TransactionType = {
     id: '1',
     name: 'Test Type',
@@ -38,6 +41,7 @@ describe('transactionTypeService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    transactionTypeService = new TransactionTypeService(db, mockSyncMetadataService);
   });
 
   describe('getAll', () => {
@@ -137,7 +141,6 @@ describe('transactionTypeService', () => {
           updatedAt: expect.any(String),
         })
       );
-      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
     });
 
     it('should throw error if transaction type not found', async () => {

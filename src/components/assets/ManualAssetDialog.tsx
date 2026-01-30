@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, Box, Typography, Alert } from '@mui/material';
 import { ManualAssetForm } from './ManualAssetForm';
-import { assetService } from '../../services/asset.service';
+import { useAssetService } from '../../contexts/ServiceProviders';
 import type { ManualAsset } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
 import { formatDate, getTodayDate } from '../../utils/date.utils';
@@ -21,6 +21,7 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
   onClose,
   mode = 'create',
 }) => {
+  const assetService = useAssetService();
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [previousValue, setPreviousValue] = useState<{ value: number; date: string } | null>(null);
 

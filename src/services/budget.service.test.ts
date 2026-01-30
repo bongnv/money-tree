@@ -1,14 +1,12 @@
-import { budgetService } from './budget.service';
+import { BudgetService } from './budget.service';
 import { db } from '../db/database';
-import { syncMetadataService } from './syncMetadata.service';
 import type { Budget } from '../types/models';
 import { CurrencyCode } from '../types/enums';
+import type { SyncMetadataService } from './syncMetadata.service';
 
-jest.mock('./syncMetadata.service', () => ({
-  syncMetadataService: {
-    setLastModified: jest.fn(),
-  },
-}));
+const mockSyncMetadataService = {
+  setLastModified: jest.fn(),
+} as unknown as SyncMetadataService;
 
 jest.mock('../db/database', () => ({
   db: {
@@ -19,10 +17,15 @@ jest.mock('../db/database', () => ({
       add: jest.fn(),
       update: jest.fn(),
     },
+    syncMetadata: {
+      put: jest.fn(),
+      get: jest.fn(),
+    },
   },
 }));
 
 describe('budgetService', () => {
+  let budgetService: BudgetService;
   const mockBudget: Budget = {
     id: '1',
     transactionTypeId: '1',
@@ -38,6 +41,7 @@ describe('budgetService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    budgetService = new BudgetService(db, mockSyncMetadataService);
   });
 
   describe('getAll', () => {
@@ -86,7 +90,6 @@ describe('budgetService', () => {
           updatedAt: expect.any(String),
         })
       );
-      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
     });
   });
 

@@ -1,6 +1,7 @@
 import { render, RenderOptions } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { AppProvider } from './contexts/AppContext';
+import { ServiceProvider } from './contexts/ServiceProviders';
 import React from 'react';
 
 // Mock CloudSyncService class
@@ -55,7 +56,9 @@ export function renderWithProviders(ui: React.ReactElement, options?: CustomRend
   function Wrapper({ children }: { children: React.ReactNode }) {
     return (
       <AppProvider>
-        <BrowserRouter>{children}</BrowserRouter>
+        <ServiceProvider>
+          <BrowserRouter>{children}</BrowserRouter>
+        </ServiceProvider>
       </AppProvider>
     );
   }

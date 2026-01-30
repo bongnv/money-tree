@@ -1,14 +1,12 @@
-import { exchangeRateService } from './exchangeRate.service';
+import { ExchangeRateService } from './exchangeRate.service';
 import { db } from '../db/database';
-
-jest.mock('./syncMetadata.service', () => ({
-  syncMetadataService: {
-    setLastModified: jest.fn(),
-  },
-}));
-
 import type { ExchangeRate } from '../types/models';
 import { CurrencyCode } from '@/types/enums';
+import type { SyncMetadataService } from './syncMetadata.service';
+
+const mockSyncMetadataService = {
+  setLastModified: jest.fn(),
+} as unknown as SyncMetadataService;
 
 jest.mock('../db/database', () => ({
   db: {
@@ -20,13 +18,15 @@ jest.mock('../db/database', () => ({
       update: jest.fn(),
       delete: jest.fn(),
     },
-  },
-  syncMetadata: {
-    setLastModified: jest.fn(),
+    syncMetadata: {
+      put: jest.fn(),
+      get: jest.fn(),
+    },
   },
 }));
 
 describe('exchangeRateService', () => {
+  let exchangeRateService: ExchangeRateService;
   const mockExchangeRate: ExchangeRate = {
     id: '1',
     month: '2024-01',
@@ -38,6 +38,7 @@ describe('exchangeRateService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    exchangeRateService = new ExchangeRateService(db, mockSyncMetadataService);
   });
 
   describe('getAll', () => {
@@ -84,7 +85,11 @@ describe('exchangeRateService', () => {
 
       expect(result).toEqual(mockExchangeRate);
       expect(db.exchangeRates.where).toHaveBeenCalledWith(['month', 'fromCurrency', 'toCurrency']);
-      expect(mockWhere.equals).toHaveBeenCalledWith(['2024-01', CurrencyCode.USD, CurrencyCode.VND]);
+      expect(mockWhere.equals).toHaveBeenCalledWith([
+        '2024-01',
+        CurrencyCode.USD,
+        CurrencyCode.VND,
+      ]);
     });
   });
 
@@ -157,7 +162,7 @@ describe('exchangeRateService', () => {
         }),
       };
       (db.exchangeRates.where as jest.Mock).mockReturnValue(mockWhere);
-      (db.exchangeRates.add as jest.Mock).mockResolvedValue(2);
+      (db.exchangeRates.add as jest.Mock).mockResolvedValue('2');
 
       const data = {
         month: '2024-02',

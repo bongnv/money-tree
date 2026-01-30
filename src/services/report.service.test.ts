@@ -936,11 +936,11 @@ describe('ReportService', () => {
     });
 
     it('should convert budget currency when base currency provided', async () => {
-      const eurBudgets = [
+      const sgdBudgets = [
         {
           ...mockBudgets[0],
           id: 'budget3',
-          currencyCode: CurrencyCode.USD as const,
+          currencyCode: CurrencyCode.SGD as const,
           amount: 500,
         },
       ];
@@ -949,7 +949,7 @@ describe('ReportService', () => {
       (getRateForMonth as jest.Mock).mockResolvedValue(1.1);
 
       const result = await reportService.calculateBudgetPerformance(
-        eurBudgets,
+        sgdBudgets,
         [],
         mockTypes,
         mockCategories,
@@ -959,14 +959,14 @@ describe('ReportService', () => {
         CurrencyCode.USD
       );
 
-      expect(result.totalBudgetedExpenses).toBe(550); // 500 EUR * 1.1
+      expect(result.totalBudgetedExpenses).toBe(550); // 500 SGD * 1.1
     });
 
     it('should convert transaction currency when base currency provided', async () => {
-      const eurAccounts = [
+      const sgdAccounts = [
         {
           ...mockAccounts[0],
-          currencyCode: CurrencyCode.USD as const,
+          currencyCode: CurrencyCode.SGD as const,
         },
       ];
 
@@ -980,11 +980,11 @@ describe('ReportService', () => {
         mockCategories,
         '2024-01-01',
         '2024-01-31',
-        eurAccounts,
+        sgdAccounts,
         CurrencyCode.USD
       );
 
-      // Transaction amount 300 EUR * 1.1 = 330 USD
+      // Transaction amount 300 SGD * 1.1 = 330 USD
       expect(result.totalActualExpenses).toBe(330);
     });
   });

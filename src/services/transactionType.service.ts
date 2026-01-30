@@ -1,6 +1,6 @@
 import type { MoneyTreeDB } from '../db/database';
-import { db } from '../db/database';
 import type { TransactionType } from '../types/models';
+import type { SyncMetadataService } from './syncMetadata.service';
 
 const addTimestamps = (
   entity: Partial<TransactionType>,
@@ -20,7 +20,10 @@ const softDelete = (entity: Partial<TransactionType>): Partial<TransactionType> 
 });
 
 export class TransactionTypeService {
-  constructor(private db: MoneyTreeDB) {}
+  constructor(
+    private db: MoneyTreeDB,
+    private syncMetadata: SyncMetadataService
+  ) {}
 
   async getAll(): Promise<TransactionType[]> {
     return await this.db.transactionTypes.toArray();
@@ -48,6 +51,7 @@ export class TransactionTypeService {
     });
 
     const id = await this.db.transactionTypes.add(transactionType as TransactionType);
+    await this.syncMetadata.setLastModified();
     return id as string;
   }
 
@@ -62,6 +66,7 @@ export class TransactionTypeService {
 
     const updated = addTimestamps(data, true);
     await this.db.transactionTypes.update(id, updated);
+    await this.syncMetadata.setLastModified();
   }
 
   async delete(id: string): Promise<void> {
@@ -72,6 +77,7 @@ export class TransactionTypeService {
 
     const deleted = addTimestamps(softDelete(existing), true);
     await this.db.transactionTypes.update(id, deleted);
+    await this.syncMetadata.setLastModified();
   }
 
   async archive(id: string): Promise<void> {
@@ -82,6 +88,3 @@ export class TransactionTypeService {
     await this.update(id, { isActive: true });
   }
 }
-
-// Singleton instance for backward compatibility
-export const transactionTypeService = new TransactionTypeService(db);

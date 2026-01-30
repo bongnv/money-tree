@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { screen } from '@testing-library/react';
+import { renderWithProviders as render } from '../../test-utils';
 import '@testing-library/jest-dom';
 import { ManualAssetSection } from './ManualAssetSection';
 import { AssetGroup } from '../../services/report.service';
@@ -27,11 +27,7 @@ describe('ManualAssetSection', () => {
     groups: AssetGroup[];
     currencyCode: CurrencyCode;
   }) => {
-    return render(
-      <BrowserRouter>
-        <ManualAssetSection {...props} />
-      </BrowserRouter>
-    );
+    return render(<ManualAssetSection {...props} />);
   };
 
   it('should render section with title', () => {

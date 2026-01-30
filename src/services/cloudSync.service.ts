@@ -2,7 +2,7 @@ import type { MoneyTreeDB } from '../db/database';
 import { IStorageProvider, CloudItem } from './storage/IStorageProvider';
 import type { DataFile, ExchangeRate, ArchivedYearReference } from '../types/models';
 import { CurrencyCode } from '../types/enums';
-import { syncMetadataService } from './syncMetadata.service';
+import type { SyncMetadataService } from './syncMetadata.service';
 import { DataFileSchema } from '../schemas/models.schema';
 
 /**
@@ -32,11 +32,18 @@ export class CloudSyncService {
   private provider: IStorageProvider;
   private fileItem: CloudItem;
   private db: MoneyTreeDB;
+  private syncMetadata: SyncMetadataService;
 
-  constructor(provider: IStorageProvider, fileItem: CloudItem, db: MoneyTreeDB) {
+  constructor(
+    provider: IStorageProvider,
+    fileItem: CloudItem,
+    db: MoneyTreeDB,
+    syncMetadata: SyncMetadataService
+  ) {
     this.provider = provider;
     this.fileItem = fileItem;
     this.db = db;
+    this.syncMetadata = syncMetadata;
   }
 
   /**
@@ -170,11 +177,11 @@ export class CloudSyncService {
 
     // Update metadata in IndexedDB if cloud is newer
     if (!metadataResult.hasLocalChanges) {
-      await syncMetadataService.setBaseCurrency(metadataResult.baseCurrency);
+      await this.syncMetadata.setBaseCurrency(metadataResult.baseCurrency);
       if (metadataResult.archivedYears.length > 0) {
-        await syncMetadataService.setArchivedYears(metadataResult.archivedYears);
+        await this.syncMetadata.setArchivedYears(metadataResult.archivedYears);
       }
-      await syncMetadataService.setLastModified(metadataResult.lastModified);
+      await this.syncMetadata.setLastModifiedTimestamp(metadataResult.lastModified);
     }
 
     return {
@@ -355,9 +362,9 @@ export class CloudSyncService {
       this.db.budgets.toArray(),
       this.db.manualAssets.toArray(),
       this.db.exchangeRates.toArray(),
-      syncMetadataService.getBaseCurrency(),
-      syncMetadataService.getArchivedYears(),
-      syncMetadataService.getLastModified(),
+      this.syncMetadata.getBaseCurrency(),
+      this.syncMetadata.getArchivedYears(),
+      this.syncMetadata.getLastModified(),
     ]);
 
     const localSnapshot: LocalDataSnapshot = {

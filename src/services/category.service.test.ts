@@ -1,13 +1,11 @@
-import { categoryService } from './category.service';
+import { CategoryService } from './category.service';
 import { db } from '../db/database';
-
-jest.mock('./syncMetadata.service', () => ({
-  syncMetadataService: {
-    setLastModified: jest.fn(),
-  },
-}));
-
 import type { Category } from '../types/models';
+import type { SyncMetadataService } from './syncMetadata.service';
+
+const mockSyncMetadataService = {
+  setLastModified: jest.fn(),
+} as unknown as SyncMetadataService;
 
 jest.mock('../db/database', () => ({
   db: {
@@ -18,13 +16,15 @@ jest.mock('../db/database', () => ({
       add: jest.fn(),
       update: jest.fn(),
     },
-  },
-  syncMetadata: {
-    setLastModified: jest.fn(),
+    syncMetadata: {
+      put: jest.fn(),
+      get: jest.fn(),
+    },
   },
 }));
 
 describe('categoryService', () => {
+  let categoryService: CategoryService;
   const mockCategory: Category = {
     id: '1',
     name: 'Test Category',
@@ -35,6 +35,7 @@ describe('categoryService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    categoryService = new CategoryService(db, mockSyncMetadataService);
   });
 
   describe('getAll', () => {

@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import { renderWithProviders as render } from '../../test-utils';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { TransactionFilters, TransactionFiltersState } from './TransactionFilters';
@@ -56,7 +57,7 @@ describe('TransactionFilters', () => {
       group: Group.EXPENSE,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
-      isActive: false,
+      isActive: true,
       isDeleted: false,
     },
     {
@@ -66,7 +67,7 @@ describe('TransactionFilters', () => {
       group: Group.INCOME,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
-      isActive: false,
+      isActive: true,
       isDeleted: false,
     },
   ];

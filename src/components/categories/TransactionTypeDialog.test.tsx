@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import { renderWithProviders as render } from '../../test-utils';
 import userEvent from '@testing-library/user-event';
 import { TransactionTypeDialog } from './TransactionTypeDialog';
 import { Group } from '../../types/enums';

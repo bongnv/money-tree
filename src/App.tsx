@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { syncMetadataService } from './services/syncMetadata.service';
+import { useSyncMetadataService } from './contexts/ServiceProviders';
 import { CurrencyCode } from './types/enums';
 import { BrowserRouter, useNavigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
@@ -21,6 +21,7 @@ const AppContent: React.FC = () => {
   const navigate = useNavigate();
   const syncService = useSyncService();
   const archiveService = useArchiveService();
+  const syncMetadataService = useSyncMetadataService();
   const baseCurrency =
     useLiveQuery(() => syncMetadataService.getBaseCurrency()) || CurrencyCode.USD;
   const { snackbar, hideSnackbar, isLoading, welcomeDismissed, setWelcomeDismissed } =

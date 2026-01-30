@@ -240,13 +240,34 @@ export const ServiceProvider: React.FC<{
 }> = ({ children }) => {
   // Instantiate all services with DB injection
   const syncMetadataService = useMemo(() => new SyncMetadataService(db), []);
-  const accountService = useMemo(() => new AccountService(db), []);
-  const transactionService = useMemo(() => new TransactionService(db), []);
-  const categoryService = useMemo(() => new CategoryService(db), []);
-  const transactionTypeService = useMemo(() => new TransactionTypeService(db), []);
-  const budgetService = useMemo(() => new BudgetService(db), []);
-  const assetService = useMemo(() => new AssetService(db), []);
-  const exchangeRateService = useMemo(() => new ExchangeRateService(db), []);
+  const accountService = useMemo(
+    () => new AccountService(db, syncMetadataService),
+    [syncMetadataService]
+  );
+  const transactionService = useMemo(
+    () => new TransactionService(db, syncMetadataService),
+    [syncMetadataService]
+  );
+  const categoryService = useMemo(
+    () => new CategoryService(db, syncMetadataService),
+    [syncMetadataService]
+  );
+  const transactionTypeService = useMemo(
+    () => new TransactionTypeService(db, syncMetadataService),
+    [syncMetadataService]
+  );
+  const budgetService = useMemo(
+    () => new BudgetService(db, syncMetadataService),
+    [syncMetadataService]
+  );
+  const assetService = useMemo(
+    () => new AssetService(db, syncMetadataService),
+    [syncMetadataService]
+  );
+  const exchangeRateService = useMemo(
+    () => new ExchangeRateService(db, syncMetadataService),
+    [syncMetadataService]
+  );
   const calculationService = useMemo(() => new CalculationService(), []);
   const archiveService = useMemo(
     () => new DexieArchiveService(syncMetadataService),

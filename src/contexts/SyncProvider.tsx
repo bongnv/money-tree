@@ -10,6 +10,7 @@ import React, {
 } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CloudSyncService } from '../services/cloudSync.service';
+import { SyncMetadataService } from '../services/syncMetadata.service';
 import { StorageProviderFactory } from '../services/storage/StorageProviderFactory';
 import { IStorageProvider, CloudItem } from '../services/storage/IStorageProvider';
 import type { StorageProviderType } from '../services/storage/StorageProviderFactory';
@@ -76,7 +77,8 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onReconnec
   // Memoize CloudSyncService to avoid creating it on every sync
   const syncService = useMemo(() => {
     if (!provider || !currentFileItem) return null;
-    return new CloudSyncService(provider, currentFileItem, db);
+    const syncMetadataService = new SyncMetadataService(db);
+    return new CloudSyncService(provider, currentFileItem, db, syncMetadataService);
   }, [provider, currentFileItem]);
 
   // Set current file and cache to localStorage

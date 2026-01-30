@@ -1,4 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
+import { renderWithProviders as render } from '../../test-utils';
 import { AssetValueHistoryDialog } from './AssetValueHistoryDialog';
 import type { ManualAsset } from '../../types/models';
 import { AssetType, CurrencyCode } from '../../types/enums';

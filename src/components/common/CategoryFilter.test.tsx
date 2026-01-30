@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CategoryFilter } from './CategoryFilter';
@@ -11,18 +10,21 @@ describe('CategoryFilter', () => {
       name: 'Food',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false
     },
     {
       id: 'cat2',
       name: 'Transportation',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false
     },
     {
       id: 'cat3',
       name: 'Entertainment',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false
     },
   ];
 

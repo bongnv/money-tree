@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { categoryService } from '../../services/category.service';
-import { transactionTypeService } from '../../services/transactionType.service';
 import { Container, Typography, Box, Button, Breadcrumbs, Link } from '@mui/material';
 import { Add as AddIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TransactionTypeList } from '../categories/TransactionTypeList';
 import { TransactionTypeDialog } from '../categories/TransactionTypeDialog';
 import type { TransactionType } from '../../types/models';
+import { useCategories } from '../../hooks/useCategories';
+import { useTransactionTypes } from '../../hooks/useTransactionTypes';
+import { useTransactionTypeService } from '../../contexts/ServiceProviders';
 
 export const CategoryDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const categories = useLiveQuery(() => categoryService.getActive()) ?? [];
-  const allTransactionTypes = useLiveQuery(() => transactionTypeService.getActive()) ?? [];
+  const categories = useCategories();
+  const allTransactionTypes = useTransactionTypes();
+  const transactionTypeService = useTransactionTypeService();
 
   const category = categories?.find((c) => c.id === id);
   const categoryTransactionTypes = allTransactionTypes?.filter((tt) => tt.categoryId === id) || [];
@@ -63,7 +64,7 @@ export const CategoryDetailPage: React.FC = () => {
   const handleDeleteTransactionType = async (transactionType: TransactionType) => {
     if (
       window.confirm(
-        `Are you sure you want to delete the transaction type "${transactionType.name}"? This action cannot be undone.`
+        `Are you sure you want to delete the transaction type "${transactionType.name}"?`
       )
     ) {
       await transactionTypeService.delete(transactionType.id);

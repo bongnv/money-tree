@@ -1,11 +1,4 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { budgetService } from '../../services/budget.service';
-import { categoryService } from '../../services/category.service';
-import { transactionTypeService } from '../../services/transactionType.service';
-import { accountService } from '../../services/account.service';
-import { transactionService } from '../../services/transaction.service';
-import { syncMetadataService } from '../../services/syncMetadata.service';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -47,6 +40,12 @@ import { CHART_COLORS } from '../../theme';
 import { CurrencyCode } from '../../types/enums';
 import { Group } from '../../types/enums';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
+import { useActiveAccounts } from '../../hooks/useAccounts';
+import { useTransactions } from '../../hooks/useTransactions';
+import { useCategories } from '../../hooks/useCategories';
+import { useTransactionTypes } from '../../hooks/useTransactionTypes';
+import { useBudgets } from '../../hooks/useBudgets';
+import { useBaseCurrency } from '../../hooks/useSyncMetadata';
 
 /**
  * Build chart lines for budget performance trend based on available income/expense types
@@ -88,13 +87,12 @@ const buildBudgetTrendLines = (hasIncomeTypes: boolean, hasExpenseTypes: boolean
 
 export const BudgetPerformanceReport: React.FC = () => {
   const navigate = useNavigate();
-  const budgets = useLiveQuery(() => budgetService.getActive()) ?? [];
-  const transactions = useLiveQuery(() => transactionService.getActive()) ?? [];
-  const transactionTypes = useLiveQuery(() => transactionTypeService.getActive()) ?? [];
-  const categories = useLiveQuery(() => categoryService.getActive()) ?? [];
-  const accounts = useLiveQuery(() => accountService.getActive()) ?? [];
-  const baseCurrency =
-    useLiveQuery(() => syncMetadataService.getBaseCurrency()) || CurrencyCode.USD;
+  const budgets = useBudgets();
+  const transactions = useTransactions();
+  const transactionTypes = useTransactionTypes();
+  const categories = useCategories();
+  const accounts = useActiveAccounts();
+  const baseCurrency = useBaseCurrency();
   const reportService = useReportService();
 
   // Date range state - default to Year to Date

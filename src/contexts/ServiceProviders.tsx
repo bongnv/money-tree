@@ -1,8 +1,15 @@
 import React, { createContext, useContext, useMemo, ReactNode } from 'react';
 import { CalculationService } from '../services/calculation.service';
 import { ReportService } from '../services/report.service';
+import { AccountService } from '../services/account.service';
+import { TransactionService } from '../services/transaction.service';
+import { CategoryService } from '../services/category.service';
+import { TransactionTypeService } from '../services/transactionType.service';
+import { BudgetService } from '../services/budget.service';
+import { AssetService } from '../services/asset.service';
+import { ExchangeRateService } from '../services/exchangeRate.service';
+import { SyncMetadataService } from '../services/syncMetadata.service';
 import { db } from '../db/database';
-import { syncMetadataService } from '../services/syncMetadata.service';
 import type { ArchivedYearReference, YearEndSummary } from '../types/models';
 import { CurrencyCode } from '../types/enums';
 
@@ -96,11 +103,13 @@ class DexieArchiveService {
     return sortedYears[0];
   }
 
+  constructor(private syncMetadataService: SyncMetadataService) {}
+
   /**
    * Get list of archived years
    */
   async getArchivedYears(): Promise<ArchivedYearReference[]> {
-    return await syncMetadataService.getArchivedYears();
+    return await this.syncMetadataService.getArchivedYears();
   }
 
   /**
@@ -214,6 +223,14 @@ class DexieArchiveService {
 const ArchiveServiceContext = createContext<DexieArchiveService>(null!);
 const CalculationServiceContext = createContext<CalculationService>(null!);
 const ReportServiceContext = createContext<ReportService>(null!);
+const AccountServiceContext = createContext<AccountService>(null!);
+const TransactionServiceContext = createContext<TransactionService>(null!);
+const CategoryServiceContext = createContext<CategoryService>(null!);
+const TransactionTypeServiceContext = createContext<TransactionTypeService>(null!);
+const BudgetServiceContext = createContext<BudgetService>(null!);
+const AssetServiceContext = createContext<AssetService>(null!);
+const ExchangeRateServiceContext = createContext<ExchangeRateService>(null!);
+const SyncMetadataServiceContext = createContext<SyncMetadataService>(null!);
 
 /**
  * Combined Service Provider
@@ -221,18 +238,46 @@ const ReportServiceContext = createContext<ReportService>(null!);
 export const ServiceProvider: React.FC<{
   children: ReactNode;
 }> = ({ children }) => {
+  // Instantiate all services with DB injection
+  const syncMetadataService = useMemo(() => new SyncMetadataService(db), []);
+  const accountService = useMemo(() => new AccountService(db), []);
+  const transactionService = useMemo(() => new TransactionService(db), []);
+  const categoryService = useMemo(() => new CategoryService(db), []);
+  const transactionTypeService = useMemo(() => new TransactionTypeService(db), []);
+  const budgetService = useMemo(() => new BudgetService(db), []);
+  const assetService = useMemo(() => new AssetService(db), []);
+  const exchangeRateService = useMemo(() => new ExchangeRateService(db), []);
   const calculationService = useMemo(() => new CalculationService(), []);
-  const archiveService = useMemo(() => new DexieArchiveService(), []);
+  const archiveService = useMemo(
+    () => new DexieArchiveService(syncMetadataService),
+    [syncMetadataService]
+  );
   const reportService = useMemo(() => new ReportService(calculationService), [calculationService]);
 
   return (
-    <ArchiveServiceContext.Provider value={archiveService}>
-      <CalculationServiceContext.Provider value={calculationService}>
-        <ReportServiceContext.Provider value={reportService}>
-          {children}
-        </ReportServiceContext.Provider>
-      </CalculationServiceContext.Provider>
-    </ArchiveServiceContext.Provider>
+    <SyncMetadataServiceContext.Provider value={syncMetadataService}>
+      <AccountServiceContext.Provider value={accountService}>
+        <TransactionServiceContext.Provider value={transactionService}>
+          <CategoryServiceContext.Provider value={categoryService}>
+            <TransactionTypeServiceContext.Provider value={transactionTypeService}>
+              <BudgetServiceContext.Provider value={budgetService}>
+                <AssetServiceContext.Provider value={assetService}>
+                  <ExchangeRateServiceContext.Provider value={exchangeRateService}>
+                    <ArchiveServiceContext.Provider value={archiveService}>
+                      <CalculationServiceContext.Provider value={calculationService}>
+                        <ReportServiceContext.Provider value={reportService}>
+                          {children}
+                        </ReportServiceContext.Provider>
+                      </CalculationServiceContext.Provider>
+                    </ArchiveServiceContext.Provider>
+                  </ExchangeRateServiceContext.Provider>
+                </AssetServiceContext.Provider>
+              </BudgetServiceContext.Provider>
+            </TransactionTypeServiceContext.Provider>
+          </CategoryServiceContext.Provider>
+        </TransactionServiceContext.Provider>
+      </AccountServiceContext.Provider>
+    </SyncMetadataServiceContext.Provider>
   );
 };
 
@@ -254,10 +299,66 @@ export const useReportService = (): ReportService => {
   return context;
 };
 
+export const useAccountService = (): AccountService => {
+  const context = useContext(AccountServiceContext);
+  if (!context) throw new Error('useAccountService must be used within ServiceProvider');
+  return context;
+};
+
+export const useTransactionService = (): TransactionService => {
+  const context = useContext(TransactionServiceContext);
+  if (!context) throw new Error('useTransactionService must be used within ServiceProvider');
+  return context;
+};
+
+export const useCategoryService = (): CategoryService => {
+  const context = useContext(CategoryServiceContext);
+  if (!context) throw new Error('useCategoryService must be used within ServiceProvider');
+  return context;
+};
+
+export const useTransactionTypeService = (): TransactionTypeService => {
+  const context = useContext(TransactionTypeServiceContext);
+  if (!context) throw new Error('useTransactionTypeService must be used within ServiceProvider');
+  return context;
+};
+
+export const useBudgetService = (): BudgetService => {
+  const context = useContext(BudgetServiceContext);
+  if (!context) throw new Error('useBudgetService must be used within ServiceProvider');
+  return context;
+};
+
+export const useAssetService = (): AssetService => {
+  const context = useContext(AssetServiceContext);
+  if (!context) throw new Error('useAssetService must be used within ServiceProvider');
+  return context;
+};
+
+export const useExchangeRateService = (): ExchangeRateService => {
+  const context = useContext(ExchangeRateServiceContext);
+  if (!context) throw new Error('useExchangeRateService must be used within ServiceProvider');
+  return context;
+};
+
+export const useSyncMetadataService = (): SyncMetadataService => {
+  const context = useContext(SyncMetadataServiceContext);
+  if (!context) throw new Error('useSyncMetadataService must be used within ServiceProvider');
+  return context;
+};
+
 export const useServices = () => {
   return {
     archive: useArchiveService(),
     calculation: useCalculationService(),
     report: useReportService(),
+    account: useAccountService(),
+    transaction: useTransactionService(),
+    category: useCategoryService(),
+    transactionType: useTransactionTypeService(),
+    budget: useBudgetService(),
+    asset: useAssetService(),
+    exchangeRate: useExchangeRateService(),
+    syncMetadata: useSyncMetadataService(),
   };
 };

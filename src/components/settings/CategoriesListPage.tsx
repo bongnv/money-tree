@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { categoryService } from '../../services/category.service';
-import { transactionTypeService } from '../../services/transactionType.service';
 import { Container, Typography, Box, Button } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { CategoryList } from '../categories/CategoryList';
 import { CategoryDialog } from '../categories/CategoryDialog';
 import type { Category } from '../../types/models';
+import { useCategories } from '../../hooks/useCategories';
+import { useTransactionTypes } from '../../hooks/useTransactionTypes';
+import { useCategoryService } from '../../contexts/ServiceProviders';
 
 export const CategoriesListPage: React.FC = () => {
   const navigate = useNavigate();
-  const categories = useLiveQuery(() => categoryService.getActive()) ?? [];
-  const transactionTypes = useLiveQuery(() => transactionTypeService.getActive()) ?? [];
+  const categories = useCategories();
+  const transactionTypes = useTransactionTypes();
+  const categoryService = useCategoryService();
 
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | undefined>();

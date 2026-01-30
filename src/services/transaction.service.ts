@@ -1,6 +1,6 @@
+import type { MoneyTreeDB } from '../db/database';
 import { db } from '../db/database';
 import type { Transaction, TransactionType } from '../types/models';
-import { syncMetadataService } from './syncMetadata.service';
 import type { Group } from '../types/enums';
 
 export interface TransactionFilters {
@@ -27,22 +27,27 @@ const softDelete = (entity: Partial<Transaction>): Partial<Transaction> => ({
   isDeleted: true,
 });
 
-export const transactionService = {
+export class TransactionService {
+  constructor(private db: MoneyTreeDB) {}
+
   async getAll(): Promise<Transaction[]> {
-    return await db.transactions.toArray();
-  },
+    return await this.db.transactions.toArray();
+  }
 
   async getById(id: string): Promise<Transaction | undefined> {
-    return await db.transactions.get(id);
-  },
+    return await this.db.transactions.get(id);
+  }
 
   async getActive(): Promise<Transaction[]> {
-    return await db.transactions.filter((txn) => !txn.isDeleted).toArray();
-  },
+    return await this.db.transactions.filter((txn) => !txn.isDeleted).toArray();
+  }
 
   async getByDateRange(startDate: string, endDate: string): Promise<Transaction[]> {
-    return await db.transactions.where('date').between(startDate, endDate, true, true).toArray();
-  },
+    return await this.db.transactions
+      .where('date')
+      .between(startDate, endDate, true, true)
+      .toArray();
+  }
 
   async create(
     data: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
@@ -52,35 +57,32 @@ export const transactionService = {
       isDeleted: false,
     });
 
-    const id = await db.transactions.add(transaction as Transaction);
-    await syncMetadataService.setLastModified(new Date().toISOString());
+    const id = await this.db.transactions.add(transaction as Transaction);
     return id as string;
-  },
+  }
 
   async update(
     id: string,
     data: Partial<Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>>
   ): Promise<void> {
-    const existing = await db.transactions.get(id);
+    const existing = await this.db.transactions.get(id);
     if (!existing) {
       throw new Error(`Transaction with id ${id} not found`);
     }
 
     const updated = addTimestamps(data, true);
-    await db.transactions.update(id, updated);
-    await syncMetadataService.setLastModified(new Date().toISOString());
-  },
+    await this.db.transactions.update(id, updated);
+  }
 
   async delete(id: string): Promise<void> {
-    const existing = await db.transactions.get(id);
+    const existing = await this.db.transactions.get(id);
     if (!existing) {
       throw new Error(`Transaction with id ${id} not found`);
     }
 
     const deleted = addTimestamps(softDelete(existing), true);
-    await db.transactions.update(id, deleted);
-    await syncMetadataService.setLastModified(new Date().toISOString());
-  },
+    await this.db.transactions.update(id, deleted);
+  }
 
   filterTransactions(
     transactions: Transaction[],
@@ -145,5 +147,8 @@ export const transactionService = {
 
       return true;
     });
-  },
-};
+  }
+}
+
+// Singleton instance for backward compatibility
+export const transactionService = new TransactionService(db);

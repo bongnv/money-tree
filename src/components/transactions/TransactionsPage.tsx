@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import {
   Box,
@@ -13,25 +12,27 @@ import {
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import type { Transaction } from '../../types/models';
-import { transactionService } from '../../services/transaction.service';
-import { accountService } from '../../services/account.service';
-import { assetService } from '../../services/asset.service';
-import { categoryService } from '../../services/category.service';
-import { transactionTypeService } from '../../services/transactionType.service';
 import { TransactionDialog } from './TransactionDialog';
 import { TransactionList } from './TransactionList';
 import { TransactionFilters, TransactionFiltersState } from './TransactionFilters';
 import { QuickEntryRow } from './QuickEntryRow';
 import { getTodayDate } from '../../utils/date.utils';
+import { useActiveAccounts } from '../../hooks/useAccounts';
+import { useTransactions } from '../../hooks/useTransactions';
+import { useCategories } from '../../hooks/useCategories';
+import { useTransactionTypes } from '../../hooks/useTransactionTypes';
+import { useAssets } from '../../hooks/useAssets';
+import { useTransactionService } from '../../contexts/ServiceProviders';
 
 export const TransactionsPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  const transactions = useLiveQuery(() => transactionService.getActive()) ?? [];
-  const accounts = useLiveQuery(() => accountService.getActive()) ?? [];
-  const categories = useLiveQuery(() => categoryService.getActive()) ?? [];
-  const transactionTypes = useLiveQuery(() => transactionTypeService.getActive()) ?? [];
-  const manualAssets = useLiveQuery(() => assetService.getActive()) ?? [];
+  const transactions = useTransactions();
+  const accounts = useActiveAccounts();
+  const categories = useCategories();
+  const transactionTypes = useTransactionTypes();
+  const manualAssets = useAssets();
+  const transactionService = useTransactionService();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | undefined>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -81,6 +82,8 @@ export const TransactionsPage: React.FC = () => {
   const filteredTransactions = useMemo(() => {
     if (!transactions || !transactionTypes) return [];
     return transactionService.filterTransactions(transactions, filters, transactionTypes);
+    // transactionService is stable from context, no need to include
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transactions, filters, transactionTypes]);
 
   const handleOpenDialog = () => {

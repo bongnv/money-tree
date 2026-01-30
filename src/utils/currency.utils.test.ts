@@ -75,7 +75,7 @@ describe('currency.utils', () => {
     });
 
     it('should handle unknown currency gracefully', () => {
-      const formatted = formatCurrency(1234.56, 'unknown');
+      const formatted = formatCurrency(1234.56, 'unknown' as any);
       expect(formatted).toBe('1,234.56');
     });
 
@@ -137,7 +137,7 @@ describe('currency.utils', () => {
     });
 
     it('should handle unknown currency', () => {
-      const parsed = parseCurrency('1234.56', 'unknown');
+      const parsed = parseCurrency('1234.56', 'unknown' as any);
       expect(parsed).toBe(1234.56);
     });
   });
@@ -191,7 +191,7 @@ describe('currency.utils', () => {
     });
 
     it('should return false for unknown currency', () => {
-      expect(isValidCurrencyAmount(1234.56, 'unknown')).toBe(false);
+      expect(isValidCurrencyAmount(1234.56, 'unknown' as any)).toBe(false);
     });
 
     it('should return true for negative amounts', () => {
@@ -209,7 +209,7 @@ describe('currency.utils', () => {
 
   describe('convertAmount', () => {
     it('should convert amount using exchange rate', () => {
-      const converted = convertAmount(1000, 'EUR', 'USD', 1.18);
+      const converted = convertAmount(1000, CurrencyCode.SGD, CurrencyCode.USD, 1.18);
       expect(converted).toBe(1180);
     });
 
@@ -219,24 +219,29 @@ describe('currency.utils', () => {
     });
 
     it('should return same amount when rate is 1', () => {
-      const converted = convertAmount(1000, 'EUR', 'USD', 1);
+      const converted = convertAmount(1000, CurrencyCode.SGD, CurrencyCode.USD, 1);
       expect(converted).toBe(1000);
     });
 
     it('should handle fractional rates', () => {
-      const converted = convertAmount(1000, 'USD', 'EUR', 0.85);
+      const converted = convertAmount(1000, CurrencyCode.USD, CurrencyCode.SGD, 0.85);
       expect(converted).toBe(850);
     });
 
     it('should handle negative amounts', () => {
-      const converted = convertAmount(-1000, 'EUR', 'USD', 1.18);
+      const converted = convertAmount(-1000, CurrencyCode.SGD, CurrencyCode.USD, 1.18);
       expect(converted).toBe(-1180);
     });
   });
 
   describe('formatCurrencyWithConversion', () => {
     it('should format with conversion when different currencies', () => {
-      const formatted = formatCurrencyWithConversion(1000, 'EUR', 1180, 'USD');
+      const formatted = formatCurrencyWithConversion(
+        1000,
+        CurrencyCode.SGD,
+        1180,
+        CurrencyCode.USD
+      );
       expect(formatted).toContain('1,000');
       expect(formatted).toContain('1,180');
       expect(formatted).toContain('≈');
@@ -271,17 +276,29 @@ describe('currency.utils', () => {
     });
 
     it('should show only original when showConverted is false', () => {
-      const formatted = formatCurrencyWithConversion(1000, 'EUR', 1180, 'USD', {
-        showConverted: false,
-      });
+      const formatted = formatCurrencyWithConversion(
+        1000,
+        CurrencyCode.SGD,
+        1180,
+        CurrencyCode.USD,
+        {
+          showConverted: false,
+        }
+      );
       expect(formatted).not.toContain('1180');
       expect(formatted).not.toContain('≈');
     });
 
     it('should show only converted when showOriginal is false', () => {
-      const formatted = formatCurrencyWithConversion(1000, 'EUR', 1180, 'USD', {
-        showOriginal: false,
-      });
+      const formatted = formatCurrencyWithConversion(
+        1000,
+        CurrencyCode.SGD,
+        1180,
+        CurrencyCode.USD,
+        {
+          showOriginal: false,
+        }
+      );
       expect(formatted).toBe('$1,180.00');
       expect(formatted).not.toContain('≈');
     });

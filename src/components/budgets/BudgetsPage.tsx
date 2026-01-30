@@ -1,11 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { budgetService } from '../../services/budget.service';
-import { categoryService } from '../../services/category.service';
-import { transactionTypeService } from '../../services/transactionType.service';
-import { accountService } from '../../services/account.service';
-import { transactionService } from '../../services/transaction.service';
-import { syncMetadataService } from '../../services/syncMetadata.service';
 import {
   Box,
   Typography,
@@ -25,16 +18,23 @@ import { getBudgetPresets } from './periodPresets';
 import type { Budget } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
 import { useCalculationService } from '../../contexts/ServiceProviders';
-import { Group, CurrencyCode } from '../../types/enums';
+import { Group } from '../../types/enums';
+import { useActiveAccounts } from '../../hooks/useAccounts';
+import { useTransactions } from '../../hooks/useTransactions';
+import { useCategories } from '../../hooks/useCategories';
+import { useTransactionTypes } from '../../hooks/useTransactionTypes';
+import { useBudgets } from '../../hooks/useBudgets';
+import { useBaseCurrency } from '../../hooks/useSyncMetadata';
+import { useBudgetService } from '../../contexts/ServiceProviders';
 
 export const BudgetsPage: React.FC = () => {
-  const budgets = useLiveQuery(() => budgetService.getActive()) ?? [];
-  const transactionTypes = useLiveQuery(() => transactionTypeService.getActive()) ?? [];
-  const categories = useLiveQuery(() => categoryService.getActive()) ?? [];
-  const transactions = useLiveQuery(() => transactionService.getActive()) ?? [];
-  const accounts = useLiveQuery(() => accountService.getActive()) ?? [];
-  const baseCurrency =
-    useLiveQuery(() => syncMetadataService.getBaseCurrency()) || CurrencyCode.USD;
+  const budgets = useBudgets();
+  const transactionTypes = useTransactionTypes();
+  const categories = useCategories();
+  const transactions = useTransactions();
+  const accounts = useActiveAccounts();
+  const baseCurrency = useBaseCurrency();
+  const budgetService = useBudgetService();
   const calculationService = useCalculationService();
 
   // Helper to get category by id - memoized to prevent infinite loops

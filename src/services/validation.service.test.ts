@@ -9,6 +9,7 @@ const mockAccount1: Account = {
   currencyCode: CurrencyCode.USD,
   initialBalance: 1000,
   isActive: true,
+  isDeleted: false,
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',
 };
@@ -25,6 +26,8 @@ const expenseType: TransactionType = {
   name: 'Groceries',
   categoryId: 'cat-1',
   group: Group.EXPENSE,
+  isActive: true,
+  isDeleted: false,
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',
 };
@@ -117,6 +120,8 @@ describe('ValidationService', () => {
           name: 'Monthly Salary',
           categoryId: 'cat-2',
           group: Group.INCOME,
+          isActive: true,
+          isDeleted: false,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z',
         };
@@ -141,6 +146,8 @@ describe('ValidationService', () => {
           name: 'Monthly Salary',
           categoryId: 'cat-2',
           group: Group.INCOME,
+          isActive: true,
+          isDeleted: false,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z',
         };
@@ -165,6 +172,8 @@ describe('ValidationService', () => {
           name: 'Between Accounts',
           categoryId: 'cat-3',
           group: Group.TRANSFER,
+          isActive: true,
+          isDeleted: false,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z',
         };
@@ -190,6 +199,8 @@ describe('ValidationService', () => {
           name: 'Between Accounts',
           categoryId: 'cat-3',
           group: Group.TRANSFER,
+          isActive: true,
+          isDeleted: false,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z',
         };
@@ -220,6 +231,8 @@ describe('ValidationService', () => {
           name: 'Stock Purchase',
           categoryId: 'cat-4',
           group: Group.ASSET_PURCHASE,
+          isActive: true,
+          isDeleted: false,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z',
         };
@@ -243,6 +256,8 @@ describe('ValidationService', () => {
           name: 'Stock Purchase',
           categoryId: 'cat-4',
           group: Group.ASSET_PURCHASE,
+          isActive: true,
+          isDeleted: false,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z',
         };
@@ -267,6 +282,8 @@ describe('ValidationService', () => {
           name: 'Stock Purchase',
           categoryId: 'cat-4',
           group: Group.ASSET_PURCHASE,
+          isActive: true,
+          isDeleted: false,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z',
         };
@@ -297,6 +314,8 @@ describe('ValidationService', () => {
           name: 'Stock Purchase',
           categoryId: 'cat-4',
           group: Group.ASSET_PURCHASE,
+          isActive: true,
+          isDeleted: false,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z',
         };
@@ -322,6 +341,8 @@ describe('ValidationService', () => {
           name: 'Stock Sale',
           categoryId: 'cat-4',
           group: Group.ASSET_SALE,
+          isActive: true,
+          isDeleted: false,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z',
         };
@@ -345,6 +366,8 @@ describe('ValidationService', () => {
           name: 'Stock Sale',
           categoryId: 'cat-4',
           group: Group.ASSET_SALE,
+          isActive: true,
+          isDeleted: false,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z',
         };
@@ -369,6 +392,8 @@ describe('ValidationService', () => {
           name: 'Stock Sale',
           categoryId: 'cat-4',
           group: Group.ASSET_SALE,
+          isActive: true,
+          isDeleted: false,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z',
         };
@@ -399,6 +424,8 @@ describe('ValidationService', () => {
           name: 'Stock Sale',
           categoryId: 'cat-4',
           group: Group.ASSET_SALE,
+          isActive: true,
+          isDeleted: false,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z',
         };
@@ -442,6 +469,8 @@ describe('ValidationService', () => {
           name: 'Salary',
           categoryId: 'cat-2',
           group: Group.INCOME,
+          isActive: true,
+          isDeleted: false,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z',
         };

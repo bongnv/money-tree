@@ -11,12 +11,14 @@ describe('CategoryList', () => {
       description: 'Food and household items',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
     {
       id: 'cat-2',
       name: 'Salary',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
   ];
 
@@ -28,6 +30,8 @@ describe('CategoryList', () => {
       group: Group.EXPENSE,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
+      isActive: true,
     },
     {
       id: 'tt-2',
@@ -36,6 +40,8 @@ describe('CategoryList', () => {
       group: Group.EXPENSE,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
+      isActive: true,
     },
   ];
 

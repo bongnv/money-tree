@@ -1,6 +1,6 @@
 import { accountService } from './account.service';
 import { db } from '../db/database';
-import { AccountType } from '../types/enums';
+import { AccountType, CurrencyCode } from '../types/enums';
 import type { Account } from '../types/models';
 
 jest.mock('./syncMetadata.service', () => ({
@@ -29,8 +29,9 @@ describe('accountService', () => {
     id: 1,
     name: 'Test Account',
     type: AccountType.CHECKING,
-    currency: 'USD',
+    currency: CurrencyCode.USD,
     isActive: true,
+    isDeleted: false,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
   };
@@ -91,20 +92,19 @@ describe('accountService', () => {
         expect.objectContaining({
           ...newAccount,
           isActive: true,
+          isDeleted: false,
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
         })
       );
-      expect(
-        syncMetadataService.setLastModified
-      ).toHaveBeenCalled();
+      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
     });
 
     it('should preserve isActive if provided', async () => {
       const newAccount = {
         name: 'Inactive Account',
         type: AccountType.CHECKING,
-        currency: 'USD',
+        currency: CurrencyCode.USD,
         isActive: false,
       };
       (db.accounts.add as jest.Mock).mockResolvedValue(2);
@@ -133,9 +133,7 @@ describe('accountService', () => {
           updatedAt: expect.any(String),
         })
       );
-      expect(
-        syncMetadataService.setLastModified
-      ).toHaveBeenCalled();
+      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
     });
 
     it('should throw error if account not found', async () => {
@@ -148,15 +146,26 @@ describe('accountService', () => {
   });
 
   describe('delete', () => {
-    it('should delete an account', async () => {
-      (db.accounts.delete as jest.Mock).mockResolvedValue(undefined);
+    it('should soft delete an account', async () => {
+      (db.accounts.get as jest.Mock).mockResolvedValue(mockAccount);
+      (db.accounts.update as jest.Mock).mockResolvedValue(1);
 
       await accountService.delete(1);
 
-      expect(db.accounts.delete).toHaveBeenCalledWith(1);
-      expect(
-        syncMetadataService.setLastModified
-      ).toHaveBeenCalled();
+      expect(db.accounts.update).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          isDeleted: true,
+          updatedAt: expect.any(String),
+        })
+      );
+      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
+    });
+
+    it('should throw error if account not found', async () => {
+      (db.accounts.get as jest.Mock).mockResolvedValue(undefined);
+
+      await expect(accountService.delete(999)).rejects.toThrow('Account with id 999 not found');
     });
   });
 

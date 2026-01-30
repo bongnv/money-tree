@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TransactionList } from './TransactionList';
 import type { Transaction, Account, Category, TransactionType } from '../../types/models';
-import { Group, AccountType } from '../../types/enums';
+import { Group, AccountType, CurrencyCode } from '../../types/enums';
 
 describe('TransactionList', () => {
   const mockAccounts: Account[] = [
@@ -10,7 +10,7 @@ describe('TransactionList', () => {
       id: 'acc-1',
       name: 'Checking',
       type: AccountType.BANK_ACCOUNT,
-      currencyCode: 'USD',
+      currencyCode: CurrencyCode.USD,
       initialBalance: 1000,
       isActive: true,
       createdAt: '2024-01-01T00:00:00.000Z',
@@ -20,7 +20,7 @@ describe('TransactionList', () => {
       id: 'acc-2',
       name: 'Savings',
       type: AccountType.BANK_ACCOUNT,
-      currencyCode: 'USD',
+      currencyCode: CurrencyCode.USD,
       initialBalance: 5000,
       isActive: true,
       createdAt: '2024-01-01T00:00:00.000Z',

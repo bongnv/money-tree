@@ -1,14 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QuickEntryRow } from './QuickEntryRow';
-import type { Account, Category, TransactionType } from '../../types/models';
-import { Group, AccountType } from '../../types/enums';
-
-// Helper to get today's date in YYYY-MM-DD format
-const getTodayDate = () => {
-  const today = new Date();
-  return today.toISOString().split('T')[0];
-};
+import type { Account, Category, Transaction, TransactionType } from '../../types/models';
+import { Group, AccountType, CurrencyCode } from '../../types/enums';
 
 describe('QuickEntryRow', () => {
   const mockAccounts: Account[] = [
@@ -16,31 +10,34 @@ describe('QuickEntryRow', () => {
       id: 'acc-1',
       name: 'Checking',
       type: AccountType.BANK_ACCOUNT,
-      currencyCode: 'USD',
+      currencyCode: CurrencyCode.USD,
       initialBalance: 0,
       isActive: true,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
     {
       id: 'acc-2',
       name: 'Savings',
       type: AccountType.BANK_ACCOUNT,
-      currencyCode: 'USD',
+      currencyCode: CurrencyCode.USD,
       initialBalance: 0,
       isActive: true,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
     {
       id: 'acc-3',
       name: 'Credit Card',
       type: AccountType.CREDIT_CARD,
-      currencyCode: 'USD',
+      currencyCode: CurrencyCode.USD,
       initialBalance: 0,
       isActive: true,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
   ];
 
@@ -50,18 +47,21 @@ describe('QuickEntryRow', () => {
       name: 'Food',
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
     {
       id: 'cat-2',
       name: 'Salary',
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
     {
       id: 'cat-3',
       name: 'Transfers',
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
   ];
 
@@ -73,6 +73,8 @@ describe('QuickEntryRow', () => {
       group: Group.EXPENSE,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
+      isActive: false,
+      isDeleted: false,
     },
     {
       id: 'type-2',
@@ -81,6 +83,8 @@ describe('QuickEntryRow', () => {
       group: Group.INCOME,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
+      isActive: false,
+      isDeleted: false,
     },
     {
       id: 'type-3',
@@ -89,6 +93,8 @@ describe('QuickEntryRow', () => {
       group: Group.TRANSFER,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
+      isActive: false,
+      isDeleted: false,
     },
     {
       id: 'type-4',
@@ -99,6 +105,8 @@ describe('QuickEntryRow', () => {
       defaultToAccountId: 'acc-2',
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
+      isActive: false,
+      isDeleted: false,
     },
   ];
 

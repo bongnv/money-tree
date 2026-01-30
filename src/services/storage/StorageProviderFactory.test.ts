@@ -2,6 +2,7 @@ import { StorageProviderFactory, StorageProviderType } from './StorageProviderFa
 import { OneDriveProvider } from './OneDriveProvider';
 import { GoogleDriveProvider } from './GoogleDriveProvider';
 import type { DataFile } from '../../types/models';
+import { CurrencyCode } from '@/types/enums';
 
 // Mock the storage providers
 jest.mock('./OneDriveProvider');
@@ -17,7 +18,7 @@ describe('StorageProviderFactory', () => {
   const mockDataFile: DataFile = {
     version: '1.0',
     lastModified: new Date().toISOString(),
-    baseCurrency: 'USD',
+    baseCurrency: CurrencyCode.USD,
     accounts: [],
     transactionTypes: [],
     categories: [],

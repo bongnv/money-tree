@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { ManualAssetList } from './ManualAssetList';
-import { AssetType } from '../../types/enums';
+import { AssetType, CurrencyCode } from '../../types/enums';
 import type { ManualAsset } from '../../types/models';
 
 describe('ManualAssetList', () => {
@@ -12,19 +12,21 @@ describe('ManualAssetList', () => {
       id: 'asset-1',
       name: 'House',
       type: AssetType.REAL_ESTATE,
-      currencyCode: 'USD',
+      currencyCode: CurrencyCode.USD,
       valueHistory: [{ date: '2024-01-15', value: 500000, notes: 'Primary residence' }],
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
     {
       id: 'asset-2',
       name: 'Car',
       type: AssetType.OTHER,
-      currencyCode: 'USD',
+      currencyCode: CurrencyCode.USD,
       valueHistory: [{ date: '2024-01-15', value: 25000 }],
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
   ];
 

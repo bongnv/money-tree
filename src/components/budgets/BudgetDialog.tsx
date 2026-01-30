@@ -1,7 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { categoryService } from '../../services/category.service';
-import { transactionTypeService } from '../../services/transactionType.service';
 import {
   Dialog,
   DialogTitle,
@@ -16,6 +13,8 @@ import { FormDatePicker } from '../common/FormDatePicker';
 import type { Budget } from '../../types/models';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
 import { CurrencyCode, Group } from '../../types/enums';
+import { useCategories } from '../../hooks/useCategories';
+import { useTransactionTypes } from '../../hooks/useTransactionTypes';
 
 interface BudgetDialogProps {
   open: boolean;
@@ -25,8 +24,8 @@ interface BudgetDialogProps {
 }
 
 export const BudgetDialog: React.FC<BudgetDialogProps> = ({ open, budget, onClose, onSubmit }) => {
-  const categories = useLiveQuery(() => categoryService.getActive()) ?? [];
-  const transactionTypes = useLiveQuery(() => transactionTypeService.getActive()) ?? [];
+  const categories = useCategories();
+  const transactionTypes = useTransactionTypes();
 
   const [formData, setFormData] = useState({
     transactionTypeId: budget?.transactionTypeId || '',

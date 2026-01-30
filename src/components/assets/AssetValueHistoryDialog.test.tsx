@@ -1,14 +1,15 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { AssetValueHistoryDialog } from './AssetValueHistoryDialog';
 import type { ManualAsset } from '../../types/models';
-import { AssetType } from '../../types/enums';
+import { AssetType, CurrencyCode } from '../../types/enums';
 
 describe('AssetValueHistoryDialog', () => {
   const mockAsset: ManualAsset = {
     id: 'asset-1',
     name: 'Test House',
     type: AssetType.REAL_ESTATE,
-    currencyCode: 'USD',
+    currencyCode: CurrencyCode.USD,
+    isDeleted: false,
     valueHistory: [
       { date: '2026-01-01', value: 500000, notes: 'Initial' },
       { date: '2026-04-01', value: 520000, notes: 'Q1 appraisal' },

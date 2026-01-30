@@ -1,4 +1,4 @@
-import { db } from '../db/database';
+import type { MoneyTreeDB } from '../db/database';
 import { IStorageProvider, CloudItem } from './storage/IStorageProvider';
 import type { DataFile, ExchangeRate, ArchivedYearReference } from '../types/models';
 import { CurrencyCode } from '../types/enums';
@@ -31,10 +31,12 @@ type LocalDataSnapshot = {
 export class CloudSyncService {
   private provider: IStorageProvider;
   private fileItem: CloudItem;
+  private db: MoneyTreeDB;
 
-  constructor(provider: IStorageProvider, fileItem: CloudItem) {
+  constructor(provider: IStorageProvider, fileItem: CloudItem, db: MoneyTreeDB) {
     this.provider = provider;
     this.fileItem = fileItem;
+    this.db = db;
   }
 
   /**
@@ -157,13 +159,13 @@ export class CloudSyncService {
 
     // Update IndexedDB with merged data
     await Promise.all([
-      db.transactions.bulkPut(transactionsResult.merged),
-      db.accounts.bulkPut(accountsResult.merged),
-      db.categories.bulkPut(categoriesResult.merged),
-      db.transactionTypes.bulkPut(transactionTypesResult.merged),
-      db.budgets.bulkPut(budgetsResult.merged),
-      db.manualAssets.bulkPut(assetsResult.merged),
-      db.exchangeRates.bulkPut(exchangeRatesResult.merged),
+      this.db.transactions.bulkPut(transactionsResult.merged),
+      this.db.accounts.bulkPut(accountsResult.merged),
+      this.db.categories.bulkPut(categoriesResult.merged),
+      this.db.transactionTypes.bulkPut(transactionTypesResult.merged),
+      this.db.budgets.bulkPut(budgetsResult.merged),
+      this.db.manualAssets.bulkPut(assetsResult.merged),
+      this.db.exchangeRates.bulkPut(exchangeRatesResult.merged),
     ]);
 
     // Update metadata in IndexedDB if cloud is newer
@@ -346,13 +348,13 @@ export class CloudSyncService {
       archivedYears,
       lastModified,
     ] = await Promise.all([
-      db.transactions.toArray(),
-      db.accounts.toArray(),
-      db.categories.toArray(),
-      db.transactionTypes.toArray(),
-      db.budgets.toArray(),
-      db.manualAssets.toArray(),
-      db.exchangeRates.toArray(),
+      this.db.transactions.toArray(),
+      this.db.accounts.toArray(),
+      this.db.categories.toArray(),
+      this.db.transactionTypes.toArray(),
+      this.db.budgets.toArray(),
+      this.db.manualAssets.toArray(),
+      this.db.exchangeRates.toArray(),
       syncMetadataService.getBaseCurrency(),
       syncMetadataService.getArchivedYears(),
       syncMetadataService.getLastModified(),

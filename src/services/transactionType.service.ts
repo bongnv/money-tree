@@ -1,6 +1,6 @@
+import type { MoneyTreeDB } from '../db/database';
 import { db } from '../db/database';
 import type { TransactionType } from '../types/models';
-import { syncMetadataService } from './syncMetadata.service';
 
 const addTimestamps = (
   entity: Partial<TransactionType>,
@@ -14,58 +14,74 @@ const addTimestamps = (
   };
 };
 
-export const transactionTypeService = {
+const softDelete = (entity: Partial<TransactionType>): Partial<TransactionType> => ({
+  ...entity,
+  isDeleted: true,
+});
+
+export class TransactionTypeService {
+  constructor(private db: MoneyTreeDB) {}
+
   async getAll(): Promise<TransactionType[]> {
-    return await db.transactionTypes.toArray();
-  },
+    return await this.db.transactionTypes.toArray();
+  }
 
   async getById(id: string): Promise<TransactionType | undefined> {
-    return await db.transactionTypes.get(id);
-  },
+    return await this.db.transactionTypes.get(id);
+  }
 
   async getActive(): Promise<TransactionType[]> {
-    return await db.transactionTypes.filter((type) => type.isActive === true).toArray();
-  },
+    return await this.db.transactionTypes
+      .filter((type) => type.isActive === true && !type.isDeleted)
+      .toArray();
+  }
 
   async getByCategoryId(categoryId: string): Promise<TransactionType[]> {
-    return await db.transactionTypes.where('categoryId').equals(categoryId).toArray();
-  },
+    return await this.db.transactionTypes.where('categoryId').equals(categoryId).toArray();
+  }
 
   async create(data: Omit<TransactionType, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     const transactionType = addTimestamps({
       ...data,
       isActive: data.isActive !== undefined ? data.isActive : true,
+      isDeleted: false,
     });
 
-    const id = await db.transactionTypes.add(transactionType as TransactionType);
-    await syncMetadataService.setLastModified(new Date().toISOString());
+    const id = await this.db.transactionTypes.add(transactionType as TransactionType);
     return id as string;
-  },
+  }
 
   async update(
     id: string,
     data: Partial<Omit<TransactionType, 'id' | 'createdAt' | 'updatedAt'>>
   ): Promise<void> {
-    const existing = await db.transactionTypes.get(id);
+    const existing = await this.db.transactionTypes.get(id);
     if (!existing) {
       throw new Error(`TransactionType with id ${id} not found`);
     }
 
     const updated = addTimestamps(data, true);
-    await db.transactionTypes.update(id, updated);
-    await syncMetadataService.setLastModified(new Date().toISOString());
-  },
+    await this.db.transactionTypes.update(id, updated);
+  }
 
   async delete(id: string): Promise<void> {
-    await db.transactionTypes.delete(id);
-    await syncMetadataService.setLastModified(new Date().toISOString());
-  },
+    const existing = await this.db.transactionTypes.get(id);
+    if (!existing) {
+      throw new Error(`TransactionType with id ${id} not found`);
+    }
+
+    const deleted = addTimestamps(softDelete(existing), true);
+    await this.db.transactionTypes.update(id, deleted);
+  }
 
   async archive(id: string): Promise<void> {
     await this.update(id, { isActive: false });
-  },
+  }
 
   async unarchive(id: string): Promise<void> {
     await this.update(id, { isActive: true });
-  },
-};
+  }
+}
+
+// Singleton instance for backward compatibility
+export const transactionTypeService = new TransactionTypeService(db);

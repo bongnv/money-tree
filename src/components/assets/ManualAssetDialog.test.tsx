@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ManualAssetDialog } from './ManualAssetDialog';
 import { AppProvider } from '../../contexts/AppContext';
-import { AssetType } from '../../types/enums';
+import { AssetType, CurrencyCode } from '../../types/enums';
 import type { ManualAsset } from '../../types/models';
 import { assetService } from '../../services/asset.service';
 
@@ -83,10 +83,11 @@ describe('ManualAssetDialog', () => {
       id: 'asset-1',
       name: 'House',
       type: AssetType.REAL_ESTATE,
-      currencyCode: 'USD',
+      currencyCode: CurrencyCode.USD,
       valueHistory: [{ date: '2024-01-15', value: 500000, notes: 'Primary residence' }],
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
     };
 
     it('should render dialog with Edit title', () => {
@@ -125,11 +126,11 @@ describe('ManualAssetDialog', () => {
       name: 'House',
       type: AssetType.REAL_ESTATE,
       valueHistory: [{ date: '2024-01-15', value: 500000 }],
-      currencyCode: 'USD',
-      date: '2026-01-01',
+      currencyCode: CurrencyCode.USD,
       notes: 'Initial purchase',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
     };
 
     it('should render with update value title when mode is update-value', () => {

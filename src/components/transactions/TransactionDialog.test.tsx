@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TransactionDialog } from './TransactionDialog';
 import type { Transaction, Account, TransactionType, Category } from '../../types/models';
-import { Group, AccountType } from '../../types/enums';
+import { Group, AccountType, CurrencyCode } from '../../types/enums';
 
 describe('TransactionDialog', () => {
   const mockAccounts: Account[] = [
@@ -10,21 +10,23 @@ describe('TransactionDialog', () => {
       id: 'acc-1',
       name: 'Checking',
       type: AccountType.BANK_ACCOUNT,
-      currencyCode: 'USD',
+      currencyCode: CurrencyCode.USD,
       initialBalance: 1000,
       isActive: true,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
     {
       id: 'acc-2',
       name: 'Savings',
       type: AccountType.BANK_ACCOUNT,
-      currencyCode: 'USD',
+      currencyCode: CurrencyCode.USD,
       initialBalance: 5000,
       isActive: true,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
   ];
 
@@ -34,12 +36,14 @@ describe('TransactionDialog', () => {
       name: 'Food & Dining',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
     {
       id: 'cat-2',
       name: 'Salary',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
   ];
 
@@ -51,6 +55,8 @@ describe('TransactionDialog', () => {
       group: Group.EXPENSE,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isActive: false,
+      isDeleted: false,
     },
     {
       id: 'tt-2',
@@ -59,6 +65,8 @@ describe('TransactionDialog', () => {
       group: Group.INCOME,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isActive: false,
+      isDeleted: false,
     },
   ];
 
@@ -72,6 +80,7 @@ describe('TransactionDialog', () => {
     toAccountId: '',
     createdAt: '2024-01-15T00:00:00.000Z',
     updatedAt: '2024-01-15T00:00:00.000Z',
+    isDeleted: false,
   };
 
   const mockOnClose = jest.fn();

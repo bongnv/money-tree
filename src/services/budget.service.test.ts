@@ -81,9 +81,7 @@ describe('budgetService', () => {
           updatedAt: expect.any(String),
         })
       );
-      expect(
-        syncMetadataService.setLastModified
-      ).toHaveBeenCalled();
+      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
     });
   });
 

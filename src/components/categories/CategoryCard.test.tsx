@@ -10,6 +10,7 @@ describe('CategoryCard', () => {
     description: 'Food and household items',
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
+    isDeleted: false,
   };
 
   const mockOnEdit = jest.fn();

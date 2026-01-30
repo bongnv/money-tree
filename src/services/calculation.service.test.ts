@@ -1,5 +1,12 @@
 import { CalculationService } from './calculation.service';
-import type { Transaction, Account, ManualAsset } from '../types/models';
+import type {
+  Transaction,
+  Account,
+  ManualAsset,
+  Budget,
+  TransactionType,
+  Category,
+} from '../types/models';
 import { AccountType, AssetType, CurrencyCode } from '../types/enums';
 import * as exchangeRateUtils from '../utils/exchangeRate.utils';
 
@@ -17,6 +24,7 @@ const mockAccount1: Account = {
   currencyCode: CurrencyCode.USD,
   initialBalance: 1000,
   isActive: true,
+  isDeleted: false,
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',
 };
@@ -28,6 +36,7 @@ const mockAccount2: Account = {
   currencyCode: CurrencyCode.USD,
   initialBalance: 5000,
   isActive: true,
+  isDeleted: false,
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',
 };
@@ -41,6 +50,7 @@ const incomeTransaction: Transaction = {
   toAccountId: 'acc-1',
   createdAt: '2024-03-01T00:00:00.000Z',
   updatedAt: '2024-03-01T00:00:00.000Z',
+  isDeleted: false,
 };
 
 const expenseTransaction: Transaction = {
@@ -52,6 +62,7 @@ const expenseTransaction: Transaction = {
   fromAccountId: 'acc-1',
   createdAt: '2024-03-05T00:00:00.000Z',
   updatedAt: '2024-03-05T00:00:00.000Z',
+  isDeleted: false,
 };
 
 const transferTransaction: Transaction = {
@@ -64,6 +75,7 @@ const transferTransaction: Transaction = {
   toAccountId: 'acc-2',
   createdAt: '2024-03-10T00:00:00.000Z',
   updatedAt: '2024-03-10T00:00:00.000Z',
+  isDeleted: false,
 };
 
 describe('CalculationService', () => {
@@ -179,6 +191,7 @@ describe('CalculationService', () => {
         fromAccountId: 'acc-1',
         createdAt: '2026-01-05T00:00:00.000Z',
         updatedAt: '2026-01-05T00:00:00.000Z',
+        isDeleted: false,
       },
       {
         id: 'txn-2',
@@ -189,6 +202,7 @@ describe('CalculationService', () => {
         fromAccountId: 'acc-1',
         createdAt: '2026-01-15T00:00:00.000Z',
         updatedAt: '2026-01-15T00:00:00.000Z',
+        isDeleted: false,
       },
       {
         id: 'txn-3',
@@ -199,6 +213,7 @@ describe('CalculationService', () => {
         fromAccountId: 'acc-1',
         createdAt: '2026-01-20T00:00:00.000Z',
         updatedAt: '2026-01-20T00:00:00.000Z',
+        isDeleted: false,
       },
       {
         id: 'txn-4',
@@ -209,6 +224,7 @@ describe('CalculationService', () => {
         fromAccountId: 'acc-1',
         createdAt: '2026-02-05T00:00:00.000Z',
         updatedAt: '2026-02-05T00:00:00.000Z',
+        isDeleted: false,
       },
     ];
 
@@ -274,7 +290,7 @@ describe('CalculationService', () => {
   });
 
   describe('getActiveBudgetForPeriod', () => {
-    const budgets = [
+    const budgets: Budget[] = [
       {
         id: '1',
         transactionTypeId: 'type-1',
@@ -285,6 +301,7 @@ describe('CalculationService', () => {
         endDate: '2026-06-30',
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
+        isDeleted: false,
       },
       {
         id: '2',
@@ -296,6 +313,7 @@ describe('CalculationService', () => {
         endDate: '2026-12-31',
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
+        isDeleted: false,
       },
       {
         id: '3',
@@ -307,6 +325,7 @@ describe('CalculationService', () => {
         endDate: '2026-12-31',
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
+        isDeleted: false,
       },
     ];
 
@@ -377,7 +396,7 @@ describe('CalculationService', () => {
     });
 
     it('should return budget when date is in middle of range', () => {
-      const midYearBudget = [
+      const midYearBudget: Budget[] = [
         {
           id: '1',
           transactionTypeId: 'type-1',
@@ -388,6 +407,7 @@ describe('CalculationService', () => {
           endDate: '2026-12-31',
           createdAt: '2026-01-01T00:00:00.000Z',
           updatedAt: '2026-01-01T00:00:00.000Z',
+          isDeleted: false,
         },
       ];
 
@@ -444,7 +464,7 @@ describe('CalculationService', () => {
 
   describe('prorateBudgetForPeriod', () => {
     it('should show monthly budget as-is for single month', () => {
-      const budget = {
+      const budget: Budget = {
         id: '1',
         transactionTypeId: 'type-1',
         currencyCode: CurrencyCode.USD,
@@ -454,6 +474,7 @@ describe('CalculationService', () => {
         endDate: '2026-12-31',
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
+        isDeleted: false,
       };
       const prorated = calculationService.prorateBudgetForPeriod(
         budget,
@@ -675,6 +696,7 @@ describe('CalculationService', () => {
         type: AssetType.REAL_ESTATE,
         currencyCode: CurrencyCode.USD,
         valueHistory: [{ date: '2026-01-01', value: 500000 }],
+        isDeleted: false,
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       },
@@ -684,6 +706,7 @@ describe('CalculationService', () => {
         type: AssetType.OTHER,
         currencyCode: CurrencyCode.USD,
         valueHistory: [{ date: '2026-01-01', value: 25000 }],
+        isDeleted: false,
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       },
@@ -695,7 +718,7 @@ describe('CalculationService', () => {
           [mockAccount1, mockAccount2],
           [incomeTransaction, expenseTransaction, transferTransaction],
           mockAssets,
-          'USD',
+          CurrencyCode.USD,
           '2026-01'
         );
         // acc-1: 1000 + 3000 - 200 - 500 = 3300
@@ -710,7 +733,7 @@ describe('CalculationService', () => {
           [mockAccount1],
           [incomeTransaction, expenseTransaction],
           [],
-          'USD',
+          CurrencyCode.USD,
           '2026-01'
         );
         // acc-1: 1000 + 3000 - 200 = 3800
@@ -722,7 +745,7 @@ describe('CalculationService', () => {
           [],
           [],
           mockAssets,
-          'USD',
+          CurrencyCode.USD,
           '2026-01'
         );
         // assets only: 500000 + 25000 = 525000
@@ -762,6 +785,7 @@ describe('CalculationService', () => {
         currencyCode: CurrencyCode.USD,
         initialBalance: 1000,
         isActive: true,
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       };
@@ -773,6 +797,7 @@ describe('CalculationService', () => {
         currencyCode: CurrencyCode.EUR,
         initialBalance: 1000,
         isActive: true,
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       };
@@ -787,6 +812,7 @@ describe('CalculationService', () => {
           fromAccountId: 'acc-unknown',
           createdAt: '2026-01-15T00:00:00.000Z',
           updatedAt: '2026-01-15T00:00:00.000Z',
+          isDeleted: false,
         };
 
         const result = await calculationService.convertTransactionAmount(
@@ -807,6 +833,7 @@ describe('CalculationService', () => {
           fromAccountId: 'acc-usd',
           createdAt: '2026-01-15T00:00:00.000Z',
           updatedAt: '2026-01-15T00:00:00.000Z',
+          isDeleted: false,
         };
 
         const result = await calculationService.convertTransactionAmount(
@@ -830,6 +857,7 @@ describe('CalculationService', () => {
           fromAccountId: 'acc-eur',
           createdAt: '2026-01-15T00:00:00.000Z',
           updatedAt: '2026-01-15T00:00:00.000Z',
+          isDeleted: false,
         };
 
         const result = await calculationService.convertTransactionAmount(
@@ -893,6 +921,7 @@ describe('CalculationService', () => {
         currencyCode: CurrencyCode.USD,
         initialBalance: 1000,
         isActive: true,
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       };
@@ -908,6 +937,7 @@ describe('CalculationService', () => {
             fromAccountId: 'acc-usd',
             createdAt: '2026-01-15T00:00:00.000Z',
             updatedAt: '2026-01-15T00:00:00.000Z',
+            isDeleted: false,
           },
           {
             id: 'tx2',
@@ -918,6 +948,7 @@ describe('CalculationService', () => {
             fromAccountId: 'acc-usd',
             createdAt: '2026-01-16T00:00:00.000Z',
             updatedAt: '2026-01-16T00:00:00.000Z',
+            isDeleted: false,
           },
         ];
 
@@ -947,6 +978,7 @@ describe('CalculationService', () => {
         currencyCode: CurrencyCode.USD,
         initialBalance: 1000,
         isActive: true,
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       };
@@ -958,6 +990,7 @@ describe('CalculationService', () => {
           categoryId: 'cat-1',
           group: 'income' as const,
           isActive: true,
+          isDeleted: false,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z',
         },
@@ -967,6 +1000,7 @@ describe('CalculationService', () => {
           categoryId: 'cat-2',
           group: 'expense' as const,
           isActive: true,
+          isDeleted: false,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z',
         },
@@ -983,6 +1017,7 @@ describe('CalculationService', () => {
             toAccountId: 'acc-usd',
             createdAt: '2026-01-15T00:00:00.000Z',
             updatedAt: '2026-01-15T00:00:00.000Z',
+            isDeleted: false,
           },
           {
             id: 'tx2',
@@ -993,6 +1028,7 @@ describe('CalculationService', () => {
             fromAccountId: 'acc-usd',
             createdAt: '2026-01-16T00:00:00.000Z',
             updatedAt: '2026-01-16T00:00:00.000Z',
+            isDeleted: false,
           },
         ];
 
@@ -1032,6 +1068,7 @@ describe('CalculationService', () => {
             fromAccountId: 'acc-usd',
             createdAt: '2026-01-15T00:00:00.000Z',
             updatedAt: '2026-01-15T00:00:00.000Z',
+            isDeleted: false,
           },
         ];
 
@@ -1055,26 +1092,28 @@ describe('CalculationService', () => {
         currencyCode: CurrencyCode.USD,
         initialBalance: 1000,
         isActive: true,
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       };
 
-      const transactionTypes = [
+      const transactionTypes: TransactionType[] = [
         {
           id: 'type-groceries',
           name: 'Groceries',
           categoryId: 'cat-food',
           group: 'expense' as const,
           isActive: true,
+          isDeleted: false,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z',
         },
       ];
 
-      const category = {
+      const category: Category = {
         id: 'cat-food',
         name: 'Food',
-        isActive: true,
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       };
@@ -1082,7 +1121,7 @@ describe('CalculationService', () => {
       const getCategoryById = (id: string) => (id === 'cat-food' ? category : null);
 
       it('should group budgets by category', async () => {
-        const budgets = [
+        const budgets: Budget[] = [
           {
             id: 'b1',
             transactionTypeId: 'type-groceries',
@@ -1093,6 +1132,7 @@ describe('CalculationService', () => {
             endDate: '2026-12-31',
             createdAt: '2026-01-01T00:00:00.000Z',
             updatedAt: '2026-01-01T00:00:00.000Z',
+            isDeleted: false,
           },
         ];
 
@@ -1106,6 +1146,7 @@ describe('CalculationService', () => {
             fromAccountId: 'acc-usd',
             createdAt: '2026-01-15T00:00:00.000Z',
             updatedAt: '2026-01-15T00:00:00.000Z',
+            isDeleted: false,
           },
         ];
 
@@ -1126,7 +1167,7 @@ describe('CalculationService', () => {
       });
 
       it('should skip budgets with missing transaction type', async () => {
-        const budgets = [
+        const budgets: Budget[] = [
           {
             id: 'b1',
             transactionTypeId: 'type-unknown',
@@ -1137,6 +1178,7 @@ describe('CalculationService', () => {
             endDate: '2026-12-31',
             createdAt: '2026-01-01T00:00:00.000Z',
             updatedAt: '2026-01-01T00:00:00.000Z',
+            isDeleted: false,
           },
         ];
 
@@ -1154,7 +1196,7 @@ describe('CalculationService', () => {
       });
 
       it('should skip budgets with missing category', async () => {
-        const budgets = [
+        const budgets: Budget[] = [
           {
             id: 'b1',
             transactionTypeId: 'type-groceries',
@@ -1165,6 +1207,7 @@ describe('CalculationService', () => {
             endDate: '2026-12-31',
             createdAt: '2026-01-01T00:00:00.000Z',
             updatedAt: '2026-01-01T00:00:00.000Z',
+            isDeleted: false,
           },
         ];
 

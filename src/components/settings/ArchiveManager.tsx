@@ -1,7 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { syncMetadataService } from '../../services/syncMetadata.service';
-import { CurrencyCode } from '../../types/enums';
 import {
   Box,
   Paper,
@@ -28,13 +25,15 @@ import { useArchiveService } from '../../contexts/ServiceProviders';
 import { useAppContext } from '../../contexts/AppContext';
 import { formatCurrency } from '../../utils/currency.utils';
 import type { YearEndSummary } from '../../types/models';
+import { useBaseCurrency, useArchivedYears } from '../../hooks/useSyncMetadata';
+import { useSyncMetadataService } from '../../contexts/ServiceProviders';
 
 export const ArchiveManager: React.FC = () => {
+  const syncMetadataService = useSyncMetadataService();
   const archiveService = useArchiveService();
   const { showSnackbar } = useAppContext();
-  const baseCurrency =
-    useLiveQuery(() => syncMetadataService.getBaseCurrency()) || CurrencyCode.USD;
-  const archivedYears = useLiveQuery(() => syncMetadataService.getArchivedYears()) ?? [];
+  const baseCurrency = useBaseCurrency();
+  const archivedYears = useArchivedYears();
   const [isExporting, setIsExporting] = useState(false);
   const [exportingYear, setExportingYear] = useState<number | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; year: number | null }>({

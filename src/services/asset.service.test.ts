@@ -1,7 +1,7 @@
 import { assetService } from './asset.service';
 import { db } from '../db/database';
 import { syncMetadataService } from './syncMetadata.service';
-import { AssetType } from '../types/enums';
+import { AssetType, CurrencyCode } from '../types/enums';
 import type { ManualAsset } from '../types/models';
 
 jest.mock('./syncMetadata.service', () => ({
@@ -28,7 +28,7 @@ describe('assetService', () => {
     name: 'Test Asset',
     type: AssetType.REAL_ESTATE,
     currentValue: 500000,
-    currency: 'USD',
+    currency: CurrencyCode.USD,
     valueHistory: [],
     isDeleted: false,
     createdAt: '2024-01-01T00:00:00.000Z',
@@ -68,9 +68,9 @@ describe('assetService', () => {
     it('should create a new asset with default values', async () => {
       const newAsset = {
         name: 'New Asset',
-        type: AssetType.INVESTMENT,
+        type: AssetType.REAL_ESTATE,
         currentValue: 10000,
-        currency: 'USD',
+        currency: CurrencyCode.USD,
       };
       (db.manualAssets.add as jest.Mock).mockResolvedValue(1);
 
@@ -86,9 +86,7 @@ describe('assetService', () => {
           updatedAt: expect.any(String),
         })
       );
-      expect(
-        syncMetadataService.setLastModified
-      ).toHaveBeenCalled();
+      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
     });
   });
 
@@ -106,9 +104,7 @@ describe('assetService', () => {
           updatedAt: expect.any(String),
         })
       );
-      expect(
-        syncMetadataService.setLastModified
-      ).toHaveBeenCalled();
+      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
     });
 
     it('should throw error if asset not found', async () => {
@@ -134,9 +130,7 @@ describe('assetService', () => {
           updatedAt: expect.any(String),
         })
       );
-      expect(
-        syncMetadataService.setLastModified
-      ).toHaveBeenCalled();
+      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
     });
 
     it('should throw error if asset not found', async () => {

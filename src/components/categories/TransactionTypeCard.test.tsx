@@ -10,6 +10,7 @@ describe('TransactionTypeCard', () => {
     name: 'Groceries',
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
+    isDeleted: false,
   };
 
   const mockTransactionType: TransactionType = {
@@ -20,6 +21,8 @@ describe('TransactionTypeCard', () => {
     description: 'Grocery shopping',
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
+    isActive: false,
+    isDeleted: false,
   };
 
   const mockOnEdit = jest.fn();

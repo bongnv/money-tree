@@ -12,6 +12,7 @@ describe('ArchivePrompt', () => {
     transactionCount: 150,
     closingNetWorth: 50000,
     closingBalances: {},
+    closingAssetValuations: {},
   };
 
   const mockOnGoToSettings = jest.fn();

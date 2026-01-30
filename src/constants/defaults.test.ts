@@ -1,5 +1,6 @@
 import { DEFAULT_CURRENCIES } from './defaults';
 import { CurrencySchema } from '../schemas/models.schema';
+import { CurrencyCode } from '@/types/enums';
 
 describe('Default Data', () => {
   describe('DEFAULT_CURRENCIES', () => {
@@ -26,7 +27,7 @@ describe('Default Data', () => {
     });
 
     it('should include USD', () => {
-      const usd = DEFAULT_CURRENCIES.find((c) => c.code === 'USD');
+      const usd = DEFAULT_CURRENCIES.find((c) => c.code === CurrencyCode.USD);
       expect(usd).toBeDefined();
       expect(usd?.symbol).toBe('$');
       expect(usd?.decimalPlaces).toBe(2);

@@ -1,9 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { accountService } from '../../services/account.service';
-import { assetService } from '../../services/asset.service';
-import { transactionService } from '../../services/transaction.service';
-import { syncMetadataService } from '../../services/syncMetadata.service';
 import {
   Box,
   Paper,
@@ -30,15 +25,18 @@ import { formatCurrency } from '../../utils/currency.utils';
 import { getTodayDate } from '../../utils/date.utils';
 import { FormDatePicker } from '../common/FormDatePicker';
 import { CurrencyCode } from '../../types/enums';
+import { useActiveAccounts } from '../../hooks/useAccounts';
+import { useTransactions } from '../../hooks/useTransactions';
+import { useAssets } from '../../hooks/useAssets';
+import { useBaseCurrency } from '../../hooks/useSyncMetadata';
 
 type ComparisonType = 'none' | 'month' | 'year';
 
 export const BalanceSheet: React.FC = () => {
-  const accounts = useLiveQuery(() => accountService.getActive()) ?? [];
-  const manualAssets = useLiveQuery(() => assetService.getActive()) ?? [];
-  const transactions = useLiveQuery(() => transactionService.getActive()) ?? [];
-  const baseCurrency =
-    useLiveQuery(() => syncMetadataService.getBaseCurrency()) || CurrencyCode.USD;
+  const accounts = useActiveAccounts();
+  const manualAssets = useAssets();
+  const transactions = useTransactions();
+  const baseCurrency = useBaseCurrency();
   const reportService = useReportService();
 
   // Use today as default date

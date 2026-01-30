@@ -1,5 +1,6 @@
 import type { IStorageProvider, CloudItem } from './IStorageProvider';
 import type { DataFile } from '../../types/models';
+import { CurrencyCode } from '@/types/enums';
 
 /**
  * Tests for IStorageProvider interface
@@ -64,7 +65,7 @@ describe('IStorageProvider', () => {
       manualAssets: [],
       exchangeRates: [],
       archivedYears: [],
-      baseCurrency: 'USD',
+      baseCurrency: CurrencyCode.USD,
       lastModified: new Date().toISOString(),
     };
   });

@@ -1,14 +1,14 @@
 import { transactionTypeService } from './transactionType.service';
 import { db } from '../db/database';
+import { syncMetadataService } from './syncMetadata.service';
+import type { TransactionType } from '../types/models';
+import { Group } from '@/types/enums';
 
 jest.mock('./syncMetadata.service', () => ({
   syncMetadataService: {
     setLastModified: jest.fn(),
   },
 }));
-
-import { syncMetadataService } from './syncMetadata.service';
-import type { TransactionType } from '../types/models';
 
 jest.mock('../db/database', () => ({
   db: {
@@ -26,12 +26,14 @@ jest.mock('../db/database', () => ({
 
 describe('transactionTypeService', () => {
   const mockTransactionType: TransactionType = {
-    id: 1,
+    id: '1',
     name: 'Test Type',
-    categoryId: 1,
+    categoryId: 'cat-1',
     isActive: true,
+    isDeleted: false,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
+    group: Group.INCOME,
   };
 
   beforeEach(() => {
@@ -70,7 +72,7 @@ describe('transactionTypeService', () => {
       };
       (db.transactionTypes.where as jest.Mock).mockReturnValue(mockWhere);
 
-      const result = await transactionTypeService.getByCategoryId(1);
+      const result = await transactionTypeService.getByCategoryId("1");
 
       expect(result).toEqual([mockTransactionType]);
       expect(db.transactionTypes.where).toHaveBeenCalledWith('categoryId');
@@ -82,9 +84,9 @@ describe('transactionTypeService', () => {
     it('should create a new transaction type', async () => {
       const newType = {
         name: 'New Type',
-        categoryId: 1,
+        categoryId: 'cat-1',
       };
-      (db.transactionTypes.add as jest.Mock).mockResolvedValue(2);
+      (db.transactionTypes.add as jest.Mock).mockResolvedValue('type-2');
 
       const id = await transactionTypeService.create(newType);
 
@@ -93,6 +95,7 @@ describe('transactionTypeService', () => {
         expect.objectContaining({
           ...newType,
           isActive: true,
+          isDeleted: false,
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
         })
@@ -105,7 +108,7 @@ describe('transactionTypeService', () => {
       (db.transactionTypes.get as jest.Mock).mockResolvedValue(mockTransactionType);
       (db.transactionTypes.update as jest.Mock).mockResolvedValue(1);
 
-      await transactionTypeService.update(1, { name: 'Updated Type' });
+      await transactionTypeService.update('type-1', { name: 'Updated Type' });
 
       expect(db.transactionTypes.update).toHaveBeenCalledWith(
         1,
@@ -118,15 +121,28 @@ describe('transactionTypeService', () => {
   });
 
   describe('delete', () => {
-    it('should hard delete a transaction type', async () => {
-      (db.transactionTypes.delete as jest.Mock).mockResolvedValue(undefined);
+    it('should soft delete a transaction type', async () => {
+      (db.transactionTypes.get as jest.Mock).mockResolvedValue(mockTransactionType);
+      (db.transactionTypes.update as jest.Mock).mockResolvedValue(1);
 
-      await transactionTypeService.delete(1);
+      await transactionTypeService.delete('type-1');
 
-      expect(db.transactionTypes.delete).toHaveBeenCalledWith(1);
-      expect(
-        syncMetadataService.setLastModified
-      ).toHaveBeenCalled();
+      expect(db.transactionTypes.update).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          isDeleted: true,
+          updatedAt: expect.any(String),
+        })
+      );
+      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
+    });
+
+    it('should throw error if transaction type not found', async () => {
+      (db.transactionTypes.get as jest.Mock).mockResolvedValue(undefined);
+
+      await expect(transactionTypeService.delete('type-999')).rejects.toThrow(
+        'TransactionType with id type-999 not found'
+      );
     });
   });
 
@@ -135,7 +151,7 @@ describe('transactionTypeService', () => {
       (db.transactionTypes.get as jest.Mock).mockResolvedValue(mockTransactionType);
       (db.transactionTypes.update as jest.Mock).mockResolvedValue(1);
 
-      await transactionTypeService.archive(1);
+      await transactionTypeService.archive('type-1');
 
       expect(db.transactionTypes.update).toHaveBeenCalledWith(
         1,
@@ -149,7 +165,7 @@ describe('transactionTypeService', () => {
       (db.transactionTypes.get as jest.Mock).mockResolvedValue(mockTransactionType);
       (db.transactionTypes.update as jest.Mock).mockResolvedValue(1);
 
-      await transactionTypeService.unarchive(1);
+      await transactionTypeService.unarchive('type-1');
 
       expect(db.transactionTypes.update).toHaveBeenCalledWith(
         1,

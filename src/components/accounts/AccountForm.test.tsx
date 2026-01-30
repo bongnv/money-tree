@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AccountForm } from './AccountForm';
-import { AccountType } from '../../types/enums';
+import { AccountType, CurrencyCode } from '../../types/enums';
 import type { Account } from '../../types/models';
 
 describe('AccountForm', () => {
@@ -28,10 +28,11 @@ describe('AccountForm', () => {
       id: 'acc-1',
       name: 'Test Account',
       type: AccountType.CASH,
-      currencyCode: 'EUR',
+      currencyCode: CurrencyCode.USD,
       initialBalance: 1500,
       description: 'Test description',
       isActive: false,
+      isDeleted: false,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     };
@@ -101,7 +102,7 @@ describe('AccountForm', () => {
       expect(mockOnSubmit).toHaveBeenCalledWith({
         name: 'New Account',
         type: AccountType.BANK_ACCOUNT,
-        currencyCode: 'USD',
+        currencyCode: CurrencyCode.USD,
         initialBalance: 2500.5,
         description: 'My new account',
         isActive: true,

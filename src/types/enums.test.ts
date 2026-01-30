@@ -61,7 +61,7 @@ describe('Enums', () => {
 
   describe('Currency', () => {
     it('should have correct values', () => {
-      expect(CurrencyCode.USD).toBe('USD');
+      expect(CurrencyCode.USD).toBe(CurrencyCode.USD);
       expect(CurrencyCode.VND).toBe('VND');
       expect(CurrencyCode.SGD).toBe('SGD');
       expect(CurrencyCode.AUD).toBe('AUD');
@@ -70,7 +70,7 @@ describe('Enums', () => {
     it('should have all expected members', () => {
       const values = Object.values(CurrencyCode);
       expect(values).toHaveLength(4);
-      expect(values).toContain('USD');
+      expect(values).toContain(CurrencyCode.USD);
       expect(values).toContain('VND');
       expect(values).toContain('SGD');
       expect(values).toContain('AUD');

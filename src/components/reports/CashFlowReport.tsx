@@ -1,10 +1,4 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { categoryService } from '../../services/category.service';
-import { transactionTypeService } from '../../services/transactionType.service';
-import { accountService } from '../../services/account.service';
-import { transactionService } from '../../services/transaction.service';
-import { syncMetadataService } from '../../services/syncMetadata.service';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -43,6 +37,11 @@ import { CurrencyCode } from '../../types/enums';
 import { Group } from '../../types/enums';
 import type { CashFlowData } from '../../services/report.service';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
+import { useActiveAccounts } from '../../hooks/useAccounts';
+import { useTransactions } from '../../hooks/useTransactions';
+import { useCategories } from '../../hooks/useCategories';
+import { useTransactionTypes } from '../../hooks/useTransactionTypes';
+import { useBaseCurrency } from '../../hooks/useSyncMetadata';
 
 /**
  * Build chart lines for cash flow trend based on available income/expense types
@@ -67,12 +66,11 @@ const buildCashFlowTrendLines = (hasIncomeTypes: boolean, hasExpenseTypes: boole
 
 export const CashFlowReport: React.FC = () => {
   const navigate = useNavigate();
-  const transactions = useLiveQuery(() => transactionService.getActive()) ?? [];
-  const transactionTypes = useLiveQuery(() => transactionTypeService.getActive()) ?? [];
-  const categories = useLiveQuery(() => categoryService.getActive()) ?? [];
-  const accounts = useLiveQuery(() => accountService.getActive()) ?? [];
-  const baseCurrency =
-    useLiveQuery(() => syncMetadataService.getBaseCurrency()) || CurrencyCode.USD;
+  const transactions = useTransactions();
+  const transactionTypes = useTransactionTypes();
+  const categories = useCategories();
+  const accounts = useActiveAccounts();
+  const baseCurrency = useBaseCurrency();
   const reportService = useReportService();
   const calculationService = useCalculationService();
 

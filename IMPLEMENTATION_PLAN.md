@@ -2624,3 +2624,349 @@ End-to-end testing:
 6. Verify no errors in browser console related to LocalStorageProvider
 7. Test app functionality after connecting to cloud storage
 8. Verify data sync works correctly with cloud providers
+
+---
+
+## Phase 26: Custom Hooks Architecture for DB Operations
+
+**Context**: Refactor architecture to use custom hooks that encapsulate Dexie/IndexedDB operations, moving DB access out of services and into React hooks. This improves testability by allowing easy mocking of hooks while keeping services focused on pure business logic.
+
+**Architecture Pattern**:
+```
+Component → Custom Hook (with useLiveQuery) → Dexie DB
+Component → Service (business logic) → No DB access
+```
+
+**Key Benefits**:
+- ✅ Easy to test: Mock hooks return plain data, no Dexie setup needed
+- ✅ Single responsibility: Hooks handle reactive data, services handle business logic
+- ✅ React patterns: Follows React's composition model with custom hooks
+- ✅ Incremental migration: Can refactor one entity at a time
+
+### 26.1 Create Test Utilities for Service Mocking
+
+**Goal**: Set up infrastructure for easily testing services with injected dependencies
+
+**Implementation**:
+- [ ] Create `src/test-utils/mockDb.ts`:
+  - [ ] `MockTable<T>` class implementing Dexie Table interface:
+    - [ ] `data: Map<string, T>` - In-memory storage
+    - [ ] `toArray()` - Return all items
+    - [ ] `get(id)` - Get by ID
+    - [ ] `add(item)` - Add item
+    - [ ] `update(id, changes)` - Update item
+    - [ ] `delete(id)` - Delete item
+    - [ ] `filter(predicate)` - Filter items
+    - [ ] `setData(items)` - Test helper to populate data
+    - [ ] `clear()` - Test helper to clear data
+  - [ ] `MockDB` class with MockTable instances for all entities:
+    - [ ] accounts, transactions, categories, transactionTypes, budgets, manualAssets, exchangeRates, syncMetadata
+    - [ ] `resetAll()` helper to clear all tables
+- [ ] **Write tests**: Test MockTable and MockDB behavior matches Dexie
+- [ ] **Test**: Run tests to verify mock utilities work correctly
+
+### 26.2 Refactor Services to Accept DB Instance
+
+**Goal**: Refactor all services from singleton objects to classes that accept DB instance via constructor
+
+**Pattern**:
+```typescript
+// Before (singleton)
+export const accountService = {
+  async getActive() {
+    return db.accounts.filter(a => a.isActive).toArray();
+  }
+};
+
+// After (class with DI)
+export class AccountService {
+  constructor(private db: MoneyTreeDB) {}
+  
+  async getActive(): Promise<Account[]> {
+    return this.db.accounts.filter(a => a.isActive).toArray();
+  }
+}
+```
+
+**Implementation**:
+- [ ] Refactor `src/services/account.service.ts`:
+  - [ ] Convert to `AccountService` class
+  - [ ] Accept `db: MoneyTreeDB` in constructor
+  - [ ] Update all methods to use `this.db`
+  - [ ] Export both class and singleton instance: `export const accountService = new AccountService(db)`
+- [ ] Refactor `src/services/transaction.service.ts`:
+  - [ ] Convert to `TransactionService` class
+  - [ ] Same pattern as AccountService
+- [ ] Refactor remaining services:
+  - [ ] `category.service.ts` → `CategoryService`
+  - [ ] `transactionType.service.ts` → `TransactionTypeService`
+  - [ ] `budget.service.ts` → `BudgetService`
+  - [ ] `asset.service.ts` → `AssetService`
+  - [ ] `exchangeRate.service.ts` → `ExchangeRateService`
+  - [ ] `syncMetadata.service.ts` → `SyncMetadataService`
+- [ ] **Write tests**: Update service tests to use MockDB
+  ```typescript
+  describe('AccountService', () => {
+    let mockDb: MockDB;
+    let service: AccountService;
+    
+    beforeEach(() => {
+      mockDb = new MockDB();
+      service = new AccountService(mockDb as any);
+    });
+    
+    it('filters active accounts', async () => {
+      mockDb.accounts.setData([
+        { id: '1', isActive: true, name: 'Active' },
+        { id: '2', isActive: false, name: 'Inactive' }
+      ]);
+      
+      const active = await service.getActive();
+      expect(active).toHaveLength(1);
+    });
+  });
+  ```
+- [ ] **Test**: All service tests pass with MockDB (maintain 80%+ coverage)
+
+### 26.3 Create Custom Hooks for Queries
+
+**Goal**: Create custom hooks that encapsulate `useLiveQuery` for reactive data fetching
+
+**Pattern**:
+```typescript
+// src/hooks/queries/useAccounts.ts
+export function useAccounts() {
+  const accountService = useAccountService();
+  const accounts = useLiveQuery(() => accountService.getActive()) ?? [];
+  const loading = !accounts;
+  
+  return { accounts, loading };
+}
+
+// Component usage
+const { accounts, loading } = useAccounts();
+```
+
+**Implementation**:
+- [ ] Create `src/hooks/queries/useAccounts.ts`:
+  - [ ] `useAccounts()` - Hook for active accounts
+  - [ ] `useAllAccounts()` - Hook for all accounts (including archived)
+  - [ ] Returns `{ accounts, loading }`
+- [ ] Create `src/hooks/queries/useTransactions.ts`:
+  - [ ] `useTransactions()` - Hook for active transactions
+  - [ ] `useTransactionById(id)` - Hook for single transaction
+  - [ ] Returns `{ transactions, loading }` or `{ transaction, loading }`
+- [ ] Create remaining query hooks:
+  - [ ] `useCategories.ts` - `useCategories()`, `useCategoryById(id)`
+  - [ ] `useTransactionTypes.ts` - `useTransactionTypes()`, `useTransactionTypeById(id)`
+  - [ ] `useBudgets.ts` - `useBudgets()`, `useBudgetById(id)`
+  - [ ] `useAssets.ts` - `useAssets()`, `useAssetById(id)`
+  - [ ] `useExchangeRates.ts` - `useExchangeRate(month, from, to)`
+  - [ ] `useBaseCurrency.ts` - `useBaseCurrency()`
+- [ ] **Write tests**: Test hooks with `@testing-library/react-hooks`
+  ```typescript
+  describe('useAccounts', () => {
+    it('returns accounts and loading state', () => {
+      jest.mock('dexie-react-hooks');
+      (useLiveQuery as jest.Mock).mockReturnValue([mockAccount1, mockAccount2]);
+      
+      const { result } = renderHook(() => useAccounts());
+      
+      expect(result.current.accounts).toHaveLength(2);
+      expect(result.current.loading).toBe(false);
+    });
+  });
+  ```
+- [ ] **Test**: All hook tests pass
+
+### 26.4 Extend Existing Service Provider Context
+
+**Goal**: Extend existing ServiceProvider in `src/contexts/ServiceProviders.tsx` to include all CRUD services with DI support
+
+**Context**: ServiceProvider already exists and provides ArchiveService, CalculationService, and ReportService. We need to add Account, Transaction, Category, TransactionType, Budget, Asset, ExchangeRate, and SyncMetadata services.
+
+**Implementation**:
+- [ ] Update `src/contexts/ServiceProviders.tsx`:
+  - [ ] Add new service contexts for each entity:
+    - [ ] `AccountServiceContext`
+    - [ ] `TransactionServiceContext`
+    - [ ] `CategoryServiceContext`
+    - [ ] `TransactionTypeServiceContext`
+    - [ ] `BudgetServiceContext`
+    - [ ] `AssetServiceContext`
+    - [ ] `ExchangeRateServiceContext`
+    - [ ] `SyncMetadataServiceContext`
+  - [ ] Add optional `dbInstance` prop to ServiceProvider for testing:
+    ```typescript
+    export const ServiceProvider: React.FC<{
+      children: ReactNode;
+      dbInstance?: MoneyTreeDB; // For testing!
+    }> = ({ children, dbInstance = db }) => {
+      const accountService = useMemo(() => new AccountService(dbInstance), [dbInstance]);
+      const transactionService = useMemo(() => new TransactionService(dbInstance), [dbInstance]);
+      // ... other services
+      const calculationService = useMemo(() => new CalculationService(), []);
+      const archiveService = useMemo(() => new DexieArchiveService(), []);
+      const reportService = useMemo(() => new ReportService(calculationService), [calculationService]);
+    ```
+  - [ ] Wrap children with all service contexts (nest the new ones with existing)
+  - [ ] Export custom hooks for each service:
+    - [ ] `useAccountService()`
+    - [ ] `useTransactionService()`
+    - [ ] `useCategoryService()`
+    - [ ] `useTransactionTypeService()`
+    - [ ] `useBudgetService()`
+    - [ ] `useAssetService()`
+    - [ ] `useExchangeRateService()`
+    - [ ] `useSyncMetadataService()`
+  - [ ] Keep existing hooks: `useArchiveService()`, `useCalculationService()`, `useReportService()`
+- [ ] Verify `src/App.tsx` already uses `<ServiceProvider>` (should already be wrapped)
+- [ ] Update `src/test-utils.tsx`:
+  - [ ] Support optional `dbInstance` prop in renderWithProviders
+  - [ ] Pass dbInstance to ServiceProvider when provided
+- [ ] **Write tests**: Test ServiceProvider with dbInstance prop, verify all service hooks work
+- [ ] **Test**: App renders correctly, all existing services still work
+
+### 26.5 Migrate Components to Use Custom Hooks (Phase 1 - Accounts)
+
+**Goal**: Start migration with AccountsPage as proof of concept
+
+**Before**:
+```typescript
+const accounts = useLiveQuery(() => accountService.getActive()) ?? [];
+```
+
+**After**:
+```typescript
+const { accounts, loading } = useAccounts();
+const accountService = useAccountService();
+```
+
+**Implementation**:
+- [ ] Update `src/components/accounts/AccountsPage.tsx`:
+  - [ ] Replace `useLiveQuery` with `useAccounts()` hook
+  - [ ] Use `useAccountService()` for mutations (create, update, delete)
+  - [ ] Keep mutations as direct service calls
+- [ ] Update `src/components/accounts/AccountCard.tsx`:
+  - [ ] Use `useAccountService()` for mutations only
+  - [ ] No query hook needed (data passed as prop)
+- [ ] Update `src/components/accounts/AccountsPage.test.tsx`:
+  - [ ] Mock `useAccounts` hook instead of `useLiveQuery`
+  ```typescript
+  jest.mock('@/hooks/queries/useAccounts');
+  
+  it('displays accounts', () => {
+    (useAccounts as jest.Mock).mockReturnValue({
+      accounts: [mockAccount1, mockAccount2],
+      loading: false
+    });
+    
+    render(<AccountsPage />);
+    expect(screen.getByText('Account 1')).toBeInTheDocument();
+  });
+  ```
+- [ ] **Write tests**: Update and verify all AccountsPage tests pass
+- [ ] **Test UI**: Accounts page works correctly, can create/edit/delete accounts
+
+### 26.6 Migrate Components to Use Custom Hooks (Phase 2 - Transactions)
+
+**Implementation**:
+- [ ] Update `src/components/transactions/TransactionsPage.tsx`:
+  - [ ] Replace `useLiveQuery` with `useTransactions()` hook
+  - [ ] Use `useTransactionService()` for mutations
+- [ ] Update `src/components/transactions/TransactionForm.tsx`:
+  - [ ] Use query hooks for dropdown data (accounts, categories, types)
+  - [ ] Use service for form submission
+- [ ] Update `src/components/dashboard/QuickEntryRow.tsx`:
+  - [ ] Use query hooks for dropdown data
+  - [ ] Use service for transaction creation
+- [ ] Update tests to mock hooks instead of `useLiveQuery`
+- [ ] **Write tests**: All transaction component tests pass
+- [ ] **Test UI**: Transaction management works correctly
+
+### 26.7 Migrate Components to Use Custom Hooks (Phase 3 - Reports)
+
+**Implementation**:
+- [ ] Update `src/components/reports/BalanceSheet.tsx`:
+  - [ ] Replace multiple `useLiveQuery` calls with custom hooks:
+    - [ ] `useAccounts()`
+    - [ ] `useAssets()`
+    - [ ] `useTransactions()`
+    - [ ] `useBaseCurrency()`
+  - [ ] Simplify component code (cleaner imports)
+- [ ] Update `src/components/reports/CashFlowReport.tsx`:
+  - [ ] Use `useTransactions()`, `useTransactionTypes()`, `useCategories()`, `useAccounts()`
+- [ ] Update `src/components/reports/BudgetPerformanceReport.tsx`:
+  - [ ] Use `useBudgets()`, `useTransactions()`, etc.
+- [ ] Update tests to mock hooks
+- [ ] **Write tests**: All report tests pass
+- [ ] **Test UI**: Reports display correctly with correct data
+
+### 26.8 Migrate Remaining Components
+
+**Implementation**:
+- [ ] Update `src/components/budgets/BudgetsPage.tsx`:
+  - [ ] Use `useBudgets()` hook
+  - [ ] Use `useBudgetService()` for mutations
+- [ ] Update `src/components/categories/CategoriesPage.tsx`:
+  - [ ] Use `useCategories()` and `useTransactionTypes()` hooks
+- [ ] Update `src/components/assets/ManualAssetsPage.tsx`:
+  - [ ] Use `useAssets()` hook
+- [ ] Update `src/components/settings/*` components:
+  - [ ] Exchange rates, data sync, archive manager
+- [ ] Update `src/components/dashboard/Dashboard.tsx`:
+  - [ ] Use appropriate query hooks
+- [ ] Update all tests to mock hooks
+- [ ] **Write tests**: All component tests pass (maintain 80%+ coverage)
+- [ ] **Test UI**: Complete regression testing of all features
+
+### 26.9 Remove useLiveQuery Imports
+
+**Implementation**:
+- [ ] Search codebase for all `useLiveQuery` imports
+- [ ] Verify all have been replaced with custom hooks
+- [ ] Remove `import { useLiveQuery } from 'dexie-react-hooks'` from all files
+- [ ] Update ESLint rules to flag direct `useLiveQuery` usage
+- [ ] **Write tests**: Verify no regressions
+- [ ] **Test**: Run full test suite (all tests pass)
+
+### 26.10 Documentation and Final Verification
+
+**Implementation**:
+- [ ] Update ARCHITECTURE.md with new patterns:
+  - [ ] Document custom hooks approach
+  - [ ] Document service DI pattern
+  - [ ] Document testing strategies
+- [ ] Update README.md with testing examples
+- [ ] Add JSDoc comments to all hooks
+- [ ] **Write tests**: Verify 80%+ test coverage maintained
+- [ ] **Test**: Run `npm test -- --coverage` and verify coverage
+- [ ] **Test**: Run `npm run build` and verify no errors
+- [ ] **Test UI**: Complete manual regression testing:
+  - [ ] All CRUD operations work
+  - [ ] All reports display correctly
+  - [ ] Dashboard shows correct data
+  - [ ] Settings pages function correctly
+  - [ ] No console errors or warnings
+
+**Manual Verification (User):**
+1. Test Accounts page: View, create, edit, delete accounts
+2. Test Transactions page: View, create, edit, delete transactions
+3. Test Transaction filters and search
+4. Test Quick Entry on dashboard
+5. Test Balance Sheet report with different dates
+6. Test Cash Flow report with filters
+7. Test Budget Performance report
+8. Test Budgets page: Create, edit, delete budgets
+9. Test Categories page: Create, edit, delete categories and types
+10. Test Manual Assets page: Create, edit, delete assets
+11. Test Settings pages: Exchange rates, data sync, preferences
+12. Test Dashboard: Financial summary, budget overview
+13. Verify all data updates in real-time
+14. Verify no console errors
+15. Check browser performance (React DevTools)
+16. Test with large dataset (100+ transactions)
+17. Verify test coverage: `npm test -- --coverage` shows 80%+
+18. Verify build succeeds: `npm run build`
+19. Test production build locally
+20. Compare behavior before/after refactor (should be identical)

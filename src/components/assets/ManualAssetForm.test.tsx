@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ManualAssetForm } from './ManualAssetForm';
-import { AssetType } from '../../types/enums';
+import { AssetType, CurrencyCode } from '../../types/enums';
 import type { ManualAsset } from '../../types/models';
 
 describe('ManualAssetForm', () => {
@@ -59,7 +59,7 @@ describe('ManualAssetForm', () => {
           expect.objectContaining({
             name: 'Super Fund',
             type: AssetType.SUPERANNUATION,
-            currencyCode: 'USD',
+            currencyCode: CurrencyCode.USD,
             valueHistory: expect.arrayContaining([
               expect.objectContaining({
                 value: 500000,
@@ -97,10 +97,11 @@ describe('ManualAssetForm', () => {
       id: 'asset-1',
       name: 'House',
       type: AssetType.REAL_ESTATE,
-      currencyCode: 'USD',
+      currencyCode: CurrencyCode.USD,
       valueHistory: [{ date: '2024-01-15', value: 500000, notes: 'Primary residence' }],
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
     };
 
     it('should render form with existing asset data', () => {

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AccountDialog } from './AccountDialog';
-import { AccountType } from '../../types/enums';
+import { AccountType, CurrencyCode } from '../../types/enums';
 import type { Account } from '../../types/models';
 
 describe('AccountDialog', () => {
@@ -30,9 +30,10 @@ describe('AccountDialog', () => {
       id: 'acc-1',
       name: 'Test Account',
       type: AccountType.BANK_ACCOUNT,
-      currencyCode: 'USD',
+      currencyCode: CurrencyCode.USD,
       initialBalance: 1000,
       isActive: true,
+      isDeleted: false,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     };

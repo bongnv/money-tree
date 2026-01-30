@@ -5,7 +5,7 @@ import { AccountType, Group, AssetType, CurrencyCode } from './enums';
  * Represents a currency used in the application
  */
 export interface Currency {
-  code: string; // e.g., 'USD', 'VND' (ISO 4217)
+  code: CurrencyCode; // e.g., 'USD', 'VND' (ISO 4217)
   symbol: string; // e.g., '$', '€'
   name: string; // e.g., 'US Dollar', 'Euro'
   decimalPlaces: number; // e.g., 2 for most currencies

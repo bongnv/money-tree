@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { assetService } from '../../services/asset.service';
 import {
   Box,
   Typography,
@@ -15,9 +13,12 @@ import { Add as AddIcon } from '@mui/icons-material';
 import type { ManualAsset } from '../../types/models';
 import { ManualAssetList } from './ManualAssetList';
 import { ManualAssetDialog } from './ManualAssetDialog';
+import { useAssets } from '../../hooks/useAssets';
+import { useAssetService } from '../../contexts/ServiceProviders';
 
 export const ManualAssetsPage: React.FC = () => {
-  const manualAssets = useLiveQuery(() => assetService.getActive()) ?? [];
+  const manualAssets = useAssets();
+  const assetService = useAssetService();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<ManualAsset | undefined>();
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'update-value'>('create');

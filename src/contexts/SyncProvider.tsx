@@ -76,7 +76,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children, onReconnec
   // Memoize CloudSyncService to avoid creating it on every sync
   const syncService = useMemo(() => {
     if (!provider || !currentFileItem) return null;
-    return new CloudSyncService(provider, currentFileItem);
+    return new CloudSyncService(provider, currentFileItem, db);
   }, [provider, currentFileItem]);
 
   // Set current file and cache to localStorage

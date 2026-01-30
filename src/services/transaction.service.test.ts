@@ -24,10 +24,10 @@ jest.mock('../db/database', () => ({
 
 describe('transactionService', () => {
   const mockTransaction: Transaction = {
-    id: 1,
+    id: 'txn-1',
     date: '2024-01-15',
-    accountId: 1,
-    transactionTypeId: 1,
+    fromAccountId: 'acc-1',
+    transactionTypeId: 'type-1',
     amount: 100,
     description: 'Test transaction',
     isDeleted: false,
@@ -85,8 +85,8 @@ describe('transactionService', () => {
     it('should create a new transaction with defaults', async () => {
       const newTransaction = {
         date: '2024-02-01',
-        accountId: 1,
-        transactionTypeId: 1,
+        fromAccountId: 'acc-1',
+        transactionTypeId: 'type-1',
         amount: 200,
         description: 'New transaction',
       };
@@ -103,9 +103,7 @@ describe('transactionService', () => {
           updatedAt: expect.any(String),
         })
       );
-      expect(
-        syncMetadataService.setLastModified
-      ).toHaveBeenCalled();
+      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
     });
   });
 
@@ -114,7 +112,7 @@ describe('transactionService', () => {
       (db.transactions.get as jest.Mock).mockResolvedValue(mockTransaction);
       (db.transactions.update as jest.Mock).mockResolvedValue(1);
 
-      await transactionService.update(1, { amount: 150 });
+      await transactionService.update('txn-1', { amount: 150 });
 
       expect(db.transactions.update).toHaveBeenCalledWith(
         1,
@@ -123,9 +121,7 @@ describe('transactionService', () => {
           updatedAt: expect.any(String),
         })
       );
-      expect(
-        syncMetadataService.setLastModified
-      ).toHaveBeenCalled();
+      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
     });
 
     it('should throw error if transaction not found', async () => {
@@ -142,7 +138,7 @@ describe('transactionService', () => {
       (db.transactions.get as jest.Mock).mockResolvedValue(mockTransaction);
       (db.transactions.update as jest.Mock).mockResolvedValue(1);
 
-      await transactionService.delete(1);
+      await transactionService.delete('txn-1');
 
       expect(db.transactions.update).toHaveBeenCalledWith(
         1,
@@ -151,9 +147,7 @@ describe('transactionService', () => {
           updatedAt: expect.any(String),
         })
       );
-      expect(
-        syncMetadataService.setLastModified
-      ).toHaveBeenCalled();
+      expect(syncMetadataService.setLastModified).toHaveBeenCalled();
     });
   });
 });

@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { accountService } from '../../services/account.service';
 import {
   Box,
   Typography,
@@ -15,9 +13,12 @@ import { Add as AddIcon } from '@mui/icons-material';
 import type { Account } from '../../types/models';
 import { AccountList } from './AccountList';
 import { AccountDialog } from './AccountDialog';
+import { useActiveAccounts } from '../../hooks/useAccounts';
+import { useAccountService } from '@/contexts/ServiceProviders';
 
 export const AccountsPage: React.FC = () => {
-  const accounts = useLiveQuery(() => accountService.getActive()) ?? [];
+  const accounts = useActiveAccounts();
+  const accountService = useAccountService();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | undefined>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

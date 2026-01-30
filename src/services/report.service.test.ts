@@ -22,6 +22,7 @@ describe('ReportService', () => {
       currencyCode: CurrencyCode.USD,
       initialBalance: 1000,
       isActive: true,
+      isDeleted: false,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
@@ -32,6 +33,7 @@ describe('ReportService', () => {
       currencyCode: CurrencyCode.USD,
       initialBalance: 0,
       isActive: true,
+      isDeleted: false,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
@@ -42,6 +44,7 @@ describe('ReportService', () => {
       currencyCode: CurrencyCode.USD,
       initialBalance: 5000,
       isActive: true,
+      isDeleted: false,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
@@ -292,7 +295,7 @@ describe('ReportService', () => {
         mockManualAssets,
         mockTransactions,
         '2025-01-15',
-        'USD'
+        CurrencyCode.USD
       );
 
       expect(result.current).toBeDefined();
@@ -307,7 +310,7 @@ describe('ReportService', () => {
         mockManualAssets,
         mockTransactions,
         '2025-01-15',
-        'USD'
+        CurrencyCode.USD
       );
 
       expect(result.change).toBe(result.current.netWorth - result.previous.netWorth);
@@ -356,6 +359,8 @@ describe('ReportService', () => {
         name: 'Salary',
         categoryId: 'cat1',
         group: Group.INCOME,
+        isActive: true,
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       },
@@ -364,6 +369,8 @@ describe('ReportService', () => {
         name: 'Groceries',
         categoryId: 'cat2',
         group: Group.EXPENSE,
+        isActive: true,
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       },
@@ -372,6 +379,8 @@ describe('ReportService', () => {
         name: 'Account Transfer',
         categoryId: 'cat3',
         group: Group.TRANSFER,
+        isActive: true,
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       },
@@ -520,6 +529,8 @@ describe('ReportService', () => {
         name: 'Salary',
         categoryId: 'cat1',
         group: Group.INCOME,
+        isActive: true,
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       },
@@ -528,6 +539,8 @@ describe('ReportService', () => {
         name: 'Groceries',
         categoryId: 'cat2',
         group: Group.EXPENSE,
+        isActive: true,
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       },
@@ -644,6 +657,8 @@ describe('ReportService', () => {
         name: 'Groceries',
         categoryId: 'cat1',
         group: Group.EXPENSE,
+        isActive: true,
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       },
@@ -652,6 +667,8 @@ describe('ReportService', () => {
         name: 'Salary',
         categoryId: 'cat2',
         group: Group.INCOME,
+        isActive: true,
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       },
@@ -677,7 +694,7 @@ describe('ReportService', () => {
         id: 'budget1',
         transactionTypeId: 'type1', // Groceries (EXPENSE)
         amount: 500,
-        currencyCode: 'USD' as const,
+        currencyCode: CurrencyCode.USD as const,
         period: 'monthly' as const,
         startDate: '2024-01-01',
         endDate: '2024-12-31',
@@ -688,7 +705,7 @@ describe('ReportService', () => {
         id: 'budget2',
         transactionTypeId: 'type3', // Salary (INCOME)
         amount: 5000,
-        currencyCode: 'USD' as const,
+        currencyCode: CurrencyCode.USD as const,
         period: 'monthly' as const,
         startDate: '2024-01-01',
         endDate: '2024-12-31',
@@ -727,7 +744,7 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         [],
-        'USD'
+        CurrencyCode.USD
       );
 
       expect(result.items).toHaveLength(2);
@@ -746,7 +763,7 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         [],
-        'USD'
+        CurrencyCode.USD
       );
 
       const groceryItem = result.items.find((item) => item.transactionTypeId === 'type1');
@@ -765,7 +782,7 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         [],
-        'USD'
+        CurrencyCode.USD
       );
 
       const groceryItem = result.items.find((item) => item.transactionTypeId === 'type1');
@@ -784,7 +801,7 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         [],
-        'USD'
+        CurrencyCode.USD
       );
 
       const groceryItem = result.items.find((item) => item.transactionTypeId === 'type1');
@@ -803,7 +820,7 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         [],
-        'USD'
+        CurrencyCode.USD
       );
 
       // Expense score: (500-300)/500 * 100 = 40
@@ -821,7 +838,7 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-03-31', // 3 months
         [],
-        'USD'
+        CurrencyCode.USD
       );
 
       // Monthly budget * 3 months
@@ -854,7 +871,7 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         [],
-        'USD'
+        CurrencyCode.USD
       );
 
       expect(result.items).toHaveLength(2);
@@ -870,7 +887,7 @@ describe('ReportService', () => {
         {
           ...mockBudgets[0],
           id: 'budget3',
-          currencyCode: 'EUR' as const,
+          currencyCode: CurrencyCode.EUR as const,
           amount: 500,
         },
       ];
@@ -886,7 +903,7 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         mockAccounts,
-        'USD'
+        CurrencyCode.USD
       );
 
       expect(result.totalBudgetedExpenses).toBe(550); // 500 EUR * 1.1
@@ -896,7 +913,7 @@ describe('ReportService', () => {
       const eurAccounts = [
         {
           ...mockAccounts[0],
-          currencyCode: 'EUR' as const,
+          currencyCode: CurrencyCode.EUR as const,
         },
       ];
 
@@ -911,7 +928,7 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         eurAccounts,
-        'USD'
+        CurrencyCode.USD
       );
 
       // Transaction amount 300 EUR * 1.1 = 330 USD
@@ -926,6 +943,8 @@ describe('ReportService', () => {
         name: 'Groceries',
         categoryId: 'cat1',
         group: Group.EXPENSE,
+        isActive: true,
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       },
@@ -945,7 +964,7 @@ describe('ReportService', () => {
         id: 'budget1',
         transactionTypeId: 'type1',
         amount: 500,
-        currencyCode: 'USD' as const,
+        currencyCode: CurrencyCode.USD as const,
         period: 'monthly' as const,
         startDate: '2024-01-01',
         endDate: '2024-12-31',
@@ -985,7 +1004,7 @@ describe('ReportService', () => {
         '2024-02-29',
         30,
         [],
-        'USD'
+        CurrencyCode.USD
       );
 
       expect(result.length).toBeGreaterThan(0);
@@ -1005,7 +1024,7 @@ describe('ReportService', () => {
         '2024-01-31',
         30,
         [],
-        'USD'
+        CurrencyCode.USD
       );
 
       // First period: budgeted 500, actual 300, variance = -200 (under budget)
@@ -1024,7 +1043,7 @@ describe('ReportService', () => {
         '2024-02-29',
         15,
         [],
-        'USD'
+        CurrencyCode.USD
       );
 
       // Should have approximately 4 data points for 60-day period with 15-day intervals
@@ -1070,7 +1089,7 @@ describe('ReportService', () => {
         '2024-01-31',
         30,
         [],
-        'USD'
+        CurrencyCode.USD
       );
 
       expect(result.length).toBeGreaterThan(0);

@@ -1,11 +1,4 @@
 import React, { useMemo } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { budgetService } from '../../services/budget.service';
-import { categoryService } from '../../services/category.service';
-import { transactionTypeService } from '../../services/transactionType.service';
-import { accountService } from '../../services/account.service';
-import { assetService } from '../../services/asset.service';
-import { transactionService } from '../../services/transaction.service';
 import {
   Box,
   Typography,
@@ -25,6 +18,12 @@ import { useSyncService } from '../../contexts/SyncProvider';
 import { formatDistance } from 'date-fns';
 import { useAppContext } from '../../contexts/AppContext';
 import { db } from '../../db/database';
+import { useActiveAccounts } from '../../hooks/useAccounts';
+import { useTransactions } from '../../hooks/useTransactions';
+import { useCategories } from '../../hooks/useCategories';
+import { useTransactionTypes } from '../../hooks/useTransactionTypes';
+import { useBudgets } from '../../hooks/useBudgets';
+import { useAssets } from '../../hooks/useAssets';
 
 export const DataSyncSettings: React.FC = () => {
   const navigate = useNavigate();
@@ -32,12 +31,12 @@ export const DataSyncSettings: React.FC = () => {
   const cloudFileName = syncService.fileName;
   const lastSynced = syncService.lastSynced;
   const { setWelcomeDismissed } = useAppContext();
-  const accounts = useLiveQuery(() => accountService.getActive()) ?? [];
-  const categories = useLiveQuery(() => categoryService.getActive()) ?? [];
-  const transactionTypes = useLiveQuery(() => transactionTypeService.getActive()) ?? [];
-  const transactions = useLiveQuery(() => transactionService.getActive()) ?? [];
-  const assets = useLiveQuery(() => assetService.getActive()) ?? [];
-  const budgets = useLiveQuery(() => budgetService.getActive()) ?? [];
+  const accounts = useActiveAccounts();
+  const categories = useCategories();
+  const transactionTypes = useTransactionTypes();
+  const transactions = useTransactions();
+  const assets = useAssets();
+  const budgets = useBudgets();
 
   const [disconnectDialogOpen, setDisconnectDialogOpen] = React.useState(false);
 

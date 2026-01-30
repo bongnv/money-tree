@@ -11,21 +11,23 @@ describe('TransactionFilters', () => {
       id: 'acc-1',
       name: 'Checking',
       type: AccountType.BANK_ACCOUNT,
-      currencyCode: 'USD' as CurrencyCode,
+      currencyCode: CurrencyCode.USD,
       initialBalance: 1000,
       isActive: true,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
     {
       id: 'acc-2',
       name: 'Savings',
       type: AccountType.BANK_ACCOUNT,
-      currencyCode: 'USD' as CurrencyCode,
+      currencyCode: CurrencyCode.USD,
       initialBalance: 5000,
       isActive: true,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
   ];
 
@@ -35,12 +37,14 @@ describe('TransactionFilters', () => {
       name: 'Food & Dining',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
     {
       id: 'cat-2',
       name: 'Salary',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
   ];
 
@@ -52,6 +56,8 @@ describe('TransactionFilters', () => {
       group: Group.EXPENSE,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isActive: false,
+      isDeleted: false,
     },
     {
       id: 'tt-2',
@@ -60,6 +66,8 @@ describe('TransactionFilters', () => {
       group: Group.INCOME,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isActive: false,
+      isDeleted: false,
     },
   ];
 

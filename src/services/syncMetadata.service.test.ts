@@ -39,10 +39,10 @@ describe('syncMetadataService', () => {
         year: 2023,
         archivedDate: '2024-01-01T00:00:00.000Z',
         summary: {
-          totalIncome: 50000,
-          totalExpenses: 30000,
-          netSavings: 20000,
-          categories: [],
+          transactionCount: 0,
+          closingNetWorth: 0,
+          closingBalances: {},
+          closingAssetValuations: {}
         },
       };
 
@@ -90,10 +90,10 @@ describe('syncMetadataService', () => {
           year: 2023,
           archivedDate: '2024-01-01T00:00:00.000Z',
           summary: {
-            totalIncome: 50000,
-            totalExpenses: 30000,
-            netSavings: 20000,
-            categories: [],
+            transactionCount: 0,
+            closingNetWorth: 0,
+            closingBalances: {},
+            closingAssetValuations: {},
           },
         },
       ];

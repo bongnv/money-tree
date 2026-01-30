@@ -1,11 +1,10 @@
 import React from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { transactionService } from '../../services/transaction.service';
 import { Card, CardContent, CardActions, Typography, IconButton, Box, Chip } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import type { Account } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
 import { useCalculationService } from '../../contexts/ServiceProviders';
+import { useTransactions } from '../../hooks/useTransactions';
 
 interface AccountCardProps {
   account: Account;
@@ -14,7 +13,7 @@ interface AccountCardProps {
 }
 
 export const AccountCard: React.FC<AccountCardProps> = ({ account, onEdit, onDelete }) => {
-  const transactions = useLiveQuery(() => transactionService.getActive()) ?? [];
+  const transactions = useTransactions();
   const calculationService = useCalculationService();
   const currentBalance = calculationService.calculateAccountBalance(account, transactions || []);
 

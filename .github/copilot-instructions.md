@@ -52,10 +52,21 @@ Mark task as complete only if all three pass.
 
 ## Architecture
 
-**3-layer**: UI (`src/components/`, `src/hooks/`) → Services/Utils (`src/services/`, `src/utils/`) → Database (`src/db/`)
-- **UI**: UI logic. NO direct DB. NO business logic.
-- **Services**: Stateless, Pure logic. NO React. Dependencies injected via constructor for easier testing.
-- **Database**: Schema, tables, IndexedDB. NO React. No business logic.
+**3-layer**: UI (`src/components/`, `src/hooks/`, `src/contexts/`) → Services/Utils (`src/services/`, `src/utils/`) → Database (`src/db/`)
+
+### UI Layer
+- **Pages** (smart components): Coordinate data fetching, queries, and updates. Handle routing and page-level state.
+- **Components**: Presentation only. All dependencies injected via props. NO direct service calls. NO business logic.
+- **Hooks** (`src/hooks/`): Custom hooks for data access using `useLiveQuery` (queries) and service methods (mutations). Bridge between UI and services.
+- **Contexts** (`src/contexts/`): React Context providers for dependency injection (ServiceProviders, SyncProvider, AppContext). Create and provide service instances.
+- NO direct DB access from any UI code.
+
+### Services Layer
+- **Services** (`src/services/`): Stateless, pure business logic. NO React dependencies. Dependencies injected via constructor for easier testing.
+- **Utils** (`src/utils/`): Pure utility functions. No state, no dependencies.
+
+### Database Layer
+- **Database** (`src/db/`): Dexie schema, tables, IndexedDB operations. NO React. NO business logic.
 
 ## Code Style
 

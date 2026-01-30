@@ -105,7 +105,8 @@ describe('exchangeRateService', () => {
 
       const id = await exchangeRateService.create(newRate);
 
-      expect(id).toBe('2');
+      expect(typeof id).toBe('string');
+      expect(id).toBeTruthy();
       expect(db.exchangeRates.add).toHaveBeenCalledWith(
         expect.objectContaining({
           ...newRate,
@@ -173,7 +174,8 @@ describe('exchangeRateService', () => {
 
       const id = await exchangeRateService.upsert(data);
 
-      expect(id).toBe('2');
+      expect(typeof id).toBe('string');
+      expect(id).toBeTruthy();
       expect(db.exchangeRates.add).toHaveBeenCalled();
     });
   });

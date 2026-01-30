@@ -1,6 +1,7 @@
 import type { MoneyTreeDB } from '../db/database';
 import type { Category } from '../types/models';
 import type { SyncMetadataService } from './syncMetadata.service';
+import { generateId } from '../utils/id.utils';
 
 const addTimestamps = (entity: Partial<Category>, isUpdate = false): Partial<Category> => {
   const now = new Date().toISOString();
@@ -37,14 +38,16 @@ export class CategoryService {
   async create(
     data: Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
   ): Promise<string> {
+    const id = generateId();
     const category = addTimestamps({
       ...data,
+      id,
       isDeleted: false,
     });
 
-    const id = await this.db.categories.add(category as Category);
+    await this.db.categories.add(category as Category);
     await this.syncMetadata.setLastModified();
-    return id as string;
+    return id;
   }
 
   async update(

@@ -102,7 +102,8 @@ describe('accountService', () => {
 
       const id = await accountService.create(newAccount);
 
-      expect(id).toBe('1');
+      expect(typeof id).toBe('string');
+      expect(id).toBeTruthy();
       expect(db.accounts.add).toHaveBeenCalledWith(
         expect.objectContaining({
           ...newAccount,

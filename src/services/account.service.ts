@@ -1,6 +1,7 @@
 import type { MoneyTreeDB } from '../db/database';
 import type { Account } from '../types/models';
 import type { SyncMetadataService } from './syncMetadata.service';
+import { generateId } from '../utils/id.utils';
 
 const addTimestamps = (entity: Partial<Account>, isUpdate = false): Partial<Account> => {
   const now = new Date().toISOString();
@@ -37,15 +38,17 @@ export class AccountService {
   }
 
   async create(data: Omit<Account, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const id = generateId();
     const account = addTimestamps({
       ...data,
+      id,
       isActive: data.isActive ?? true,
       isDeleted: false,
     });
 
-    const id = await this.db.accounts.add(account as Account);
+    await this.db.accounts.add(account as Account);
     await this.syncMetadata.setLastModified();
-    return id as string;
+    return id;
   }
 
   async update(

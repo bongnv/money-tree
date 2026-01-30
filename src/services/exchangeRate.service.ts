@@ -1,5 +1,6 @@
 import type { MoneyTreeDB } from '../db/database';
 import type { ExchangeRate } from '../types/models';
+import { generateId } from '../utils/id.utils';
 import type { SyncMetadataService } from './syncMetadata.service';
 
 const addTimestamps = (entity: Partial<ExchangeRate>, isUpdate = false): Partial<ExchangeRate> => {
@@ -40,10 +41,11 @@ export class ExchangeRateService {
   }
 
   async create(data: Omit<ExchangeRate, 'id' | 'createdAt'>): Promise<string> {
-    const exchangeRate = addTimestamps(data);
-    const id = await this.db.exchangeRates.add(exchangeRate as ExchangeRate);
+    const id = generateId();
+    const exchangeRate = addTimestamps({ ...data, id });
+    await this.db.exchangeRates.add(exchangeRate as ExchangeRate);
     await this.syncMetadata.setLastModified();
-    return id as string;
+    return id;
   }
 
   async update(id: string, data: Partial<Omit<ExchangeRate, 'id' | 'createdAt'>>): Promise<void> {

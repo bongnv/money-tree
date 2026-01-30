@@ -70,7 +70,8 @@ describe('categoryService', () => {
 
       const id = await categoryService.create(newCategory);
 
-      expect(id).toBe('2');
+      expect(typeof id).toBe('string');
+      expect(id).toBeTruthy();
       expect(db.categories.add).toHaveBeenCalledWith(
         expect.objectContaining({
           ...newCategory,

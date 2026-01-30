@@ -97,7 +97,8 @@ describe('transactionTypeService', () => {
 
       const id = await transactionTypeService.create(newType);
 
-      expect(id).toBe('type-2');
+      expect(typeof id).toBe('string');
+      expect(id).toBeTruthy();
       expect(db.transactionTypes.add).toHaveBeenCalledWith(
         expect.objectContaining({
           ...newType,

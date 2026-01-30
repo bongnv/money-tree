@@ -1,6 +1,7 @@
 import type { MoneyTreeDB } from '../db/database';
 import type { Budget } from '../types/models';
 import type { SyncMetadataService } from './syncMetadata.service';
+import { generateId } from '../utils/id.utils';
 
 const addTimestamps = (entity: Partial<Budget>, isUpdate = false): Partial<Budget> => {
   const now = new Date().toISOString();
@@ -37,14 +38,16 @@ export class BudgetService {
   async create(
     data: Omit<Budget, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
   ): Promise<string> {
+    const id = generateId();
     const budget = addTimestamps({
       ...data,
+      id,
       isDeleted: false,
     });
 
-    const id = await this.db.budgets.add(budget as Budget);
+    await this.db.budgets.add(budget as Budget);
     await this.syncMetadata.setLastModified();
-    return id as string;
+    return id;
   }
 
   async update(

@@ -1,6 +1,7 @@
 import type { MoneyTreeDB } from '../db/database';
 import type { TransactionType } from '../types/models';
 import type { SyncMetadataService } from './syncMetadata.service';
+import { generateId } from '../utils/id.utils';
 
 const addTimestamps = (
   entity: Partial<TransactionType>,
@@ -44,15 +45,17 @@ export class TransactionTypeService {
   }
 
   async create(data: Omit<TransactionType, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const id = generateId();
     const transactionType = addTimestamps({
       ...data,
-      isActive: data.isActive !== undefined ? data.isActive : true,
+      id,
+      isActive: data.isActive ?? true,
       isDeleted: false,
     });
 
-    const id = await this.db.transactionTypes.add(transactionType as TransactionType);
+    await this.db.transactionTypes.add(transactionType as TransactionType);
     await this.syncMetadata.setLastModified();
-    return id as string;
+    return id;
   }
 
   async update(

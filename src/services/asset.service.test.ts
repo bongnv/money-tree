@@ -80,7 +80,8 @@ describe('assetService', () => {
 
       const id = await assetService.create(newAsset);
 
-      expect(id).toBe('1');
+      expect(typeof id).toBe('string');
+      expect(id).toBeTruthy();
       expect(db.manualAssets.add).toHaveBeenCalledWith(
         expect.objectContaining({
           ...newAsset,

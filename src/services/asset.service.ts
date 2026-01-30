@@ -1,6 +1,7 @@
 import type { MoneyTreeDB } from '../db/database';
 import type { ManualAsset, AssetValueHistory } from '../types/models';
 import type { SyncMetadataService } from './syncMetadata.service';
+import { generateId } from '../utils/id.utils';
 
 const addTimestamps = (entity: Partial<ManualAsset>, isUpdate = false): Partial<ManualAsset> => {
   const now = new Date().toISOString();
@@ -37,15 +38,17 @@ export class AssetService {
   async create(
     data: Omit<ManualAsset, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
   ): Promise<string> {
+    const id = generateId();
     const asset = addTimestamps({
       ...data,
+      id,
       isDeleted: false,
       valueHistory: data.valueHistory || [],
     });
 
-    const id = await this.db.manualAssets.add(asset as ManualAsset);
+    await this.db.manualAssets.add(asset as ManualAsset);
     await this.syncMetadata.setLastModified();
-    return id as string;
+    return id;
   }
 
   async update(

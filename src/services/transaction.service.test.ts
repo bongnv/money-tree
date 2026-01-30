@@ -94,7 +94,8 @@ describe('transactionService', () => {
 
       const id = await transactionService.create(newTransaction);
 
-      expect(id).toBe('2');
+      expect(typeof id).toBe('string');
+      expect(id).toBeTruthy();
       expect(db.transactions.add).toHaveBeenCalledWith(
         expect.objectContaining({
           ...newTransaction,

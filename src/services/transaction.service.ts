@@ -2,6 +2,7 @@ import type { MoneyTreeDB } from '../db/database';
 import type { Transaction, TransactionType } from '../types/models';
 import type { Group } from '../types/enums';
 import type { SyncMetadataService } from './syncMetadata.service';
+import { generateId } from '../utils/id.utils';
 
 export interface TransactionFilters {
   dateFrom: string;
@@ -55,14 +56,16 @@ export class TransactionService {
   async create(
     data: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
   ): Promise<string> {
+    const id = generateId();
     const transaction = addTimestamps({
       ...data,
+      id,
       isDeleted: false,
     });
 
-    const id = await this.db.transactions.add(transaction as Transaction);
+    await this.db.transactions.add(transaction as Transaction);
     await this.syncMetadata.setLastModified();
-    return id as string;
+    return id;
   }
 
   async update(

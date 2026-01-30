@@ -55,9 +55,14 @@ describe('ReportService', () => {
       id: 'asset1',
       name: 'House',
       type: AssetType.REAL_ESTATE,
-      value: 500000,
       currencyCode: CurrencyCode.USD,
-      date: '2024-01-01',
+      valueHistory: [
+        {
+          date: '2024-01-01',
+          value: 500000,
+        },
+      ],
+      isDeleted: false,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
@@ -65,9 +70,14 @@ describe('ReportService', () => {
       id: 'asset2',
       name: 'Mortgage',
       type: AssetType.LIABILITY,
-      value: -300000,
       currencyCode: CurrencyCode.USD,
-      date: '2024-01-01',
+      valueHistory: [
+        {
+          date: '2024-01-01',
+          value: -300000,
+        },
+      ],
+      isDeleted: false,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
@@ -81,6 +91,7 @@ describe('ReportService', () => {
       amount: 3000,
       transactionTypeId: 'type1',
       toAccountId: 'acc1',
+      isDeleted: false,
       createdAt: '2024-01-15T00:00:00.000Z',
       updatedAt: '2024-01-15T00:00:00.000Z',
     },
@@ -91,6 +102,7 @@ describe('ReportService', () => {
       amount: 500,
       transactionTypeId: 'type2',
       fromAccountId: 'acc1',
+      isDeleted: false,
       createdAt: '2024-01-20T00:00:00.000Z',
       updatedAt: '2024-01-20T00:00:00.000Z',
     },
@@ -101,6 +113,7 @@ describe('ReportService', () => {
       amount: 200,
       transactionTypeId: 'type3',
       fromAccountId: 'acc2',
+      isDeleted: false,
       createdAt: '2024-01-25T00:00:00.000Z',
       updatedAt: '2024-01-25T00:00:00.000Z',
     },
@@ -324,7 +337,8 @@ describe('ReportService', () => {
         emptyAccounts,
         emptyAssets,
         [],
-        '2024-01-15'
+        '2024-01-15',
+        CurrencyCode.USD
       );
 
       expect(result.changePercent).toBe(0);
@@ -336,18 +350,21 @@ describe('ReportService', () => {
       {
         id: 'cat1',
         name: 'Salary',
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       },
       {
         id: 'cat2',
         name: 'Groceries',
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       },
       {
         id: 'cat3',
         name: 'Transfer',
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       },
@@ -394,6 +411,7 @@ describe('ReportService', () => {
         amount: 3000,
         transactionTypeId: 'type1',
         toAccountId: 'acc1',
+        isDeleted: false,
         createdAt: '2024-01-15T00:00:00.000Z',
         updatedAt: '2024-01-15T00:00:00.000Z',
       },
@@ -404,6 +422,7 @@ describe('ReportService', () => {
         amount: 500,
         transactionTypeId: 'type2',
         fromAccountId: 'acc1',
+        isDeleted: false,
         createdAt: '2024-01-20T00:00:00.000Z',
         updatedAt: '2024-01-20T00:00:00.000Z',
       },
@@ -415,6 +434,7 @@ describe('ReportService', () => {
         transactionTypeId: 'type3',
         fromAccountId: 'acc1',
         toAccountId: 'acc3',
+        isDeleted: false,
         createdAt: '2024-01-25T00:00:00.000Z',
         updatedAt: '2024-01-25T00:00:00.000Z',
       },
@@ -425,6 +445,7 @@ describe('ReportService', () => {
         amount: 1000,
         transactionTypeId: 'type2',
         fromAccountId: 'acc1',
+        isDeleted: false,
         createdAt: '2024-02-01T00:00:00.000Z',
         updatedAt: '2024-02-01T00:00:00.000Z',
       },
@@ -436,7 +457,9 @@ describe('ReportService', () => {
         mockTypes,
         mockCategories,
         '2024-01-01',
-        '2024-01-31'
+        '2024-01-31',
+        [],
+        CurrencyCode.USD
       );
 
       expect(result.totalIncome).toBe(3000);
@@ -452,7 +475,9 @@ describe('ReportService', () => {
         mockTypes,
         mockCategories,
         '2024-01-01',
-        '2024-01-31'
+        '2024-01-31',
+        [],
+        CurrencyCode.USD
       );
 
       // Transfer should not appear in income or expenses
@@ -466,7 +491,9 @@ describe('ReportService', () => {
         mockTypes,
         mockCategories,
         '2024-01-01',
-        '2024-01-31'
+        '2024-01-31',
+        [],
+        CurrencyCode.USD
       );
 
       // Should not include February transaction
@@ -479,7 +506,9 @@ describe('ReportService', () => {
         mockTypes,
         mockCategories,
         '2024-01-01',
-        '2024-01-31'
+        '2024-01-31',
+        [],
+        CurrencyCode.USD
       );
 
       expect(result.income[0].categoryName).toBe('Salary');
@@ -496,7 +525,9 @@ describe('ReportService', () => {
         mockTypes,
         mockCategories,
         '2024-01-01',
-        '2024-01-31'
+        '2024-01-31',
+        [],
+        CurrencyCode.USD
       );
 
       expect(result.totalIncome).toBe(0);
@@ -512,12 +543,14 @@ describe('ReportService', () => {
       {
         id: 'cat1',
         name: 'Salary',
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       },
       {
         id: 'cat2',
         name: 'Groceries',
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       },
@@ -554,6 +587,7 @@ describe('ReportService', () => {
         amount: 3000,
         transactionTypeId: 'type1',
         toAccountId: 'acc1',
+        isDeleted: false,
         createdAt: '2024-01-15T00:00:00.000Z',
         updatedAt: '2024-01-15T00:00:00.000Z',
       },
@@ -564,6 +598,7 @@ describe('ReportService', () => {
         amount: 3500,
         transactionTypeId: 'type1',
         toAccountId: 'acc1',
+        isDeleted: false,
         createdAt: '2024-02-15T00:00:00.000Z',
         updatedAt: '2024-02-15T00:00:00.000Z',
       },
@@ -574,6 +609,7 @@ describe('ReportService', () => {
         amount: 500,
         transactionTypeId: 'type2',
         fromAccountId: 'acc1',
+        isDeleted: false,
         createdAt: '2024-01-20T00:00:00.000Z',
         updatedAt: '2024-01-20T00:00:00.000Z',
       },
@@ -584,6 +620,7 @@ describe('ReportService', () => {
         amount: 600,
         transactionTypeId: 'type2',
         fromAccountId: 'acc1',
+        isDeleted: false,
         createdAt: '2024-02-20T00:00:00.000Z',
         updatedAt: '2024-02-20T00:00:00.000Z',
       },
@@ -596,7 +633,9 @@ describe('ReportService', () => {
         mockCategories,
         '2024-01-01',
         '2024-02-29',
-        30
+        30,
+        [],
+        CurrencyCode.USD
       );
 
       expect(result.length).toBeGreaterThan(0);
@@ -613,7 +652,9 @@ describe('ReportService', () => {
         mockCategories,
         '2024-01-01',
         '2024-01-31',
-        15
+        15,
+        [],
+        CurrencyCode.USD
       );
 
       // Should have approximately 2 data points for 30-day period with 15-day intervals
@@ -627,7 +668,9 @@ describe('ReportService', () => {
         mockCategories,
         '2024-02-01',
         '2024-01-01', // End before start
-        30
+        30,
+        [],
+        CurrencyCode.USD
       );
 
       expect(result).toHaveLength(0);
@@ -640,7 +683,9 @@ describe('ReportService', () => {
         mockCategories,
         '2024-01-01',
         '2024-01-31',
-        30
+        30,
+        [],
+        CurrencyCode.USD
       );
 
       // First period should have income 3000 and expense 500
@@ -678,12 +723,14 @@ describe('ReportService', () => {
       {
         id: 'cat1',
         name: 'Food',
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       },
       {
         id: 'cat2',
         name: 'Income',
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       },
@@ -698,6 +745,7 @@ describe('ReportService', () => {
         period: 'monthly' as const,
         startDate: '2024-01-01',
         endDate: '2024-12-31',
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       },
@@ -709,6 +757,7 @@ describe('ReportService', () => {
         period: 'monthly' as const,
         startDate: '2024-01-01',
         endDate: '2024-12-31',
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       },
@@ -721,6 +770,7 @@ describe('ReportService', () => {
         amount: 300,
         transactionTypeId: 'type1', // Groceries
         fromAccountId: 'acc1',
+        isDeleted: false,
         createdAt: '2024-01-15T00:00:00.000Z',
         updatedAt: '2024-01-15T00:00:00.000Z',
       },
@@ -730,6 +780,7 @@ describe('ReportService', () => {
         amount: 4500,
         transactionTypeId: 'type3', // Salary
         toAccountId: 'acc1',
+        isDeleted: false,
         createdAt: '2024-01-20T00:00:00.000Z',
         updatedAt: '2024-01-20T00:00:00.000Z',
       },
@@ -853,7 +904,9 @@ describe('ReportService', () => {
         mockTypes,
         mockCategories,
         '2024-01-01',
-        '2024-01-31'
+        '2024-01-31',
+        [],
+        CurrencyCode.USD
       );
 
       expect(result.items).toHaveLength(0);
@@ -887,7 +940,7 @@ describe('ReportService', () => {
         {
           ...mockBudgets[0],
           id: 'budget3',
-          currencyCode: CurrencyCode.EUR as const,
+          currencyCode: CurrencyCode.USD as const,
           amount: 500,
         },
       ];
@@ -913,7 +966,7 @@ describe('ReportService', () => {
       const eurAccounts = [
         {
           ...mockAccounts[0],
-          currencyCode: CurrencyCode.EUR as const,
+          currencyCode: CurrencyCode.USD as const,
         },
       ];
 
@@ -954,6 +1007,7 @@ describe('ReportService', () => {
       {
         id: 'cat1',
         name: 'Food',
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       },
@@ -968,6 +1022,7 @@ describe('ReportService', () => {
         period: 'monthly' as const,
         startDate: '2024-01-01',
         endDate: '2024-12-31',
+        isDeleted: false,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
       },
@@ -980,6 +1035,7 @@ describe('ReportService', () => {
         amount: 300,
         transactionTypeId: 'type1',
         fromAccountId: 'acc1',
+        isDeleted: false,
         createdAt: '2024-01-15T00:00:00.000Z',
         updatedAt: '2024-01-15T00:00:00.000Z',
       },
@@ -989,6 +1045,7 @@ describe('ReportService', () => {
         amount: 600,
         transactionTypeId: 'type1',
         fromAccountId: 'acc1',
+        isDeleted: false,
         createdAt: '2024-02-15T00:00:00.000Z',
         updatedAt: '2024-02-15T00:00:00.000Z',
       },
@@ -1058,7 +1115,9 @@ describe('ReportService', () => {
         mockCategories,
         '2024-02-01',
         '2024-01-01', // End before start
-        30
+        30,
+        [],
+        CurrencyCode.USD
       );
 
       expect(result).toHaveLength(0);
@@ -1072,7 +1131,9 @@ describe('ReportService', () => {
         mockCategories,
         '2024-01-01',
         '2024-01-31',
-        30
+        30,
+        [],
+        CurrencyCode.USD
       );
 
       expect(result.length).toBeGreaterThan(0);

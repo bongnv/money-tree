@@ -13,6 +13,7 @@ describe('TransactionList', () => {
       currencyCode: CurrencyCode.USD,
       initialBalance: 1000,
       isActive: true,
+      isDeleted: false,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
@@ -23,6 +24,7 @@ describe('TransactionList', () => {
       currencyCode: CurrencyCode.USD,
       initialBalance: 5000,
       isActive: true,
+      isDeleted: false,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
     },
@@ -34,12 +36,14 @@ describe('TransactionList', () => {
       name: 'Food & Dining',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
     {
       id: 'cat-2',
       name: 'Salary',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
   ];
 
@@ -51,6 +55,8 @@ describe('TransactionList', () => {
       group: Group.EXPENSE,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isActive: true,
+      isDeleted: false,
     },
     {
       id: 'tt-2',
@@ -59,6 +65,8 @@ describe('TransactionList', () => {
       group: Group.INCOME,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isActive: true,
+      isDeleted: false,
     },
   ];
 
@@ -73,6 +81,7 @@ describe('TransactionList', () => {
       toAccountId: undefined,
       createdAt: '2024-01-15T00:00:00.000Z',
       updatedAt: '2024-01-15T00:00:00.000Z',
+      isDeleted: false,
     },
     {
       id: 'txn-2',
@@ -84,6 +93,7 @@ describe('TransactionList', () => {
       toAccountId: 'acc-1',
       createdAt: '2024-01-20T00:00:00.000Z',
       updatedAt: '2024-01-20T00:00:00.000Z',
+      isDeleted: false,
     },
   ];
 

@@ -7,7 +7,7 @@ import type {
   TransactionType,
   Category,
 } from '../types/models';
-import { AccountType, AssetType, CurrencyCode } from '../types/enums';
+import { AccountType, AssetType, CurrencyCode, Group } from '../types/enums';
 import * as exchangeRateUtils from '../utils/exchangeRate.utils';
 
 // Mock the getRateForMonth function
@@ -382,6 +382,7 @@ describe('CalculationService', () => {
           period: 'monthly' as const,
           startDate: '2026-01-01',
           endDate: '2026-12-31',
+          isDeleted: false,
           createdAt: '2026-01-01T00:00:00.000Z',
           updatedAt: '2026-01-01T00:00:00.000Z',
         },
@@ -493,6 +494,7 @@ describe('CalculationService', () => {
         period: 'monthly' as const,
         startDate: '2026-01-01',
         endDate: '2026-12-31',
+        isDeleted: false,
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
@@ -513,6 +515,7 @@ describe('CalculationService', () => {
         period: 'monthly' as const,
         startDate: '2026-01-01',
         endDate: '2026-12-31',
+        isDeleted: false,
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
@@ -533,6 +536,7 @@ describe('CalculationService', () => {
         period: 'quarterly' as const,
         startDate: '2026-01-01',
         endDate: '2026-12-31',
+        isDeleted: false,
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
@@ -553,6 +557,7 @@ describe('CalculationService', () => {
         period: 'quarterly' as const,
         startDate: '2026-01-01',
         endDate: '2026-12-31',
+        isDeleted: false,
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
@@ -573,6 +578,7 @@ describe('CalculationService', () => {
         period: 'quarterly' as const,
         startDate: '2026-01-01',
         endDate: '2026-12-31',
+        isDeleted: false,
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
@@ -593,6 +599,7 @@ describe('CalculationService', () => {
         period: 'yearly' as const,
         startDate: '2026-01-01',
         endDate: '2026-12-31',
+        isDeleted: false,
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
@@ -613,6 +620,7 @@ describe('CalculationService', () => {
         period: 'yearly' as const,
         startDate: '2026-01-01',
         endDate: '2026-12-31',
+        isDeleted: false,
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
@@ -633,6 +641,7 @@ describe('CalculationService', () => {
         period: 'yearly' as const,
         startDate: '2026-01-01',
         endDate: '2026-12-31',
+        isDeleted: false,
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
@@ -653,6 +662,7 @@ describe('CalculationService', () => {
         period: 'monthly' as const,
         startDate: '2026-01-01',
         endDate: '2026-02-28', // Only Jan-Feb (59 days)
+        isDeleted: false,
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
@@ -675,6 +685,7 @@ describe('CalculationService', () => {
         period: 'monthly' as const,
         startDate: '2026-01-01',
         endDate: '2026-06-30',
+        isDeleted: false,
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',
       };
@@ -794,7 +805,7 @@ describe('CalculationService', () => {
         id: 'acc-eur',
         name: 'EUR Account',
         type: AccountType.BANK_ACCOUNT,
-        currencyCode: CurrencyCode.EUR,
+        currencyCode: CurrencyCode.VND,
         initialBalance: 1000,
         isActive: true,
         isDeleted: false,
@@ -818,7 +829,7 @@ describe('CalculationService', () => {
         const result = await calculationService.convertTransactionAmount(
           transaction,
           [accountUSD],
-          CurrencyCode.EUR
+          CurrencyCode.VND
         );
         expect(result).toBe(100);
       });
@@ -879,6 +890,7 @@ describe('CalculationService', () => {
           period: 'monthly' as const,
           startDate: '2026-01-01',
           endDate: '2026-12-31',
+          isDeleted: false,
           createdAt: '2026-01-01T00:00:00.000Z',
           updatedAt: '2026-01-01T00:00:00.000Z',
         };
@@ -898,11 +910,12 @@ describe('CalculationService', () => {
         const budget = {
           id: 'b1',
           transactionTypeId: 'type-1',
-          currencyCode: CurrencyCode.EUR,
+          currencyCode: CurrencyCode.VND,
           amount: 500,
           period: 'monthly' as const,
           startDate: '2026-01-01',
           endDate: '2026-12-31',
+          isDeleted: false,
           createdAt: '2026-01-01T00:00:00.000Z',
           updatedAt: '2026-01-01T00:00:00.000Z',
         };
@@ -988,7 +1001,7 @@ describe('CalculationService', () => {
           id: 'type-income',
           name: 'Salary',
           categoryId: 'cat-1',
-          group: 'income' as const,
+          group: Group.INCOME,
           isActive: true,
           isDeleted: false,
           createdAt: '2024-01-01T00:00:00.000Z',
@@ -998,7 +1011,7 @@ describe('CalculationService', () => {
           id: 'type-expense',
           name: 'Groceries',
           categoryId: 'cat-2',
-          group: 'expense' as const,
+          group: Group.EXPENSE,
           isActive: true,
           isDeleted: false,
           createdAt: '2024-01-01T00:00:00.000Z',
@@ -1102,7 +1115,7 @@ describe('CalculationService', () => {
           id: 'type-groceries',
           name: 'Groceries',
           categoryId: 'cat-food',
-          group: 'expense' as const,
+          group: Group.EXPENSE,
           isActive: true,
           isDeleted: false,
           createdAt: '2024-01-01T00:00:00.000Z',
@@ -1118,7 +1131,7 @@ describe('CalculationService', () => {
         updatedAt: '2024-01-01T00:00:00.000Z',
       };
 
-      const getCategoryById = (id: string) => (id === 'cat-food' ? category : null);
+      const getCategoryById = (id: string) => (id === 'cat-food' ? category : undefined);
 
       it('should group budgets by category', async () => {
         const budgets: Budget[] = [
@@ -1211,7 +1224,7 @@ describe('CalculationService', () => {
           },
         ];
 
-        const getCategoryByIdMissing = () => null;
+        const getCategoryByIdMissing = () => undefined;
 
         const result = await calculationService.calculateBudgetGrouping(
           budgets,

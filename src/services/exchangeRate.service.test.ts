@@ -28,13 +28,12 @@ jest.mock('../db/database', () => ({
 
 describe('exchangeRateService', () => {
   const mockExchangeRate: ExchangeRate = {
-    id: 1,
+    id: '1',
     month: '2024-01',
     fromCurrency: CurrencyCode.USD,
-    toCurrency: 'EUR',
+    toCurrency: CurrencyCode.VND,
     rate: 0.92,
     createdAt: '2024-01-01T00:00:00.000Z',
-    updatedAt: '2024-01-01T00:00:00.000Z',
   };
 
   beforeEach(() => {
@@ -80,12 +79,12 @@ describe('exchangeRateService', () => {
       const result = await exchangeRateService.getByMonthAndCurrencies(
         '2024-01',
         CurrencyCode.USD,
-        'EUR'
+        CurrencyCode.VND
       );
 
       expect(result).toEqual(mockExchangeRate);
       expect(db.exchangeRates.where).toHaveBeenCalledWith(['month', 'fromCurrency', 'toCurrency']);
-      expect(mockWhere.equals).toHaveBeenCalledWith(['2024-01', CurrencyCode.USD, 'EUR']);
+      expect(mockWhere.equals).toHaveBeenCalledWith(['2024-01', CurrencyCode.USD, CurrencyCode.VND]);
     });
   });
 
@@ -93,7 +92,7 @@ describe('exchangeRateService', () => {
     it('should create a new exchange rate', async () => {
       const newRate = {
         month: '2024-02',
-        fromCurrency: 'GBP',
+        fromCurrency: CurrencyCode.SGD,
         toCurrency: CurrencyCode.USD,
         rate: 1.27,
       };
@@ -141,13 +140,13 @@ describe('exchangeRateService', () => {
       const data = {
         month: '2024-01',
         fromCurrency: CurrencyCode.USD,
-        toCurrency: 'EUR',
+        toCurrency: CurrencyCode.VND,
         rate: 0.95,
       };
 
       const id = await exchangeRateService.upsert(data);
 
-      expect(id).toBe(1);
+      expect(id).toBe('1');
       expect(db.exchangeRates.update).toHaveBeenCalled();
     });
 
@@ -163,13 +162,13 @@ describe('exchangeRateService', () => {
       const data = {
         month: '2024-02',
         fromCurrency: CurrencyCode.USD,
-        toCurrency: 'EUR',
+        toCurrency: CurrencyCode.VND,
         rate: 0.93,
       };
 
       const id = await exchangeRateService.upsert(data);
 
-      expect(id).toBe(2);
+      expect(id).toBe('2');
       expect(db.exchangeRates.add).toHaveBeenCalled();
     });
   });

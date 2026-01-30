@@ -26,9 +26,8 @@ jest.mock('../db/database', () => ({
 
 describe('categoryService', () => {
   const mockCategory: Category = {
-    id: 1,
+    id: '1',
     name: 'Test Category',
-    type: 'expense',
     isDeleted: false,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
@@ -65,13 +64,12 @@ describe('categoryService', () => {
     it('should create a new category', async () => {
       const newCategory = {
         name: 'New Category',
-        type: 'income' as const,
       };
-      (db.categories.add as jest.Mock).mockResolvedValue(2);
+      (db.categories.add as jest.Mock).mockResolvedValue('2');
 
       const id = await categoryService.create(newCategory);
 
-      expect(id).toBe(2);
+      expect(id).toBe('2');
       expect(db.categories.add).toHaveBeenCalledWith(
         expect.objectContaining({
           ...newCategory,
@@ -88,10 +86,10 @@ describe('categoryService', () => {
       (db.categories.get as jest.Mock).mockResolvedValue(mockCategory);
       (db.categories.update as jest.Mock).mockResolvedValue(1);
 
-      await categoryService.update(1, { name: 'Updated Category' });
+      await categoryService.update('1', { name: 'Updated Category' });
 
       expect(db.categories.update).toHaveBeenCalledWith(
-        1,
+        '1',
         expect.objectContaining({
           name: 'Updated Category',
           updatedAt: expect.any(String),
@@ -105,10 +103,10 @@ describe('categoryService', () => {
       (db.categories.get as jest.Mock).mockResolvedValue(mockCategory);
       (db.categories.update as jest.Mock).mockResolvedValue(1);
 
-      await categoryService.delete(1);
+      await categoryService.delete('1');
 
       expect(db.categories.update).toHaveBeenCalledWith(
-        1,
+        '1',
         expect.objectContaining({
           isDeleted: true,
         })

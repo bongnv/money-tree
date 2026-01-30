@@ -127,7 +127,7 @@ describe('transactionService', () => {
     it('should throw error if transaction not found', async () => {
       (db.transactions.get as jest.Mock).mockResolvedValue(undefined);
 
-      await expect(transactionService.update(999, { amount: 100 })).rejects.toThrow(
+      await expect(transactionService.update('999', { amount: 100 })).rejects.toThrow(
         'Transaction with id 999 not found'
       );
     });

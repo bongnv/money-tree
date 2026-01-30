@@ -72,11 +72,11 @@ describe('transactionTypeService', () => {
       };
       (db.transactionTypes.where as jest.Mock).mockReturnValue(mockWhere);
 
-      const result = await transactionTypeService.getByCategoryId("1");
+      const result = await transactionTypeService.getByCategoryId('1');
 
       expect(result).toEqual([mockTransactionType]);
       expect(db.transactionTypes.where).toHaveBeenCalledWith('categoryId');
-      expect(mockWhere.equals).toHaveBeenCalledWith(1);
+      expect(mockWhere.equals).toHaveBeenCalledWith('1');
     });
   });
 
@@ -85,12 +85,15 @@ describe('transactionTypeService', () => {
       const newType = {
         name: 'New Type',
         categoryId: 'cat-1',
+        group: Group.INCOME,
+        isActive: true,
+        isDeleted: false,
       };
       (db.transactionTypes.add as jest.Mock).mockResolvedValue('type-2');
 
       const id = await transactionTypeService.create(newType);
 
-      expect(id).toBe(2);
+      expect(id).toBe('type-2');
       expect(db.transactionTypes.add).toHaveBeenCalledWith(
         expect.objectContaining({
           ...newType,
@@ -111,7 +114,7 @@ describe('transactionTypeService', () => {
       await transactionTypeService.update('type-1', { name: 'Updated Type' });
 
       expect(db.transactionTypes.update).toHaveBeenCalledWith(
-        1,
+        'type-1',
         expect.objectContaining({
           name: 'Updated Type',
           updatedAt: expect.any(String),
@@ -128,7 +131,7 @@ describe('transactionTypeService', () => {
       await transactionTypeService.delete('type-1');
 
       expect(db.transactionTypes.update).toHaveBeenCalledWith(
-        1,
+        'type-1',
         expect.objectContaining({
           isDeleted: true,
           updatedAt: expect.any(String),
@@ -154,7 +157,7 @@ describe('transactionTypeService', () => {
       await transactionTypeService.archive('type-1');
 
       expect(db.transactionTypes.update).toHaveBeenCalledWith(
-        1,
+        'type-1',
         expect.objectContaining({
           isActive: false,
         })
@@ -168,7 +171,7 @@ describe('transactionTypeService', () => {
       await transactionTypeService.unarchive('type-1');
 
       expect(db.transactionTypes.update).toHaveBeenCalledWith(
-        1,
+        'type-1',
         expect.objectContaining({
           isActive: true,
         })

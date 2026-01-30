@@ -11,6 +11,7 @@ describe('TransactionTypeDialog', () => {
       name: 'Groceries',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
   ];
 
@@ -43,6 +44,8 @@ describe('TransactionTypeDialog', () => {
       group: Group.EXPENSE,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isActive: true,
+      isDeleted: false,
     };
 
     render(

@@ -27,6 +27,7 @@ describe('TransactionTypeCard', () => {
 
   const mockOnEdit = jest.fn();
   const mockOnDelete = jest.fn();
+  const mockOnArchive = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -39,6 +40,7 @@ describe('TransactionTypeCard', () => {
         category={mockCategory}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
+        onArchive={mockOnArchive}
       />
     );
 
@@ -56,6 +58,7 @@ describe('TransactionTypeCard', () => {
         category={mockCategory}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
+        onArchive={mockOnArchive}
       />
     );
 
@@ -70,6 +73,7 @@ describe('TransactionTypeCard', () => {
         category={undefined}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
+        onArchive={mockOnArchive}
       />
     );
 
@@ -86,6 +90,7 @@ describe('TransactionTypeCard', () => {
         category={mockCategory}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
+        onArchive={mockOnArchive}
       />
     );
 
@@ -100,6 +105,7 @@ describe('TransactionTypeCard', () => {
         category={mockCategory}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
+        onArchive={mockOnArchive}
       />
     );
 
@@ -118,6 +124,7 @@ describe('TransactionTypeCard', () => {
         category={mockCategory}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
+        onArchive={mockOnArchive}
       />
     );
 

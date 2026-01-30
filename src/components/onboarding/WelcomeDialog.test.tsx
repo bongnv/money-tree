@@ -28,10 +28,10 @@ const mockSyncService = {
   connect: jest.fn().mockImplementation(async (type) => {
     // Set connection state based on the type
     if (type === StorageProviderType.ONEDRIVE) {
-      mockSyncService.providerName = 'OneDrive';
+      mockSyncService.providerName = 'OneDrive' as string | null;
       mockSyncService.isConnected = true;
     } else if (type === StorageProviderType.GOOGLE_DRIVE) {
-      mockSyncService.providerName = 'Google Drive';
+      mockSyncService.providerName = 'Google Drive' as string | null;
       mockSyncService.isConnected = true;
     }
   }),
@@ -41,7 +41,7 @@ const mockSyncService = {
   uploadToCloud: jest.fn(),
   fullSync: jest.fn(),
   isConnected: false,
-  providerName: null,
+  providerName: null as string | null,
   fileName: null,
   providerType: null,
   isSyncing: false,

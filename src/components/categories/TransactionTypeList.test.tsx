@@ -10,12 +10,14 @@ describe('TransactionTypeList', () => {
       name: 'Groceries',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
     {
       id: 'cat-2',
       name: 'Salary',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isDeleted: false,
     },
   ];
 
@@ -28,6 +30,8 @@ describe('TransactionTypeList', () => {
       description: 'Grocery shopping',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isActive: true,
+      isDeleted: false,
     },
     {
       id: 'tt-2',
@@ -36,11 +40,14 @@ describe('TransactionTypeList', () => {
       group: Group.INCOME,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
+      isActive: true,
+      isDeleted: false,
     },
   ];
 
   const mockOnEdit = jest.fn();
   const mockOnDelete = jest.fn();
+  const mockOnArchive = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -53,6 +60,7 @@ describe('TransactionTypeList', () => {
         categories={mockCategories}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
+        onArchive={mockOnArchive}
       />
     );
 
@@ -67,6 +75,7 @@ describe('TransactionTypeList', () => {
         categories={mockCategories}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
+        onArchive={mockOnArchive}
       />
     );
 
@@ -81,6 +90,7 @@ describe('TransactionTypeList', () => {
         categories={mockCategories}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
+        onArchive={mockOnArchive}
       />
     );
 

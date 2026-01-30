@@ -24,7 +24,7 @@ describe('useConfirmDialog', () => {
 
   it('should close dialog and resolve false when handleCancel is called', async () => {
     const { result } = renderHook(() => useConfirmDialog());
-    let confirmPromise: Promise<boolean>;
+    let confirmPromise: Promise<boolean> = Promise.resolve(false);
 
     act(() => {
       confirmPromise = result.current.confirm({ title: 'Delete Item', message: 'Are you sure?' });
@@ -50,7 +50,7 @@ describe('useConfirmDialog', () => {
 
   it('should resolve true and close dialog when handleConfirm is called', async () => {
     const { result } = renderHook(() => useConfirmDialog());
-    let confirmPromise: Promise<boolean>;
+    let confirmPromise: Promise<boolean> = Promise.resolve(false);
 
     act(() => {
       confirmPromise = result.current.confirm({ title: 'Delete Item', message: 'Are you sure?' });

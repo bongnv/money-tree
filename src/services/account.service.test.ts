@@ -26,10 +26,11 @@ jest.mock('../db/database', () => ({
 
 describe('accountService', () => {
   const mockAccount: Account = {
-    id: 1,
+    id: '1',
     name: 'Test Account',
-    type: AccountType.CHECKING,
-    currency: CurrencyCode.USD,
+    type: AccountType.BANK_ACCOUNT,
+    currencyCode: CurrencyCode.USD,
+    initialBalance: 0,
     isActive: true,
     isDeleted: false,
     createdAt: '2024-01-01T00:00:00.000Z',
@@ -55,10 +56,10 @@ describe('accountService', () => {
     it('should return account by id', async () => {
       (db.accounts.get as jest.Mock).mockResolvedValue(mockAccount);
 
-      const result = await accountService.getById(1);
+      const result = await accountService.getById('1');
 
       expect(result).toEqual(mockAccount);
-      expect(db.accounts.get).toHaveBeenCalledWith(1);
+      expect(db.accounts.get).toHaveBeenCalledWith('1');
     });
   });
 
@@ -80,14 +81,17 @@ describe('accountService', () => {
     it('should create a new account with timestamps', async () => {
       const newAccount = {
         name: 'New Account',
-        type: AccountType.SAVINGS,
-        currency: 'EUR',
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: 0,
+        isActive: true,
+        isDeleted: false,
       };
-      (db.accounts.add as jest.Mock).mockResolvedValue(1);
+      (db.accounts.add as jest.Mock).mockResolvedValue('1');
 
       const id = await accountService.create(newAccount);
 
-      expect(id).toBe(1);
+      expect(id).toBe('1');
       expect(db.accounts.add).toHaveBeenCalledWith(
         expect.objectContaining({
           ...newAccount,
@@ -103,11 +107,13 @@ describe('accountService', () => {
     it('should preserve isActive if provided', async () => {
       const newAccount = {
         name: 'Inactive Account',
-        type: AccountType.CHECKING,
-        currency: CurrencyCode.USD,
+        type: AccountType.BANK_ACCOUNT,
+        currencyCode: CurrencyCode.USD,
+        initialBalance: 0,
         isActive: false,
+        isDeleted: false,
       };
-      (db.accounts.add as jest.Mock).mockResolvedValue(2);
+      (db.accounts.add as jest.Mock).mockResolvedValue('2');
 
       await accountService.create(newAccount);
 
@@ -124,10 +130,10 @@ describe('accountService', () => {
       (db.accounts.get as jest.Mock).mockResolvedValue(mockAccount);
       (db.accounts.update as jest.Mock).mockResolvedValue(1);
 
-      await accountService.update(1, { name: 'Updated Account' });
+      await accountService.update('1', { name: 'Updated Account' });
 
       expect(db.accounts.update).toHaveBeenCalledWith(
-        1,
+        '1',
         expect.objectContaining({
           name: 'Updated Account',
           updatedAt: expect.any(String),
@@ -139,7 +145,7 @@ describe('accountService', () => {
     it('should throw error if account not found', async () => {
       (db.accounts.get as jest.Mock).mockResolvedValue(undefined);
 
-      await expect(accountService.update(999, { name: 'Updated' })).rejects.toThrow(
+      await expect(accountService.update('999', { name: 'Updated' })).rejects.toThrow(
         'Account with id 999 not found'
       );
     });
@@ -150,10 +156,10 @@ describe('accountService', () => {
       (db.accounts.get as jest.Mock).mockResolvedValue(mockAccount);
       (db.accounts.update as jest.Mock).mockResolvedValue(1);
 
-      await accountService.delete(1);
+      await accountService.delete('1');
 
       expect(db.accounts.update).toHaveBeenCalledWith(
-        1,
+        '1',
         expect.objectContaining({
           isDeleted: true,
           updatedAt: expect.any(String),
@@ -165,7 +171,7 @@ describe('accountService', () => {
     it('should throw error if account not found', async () => {
       (db.accounts.get as jest.Mock).mockResolvedValue(undefined);
 
-      await expect(accountService.delete(999)).rejects.toThrow('Account with id 999 not found');
+      await expect(accountService.delete('999')).rejects.toThrow('Account with id 999 not found');
     });
   });
 
@@ -174,10 +180,10 @@ describe('accountService', () => {
       (db.accounts.get as jest.Mock).mockResolvedValue(mockAccount);
       (db.accounts.update as jest.Mock).mockResolvedValue(1);
 
-      await accountService.archive(1);
+      await accountService.archive('1');
 
       expect(db.accounts.update).toHaveBeenCalledWith(
-        1,
+        '1',
         expect.objectContaining({
           isActive: false,
         })
@@ -190,10 +196,10 @@ describe('accountService', () => {
       (db.accounts.get as jest.Mock).mockResolvedValue(mockAccount);
       (db.accounts.update as jest.Mock).mockResolvedValue(1);
 
-      await accountService.unarchive(1);
+      await accountService.unarchive('1');
 
       expect(db.accounts.update).toHaveBeenCalledWith(
-        1,
+        '1',
         expect.objectContaining({
           isActive: true,
         })

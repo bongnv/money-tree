@@ -24,11 +24,10 @@ jest.mock('../db/database', () => ({
 
 describe('assetService', () => {
   const mockAsset: ManualAsset = {
-    id: 1,
+    id: '1',
     name: 'Test Asset',
     type: AssetType.REAL_ESTATE,
-    currentValue: 500000,
-    currency: CurrencyCode.USD,
+    currencyCode: CurrencyCode.USD,
     valueHistory: [],
     isDeleted: false,
     createdAt: '2024-01-01T00:00:00.000Z',
@@ -69,14 +68,15 @@ describe('assetService', () => {
       const newAsset = {
         name: 'New Asset',
         type: AssetType.REAL_ESTATE,
-        currentValue: 10000,
-        currency: CurrencyCode.USD,
+        currencyCode: CurrencyCode.USD,
+        valueHistory: [],
+        isDeleted: false,
       };
-      (db.manualAssets.add as jest.Mock).mockResolvedValue(1);
+      (db.manualAssets.add as jest.Mock).mockResolvedValue('1');
 
       const id = await assetService.create(newAsset);
 
-      expect(id).toBe(1);
+      expect(id).toBe('1');
       expect(db.manualAssets.add).toHaveBeenCalledWith(
         expect.objectContaining({
           ...newAsset,
@@ -95,12 +95,11 @@ describe('assetService', () => {
       (db.manualAssets.get as jest.Mock).mockResolvedValue(mockAsset);
       (db.manualAssets.update as jest.Mock).mockResolvedValue(1);
 
-      await assetService.update(1, { currentValue: 550000 });
+      await assetService.update('1', {});
 
       expect(db.manualAssets.update).toHaveBeenCalledWith(
-        1,
+        '1',
         expect.objectContaining({
-          currentValue: 550000,
           updatedAt: expect.any(String),
         })
       );
@@ -110,7 +109,7 @@ describe('assetService', () => {
     it('should throw error if asset not found', async () => {
       (db.manualAssets.get as jest.Mock).mockResolvedValue(undefined);
 
-      await expect(assetService.update(999, { currentValue: 100 })).rejects.toThrow(
+      await expect(assetService.update('999', {})).rejects.toThrow(
         'Asset with id 999 not found'
       );
     });
@@ -121,10 +120,10 @@ describe('assetService', () => {
       (db.manualAssets.get as jest.Mock).mockResolvedValue(mockAsset);
       (db.manualAssets.update as jest.Mock).mockResolvedValue(1);
 
-      await assetService.delete(1);
+      await assetService.delete('1');
 
       expect(db.manualAssets.update).toHaveBeenCalledWith(
-        1,
+        '1',
         expect.objectContaining({
           isDeleted: true,
           updatedAt: expect.any(String),
@@ -136,7 +135,7 @@ describe('assetService', () => {
     it('should throw error if asset not found', async () => {
       (db.manualAssets.get as jest.Mock).mockResolvedValue(undefined);
 
-      await expect(assetService.delete(999)).rejects.toThrow('Asset with id 999 not found');
+      await expect(assetService.delete('999')).rejects.toThrow('Asset with id 999 not found');
     });
   });
 

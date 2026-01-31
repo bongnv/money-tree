@@ -15,7 +15,7 @@ describe('AccountDialog', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Default mock for useAccountForm
     (useAccountForm as jest.Mock).mockReturnValue({
       formData: {

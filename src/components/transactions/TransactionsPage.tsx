@@ -1,10 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
-import {
-  Box,
-  Typography,
-  Button,
-} from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import type { Transaction } from '../../types/models';
 import { TransactionDialog } from './TransactionDialog';

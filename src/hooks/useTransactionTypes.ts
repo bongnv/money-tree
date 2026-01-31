@@ -9,9 +9,9 @@ import type { TransactionType } from '../types/models';
 /**
  * Get all active transaction types
  */
-export function useTransactionTypes(): TransactionType[] {
+export function useTransactionTypes(): TransactionType[] | undefined {
   const transactionTypeService = useTransactionTypeService();
-  return useLiveQuery(() => transactionTypeService.getActive()) ?? [];
+  return useLiveQuery(() => transactionTypeService.getActive());
 }
 
 /**

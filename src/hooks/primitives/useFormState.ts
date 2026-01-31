@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 /**
  * Generic form state management hook
  * Handles form data, validation, errors, and submission state
- * 
+ *
  * @template T - The type of the form data
  * @param initialData - Initial form data
  * @param validate - Optional validation function that returns errors
@@ -26,7 +26,7 @@ export function useFormState<T extends Record<string, any>>(
     <K extends keyof T>(field: K, value: T[K]) => {
       setFormData((prev) => ({ ...prev, [field]: value }));
       setIsDirty(true);
-      
+
       // Clear error for this field when user starts typing
       if (errors[field]) {
         setErrors((prev) => {
@@ -104,14 +104,14 @@ export function useFormState<T extends Record<string, any>>(
     touched,
     isSubmitting,
     isDirty,
-    
+
     // Field handlers
     setField,
     setFields,
     setFieldTouched,
     setFieldError,
     getFieldError,
-    
+
     // Form actions
     validateForm,
     reset,

@@ -37,7 +37,7 @@ import { useCategories } from '../../hooks/useCategories';
 export const BudgetPerformanceReport: React.FC = () => {
   const navigate = useNavigate();
   const categories = useCategories();
-  
+
   const {
     budgetPerformance,
     startDate,
@@ -47,7 +47,7 @@ export const BudgetPerformanceReport: React.FC = () => {
     conversionCurrency,
     setConversionCurrency,
   } = useBudgetPerformance();
-  
+
   // UI state
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
@@ -228,7 +228,7 @@ export const BudgetPerformanceReport: React.FC = () => {
       percentUsed: cat.budgetedAmount > 0 ? (cat.actualAmount / cat.budgetedAmount) * 100 : 0,
       isIncome: cat.isIncome,
     }));
-  }, [displayPerformance.items, selectedCategories]);
+  }, [performance.items, selectedCategories]);
 
   return (
     <Box sx={{ p: 3 }}>
@@ -298,10 +298,10 @@ export const BudgetPerformanceReport: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <TrendingDownIcon color="primary" />
                 <Typography variant="h5">
-                  {formatCurrency(performance.totalBudgetedExpenses, conversionCurrency)}
+                  {formatCurrency(displayPerformance.totalBudgetedExpenses, conversionCurrency)}
                 </Typography>
               </Box>
-              {performance.totalBudgetedIncome > 0 && (
+              {displayPerformance.totalBudgetedIncome > 0 && (
                 <Box sx={{ mt: 2 }}>
                   <Typography color="text.secondary" variant="body2" gutterBottom>
                     Total Target (Income)
@@ -309,7 +309,7 @@ export const BudgetPerformanceReport: React.FC = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <TrendingUpIcon color="success" />
                     <Typography variant="body1">
-                      {formatCurrency(performance.totalBudgetedIncome, conversionCurrency)}
+                      {formatCurrency(displayPerformance.totalBudgetedIncome, conversionCurrency)}
                     </Typography>
                   </Box>
                 </Box>
@@ -326,16 +326,17 @@ export const BudgetPerformanceReport: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <TrendingDownIcon
                   color={
-                    performance.totalActualExpenses <= performance.totalBudgetedExpenses
+                    displayPerformance.totalActualExpenses <=
+                    displayPerformance.totalBudgetedExpenses
                       ? 'success'
                       : 'error'
                   }
                 />
                 <Typography variant="h5">
-                  {formatCurrency(performance.totalActualExpenses, conversionCurrency)}
+                  {formatCurrency(displayPerformance.totalActualExpenses, conversionCurrency)}
                 </Typography>
               </Box>
-              {performance.totalActualIncome > 0 && (
+              {displayPerformance.totalActualIncome > 0 && (
                 <Box sx={{ mt: 2 }}>
                   <Typography color="text.secondary" variant="body2" gutterBottom>
                     Total Actual (Income)
@@ -343,13 +344,14 @@ export const BudgetPerformanceReport: React.FC = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <TrendingUpIcon
                       color={
-                        performance.totalActualIncome >= performance.totalBudgetedIncome
+                        displayPerformance.totalActualIncome >=
+                        displayPerformance.totalBudgetedIncome
                           ? 'success'
                           : 'warning'
                       }
                     />
                     <Typography variant="body1">
-                      {formatCurrency(performance.totalActualIncome, conversionCurrency)}
+                      {formatCurrency(displayPerformance.totalActualIncome, conversionCurrency)}
                     </Typography>
                   </Box>
                 </Box>
@@ -364,15 +366,18 @@ export const BudgetPerformanceReport: React.FC = () => {
                 Overall Health Score
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                {getHealthIcon(performance.overallHealthScore)}
-                <Typography variant="h5" color={getHealthColor(performance.overallHealthScore)}>
-                  {performance.overallHealthScore.toFixed(0)}%
+                {getHealthIcon(displayPerformance.overallHealthScore)}
+                <Typography
+                  variant="h5"
+                  color={getHealthColor(displayPerformance.overallHealthScore)}
+                >
+                  {displayPerformance.overallHealthScore.toFixed(0)}%
                 </Typography>
               </Box>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                {performance.overallHealthScore >= 80
+                {displayPerformance.overallHealthScore >= 80
                   ? 'On Track'
-                  : performance.overallHealthScore >= 60
+                  : displayPerformance.overallHealthScore >= 60
                     ? 'Needs Attention'
                     : 'Review Required'}
               </Typography>
@@ -389,7 +394,7 @@ export const BudgetPerformanceReport: React.FC = () => {
         <Typography variant="h6" gutterBottom>
           Budget Performance Details
         </Typography>
-        {performance.items.length === 0 ? (
+        {displayPerformance.items.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 4 }}>
             <Typography color="text.secondary">
               No budgets found for this period. Create budgets in the Budgets section.

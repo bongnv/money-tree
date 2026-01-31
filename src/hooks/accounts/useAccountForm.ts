@@ -62,7 +62,7 @@ export function useAccountForm({ account, onSubmit }: UseAccountFormProps = {}) 
     formState.setIsSubmitting(true);
     try {
       const accountData = accountService.transformFormToAccount(formState.formData);
-      
+
       if (account) {
         // Edit mode
         await accountService.update(account.id, accountData);
@@ -70,7 +70,7 @@ export function useAccountForm({ account, onSubmit }: UseAccountFormProps = {}) 
         // Create mode
         await accountService.create(accountData);
       }
-      
+
       if (onSubmit) {
         await onSubmit(accountData);
       }

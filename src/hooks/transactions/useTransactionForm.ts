@@ -1,3 +1,4 @@
+import { getTodayDate } from '@/utils/date.utils';
 import { useFormState } from '../primitives/useFormState';
 import { useTransactionService } from '../useServices';
 import type { TransactionFormData } from '@/services/transaction.service';
@@ -5,7 +6,9 @@ import type { Transaction } from '@/types/models';
 
 interface UseTransactionFormProps {
   transaction?: Transaction;
-  onSubmit?: (transactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
+  onSubmit?: (
+    transactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
+  ) => Promise<void>;
 }
 
 /**
@@ -28,7 +31,7 @@ export function useTransactionForm({ transaction, onSubmit }: UseTransactionForm
         toAssetId: transaction.toAssetId || '',
       }
     : {
-        date: new Date().toISOString().split('T')[0],
+        date: getTodayDate(),
         transactionTypeId: '',
         description: '',
         amount: '',
@@ -66,7 +69,7 @@ export function useTransactionForm({ transaction, onSubmit }: UseTransactionForm
     formState.setIsSubmitting(true);
     try {
       const transactionData = transactionService.transformFormToTransaction(formState.formData);
-      
+
       if (transaction) {
         // Edit mode
         await transactionService.update(transaction.id, transactionData);
@@ -74,7 +77,7 @@ export function useTransactionForm({ transaction, onSubmit }: UseTransactionForm
         // Create mode
         await transactionService.create(transactionData);
       }
-      
+
       if (onSubmit) {
         await onSubmit(transactionData);
       }

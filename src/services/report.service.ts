@@ -9,7 +9,7 @@ import type {
 import { AccountType, AssetType, CurrencyCode, Group } from '../types/enums';
 import { CalculationService } from './calculation.service';
 import { getAssetCurrentValue } from '../utils/asset.utils';
-import { getRateForMonth } from '../utils/exchangeRate.utils';
+import { getRateSync } from '../utils/exchangeRateLookup';
 
 export interface BalanceSheetData {
   assets: AssetGroup[];
@@ -115,16 +115,19 @@ export class ReportService {
    * @param manualAssets All manual assets
    * @param transactions All transactions up to the date
    * @param asOfDate Date to calculate balance sheet for (ISO string)
-   * @param baseCurrency Optional base currency for conversion
+   * @param baseCurrency Base currency for conversion
+   * @param ratesMap Pre-loaded exchange rates map (required)
    * @returns Balance sheet data
    */
-  async calculateBalanceSheet(
+  calculateBalanceSheet(
     accounts: Account[],
     manualAssets: ManualAsset[],
     transactions: Transaction[],
     asOfDate: string,
-    baseCurrency: CurrencyCode
-  ): Promise<BalanceSheetData> {
+    baseCurrency: CurrencyCode,
+    ratesMap: Map<string, number>
+  ): BalanceSheetData {
+
     // Filter transactions up to the date
     const filteredTransactions = asOfDate
       ? transactions.filter((t) => t.date <= asOfDate)
@@ -137,19 +140,21 @@ export class ReportService {
     const rateMonth = asOfDate.substring(0, 7);
 
     // Group assets by type
-    const assetGroups = await this.groupAssets(
+    const assetGroups = this.groupAssets(
       accounts,
       filteredManualAssets,
       filteredTransactions,
       baseCurrency,
-      rateMonth
+      rateMonth,
+      ratesMap
     );
-    const liabilityGroups = await this.groupLiabilities(
+    const liabilityGroups = this.groupLiabilities(
       accounts,
       filteredManualAssets,
       filteredTransactions,
       baseCurrency,
-      rateMonth
+      rateMonth,
+      ratesMap
     );
 
     const totalAssets = assetGroups.reduce((sum, group) => sum + group.total, 0);
@@ -168,13 +173,14 @@ export class ReportService {
   /**
    * Group assets by type
    */
-  private async groupAssets(
+  private groupAssets(
     accounts: Account[],
     manualAssets: ManualAsset[],
     transactions: Transaction[],
     baseCurrency: CurrencyCode,
-    rateMonth: string
-  ): Promise<AssetGroup[]> {
+    rateMonth: string,
+    ratesMap: Map<string, number>
+  ): AssetGroup[] {
     const groups: Map<string, AssetItem[]> = new Map();
 
     // Add account assets (positive balance accounts, excluding credit cards and loans)
@@ -194,7 +200,7 @@ export class ReportService {
 
         // Apply currency conversion if base currency is specified
         if (account.currencyCode !== baseCurrency) {
-          const rate = await getRateForMonth(rateMonth, account.currencyCode, baseCurrency);
+          const rate = getRateSync(ratesMap, rateMonth, account.currencyCode, baseCurrency);
           convertedValue = balance * rate;
           conversionRate = rate;
         }
@@ -229,7 +235,7 @@ export class ReportService {
 
       // Apply currency conversion if base currency is specified
       if (asset.currencyCode !== baseCurrency) {
-        const rate = await getRateForMonth(rateMonth, asset.currencyCode, baseCurrency);
+        const rate = getRateSync(ratesMap, rateMonth, asset.currencyCode, baseCurrency);
         convertedValue = assetValue * rate;
         conversionRate = rate;
       }
@@ -257,13 +263,14 @@ export class ReportService {
   /**
    * Group liabilities by type
    */
-  private async groupLiabilities(
+  private groupLiabilities(
     accounts: Account[],
     manualAssets: ManualAsset[],
     transactions: Transaction[],
     baseCurrency: CurrencyCode,
-    rateMonth: string
-  ): Promise<AssetGroup[]> {
+    rateMonth: string,
+    ratesMap: Map<string, number>
+  ): AssetGroup[] {
     const groups: Map<string, AssetItem[]> = new Map();
 
     // Add credit cards and loans (always show as liabilities)
@@ -285,7 +292,7 @@ export class ReportService {
 
         // Apply currency conversion if base currency is specified
         if (account.currencyCode !== baseCurrency) {
-          const rate = await getRateForMonth(rateMonth, account.currencyCode, baseCurrency);
+          const rate = getRateSync(ratesMap, rateMonth, account.currencyCode, baseCurrency);
           convertedValue = liability * rate;
           conversionRate = rate;
         }
@@ -321,7 +328,7 @@ export class ReportService {
 
         // Apply currency conversion if base currency is specified
         if (account.currencyCode !== baseCurrency) {
-          const rate = await getRateForMonth(rateMonth, account.currencyCode, baseCurrency);
+          const rate = getRateSync(ratesMap, rateMonth, account.currencyCode, baseCurrency);
           convertedValue = liability * rate;
           conversionRate = rate;
         }
@@ -357,11 +364,9 @@ export class ReportService {
 
       // Apply currency conversion if base currency is specified
       if (asset.currencyCode !== baseCurrency) {
-        const rate = await getRateForMonth(rateMonth, asset.currencyCode, baseCurrency);
-        if (rate !== null) {
-          convertedValue = liability * rate;
-          conversionRate = rate;
-        }
+        const rate = getRateSync(ratesMap, rateMonth, asset.currencyCode, baseCurrency);
+        convertedValue = liability * rate;
+        conversionRate = rate;
       }
 
       groups.get(groupName)!.push({
@@ -429,20 +434,21 @@ export class ReportService {
    * @param startDate Start date for trend (ISO string)
    * @param endDate End date for trend (ISO string)
    * @param interval Number of days between data points (default: 30)
-   * @param baseCurrency Optional base currency for conversion
+   * @param baseCurrency Base currency for conversion
+   * @param ratesMap Pre-loaded exchange rates map (required)
    * @returns Array of net worth trend points
    */
-  async calculateNetWorthTrend(
+  calculateNetWorthTrend(
     accounts: Account[],
     manualAssets: ManualAsset[],
     transactions: Transaction[],
     startDate: string,
     endDate: string,
-    interval: number = 30,
-    baseCurrency: CurrencyCode
-  ): Promise<NetWorthTrendPoint[]> {
+    interval: number,
+    baseCurrency: CurrencyCode,
+    ratesMap: Map<string, number>
+  ): NetWorthTrendPoint[] {
     const trend: NetWorthTrendPoint[] = [];
-    // Parse dates as local dates to avoid timezone issues
     const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
     const [endYear, endMonth, endDay] = endDate.split('-').map(Number);
     const start = new Date(startYear, startMonth - 1, startDay);
@@ -452,12 +458,13 @@ export class ReportService {
     while (currentDate <= end) {
       // Format date in local timezone
       const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
-      const balanceSheet = await this.calculateBalanceSheet(
+      const balanceSheet = this.calculateBalanceSheet(
         accounts,
         manualAssets,
         transactions,
         dateStr,
-        baseCurrency
+        baseCurrency,
+        ratesMap
       );
 
       trend.push({
@@ -473,12 +480,13 @@ export class ReportService {
     // Always include the end date as the final data point if not already included
     const lastPoint = trend[trend.length - 1];
     if (lastPoint && lastPoint.date !== endDate) {
-      const balanceSheet = await this.calculateBalanceSheet(
+      const balanceSheet = this.calculateBalanceSheet(
         accounts,
         manualAssets,
         transactions,
         endDate,
-        baseCurrency
+        baseCurrency,
+        ratesMap
       );
 
       trend.push({
@@ -495,38 +503,41 @@ export class ReportService {
   /**
    * Calculate month-over-month comparison
    */
-  async calculateMonthOverMonthComparison(
+  calculateMonthOverMonthComparison(
     accounts: Account[],
     manualAssets: ManualAsset[],
     transactions: Transaction[],
     currentDate: string,
-    baseCurrency: CurrencyCode
-  ): Promise<{
+    baseCurrency: CurrencyCode,
+    ratesMap: Map<string, number>
+  ): {
     current: BalanceSheetData;
     previous: BalanceSheetData;
     change: number;
     changePercent: number;
-  }> {
-    const current = await this.calculateBalanceSheet(
-      accounts,
-      manualAssets,
-      transactions,
-      currentDate,
-      baseCurrency
-    );
-
+  } {
     // Calculate previous month date (parse as local date to avoid timezone issues)
     const [year, month, day] = currentDate.split('-').map(Number);
     const currentDateObj = new Date(year, month - 1, day);
     currentDateObj.setMonth(currentDateObj.getMonth() - 1);
     const previousDate = `${currentDateObj.getFullYear()}-${String(currentDateObj.getMonth() + 1).padStart(2, '0')}-${String(currentDateObj.getDate()).padStart(2, '0')}`;
 
-    const previous = await this.calculateBalanceSheet(
+    const current = this.calculateBalanceSheet(
+      accounts,
+      manualAssets,
+      transactions,
+      currentDate,
+      baseCurrency,
+      ratesMap
+    );
+
+    const previous = this.calculateBalanceSheet(
       accounts,
       manualAssets,
       transactions,
       previousDate,
-      baseCurrency
+      baseCurrency,
+      ratesMap
     );
 
     const change = current.netWorth - previous.netWorth;
@@ -543,38 +554,41 @@ export class ReportService {
   /**
    * Calculate year-over-year comparison
    */
-  async calculateYearOverYearComparison(
+  calculateYearOverYearComparison(
     accounts: Account[],
     manualAssets: ManualAsset[],
     transactions: Transaction[],
     currentDate: string,
-    baseCurrency: CurrencyCode
-  ): Promise<{
+    baseCurrency: CurrencyCode,
+    ratesMap: Map<string, number>
+  ): {
     current: BalanceSheetData;
     previous: BalanceSheetData;
     change: number;
     changePercent: number;
-  }> {
-    const current = await this.calculateBalanceSheet(
-      accounts,
-      manualAssets,
-      transactions,
-      currentDate,
-      baseCurrency
-    );
-
+  } {
     // Calculate previous year date (parse as local date to avoid timezone issues)
     const [year, month, day] = currentDate.split('-').map(Number);
     const currentDateObj = new Date(year, month - 1, day);
     currentDateObj.setFullYear(currentDateObj.getFullYear() - 1);
     const previousDate = `${currentDateObj.getFullYear()}-${String(currentDateObj.getMonth() + 1).padStart(2, '0')}-${String(currentDateObj.getDate()).padStart(2, '0')}`;
 
-    const previous = await this.calculateBalanceSheet(
+    const current = this.calculateBalanceSheet(
+      accounts,
+      manualAssets,
+      transactions,
+      currentDate,
+      baseCurrency,
+      ratesMap
+    );
+
+    const previous = this.calculateBalanceSheet(
       accounts,
       manualAssets,
       transactions,
       previousDate,
-      baseCurrency
+      baseCurrency,
+      ratesMap
     );
 
     const change = current.netWorth - previous.netWorth;
@@ -596,18 +610,20 @@ export class ReportService {
    * @param startDate Start date (YYYY-MM-DD)
    * @param endDate End date (YYYY-MM-DD)
    * @param accounts All accounts (needed for currency lookup)
-   * @param baseCurrency Optional base currency for conversion
+   * @param baseCurrency Base currency for conversion
+   * @param ratesMap Pre-loaded exchange rates map (required)
    * @returns Cash flow data grouped by category
    */
-  async calculateCashFlow(
+  calculateCashFlow(
     transactions: Transaction[],
     transactionTypes: TransactionType[],
     categories: Category[],
     startDate: string,
     endDate: string,
-    accounts: Account[] = [],
-    baseCurrency: CurrencyCode
-  ): Promise<CashFlowData> {
+    accounts: Account[],
+    baseCurrency: CurrencyCode,
+    ratesMap: Map<string, number>
+  ): CashFlowData {
     // Filter transactions in date range and exclude transfers
     const filteredTransactions = transactions.filter(
       (t) => t.date >= startDate && t.date <= endDate
@@ -648,10 +664,8 @@ export class ReportService {
       let convertedAmount = transaction.amount;
       if (account && account.currencyCode !== baseCurrency) {
         const month = transaction.date.substring(0, 7); // YYYY-MM
-        const rate = await getRateForMonth(month, account.currencyCode, baseCurrency);
-        if (rate !== null) {
-          convertedAmount = transaction.amount * rate;
-        }
+        const rate = getRateSync(ratesMap, month, account.currencyCode, baseCurrency);
+        convertedAmount = transaction.amount * rate;
       }
 
       const targetMap =
@@ -704,19 +718,21 @@ export class ReportService {
    * @param endDate End date (YYYY-MM-DD)
    * @param intervalDays Interval between data points in days
    * @param accounts All accounts (needed for currency lookup)
-   * @param baseCurrency Optional base currency for conversion
+   * @param baseCurrency Base currency for conversion
+   * @param ratesMap Pre-loaded exchange rates map (required)
    * @returns Array of cash flow trend points
    */
-  async calculateCashFlowTrend(
+  calculateCashFlowTrend(
     transactions: Transaction[],
     transactionTypes: TransactionType[],
     categories: Category[],
     startDate: string,
     endDate: string,
-    intervalDays: number = 30,
-    accounts: Account[] = [],
-    baseCurrency: CurrencyCode
-  ): Promise<CashFlowTrendPoint[]> {
+    intervalDays: number,
+    accounts: Account[],
+    baseCurrency: CurrencyCode,
+    ratesMap: Map<string, number>
+  ): CashFlowTrendPoint[] {
     // Parse dates
     const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
     const [endYear, endMonth, endDay] = endDate.split('-').map(Number);
@@ -738,14 +754,15 @@ export class ReportService {
       const periodEndStr = `${periodEnd.getFullYear()}-${String(periodEnd.getMonth() + 1).padStart(2, '0')}-${String(periodEnd.getDate()).padStart(2, '0')}`;
 
       // Calculate cash flow for this period
-      const cashFlow = await this.calculateCashFlow(
+      const cashFlow = this.calculateCashFlow(
         transactions,
         transactionTypes,
         categories,
         periodStartStr,
         periodEndStr,
         accounts,
-        baseCurrency
+        baseCurrency,
+        ratesMap
       );
 
       trendPoints.push({
@@ -771,19 +788,21 @@ export class ReportService {
    * @param startDate Start date (YYYY-MM-DD)
    * @param endDate End date (YYYY-MM-DD)
    * @param accounts All accounts (needed for currency lookup)
-   * @param baseCurrency Optional base currency for conversion
+   * @param baseCurrency Base currency for conversion
+   * @param ratesMap Pre-loaded exchange rates map (required)
    * @returns Budget performance data
    */
-  async calculateBudgetPerformance(
+  calculateBudgetPerformance(
     budgets: Budget[],
     transactions: Transaction[],
     transactionTypes: TransactionType[],
     categories: Category[],
     startDate: string,
     endDate: string,
-    accounts: Account[] = [],
-    baseCurrency: CurrencyCode
-  ): Promise<BudgetPerformanceData> {
+    accounts: Account[],
+    baseCurrency: CurrencyCode,
+    ratesMap: Map<string, number>
+  ): BudgetPerformanceData {
     const items: BudgetPerformanceItem[] = [];
     let totalBudgetedIncome = 0;
     let totalActualIncome = 0;
@@ -815,10 +834,8 @@ export class ReportService {
       let convertedBudgetedAmount = budgetedAmount;
       if (budget.currencyCode !== baseCurrency) {
         const month = startDate.slice(0, 7);
-        const rate = await getRateForMonth(month, budget.currencyCode, baseCurrency);
-        if (rate !== null) {
-          convertedBudgetedAmount = budgetedAmount * rate;
-        }
+        const rate = getRateSync(ratesMap, month, budget.currencyCode, baseCurrency);
+        convertedBudgetedAmount = budgetedAmount * rate;
       }
 
       // Calculate actual amount with currency conversion
@@ -836,10 +853,8 @@ export class ReportService {
 
         if (account && account.currencyCode !== baseCurrency) {
           const month = transaction.date.slice(0, 7);
-          const rate = await getRateForMonth(month, account.currencyCode, baseCurrency);
-          if (rate !== null) {
-            convertedAmount = transaction.amount * rate;
-          }
+          const rate = getRateSync(ratesMap, month, account.currencyCode, baseCurrency);
+          convertedAmount = transaction.amount * rate;
         }
 
         actualAmount += convertedAmount;
@@ -921,20 +936,22 @@ export class ReportService {
    * @param endDate End date (YYYY-MM-DD)
    * @param intervalDays Interval between data points in days
    * @param accounts All accounts (needed for currency lookup)
-   * @param baseCurrency Optional base currency for conversion
+   * @param baseCurrency Base currency for conversion
+   * @param ratesMap Pre-loaded exchange rates map (required)
    * @returns Array of budget trend points
    */
-  async calculateBudgetTrend(
+  calculateBudgetTrend(
     budgets: Budget[],
     transactions: Transaction[],
     transactionTypes: TransactionType[],
     categories: Category[],
     startDate: string,
     endDate: string,
-    intervalDays: number = 30,
-    accounts: Account[] = [],
-    baseCurrency: CurrencyCode
-  ): Promise<BudgetTrendPoint[]> {
+    intervalDays: number,
+    accounts: Account[],
+    baseCurrency: CurrencyCode,
+    ratesMap: Map<string, number>
+  ): BudgetTrendPoint[] {
     // Parse dates
     const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
     const [endYear, endMonth, endDay] = endDate.split('-').map(Number);
@@ -959,7 +976,7 @@ export class ReportService {
       const periodEndStr = `${periodEnd.getFullYear()}-${String(periodEnd.getMonth() + 1).padStart(2, '0')}-${String(periodEnd.getDate()).padStart(2, '0')}`;
 
       // Calculate budget performance from START to this point (cumulative)
-      const performance = await this.calculateBudgetPerformance(
+      const performance = this.calculateBudgetPerformance(
         budgets,
         transactions,
         transactionTypes,
@@ -967,7 +984,8 @@ export class ReportService {
         startDate, // Always from the start
         periodEndStr, // To this period end
         accounts,
-        baseCurrency
+        baseCurrency,
+        ratesMap
       );
 
       // Use cumulative totals for expenses and income

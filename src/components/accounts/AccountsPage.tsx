@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  Box,
-  Typography,
-  Button,
-} from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import type { Account } from '../../types/models';
 import { AccountList } from './AccountList';
@@ -30,7 +26,7 @@ export const AccountsPage: React.FC = () => {
   const handleDelete = (account: Account) => {
     setDeleteAccount(account);
   };
-  
+
   const handleConfirmDelete = async () => {
     if (deleteAccount?.id) {
       await accountService.delete(deleteAccount.id);
@@ -65,7 +61,7 @@ export const AccountsPage: React.FC = () => {
         onClose={accountDialog.close}
         onSubmit={handleSubmit}
       />
-      
+
       <ConfirmDialog
         open={!!deleteAccount}
         title="Delete Account"

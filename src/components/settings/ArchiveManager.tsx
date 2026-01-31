@@ -219,7 +219,7 @@ export const ArchiveManager: React.FC = () => {
           Years that have been removed from the main file through the archive process.
         </Typography>
 
-        {archivedYears.length === 0 ? (
+        {!archivedYears || archivedYears.length === 0 ? (
           <Alert severity="info" icon={<ArchiveIcon />}>
             No years have been archived yet. When you have 3+ years of data, you can archive older
             years to keep your main file lightweight.

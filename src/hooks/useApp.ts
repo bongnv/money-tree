@@ -7,40 +7,39 @@ interface SnackbarState {
   severity: AlertColor;
 }
 
-interface SyncConnectionState {
+// Simplified sync status for UI display
+export type SyncUIStatus =
+  | 'not-connected' // No provider or file configured
+  | 'connected' // Provider and file set, but not yet synced
+  | 'syncing' // Currently syncing
+  | 'synced' // Successfully synced
+  | 'error'; // Sync error occurred
+
+interface SyncStatusState {
+  status: SyncUIStatus;
+  errorMessage: string | null;
   providerName: string | null;
   fileName: string | null;
 }
 
-interface SyncStatusState {
-  isSyncing: boolean;
-  isInitializing: boolean;
-  lastSyncError: string | null;
-  remoteLastModified: string | null;
-}
-
 interface AppState {
-  // Loading states
-  isLoading: boolean;
-  setLoading: (loading: boolean) => void;
-
   // Snackbar
   snackbar: SnackbarState;
   showSnackbar: (message: string, severity?: AlertColor) => void;
   hideSnackbar: () => void;
 
-  // Welcome dialog
-  welcomeDismissed: boolean;
-  setWelcomeDismissed: (dismissed: boolean) => void;
+  // Dialog visibility
+  showWelcomeDialog: boolean;
+  setShowWelcomeDialog: (show: boolean) => void;
+  showFileSelection: boolean;
+  setShowFileSelection: (show: boolean) => void;
 
-  // Sync connection state
-  syncConnection: SyncConnectionState;
-  setSyncConnection: (connection: Partial<SyncConnectionState>) => void;
-  isConnected: boolean; // Computed from syncConnection
-
-  // Sync status state
+  // Sync status for UI
   syncStatus: SyncStatusState;
   setSyncStatus: (status: Partial<SyncStatusState>) => void;
+
+  // Computed convenience properties
+  isConnected: boolean;
 }
 
 // Module-level state (singleton pattern)
@@ -53,32 +52,21 @@ function notifyListeners() {
 
 function getAppState(): AppState {
   if (!appState) {
-    let isLoading = false;
-    let welcomeDismissed = false;
+    let showWelcomeDialog = false;
+    let showFileSelection = false;
     let snackbar: SnackbarState = {
       open: false,
       message: '',
       severity: 'info',
     };
-    let syncConnection: SyncConnectionState = {
+    let syncStatus: SyncStatusState = {
+      status: 'not-connected',
+      errorMessage: null,
       providerName: null,
       fileName: null,
     };
-    let syncStatus: SyncStatusState = {
-      isSyncing: false,
-      isInitializing: false,
-      lastSyncError: null,
-      remoteLastModified: null,
-    };
 
     appState = {
-      get isLoading() {
-        return isLoading;
-      },
-      setLoading: (loading: boolean) => {
-        isLoading = loading;
-        notifyListeners();
-      },
       get snackbar() {
         return snackbar;
       },
@@ -90,18 +78,18 @@ function getAppState(): AppState {
         snackbar = { ...snackbar, open: false };
         notifyListeners();
       },
-      get welcomeDismissed() {
-        return welcomeDismissed;
+      get showWelcomeDialog() {
+        return showWelcomeDialog;
       },
-      setWelcomeDismissed: (dismissed: boolean) => {
-        welcomeDismissed = dismissed;
+      setShowWelcomeDialog: (show: boolean) => {
+        showWelcomeDialog = show;
         notifyListeners();
       },
-      get syncConnection() {
-        return syncConnection;
+      get showFileSelection() {
+        return showFileSelection;
       },
-      setSyncConnection: (connection: Partial<SyncConnectionState>) => {
-        syncConnection = { ...syncConnection, ...connection };
+      setShowFileSelection: (show: boolean) => {
+        showFileSelection = show;
         notifyListeners();
       },
       get syncStatus() {
@@ -109,10 +97,11 @@ function getAppState(): AppState {
       },
       setSyncStatus: (status: Partial<SyncStatusState>) => {
         syncStatus = { ...syncStatus, ...status };
+
         notifyListeners();
       },
       get isConnected() {
-        return Boolean(syncConnection.providerName && syncConnection.fileName);
+        return syncStatus.status !== 'not-connected';
       },
     };
   }
@@ -137,24 +126,16 @@ export function useApp(): AppState {
   });
 
   return {
-    isLoading: state.isLoading,
-    setLoading: useCallback((loading: boolean) => state.setLoading(loading), [state]),
     snackbar: state.snackbar,
     showSnackbar: useCallback(
       (message: string, severity?: AlertColor) => state.showSnackbar(message, severity),
       [state]
     ),
     hideSnackbar: useCallback(() => state.hideSnackbar(), [state]),
-    welcomeDismissed: state.welcomeDismissed,
-    setWelcomeDismissed: useCallback(
-      (dismissed: boolean) => state.setWelcomeDismissed(dismissed),
-      [state]
-    ),
-    syncConnection: state.syncConnection,
-    setSyncConnection: useCallback(
-      (connection: Partial<SyncConnectionState>) => state.setSyncConnection(connection),
-      [state]
-    ),
+    showWelcomeDialog: state.showWelcomeDialog,
+    setShowWelcomeDialog: useCallback((show: boolean) => state.setShowWelcomeDialog(show), [state]),
+    showFileSelection: state.showFileSelection,
+    setShowFileSelection: useCallback((show: boolean) => state.setShowFileSelection(show), [state]),
     syncStatus: state.syncStatus,
     setSyncStatus: useCallback(
       (status: Partial<SyncStatusState>) => state.setSyncStatus(status),

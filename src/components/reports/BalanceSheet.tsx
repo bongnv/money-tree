@@ -29,7 +29,7 @@ type ComparisonType = 'none' | 'month' | 'year';
 export const BalanceSheet: React.FC = () => {
   const [historyDialogAssetId, setHistoryDialogAssetId] = useState<string | null>(null);
   const [uiComparisonType, setUiComparisonType] = useState<ComparisonType>('none');
-  
+
   const {
     balanceSheet,
     netWorthTrend,
@@ -66,14 +66,15 @@ export const BalanceSheet: React.FC = () => {
   const handleCloseHistoryDialog = () => {
     setHistoryDialogAssetId(null);
   };
-  
+
   // Transform netWorthTrend data for LineChart
-  const chartData = netWorthTrend?.map(point => ({
-    name: point.date,
-    'Net Worth': point.netWorth,
-    'Assets': point.assets,
-    'Liabilities': point.liabilities,
-  })) || [];
+  const chartData =
+    netWorthTrend?.map((point) => ({
+      name: point.date,
+      'Net Worth': point.netWorth,
+      Assets: point.assets,
+      Liabilities: point.liabilities,
+    })) || [];
 
   return (
     <Box>
@@ -137,7 +138,9 @@ export const BalanceSheet: React.FC = () => {
       {!balanceSheet ? (
         <Paper sx={{ p: 3, textAlign: 'center' }}>
           <Typography color="text.secondary">
-            {isLoadingBalanceSheet ? 'Loading balance sheet...' : 'No data available for selected date'}
+            {isLoadingBalanceSheet
+              ? 'Loading balance sheet...'
+              : 'No data available for selected date'}
           </Typography>
         </Paper>
       ) : (

@@ -23,28 +23,29 @@ export function useAssetForm({ asset, mode = 'create', onSubmit }: UseAssetFormP
   const isUpdateValueMode = mode === 'update-value';
 
   // Initialize form data based on mode
-  const initialData = isUpdateValueMode && asset
-    ? {
-        date: getTodayDate(),
-        value: '',
-        note: '',
-      }
-    : asset
+  const initialData =
+    isUpdateValueMode && asset
       ? {
-          name: asset.name,
-          type: asset.type,
-          currencyCode: asset.currencyCode,
-          value: asset.valueHistory[asset.valueHistory.length - 1]?.value.toString() || '0',
-          date: asset.valueHistory[asset.valueHistory.length - 1]?.date || getTodayDate(),
-          notes: asset.valueHistory[asset.valueHistory.length - 1]?.notes,
-        }
-      : {
-          name: '',
-          type: AssetType.OTHER,
-          currencyCode: CurrencyCode.USD,
-          value: '0',
           date: getTodayDate(),
-        };
+          value: '',
+          note: '',
+        }
+      : asset
+        ? {
+            name: asset.name,
+            type: asset.type,
+            currencyCode: asset.currencyCode,
+            value: asset.valueHistory[asset.valueHistory.length - 1]?.value.toString() || '0',
+            date: asset.valueHistory[asset.valueHistory.length - 1]?.date || getTodayDate(),
+            notes: asset.valueHistory[asset.valueHistory.length - 1]?.notes,
+          }
+        : {
+            name: '',
+            type: AssetType.OTHER,
+            currencyCode: CurrencyCode.USD,
+            value: '0',
+            date: getTodayDate(),
+          };
 
   // Custom validation function
   const validate = (data: any) => {
@@ -93,7 +94,7 @@ export function useAssetForm({ asset, mode = 'create', onSubmit }: UseAssetFormP
         });
       } else {
         const assetData = assetService.transformFormToAsset(formState.formData as AssetFormData);
-        
+
         if (asset && mode === 'edit') {
           // Edit mode
           await assetService.update(asset.id, assetData);
@@ -102,7 +103,7 @@ export function useAssetForm({ asset, mode = 'create', onSubmit }: UseAssetFormP
           await assetService.create(assetData);
         }
       }
-      
+
       if (onSubmit) {
         await onSubmit(formState.formData);
       }

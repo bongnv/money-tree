@@ -207,7 +207,7 @@ export class CloudSyncService {
       {
         key: 'archivedYears',
         value: metadataResult.archivedYears,
-      }
+      },
     ]);
 
     const current = await this.db.syncMetadata.get('lastModified');
@@ -405,6 +405,7 @@ export class CloudSyncService {
       };
     }
 
+
     const { hasLocalChanges, mergedData } = await this.downloadFromCloud(localSnapshot);
 
     // Only upload if we have local changes that are newer than remote
@@ -414,6 +415,7 @@ export class CloudSyncService {
     }
 
     // No local changes - data is in sync
+
     return {
       mergedLastModified: mergedData.lastModified,
       fileItem: this.fileItem,

@@ -7,7 +7,9 @@ interface CategoryDialogProps {
   open: boolean;
   category?: Category;
   onClose: () => void;
-  onSubmit: (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
+  onSubmit: (
+    category: Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
+  ) => Promise<void>;
 }
 
 export const CategoryDialog: React.FC<CategoryDialogProps> = ({

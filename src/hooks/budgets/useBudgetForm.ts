@@ -6,7 +6,9 @@ import { BudgetPeriod, CurrencyCode } from '@/types/enums';
 
 interface UseBudgetFormProps {
   budget?: Budget;
-  onSubmit?: (budgetData: Omit<Budget, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
+  onSubmit?: (
+    budgetData: Omit<Budget, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
+  ) => Promise<void>;
 }
 
 /**
@@ -63,7 +65,7 @@ export function useBudgetForm({ budget, onSubmit }: UseBudgetFormProps = {}) {
     formState.setIsSubmitting(true);
     try {
       const budgetData = budgetService.transformFormToBudget(formState.formData);
-      
+
       if (budget) {
         // Edit mode
         await budgetService.update(budget.id, budgetData);
@@ -71,7 +73,7 @@ export function useBudgetForm({ budget, onSubmit }: UseBudgetFormProps = {}) {
         // Create mode
         await budgetService.create(budgetData);
       }
-      
+
       if (onSubmit) {
         await onSubmit(budgetData);
       }

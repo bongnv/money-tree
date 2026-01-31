@@ -136,8 +136,7 @@ export const mockAssets: ManualAsset[] = [
 
 export const mockAppContext = {
   showSnackbar: jest.fn(),
-  isLoading: false,
-  setLoading: jest.fn(),
+
   isSyncing: false,
   setIsSyncing: jest.fn(),
   snackbar: { open: false, message: '', severity: 'info' as const },

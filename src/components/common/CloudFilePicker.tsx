@@ -32,7 +32,6 @@ interface CloudFilePickerProps {
   open: boolean;
   providerName: string;
   onListItems: (parent?: CloudItem) => Promise<CloudItem[]>;
-  mode?: 'open' | 'create'; // 'open' = select existing file, 'create' = select folder to create in
   onFileSelected: (fileItem: CloudItem) => void;
   onCancel: () => void;
   defaultFileName?: string;
@@ -42,7 +41,6 @@ export function CloudFilePicker({
   open,
   providerName,
   onListItems,
-  mode = 'open',
   onFileSelected,
   onCancel,
   defaultFileName = 'money-tree.json',
@@ -160,13 +158,10 @@ export function CloudFilePicker({
     setNewFileName(defaultFileName);
   };
 
-  // Filter items based on mode
-  // In 'open' mode: show both folders (for navigation) and JSON files (for selection)
-  // In 'create' mode: show only folders (for selection)
-  const jsonFiles =
-    mode === 'open'
-      ? items.filter((item) => !item.isFolder && item.name.toLowerCase().endsWith('.json'))
-      : [];
+  // Show both folders (for navigation) and JSON files (for selection)
+  const jsonFiles = items.filter(
+    (item) => !item.isFolder && item.name.toLowerCase().endsWith('.json')
+  );
   const folders = items.filter((item) => item.isFolder);
 
   // Check if file already exists in current folder
@@ -282,23 +277,12 @@ export function CloudFilePicker({
       </DialogContent>
       <DialogActions>
         <Button onClick={onCancel}>Cancel</Button>
-        {mode === 'open' ? (
-          <Button
-            variant="contained"
-            onClick={handleSelectFile}
-            disabled={!selectedFile || loading}
-          >
-            Select File
-          </Button>
-        ) : (
-          <Button
-            variant="contained"
-            onClick={() => setShowFileNameDialog(true)}
-            disabled={loading}
-          >
-            Create Here
-          </Button>
-        )}
+        <Button variant="outlined" onClick={() => setShowFileNameDialog(true)} disabled={loading}>
+          Create File
+        </Button>
+        <Button variant="contained" onClick={handleSelectFile} disabled={!selectedFile || loading}>
+          Select File
+        </Button>
       </DialogActions>
       <Dialog open={showFileNameDialog} onClose={handleFileNameDialogClose} maxWidth="sm" fullWidth>
         <DialogTitle>Create New File</DialogTitle>

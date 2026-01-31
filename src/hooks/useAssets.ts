@@ -9,9 +9,9 @@ import type { ManualAsset } from '../types/models';
 /**
  * Get all active assets
  */
-export function useAssets(): ManualAsset[] {
+export function useAssets(): ManualAsset[] | undefined {
   const assetService = useAssetService();
-  return useLiveQuery(() => assetService.getActive()) ?? [];
+  return useLiveQuery(() => assetService.getActive());
 }
 
 /**

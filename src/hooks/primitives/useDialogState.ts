@@ -8,7 +8,7 @@ export type DialogMode = 'create' | 'edit' | 'view';
 /**
  * Generic dialog state management hook
  * Handles open/close, mode (create/edit/view), and selected item
- * 
+ *
  * @template T - The type of item being displayed/edited in the dialog
  * @returns Dialog state and handlers
  */
@@ -75,12 +75,12 @@ export function useDialogState<T = any>() {
     isOpen,
     mode,
     selectedItem,
-    
+
     // Computed helpers
     isCreateMode: mode === 'create',
     isEditMode: mode === 'edit',
     isViewMode: mode === 'view',
-    
+
     // Actions
     openCreate,
     openEdit,

@@ -1,9 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Box,
-  Typography,
-  Button,
-} from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import type { ManualAsset } from '../../types/models';
 import { ManualAssetList } from './ManualAssetList';

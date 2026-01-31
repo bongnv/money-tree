@@ -1,6 +1,6 @@
 import type { Transaction, Account, Budget, ManualAsset, TransactionType } from '../types/models';
 import { getAssetCurrentValue } from '../utils/asset.utils';
-import { getRateForMonth } from '../utils/exchangeRate.utils';
+import { getRateSync } from '../utils/exchangeRateLookup';
 import { CurrencyCode, Group } from '../types/enums';
 
 /**
@@ -220,17 +220,19 @@ export class CalculationService {
    * @param accounts All accounts
    * @param transactions All transactions
    * @param manualAssets All manual assets
-   * @param baseCurrency Optional base currency for conversion (if null, no conversion)
+   * @param baseCurrency Base currency for conversion
    * @param currentMonth Current month in YYYY-MM format for rate lookup
-   * @returns Total net worth (in base currency if provided)
+   * @param ratesMap Pre-loaded exchange rates map (required)
+   * @returns Total net worth (in base currency)
    */
-  async calculateNetWorth(
+  calculateNetWorth(
     accounts: Account[],
     transactions: Transaction[],
     manualAssets: ManualAsset[],
     baseCurrency: CurrencyCode,
-    currentMonth: string
-  ): Promise<number> {
+    currentMonth: string,
+    ratesMap: Map<string, number>
+  ): number {
     const accountBalances = this.calculateAccountBalances(accounts, transactions);
 
     let totalAccountBalance = 0;
@@ -238,12 +240,7 @@ export class CalculationService {
       const balance = accountBalances.get(account.id) || 0;
 
       if (account.currencyCode !== baseCurrency) {
-        const rate = await getRateForMonth(currentMonth, account.currencyCode, baseCurrency);
-        if (rate === null) {
-          throw new Error(
-            `Missing exchange rate for ${account.currencyCode} → ${baseCurrency} in ${currentMonth}. Please fetch exchange rates in Settings → Exchange Rates.`
-          );
-        }
+        const rate = getRateSync(ratesMap, currentMonth, account.currencyCode, baseCurrency);
         totalAccountBalance += balance * rate;
       } else {
         totalAccountBalance += balance;
@@ -253,12 +250,7 @@ export class CalculationService {
     for (const asset of manualAssets) {
       const assetValue = getAssetCurrentValue(asset);
       if (asset.currencyCode !== baseCurrency) {
-        const rate = await getRateForMonth(currentMonth, asset.currencyCode, baseCurrency);
-        if (rate === null) {
-          throw new Error(
-            `Missing exchange rate for ${asset.currencyCode.toUpperCase()} → ${baseCurrency.toUpperCase()} in ${currentMonth}. Please fetch exchange rates in Settings → Exchange Rates.`
-          );
-        }
+        const rate = getRateSync(ratesMap, currentMonth, asset.currencyCode, baseCurrency);
         totalAssets += assetValue * rate;
       } else {
         totalAssets += assetValue;
@@ -284,15 +276,17 @@ export class CalculationService {
   /**
    * Convert a transaction amount to base currency
    * @param transaction Transaction to convert
+   * @param ratesMap Pre-loaded exchange rates map (required)
    * @param accounts List of accounts to lookup transaction account
    * @param baseCurrency Target currency code
    * @returns Converted amount, or original amount if conversion not needed/possible
    */
-  async convertTransactionAmount(
+  convertTransactionAmount(
     transaction: Transaction,
+    ratesMap: Map<string, number>,
     accounts: Account[],
     baseCurrency: CurrencyCode
-  ): Promise<number> {
+  ): number {
     // Find the account for this transaction
     const accountId = transaction.fromAccountId || transaction.toAccountId;
     const account = accounts.find((a) => a.id === accountId);
@@ -304,40 +298,32 @@ export class CalculationService {
 
     // Convert using transaction month
     const month = transaction.date.slice(0, 7); // YYYY-MM
-    const rate = await getRateForMonth(month, account.currencyCode, baseCurrency);
-    if (rate !== null) {
-      return transaction.amount * rate;
-    }
-
-    return transaction.amount;
+    const rate = getRateSync(ratesMap, month, account.currencyCode, baseCurrency);
+    return transaction.amount * rate;
   }
 
   /**
    * Convert a budget amount to base currency
    * @param budget Budget to convert
-   * @param month Month for exchange rate (usually period start month)
+   * @param month Month for exchange rate (YYYY-MM format)
    * @param baseCurrency Target currency code
-   * @returns Converted amount, or original amount if conversion not needed/possible
+   * @param ratesMap Pre-loaded exchange rates map (required)
+   * @returns Converted amount
    */
-  async convertBudgetAmount(
+  convertBudgetAmount(
     budget: Budget,
     month: string,
-    baseCurrency: CurrencyCode
-  ): Promise<number> {
+    baseCurrency: CurrencyCode,
+    ratesMap: Map<string, number>
+  ): number {
     // No conversion if same currency
     if (budget.currencyCode === baseCurrency) {
       return budget.amount;
     }
 
     // Convert using specified month
-    const rate = await getRateForMonth(month, budget.currencyCode, baseCurrency);
-    if (rate !== null) {
-      return budget.amount * rate;
-    } else {
-      throw new Error(
-        `Missing exchange rate for ${budget.currencyCode} → ${baseCurrency} in ${month}. Please fetch exchange rates in Settings → Exchange Rates.`
-      );
-    }
+    const rate = getRateSync(ratesMap, month, budget.currencyCode, baseCurrency);
+    return budget.amount * rate;
   }
 
   /**
@@ -345,17 +331,20 @@ export class CalculationService {
    * @param transactions Transactions to sum
    * @param accounts List of accounts for currency lookup
    * @param baseCurrency Target currency code
+   * @param ratesMap Pre-loaded exchange rates map (required)
    * @returns Total converted amount
    */
-  async sumTransactionAmounts(
+  sumTransactionAmounts(
     transactions: Transaction[],
     accounts: Account[],
-    baseCurrency: CurrencyCode
-  ): Promise<number> {
+    baseCurrency: CurrencyCode,
+    ratesMap: Map<string, number>
+  ): number {
     let total = 0;
     for (const transaction of transactions) {
-      const convertedAmount = await this.convertTransactionAmount(
+      const convertedAmount = this.convertTransactionAmount(
         transaction,
+        ratesMap,
         accounts,
         baseCurrency
       );
@@ -371,17 +360,19 @@ export class CalculationService {
    * @param transactionTypes All transaction types
    * @param accounts All accounts for currency lookup
    * @param conversionCurrency Target currency code
+   * @param ratesMap Pre-loaded exchange rates map (required)
    * @returns Maps of income and expense grouped by transaction type ID
    */
-  async calculateTransactionTypeGrouping(
+  calculateTransactionTypeGrouping(
     filteredTransactions: Transaction[],
     transactionTypes: TransactionType[],
     accounts: Account[],
-    conversionCurrency: CurrencyCode
-  ): Promise<{
+    conversionCurrency: CurrencyCode,
+    ratesMap: Map<string, number>
+  ): {
     incomeByType: Map<string, { name: string; total: number; count: number }>;
     expenseByType: Map<string, { name: string; total: number; count: number }>;
-  }> {
+  } {
     const incomeByType = new Map<string, { name: string; total: number; count: number }>();
     const expenseByType = new Map<string, { name: string; total: number; count: number }>();
 
@@ -400,7 +391,7 @@ export class CalculationService {
       let convertedAmount = tx.amount;
       if (account.currencyCode !== conversionCurrency) {
         const txMonth = tx.date.substring(0, 7);
-        const rate = await getRateForMonth(txMonth, account.currencyCode, conversionCurrency);
+        const rate = getRateSync(ratesMap, txMonth, account.currencyCode, conversionCurrency);
         convertedAmount = tx.amount * rate;
       }
 
@@ -437,32 +428,33 @@ export class CalculationService {
    * @param accounts All accounts for currency lookup
    * @param selectedPeriod Period to calculate for
    * @param baseCurrency Target currency code
+   * @param ratesMap Pre-loaded exchange rates map (required)
+   * @param getCategoryById Function to get category by ID
    * @returns Grouped budget data by category
    */
-  async calculateBudgetGrouping(
+  calculateBudgetGrouping(
     budgets: Budget[],
     transactions: Transaction[],
     transactionTypes: TransactionType[],
     accounts: Account[],
     selectedPeriod: { startDate: string; endDate: string },
     baseCurrency: CurrencyCode,
+    ratesMap: Map<string, number>,
     getCategoryById: (id: string) => { id: string; name: string } | undefined
-  ): Promise<
-    Record<
-      string,
-      {
-        category: { id: string; name: string };
-        items: {
-          budget: Budget;
-          transactionType: { id: string; name: string; group: string };
-          proratedBudget: number;
-          actualAmount: number;
-          percentage: number;
-        }[];
-        totalBudget: number;
-        totalActual: number;
-      }
-    >
+  ): Record<
+    string,
+    {
+      category: { id: string; name: string };
+      items: {
+        budget: Budget;
+        transactionType: { id: string; name: string; group: string };
+        proratedBudget: number;
+        actualAmount: number;
+        percentage: number;
+      }[];
+      totalBudget: number;
+      totalActual: number;
+    }
   > {
     const grouped: Record<
       string,
@@ -497,7 +489,7 @@ export class CalculationService {
       // Convert budget to base currency if needed
       if (baseCurrency && budget.currencyCode !== baseCurrency) {
         const month = selectedPeriod.startDate.slice(0, 7);
-        const rate = await getRateForMonth(month, budget.currencyCode, baseCurrency);
+        const rate = getRateSync(ratesMap, month, budget.currencyCode, baseCurrency);
         proratedBudget = proratedBudget * rate;
       }
 
@@ -520,7 +512,7 @@ export class CalculationService {
 
           if (account && account.currencyCode !== baseCurrency) {
             const month = transaction.date.slice(0, 7);
-            const rate = await getRateForMonth(month, account.currencyCode, baseCurrency);
+            const rate = getRateSync(ratesMap, month, account.currencyCode, baseCurrency);
             convertedAmount = transaction.amount * rate;
           }
         }

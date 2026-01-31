@@ -9,17 +9,17 @@ import type { Account } from '../types/models';
 /**
  * Get all accounts
  */
-export function useAccounts(): Account[] {
+export function useAccounts(): Account[] | undefined {
   const accountService = useAccountService();
-  return useLiveQuery(() => accountService.getAll()) ?? [];
+  return useLiveQuery(() => accountService.getAll());
 }
 
 /**
  * Get active accounts
  */
-export function useActiveAccounts(): Account[] {
+export function useActiveAccounts(): Account[] | undefined {
   const accountService = useAccountService();
-  return useLiveQuery(() => accountService.getActive()) ?? [];
+  return useLiveQuery(() => accountService.getActive());
 }
 
 /**

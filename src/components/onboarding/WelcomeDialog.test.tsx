@@ -133,7 +133,7 @@ describe('WelcomeDialog', () => {
       mockIsOneDriveConfigured.mockReturnValue(true);
     });
 
-    it('should authenticate and show file picker when OneDrive button clicked', async () => {
+    it('should authenticate and close welcome dialog when OneDrive button clicked', async () => {
       mockSyncService.connect.mockResolvedValue(undefined);
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
@@ -144,8 +144,8 @@ describe('WelcomeDialog', () => {
 
       await waitFor(() => {
         expect(mockSyncService.connect).toHaveBeenCalledWith(StorageProviderType.ONEDRIVE);
-        // CloudFilePicker should be shown
-        expect(screen.queryByText('Welcome to Money Tree')).not.toBeInTheDocument();
+        // Welcome dialog should close and trigger file selection
+        expect(mockOnClose).toHaveBeenCalled();
       });
     });
 

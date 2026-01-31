@@ -9,9 +9,9 @@ import type { Category } from '../types/models';
 /**
  * Get all active categories
  */
-export function useCategories(): Category[] {
+export function useCategories(): Category[] | undefined {
   const categoryService = useCategoryService();
-  return useLiveQuery(() => categoryService.getActive()) ?? [];
+  return useLiveQuery(() => categoryService.getActive());
 }
 
 /**

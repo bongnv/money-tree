@@ -17,15 +17,21 @@ export function useAssetDialog() {
     baseDialog.openCreate();
   }, [baseDialog]);
 
-  const openEdit = useCallback((asset: ManualAsset) => {
-    setAssetMode('edit');
-    baseDialog.openEdit(asset);
-  }, [baseDialog]);
+  const openEdit = useCallback(
+    (asset: ManualAsset) => {
+      setAssetMode('edit');
+      baseDialog.openEdit(asset);
+    },
+    [baseDialog]
+  );
 
-  const openUpdateValue = useCallback((asset: ManualAsset) => {
-    setAssetMode('update-value');
-    baseDialog.openEdit(asset);
-  }, [baseDialog]);
+  const openUpdateValue = useCallback(
+    (asset: ManualAsset) => {
+      setAssetMode('update-value');
+      baseDialog.openEdit(asset);
+    },
+    [baseDialog]
+  );
 
   return {
     ...baseDialog,

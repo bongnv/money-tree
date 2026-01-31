@@ -5,7 +5,9 @@ import { useCategoryForm } from '@/hooks/categories/useCategoryForm';
 
 interface CategoryFormProps {
   category?: Category;
-  onSubmit: (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
+  onSubmit: (
+    category: Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
+  ) => Promise<void>;
   onCancel: () => void;
 }
 

@@ -23,6 +23,7 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import { AssetGroup } from '../../services/report.service';
 import { formatCurrency } from '../../utils/currency.utils';
+import { getTodayDate } from '../../utils/date.utils';
 import { LineChart } from '../common/charts/LineChart';
 import { getCompleteValueHistory, calculateAssetValueGrowth } from '../../utils/asset.utils';
 import type { CurrencyCode } from '../../types/enums';
@@ -75,7 +76,8 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
     if (completeHistory.length === 0) return [];
 
     // Calculate cutoff date based on range
-    const today = new Date();
+    const todayStr = getTodayDate();
+    const today = new Date(todayStr);
     let cutoffDate: Date;
 
     switch (dateRange) {

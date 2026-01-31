@@ -171,7 +171,6 @@ describe('CloudFilePicker', () => {
       <CloudFilePicker
         open={true}
         providerName="Test Storage"
-        mode="create"
         onListItems={mockOnListItems}
         onFileSelected={mockOnFileSelected}
         onCancel={mockOnCancel}
@@ -190,8 +189,8 @@ describe('CloudFilePicker', () => {
       expect(mockOnListItems).toHaveBeenCalledWith(mockFolders[0]);
     });
 
-    // Click "Create Here" button (creates in current folder)
-    await user.click(screen.getByRole('button', { name: 'Create Here' }));
+    // Click "Create File" button
+    await user.click(screen.getByRole('button', { name: 'Create File' }));
 
     // Wait for file name dialog
     await waitFor(() => {
@@ -220,7 +219,6 @@ describe('CloudFilePicker', () => {
       <CloudFilePicker
         open={true}
         providerName="Test Storage"
-        mode="create"
         onListItems={mockOnListItems}
         onFileSelected={mockOnFileSelected}
         onCancel={mockOnCancel}
@@ -238,8 +236,8 @@ describe('CloudFilePicker', () => {
       expect(mockOnListItems).toHaveBeenCalledWith(mockFolders[0]);
     });
 
-    // Click "Create Here" button (creates in current folder)
-    await user.click(screen.getByRole('button', { name: 'Create Here' }));
+    // Click "Create File" button
+    await user.click(screen.getByRole('button', { name: 'Create File' }));
 
     await waitFor(() => {
       expect(screen.getByText('Create New File')).toBeInTheDocument();
@@ -267,7 +265,6 @@ describe('CloudFilePicker', () => {
       <CloudFilePicker
         open={true}
         providerName="Test Storage"
-        mode="create"
         onListItems={mockOnListItems}
         onFileSelected={mockOnFileSelected}
         onCancel={mockOnCancel}
@@ -279,8 +276,8 @@ describe('CloudFilePicker', () => {
       expect(screen.getByText('Documents')).toBeInTheDocument();
     });
 
-    // Click Create Here button
-    await user.click(screen.getByRole('button', { name: 'Create Here' }));
+    // Click Create File button
+    await user.click(screen.getByRole('button', { name: 'Create File' }));
 
     await waitFor(() => {
       expect(screen.getByText('Create New File')).toBeInTheDocument();
@@ -369,7 +366,6 @@ describe('CloudFilePicker', () => {
       <CloudFilePicker
         open={true}
         providerName="Test Storage"
-        mode="open"
         onListItems={mockOnListItems}
         onFileSelected={mockOnFileSelected}
         onCancel={mockOnCancel}

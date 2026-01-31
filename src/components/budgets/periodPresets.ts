@@ -1,4 +1,5 @@
 import type { PeriodOption } from '../common/PeriodSelector';
+import { getTodayDate } from '@/utils/date.utils';
 
 const formatDate = (year: number, month: number, day: number): string => {
   const paddedMonth = String(month).padStart(2, '0');
@@ -8,8 +9,8 @@ const formatDate = (year: number, month: number, day: number): string => {
 
 // Budget-specific presets: all months, quarters, and years
 export const getBudgetPresets = (): PeriodOption[] => {
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
+  const today = getTodayDate();
+  const currentYear = parseInt(today.substring(0, 4));
   const monthNames = [
     'January',
     'February',

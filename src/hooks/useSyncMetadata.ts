@@ -18,15 +18,15 @@ export function useBaseCurrency(): CurrencyCode {
 /**
  * Get archived years
  */
-export function useArchivedYears(): ArchivedYearReference[] {
+export function useArchivedYears(): ArchivedYearReference[] | undefined {
   const syncMetadataService = useSyncMetadataService();
-  return useLiveQuery(() => syncMetadataService.getArchivedYears()) ?? [];
+  return useLiveQuery(() => syncMetadataService.getArchivedYears());
 }
 
 /**
  * Get last modified timestamp
  */
-export function useLastModified(): string | null {
+export function useLastModified(): string | null | undefined {
   const syncMetadataService = useSyncMetadataService();
-  return useLiveQuery(() => syncMetadataService.getLastModified()) ?? null;
+  return useLiveQuery(() => syncMetadataService.getLastModified());
 }

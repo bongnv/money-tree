@@ -9,9 +9,9 @@ import type { Transaction } from '../types/models';
 /**
  * Get all transactions
  */
-export function useTransactions(): Transaction[] {
+export function useTransactions(): Transaction[] | undefined {
   const transactionService = useTransactionService();
-  return useLiveQuery(() => transactionService.getActive()) ?? [];
+  return useLiveQuery(() => transactionService.getActive());
 }
 
 /**

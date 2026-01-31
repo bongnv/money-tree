@@ -19,7 +19,7 @@ describe('AccountForm', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Default mock implementation
     (useAccountForm as jest.Mock).mockReturnValue({
       formData: {
@@ -38,7 +38,8 @@ describe('AccountForm', () => {
     });
   });
 
-  it('should render empty form for new account', () => {    (useAccountForm as jest.Mock).mockReturnValue({
+  it('should render empty form for new account', () => {
+    (useAccountForm as jest.Mock).mockReturnValue({
       formData: {
         name: '',
         type: AccountType.BANK_ACCOUNT,
@@ -119,7 +120,7 @@ describe('AccountForm', () => {
       handleSubmit: mockHandleSubmit,
       isEditMode: false,
     });
-    
+
     render(<AccountForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     await waitFor(() => {
@@ -146,7 +147,7 @@ describe('AccountForm', () => {
       handleSubmit: mockHandleSubmit,
       isEditMode: false,
     });
-    
+
     render(<AccountForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     await waitFor(() => {
@@ -156,7 +157,7 @@ describe('AccountForm', () => {
 
   it('should submit valid form data', async () => {
     const user = userEvent.setup();
-    
+
     (useAccountForm as jest.Mock).mockReturnValue({
       formData: {
         name: 'Test',
@@ -171,7 +172,7 @@ describe('AccountForm', () => {
       setField: mockSetField,
       handleSubmit: mockHandleSubmit,
     });
-    
+
     render(<AccountForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     const submitButton = screen.getByText('Create Account');
@@ -184,7 +185,7 @@ describe('AccountForm', () => {
 
   it('should call onCancel when cancel button is clicked', async () => {
     const user = userEvent.setup();
-    
+
     (useAccountForm as jest.Mock).mockReturnValue({
       formData: {
         name: '',
@@ -199,7 +200,7 @@ describe('AccountForm', () => {
       setField: mockSetField,
       handleSubmit: mockHandleSubmit,
     });
-    
+
     render(<AccountForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     const cancelButton = screen.getByText('Cancel');
@@ -211,7 +212,7 @@ describe('AccountForm', () => {
 
   it('should toggle active switch', async () => {
     const user = userEvent.setup();
-    
+
     (useAccountForm as jest.Mock).mockReturnValue({
       formData: {
         name: '',
@@ -226,18 +227,18 @@ describe('AccountForm', () => {
       setField: mockSetField,
       handleSubmit: mockHandleSubmit,
     });
-    
+
     render(<AccountForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     const activeSwitch = screen.getByLabelText(/Active/i);
-    
+
     await user.click(activeSwitch);
     expect(mockSetField).toHaveBeenCalledWith('isActive', false);
   });
 
   it('should clear error when user starts typing', async () => {
     const user = userEvent.setup();
-    
+
     // Mock with validation error initially
     (useAccountForm as jest.Mock).mockReturnValue({
       formData: {
@@ -255,7 +256,7 @@ describe('AccountForm', () => {
       setField: mockSetField,
       handleSubmit: mockHandleSubmit,
     });
-    
+
     render(<AccountForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     const nameInput = screen.getByLabelText(/Account Name/i);

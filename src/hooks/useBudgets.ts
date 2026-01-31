@@ -9,9 +9,9 @@ import type { Budget } from '../types/models';
 /**
  * Get all active budgets
  */
-export function useBudgets(): Budget[] {
+export function useBudgets(): Budget[] | undefined {
   const budgetService = useBudgetService();
-  return useLiveQuery(() => budgetService.getActive()) ?? [];
+  return useLiveQuery(() => budgetService.getActive());
 }
 
 /**

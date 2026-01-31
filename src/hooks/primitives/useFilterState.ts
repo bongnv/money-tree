@@ -3,16 +3,14 @@ import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 /**
  * Generic filter state management hook
  * Handles active filters, selected values, and filter operations
- * 
+ *
  * @template TFilters - The type of the filter object
  * @returns Filter state and handlers
  */
-export function useFilterState<TFilters extends Record<string, any>>(
-  initialFilters: TFilters
-) {
+export function useFilterState<TFilters extends Record<string, any>>(initialFilters: TFilters) {
   const [filters, setFilters] = useState<TFilters>(initialFilters);
   const [appliedFilters, setAppliedFilters] = useState<TFilters>(initialFilters);
-  
+
   // Keep a ref to latest filters for applyFilters to use
   const filtersRef = useRef<TFilters>(filters);
   useEffect(() => {
@@ -22,10 +20,7 @@ export function useFilterState<TFilters extends Record<string, any>>(
   /**
    * Update a single filter value
    */
-  const setFilter = useCallback(<K extends keyof TFilters>(
-    key: K,
-    value: TFilters[K]
-  ) => {
+  const setFilter = useCallback(<K extends keyof TFilters>(key: K, value: TFilters[K]) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   }, []);
 
@@ -61,9 +56,12 @@ export function useFilterState<TFilters extends Record<string, any>>(
   /**
    * Clear a single filter
    */
-  const clearFilter = useCallback(<K extends keyof TFilters>(key: K) => {
-    setFilters((prev) => ({ ...prev, [key]: initialFilters[key] }));
-  }, [initialFilters]);
+  const clearFilter = useCallback(
+    <K extends keyof TFilters>(key: K) => {
+      setFilters((prev) => ({ ...prev, [key]: initialFilters[key] }));
+    },
+    [initialFilters]
+  );
 
   /**
    * Check if filters have been modified from initial state
@@ -90,12 +88,12 @@ export function useFilterState<TFilters extends Record<string, any>>(
     // State
     filters,
     appliedFilters,
-    
+
     // Computed
     hasChanges,
     hasActiveFilters,
     hasUnappliedChanges,
-    
+
     // Actions
     setFilter,
     setMultipleFilters,

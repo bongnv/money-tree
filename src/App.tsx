@@ -1,76 +1,68 @@
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { Backdrop, CircularProgress } from '@mui/material';
 import theme from './theme';
 import { MainLayout } from './components/layout/MainLayout';
 import { WelcomeDialog } from './components/onboarding/WelcomeDialog';
+import { CloudFilePicker } from './components/common/CloudFilePicker';
 import { NotificationSnackbar } from './components/common/NotificationSnackbar';
 import ReconnectDialog from './components/common/ReconnectDialog';
 import { ArchivePrompt } from './components/common/ArchivePrompt';
 import { AppRoutes } from './routes';
 import { useBaseCurrency } from '@hooks/useSyncMetadata';
-import { useArchiveService } from '@/hooks/useServices';
 import { useApp } from '@/hooks/useApp';
 import { useSync } from '@/hooks/useSync';
+import { useArchivePrompt } from '@/hooks/useArchivePrompt';
+import type { CloudItem } from './services/storage/IStorageProvider';
 
 const AppContent: React.FC<{
   onReconnectNeeded: (providerName: string) => Promise<'reconnect' | 'dismiss'>;
 }> = ({ onReconnectNeeded }) => {
-  const navigate = useNavigate();
-  useSync(onReconnectNeeded);
-  const archiveService = useArchiveService();
+  const syncOps = useSync(onReconnectNeeded);
   const baseCurrency = useBaseCurrency();
   const {
     snackbar,
     hideSnackbar,
-    isLoading,
-    welcomeDismissed,
-    setWelcomeDismissed,
+    showWelcomeDialog,
+    setShowWelcomeDialog,
+    showFileSelection,
+    setShowFileSelection,
     syncStatus,
-    isConnected,
   } = useApp();
 
-  const [showArchivePrompt, setShowArchivePrompt] = useState(false);
-  const [archiveYearSummary, setArchiveYearSummary] = useState<{
-    transactionCount: number;
-    closingNetWorth: number;
-    closingBalances: Record<string, number>;
-    closingAssetValuations: Record<string, number>;
-  } | null>(null);
-  const [archiveYear, setArchiveYear] = useState<number | null>(null);
-
-  // Handle initial sync completion
-  useEffect(() => {
-    // Wait for sync to finish initializing
-    if (syncStatus.isInitializing) return;
-
-    // Connected and synced, check for archive prompt
-    if (isConnected) {
-      checkArchivePrompt();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [syncStatus.isInitializing, isConnected]);
+  const {
+    showPrompt: showArchivePrompt,
+    archiveYear,
+    archiveYearSummary,
+    handleGoToSettings: handleArchiveGoToSettings,
+    handleRemindLater: handleArchiveRemindLater,
+  } = useArchivePrompt();
 
   const handleWelcomeClose = () => {
-    setWelcomeDismissed(true);
+    setShowWelcomeDialog(false);
   };
 
-  const checkArchivePrompt = async () => {
-    const archivableYear = await archiveService.identifyArchivableYear();
-    if (archivableYear !== null) {
-      const summary = await archiveService.calculateYearEndSummary(archivableYear, baseCurrency);
-      setArchiveYear(archivableYear);
-      setArchiveYearSummary(summary);
-      setShowArchivePrompt(true);
+  const handleFileSelected = async (fileItem: CloudItem) => {
+    try {
+      // Set the file in sync context (clears DB and triggers sync automatically)
+      await syncOps.selectFile(fileItem);
+      setShowFileSelection(false);
+    } catch (error) {
+      console.error('[App] File selection error:', error);
+      setShowFileSelection(false);
     }
   };
 
-  const handleArchiveGoToSettings = () => {
-    setShowArchivePrompt(false);
-    // Navigate to archive settings page using React Router
-    navigate('/settings/archives');
+  const handleFilePickerCancel = async () => {
+    try {
+      // User cancelled file selection - disconnect provider and return to welcome
+      await syncOps.disconnect();
+      setShowFileSelection(false);
+    } catch (error) {
+      console.error('[App] Cancel file selection error:', error);
+      setShowFileSelection(false);
+    }
   };
 
   return (
@@ -78,10 +70,16 @@ const AppContent: React.FC<{
       <MainLayout>
         <AppRoutes />
       </MainLayout>
-      <WelcomeDialog
-        open={!syncStatus.isInitializing && !isConnected && !welcomeDismissed}
-        onClose={handleWelcomeClose}
-      />
+      <WelcomeDialog open={showWelcomeDialog} onClose={handleWelcomeClose} />
+      {showFileSelection && syncStatus.providerName && (
+        <CloudFilePicker
+          open={showFileSelection}
+          providerName={syncStatus.providerName}
+          onListItems={syncOps.listItems}
+          onFileSelected={handleFileSelected}
+          onCancel={handleFilePickerCancel}
+        />
+      )}
       <NotificationSnackbar
         open={snackbar.open}
         message={snackbar.message}
@@ -95,12 +93,9 @@ const AppContent: React.FC<{
           yearSummary={archiveYearSummary}
           baseCurrency={baseCurrency}
           onGoToSettings={handleArchiveGoToSettings}
-          onRemindLater={() => setShowArchivePrompt(false)}
+          onRemindLater={handleArchiveRemindLater}
         />
       )}
-      <Backdrop open={isLoading} sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-        <CircularProgress color="inherit" />
-      </Backdrop>
     </>
   );
 };

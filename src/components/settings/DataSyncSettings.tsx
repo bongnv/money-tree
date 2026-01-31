@@ -15,7 +15,6 @@ import Grid from '@mui/material/Grid';
 import { useNavigate } from 'react-router-dom';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useSync } from '@/hooks/useSync';
-import { formatDistance } from 'date-fns';
 import { useAppContext } from '@/hooks/useApp';
 import { db } from '../../db/database';
 import { useActiveAccounts } from '../../hooks/useAccounts';
@@ -28,9 +27,8 @@ import { useAssets } from '../../hooks/useAssets';
 export const DataSyncSettings: React.FC = () => {
   const navigate = useNavigate();
   const syncOps = useSync();
-  const { syncConnection, syncStatus, setWelcomeDismissed } = useAppContext();
-  const cloudFileName = syncConnection.fileName;
-  const remoteLastModified = syncStatus.remoteLastModified;
+  const { syncStatus } = useAppContext();
+  const cloudFileName = syncStatus.fileName;
   const accounts = useActiveAccounts();
   const categories = useCategories();
   const transactionTypes = useTransactionTypes();
@@ -84,18 +82,9 @@ export const DataSyncSettings: React.FC = () => {
     }
   }, [accounts, categories, transactionTypes, transactions, budgets, assets]);
 
-  const lastModifiedText = useMemo(() => {
-    if (!remoteLastModified) return 'Never';
-    try {
-      return formatDistance(new Date(remoteLastModified), new Date(), { addSuffix: true });
-    } catch {
-      return 'Unknown';
-    }
-  }, [remoteLastModified]);
-
   const storageLocation = useMemo(() => {
-    return syncConnection.providerName || 'Not connected';
-  }, [syncConnection.providerName]);
+    return syncStatus.providerName || 'Not connected';
+  }, [syncStatus.providerName]);
 
   const handleDisconnect = async () => {
     setDisconnectDialogOpen(false);
@@ -104,12 +93,11 @@ export const DataSyncSettings: React.FC = () => {
     await db.delete();
     await db.open();
 
-    // Disconnect from cloud storage
+    // Disconnect from cloud storage (will show welcome dialog automatically)
     await syncOps.disconnect();
 
-    // Redirect to dashboard and trigger welcome dialog
+    // Redirect to dashboard
     navigate('/');
-    setWelcomeDismissed(false);
   };
 
   return (
@@ -134,13 +122,6 @@ export const DataSyncSettings: React.FC = () => {
 
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Typography variant="body2" color="text.secondary">
-                      Last Modified
-                    </Typography>
-                    <Typography variant="body1">{lastModifiedText}</Typography>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
                       File Size (approximate)
                     </Typography>
                     <Typography variant="body1">{fileSize}</Typography>
@@ -151,7 +132,7 @@ export const DataSyncSettings: React.FC = () => {
                       Status
                     </Typography>
                     <Typography variant="body1">
-                      {syncConnection.providerName || 'Not connected'}
+                      {syncStatus.providerName || 'Not connected'}
                     </Typography>
                   </Grid>
                 </Grid>

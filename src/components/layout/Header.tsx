@@ -29,10 +29,8 @@ import {
   CloudOff as CloudOffIcon,
   Error as ErrorIcon,
 } from '@mui/icons-material';
-import { useAppContext, useApp } from '@/hooks/useApp';
+import { useApp } from '@/hooks/useApp';
 import { useSync } from '@/hooks/useSync';
-import { useLastModified } from '../../hooks/useSyncMetadata';
-import { formatDistance } from 'date-fns';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -40,15 +38,9 @@ export const Header: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { isLoading } = useAppContext();
-  const { syncConnection, syncStatus } = useApp();
+  const { syncStatus } = useApp();
   const syncOps = useSync();
-  const cloudFileName = syncConnection.fileName;
-  const remoteLastModified = syncStatus.remoteLastModified;
-  const lastSyncError = syncStatus.lastSyncError;
-
-  // Watch local lastModified to determine if we're truly in sync
-  const lastModified = useLastModified();
+  const cloudFileName = syncStatus.fileName;
 
   const handleSync = async () => {
     try {
@@ -58,24 +50,14 @@ export const Header: React.FC = () => {
     }
   };
 
-  const getLastSyncedText = (): string => {
-    if (!remoteLastModified) {
-      return 'Never synced';
-    }
-    try {
-      return formatDistance(new Date(remoteLastModified), new Date(), { addSuffix: true });
-    } catch {
-      return 'Unknown';
-    }
-  };
-
   const getSyncStatus = (): 'syncing' | 'synced' | 'not-synced' | 'error' => {
-    if (syncStatus.isSyncing) return 'syncing';
-    if (lastSyncError) return 'error';
-    if (!remoteLastModified) return 'not-synced';
-    // Only show synced if remote matches local
-    if (lastModified && remoteLastModified === lastModified) return 'synced';
-    return 'not-synced';
+    return syncStatus.status === 'syncing'
+      ? 'syncing'
+      : syncStatus.status === 'error'
+        ? 'error'
+        : syncStatus.status === 'synced'
+          ? 'synced'
+          : 'not-synced';
   };
 
   const getSyncIcon = () => {
@@ -98,7 +80,7 @@ export const Header: React.FC = () => {
       case 'syncing':
         return 'Syncing';
       case 'error':
-        return 'Error';
+        return syncStatus.errorMessage || 'Sync error';
       case 'not-synced':
         return 'Not Synced';
       case 'synced':
@@ -209,16 +191,12 @@ export const Header: React.FC = () => {
             </Box>
           )}
 
-          <Typography variant="caption" color="inherit" sx={{ opacity: 0.7 }}>
-            {getLastSyncedText()}
-          </Typography>
-
           <Tooltip title={getSyncLabel()} arrow>
             <span>
               <IconButton
                 color="inherit"
                 onClick={handleSync}
-                disabled={isLoading || syncStatus.isSyncing}
+                disabled={syncStatus.status === 'syncing'}
                 aria-label={getSyncLabel()}
                 sx={{
                   color: getSyncColor(),

@@ -245,15 +245,20 @@ function getCalculationService(): CalculationService {
 }
 
 /**
+ * Get ArchiveService instance (singleton)
+ */
+function getArchiveService(): DexieArchiveService {
+  if (!archiveServiceInstance) {
+    archiveServiceInstance = new DexieArchiveService(getSyncMetadataService());
+  }
+  return archiveServiceInstance;
+}
+
+/**
  * Hook to get ArchiveService instance
  */
 export function useArchiveService(): DexieArchiveService {
-  return useMemo(() => {
-    if (!archiveServiceInstance) {
-      archiveServiceInstance = new DexieArchiveService(getSyncMetadataService());
-    }
-    return archiveServiceInstance;
-  }, []);
+  return useMemo(() => getArchiveService(), []);
 }
 
 /**
@@ -264,99 +269,139 @@ export function useCalculationService(): CalculationService {
 }
 
 /**
+ * Get ReportService instance (singleton)
+ */
+function getReportService(): ReportService {
+  if (!reportServiceInstance) {
+    reportServiceInstance = new ReportService(getCalculationService());
+  }
+  return reportServiceInstance;
+}
+
+/**
  * Hook to get ReportService instance
  */
 export function useReportService(): ReportService {
-  return useMemo(() => {
-    if (!reportServiceInstance) {
-      reportServiceInstance = new ReportService(getCalculationService());
-    }
-    return reportServiceInstance;
-  }, []);
+  return useMemo(() => getReportService(), []);
+}
+
+/**
+ * Get AccountService instance (singleton)
+ */
+function getAccountService(): AccountService {
+  if (!accountServiceInstance) {
+    accountServiceInstance = new AccountService(db, getSyncMetadataService());
+  }
+  return accountServiceInstance;
 }
 
 /**
  * Hook to get AccountService instance
  */
 export function useAccountService(): AccountService {
-  return useMemo(() => {
-    if (!accountServiceInstance) {
-      accountServiceInstance = new AccountService(db, getSyncMetadataService());
-    }
-    return accountServiceInstance;
-  }, []);
+  return useMemo(() => getAccountService(), []);
+}
+
+/**
+ * Get TransactionService instance (singleton)
+ */
+function getTransactionService(): TransactionService {
+  if (!transactionServiceInstance) {
+    transactionServiceInstance = new TransactionService(db, getSyncMetadataService());
+  }
+  return transactionServiceInstance;
 }
 
 /**
  * Hook to get TransactionService instance
  */
 export function useTransactionService(): TransactionService {
-  return useMemo(() => {
-    if (!transactionServiceInstance) {
-      transactionServiceInstance = new TransactionService(db, getSyncMetadataService());
-    }
-    return transactionServiceInstance;
-  }, []);
+  return useMemo(() => getTransactionService(), []);
+}
+
+/**
+ * Get CategoryService instance (singleton)
+ */
+function getCategoryService(): CategoryService {
+  if (!categoryServiceInstance) {
+    categoryServiceInstance = new CategoryService(db, getSyncMetadataService());
+  }
+  return categoryServiceInstance;
 }
 
 /**
  * Hook to get CategoryService instance
  */
 export function useCategoryService(): CategoryService {
-  return useMemo(() => {
-    if (!categoryServiceInstance) {
-      categoryServiceInstance = new CategoryService(db, getSyncMetadataService());
-    }
-    return categoryServiceInstance;
-  }, []);
+  return useMemo(() => getCategoryService(), []);
+}
+
+/**
+ * Get TransactionTypeService instance (singleton)
+ */
+function getTransactionTypeService(): TransactionTypeService {
+  if (!transactionTypeServiceInstance) {
+    transactionTypeServiceInstance = new TransactionTypeService(db, getSyncMetadataService());
+  }
+  return transactionTypeServiceInstance;
 }
 
 /**
  * Hook to get TransactionTypeService instance
  */
 export function useTransactionTypeService(): TransactionTypeService {
-  return useMemo(() => {
-    if (!transactionTypeServiceInstance) {
-      transactionTypeServiceInstance = new TransactionTypeService(db, getSyncMetadataService());
-    }
-    return transactionTypeServiceInstance;
-  }, []);
+  return useMemo(() => getTransactionTypeService(), []);
+}
+
+/**
+ * Get BudgetService instance (singleton)
+ */
+function getBudgetService(): BudgetService {
+  if (!budgetServiceInstance) {
+    budgetServiceInstance = new BudgetService(db, getSyncMetadataService());
+  }
+  return budgetServiceInstance;
 }
 
 /**
  * Hook to get BudgetService instance
  */
 export function useBudgetService(): BudgetService {
-  return useMemo(() => {
-    if (!budgetServiceInstance) {
-      budgetServiceInstance = new BudgetService(db, getSyncMetadataService());
-    }
-    return budgetServiceInstance;
-  }, []);
+  return useMemo(() => getBudgetService(), []);
+}
+
+/**
+ * Get AssetService instance (singleton)
+ */
+function getAssetService(): AssetService {
+  if (!assetServiceInstance) {
+    assetServiceInstance = new AssetService(db, getSyncMetadataService());
+  }
+  return assetServiceInstance;
 }
 
 /**
  * Hook to get AssetService instance
  */
 export function useAssetService(): AssetService {
-  return useMemo(() => {
-    if (!assetServiceInstance) {
-      assetServiceInstance = new AssetService(db, getSyncMetadataService());
-    }
-    return assetServiceInstance;
-  }, []);
+  return useMemo(() => getAssetService(), []);
+}
+
+/**
+ * Get ExchangeRateService instance (singleton)
+ */
+function getExchangeRateService(): ExchangeRateService {
+  if (!exchangeRateServiceInstance) {
+    exchangeRateServiceInstance = new ExchangeRateService(db, getSyncMetadataService());
+  }
+  return exchangeRateServiceInstance;
 }
 
 /**
  * Hook to get ExchangeRateService instance
  */
 export function useExchangeRateService(): ExchangeRateService {
-  return useMemo(() => {
-    if (!exchangeRateServiceInstance) {
-      exchangeRateServiceInstance = new ExchangeRateService(db, getSyncMetadataService());
-    }
-    return exchangeRateServiceInstance;
-  }, []);
+  return useMemo(() => getExchangeRateService(), []);
 }
 
 /**

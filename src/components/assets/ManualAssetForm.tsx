@@ -8,7 +8,9 @@ import { useAssetForm } from '@/hooks/assets/useAssetForm';
 
 interface ManualAssetFormProps {
   asset?: ManualAsset;
-  onSubmit: (asset: Omit<ManualAsset, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
+  onSubmit: (
+    asset: Omit<ManualAsset, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
+  ) => Promise<void>;
   onCancel: () => void;
   updateValueOnly?: boolean;
 }
@@ -21,7 +23,7 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
 }) => {
   const currencies = getAllCurrencies();
   const mode = updateValueOnly ? 'update-value' : asset ? 'edit' : 'create';
-  
+
   const { formData, errors, setField, handleSubmit } = useAssetForm({
     asset,
     mode,

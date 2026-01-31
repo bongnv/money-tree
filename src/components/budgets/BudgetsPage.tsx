@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -17,31 +17,20 @@ import { CategoryFilter } from '../common/CategoryFilter';
 import { getBudgetPresets } from './periodPresets';
 import type { Budget } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
-import { useCalculationService } from '@/hooks/useServices';
 import { Group } from '../../types/enums';
-import { useActiveAccounts } from '../../hooks/useAccounts';
-import { useTransactions } from '../../hooks/useTransactions';
 import { useCategories } from '../../hooks/useCategories';
 import { useTransactionTypes } from '../../hooks/useTransactionTypes';
 import { useBudgets } from '../../hooks/useBudgets';
 import { useBaseCurrency } from '../../hooks/useSyncMetadata';
 import { useBudgetService } from '@/hooks/useServices';
+import { useBudgetGrouping } from '@/hooks/budgets/useBudgetGrouping';
 
 export const BudgetsPage: React.FC = () => {
   const budgets = useBudgets();
   const transactionTypes = useTransactionTypes();
   const categories = useCategories();
-  const transactions = useTransactions();
-  const accounts = useActiveAccounts();
   const baseCurrency = useBaseCurrency();
   const budgetService = useBudgetService();
-  const calculationService = useCalculationService();
-
-  // Helper to get category by id - memoized to prevent infinite loops
-  const getCategoryById = useCallback(
-    (id: string) => categories?.find((c) => c.id === id),
-    [categories]
-  );
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | undefined>(undefined);
@@ -69,6 +58,9 @@ export const BudgetsPage: React.FC = () => {
   };
 
   const [selectedPeriod, setSelectedPeriod] = useState(getCurrentMonthPeriod());
+
+  // Use budget grouping hook
+  const { groupedBudgets } = useBudgetGrouping(selectedPeriod, selectedCategories);
 
   const handleAdd = () => {
     setEditingBudget(undefined);
@@ -119,72 +111,6 @@ export const BudgetsPage: React.FC = () => {
       return 'error';
     }
   };
-
-  // Group budget items by category with progress data
-  const [groupedBudgets, setGroupedBudgets] = useState<
-    Record<
-      string,
-      {
-        category: { id: string; name: string };
-        items: {
-          budget: Budget;
-          transactionType: { id: string; name: string; group: string };
-          proratedBudget: number;
-          actualAmount: number;
-          percentage: number;
-        }[];
-        totalBudget: number;
-        totalActual: number;
-      }
-    >
-  >({});
-
-  useEffect(() => {
-    if (!budgets || !transactionTypes || !transactions || !accounts || !categories) return;
-
-    const calculateGroupedBudgets = async () => {
-      // Filter budgets that are active during the selected period
-      let activeBudgets = budgets.filter((budget) => {
-        // Check if budget overlaps with selected period
-        return (
-          budget.startDate <= selectedPeriod.endDate && budget.endDate >= selectedPeriod.startDate
-        );
-      });
-
-      // Filter by selected categories if any
-      if (selectedCategories.length > 0) {
-        activeBudgets = activeBudgets.filter((budget) => {
-          const transactionType = transactionTypes.find((tt) => tt.id === budget.transactionTypeId);
-          return transactionType && selectedCategories.includes(transactionType.categoryId);
-        });
-      }
-
-      const grouped = await calculationService.calculateBudgetGrouping(
-        activeBudgets,
-        transactions,
-        transactionTypes,
-        accounts,
-        selectedPeriod,
-        baseCurrency,
-        getCategoryById
-      );
-
-      setGroupedBudgets(grouped);
-    };
-
-    calculateGroupedBudgets();
-  }, [
-    budgets,
-    transactionTypes,
-    transactions,
-    accounts,
-    categories,
-    selectedPeriod,
-    getCategoryById,
-    selectedCategories,
-    baseCurrency,
-    calculationService,
-  ]);
 
   const getSectionTitle = (categoryGroup: Group): string => {
     return categoryGroup === Group.INCOME ? 'Targets' : 'Budgets';

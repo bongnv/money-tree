@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useDebouncedCallback } from 'use-debounce';
 import { CloudSyncService } from '@/services/cloudSync.service';
@@ -13,7 +13,7 @@ const FILE_CACHE_KEY = 'moneyTree.currentFile';
 
 export interface SyncOperations {
   // File management
-  setFile: (fileItem: CloudItem) => void;
+  selectFile: (fileItem: CloudItem) => Promise<void>;
   listItems: (parent?: CloudItem) => Promise<CloudItem[]>;
 
   // Sync methods
@@ -25,72 +25,118 @@ export interface SyncOperations {
 }
 
 // Singleton internal state (not UI state)
-let internalState: {
-  provider: IStorageProvider | null;
-  currentFileItem: CloudItem | null;
-  onReconnectNeeded: ((providerName: string) => Promise<'reconnect' | 'dismiss'>) | null;
-} = {
-  provider: null,
-  currentFileItem: null,
-  onReconnectNeeded: null,
-};
+let provider: IStorageProvider | null = null;
+let currentFileItem: CloudItem | null = null;
+let onReconnectNeeded: ((providerName: string) => Promise<'reconnect' | 'dismiss'>) | null = null;
 
 const DEBOUNCE_MS = 30000; // 30 seconds for all syncs
 
-let isInitialized = false;
+// Internal sync state (separate from app UI state for timing accuracy)
+let syncState = {
+  isInitialized: false,
+  isSyncing: false,
+  isInitializing: false,
+  remoteLastModified: null as string | null,
+};
 
 /**
  * Hook to access sync operations
  * State is managed in useApp(), this hook provides operations only
  */
 export function useSync(
-  onReconnectNeeded?: (providerName: string) => Promise<'reconnect' | 'dismiss'>
+  onReconnectNeededCallback?: (providerName: string) => Promise<'reconnect' | 'dismiss'>
 ): SyncOperations {
-  const { showSnackbar, setSyncConnection, setSyncStatus, syncStatus, isConnected } = useApp();
+  const { showSnackbar, setSyncStatus, setShowWelcomeDialog, setShowFileSelection } = useApp();
+  // React state to track module-level variables for proper dependency tracking
+  const [providerState, setProviderState] = useState<IStorageProvider | null>(provider);
+  const [fileState, setFileState] = useState<CloudItem | null>(currentFileItem);
 
   // Store reconnect callback
   useEffect(() => {
-    if (onReconnectNeeded) {
-      internalState.onReconnectNeeded = onReconnectNeeded;
+    if (onReconnectNeededCallback) {
+      onReconnectNeeded = onReconnectNeededCallback;
     }
-  }, [onReconnectNeeded]);
+  }, [onReconnectNeededCallback]);
 
   // Initialize storage provider on first mount
   useEffect(() => {
-    if (isInitialized) return;
-    isInitialized = true;
+    if (syncState.isInitialized) return;
+    syncState.isInitialized = true;
 
     const initialize = async () => {
-      setSyncStatus({ isInitializing: true });
+      try {
+        // Reset any stuck sync state from previous session
+        syncState.isSyncing = false;
+        syncState.isInitializing = true;
+        setSyncStatus({ status: 'not-connected' });
 
-      const result = await StorageProviderFactory.initialize(
-        internalState.onReconnectNeeded || (() => Promise.resolve('dismiss' as const))
-      );
 
-      if (result) {
-        internalState.provider = result;
-        setSyncConnection({ providerName: result.getName() });
 
-        // Load cached file info
-        try {
-          const cached = localStorage.getItem(FILE_CACHE_KEY);
-          if (cached) {
-            const fileItem = JSON.parse(cached) as CloudItem;
-            internalState.currentFileItem = fileItem;
-            setSyncConnection({
-              fileName: fileItem.name,
-            });
+        const result = await StorageProviderFactory.initialize(
+          onReconnectNeeded || (() => Promise.resolve('dismiss' as const))
+        );
+
+        if (result) {
+
+          provider = result;
+          setProviderState(result);
+
+          // Load cached file info
+          let fileName: string | null = null;
+          try {
+            const cached = localStorage.getItem(FILE_CACHE_KEY);
+            if (cached) {
+              const fileItem = JSON.parse(cached) as CloudItem;
+              currentFileItem = fileItem;
+              setFileState(fileItem);
+              fileName = fileItem.name;
+              
+              // Load last synced timestamp from database
+              const lastSyncedRecord = await db.syncMetadata.get('lastModified');
+              if (lastSyncedRecord?.value) {
+                syncState.remoteLastModified = lastSyncedRecord.value as string;
+
+              }
+            }
+          } catch (error) {
+            console.warn('Failed to load cached file info:', error);
           }
-        } catch (error) {
-          console.warn('Failed to load cached file info:', error);
-        }
-      }
 
-      setSyncStatus({ isInitializing: false });
+          // Update sync status with connection info
+          if (fileName) {
+            setSyncStatus({
+              status: 'connected',
+              providerName: result.getName(),
+              fileName: fileName,
+            });
+          } else {
+            setSyncStatus({
+              status: 'not-connected',
+              providerName: result.getName(),
+              fileName: null,
+            });
+            // Provider exists but no file - show file selection
+            setShowFileSelection(true);
+          }
+        }
+
+        // Show welcome dialog if no provider after initialization
+        if (!provider) {
+
+          setShowWelcomeDialog(true);
+        }
+      } catch (error) {
+        console.error('[useSync] Initialization failed:', error);
+        setSyncStatus({ status: 'error', errorMessage: 'Initialization failed' });
+        // Show welcome dialog on initialization failure
+        setShowWelcomeDialog(true);
+      } finally {
+        syncState.isInitializing = false;
+      }
     };
 
     initialize();
-  }, [setSyncConnection, setSyncStatus]);
+  }, [setSyncStatus]);
 
   // Watch lastModified timestamp for changes
   const lastModified = useLiveQuery(() =>
@@ -99,103 +145,128 @@ export function useSync(
 
   // Create sync service
   const syncService = useMemo(() => {
-    if (!internalState.provider || !internalState.currentFileItem) return null;
+    if (!providerState || !fileState) return null;
     const syncMetadataService = new SyncMetadataService(db);
-    return new CloudSyncService(
-      internalState.provider,
-      internalState.currentFileItem,
-      db,
-      syncMetadataService
-    );
-  }, [internalState.provider, internalState.currentFileItem]);
+    return new CloudSyncService(providerState, fileState, db, syncMetadataService);
+  }, [providerState, fileState]);
 
-  // Set current file and cache to localStorage
-  const setFile = useCallback(
+  // Internal function to update file item without clearing DB (for sync updates)
+  const updateFileItem = useCallback(
     (fileItem: CloudItem) => {
-      internalState.currentFileItem = fileItem;
+      currentFileItem = fileItem;
+      setFileState(fileItem);
       try {
         localStorage.setItem(FILE_CACHE_KEY, JSON.stringify(fileItem));
       } catch (error) {
         console.warn('Failed to cache file info:', error);
       }
-      setSyncConnection({
+      setSyncStatus({
+        status: 'connected',
         fileName: fileItem.name,
-        providerName: internalState.provider?.getName() ?? null,
+        providerName: provider?.getName() ?? null,
       });
     },
-    [setSyncConnection]
+    [setSyncStatus]
+  );
+
+  // Select file for syncing (clears DB for fresh start)
+  const selectFile = useCallback(
+    async (fileItem: CloudItem) => {
+      // Clear Dexie database for fresh start with new file
+      await db.delete();
+      await db.open();
+
+      updateFileItem(fileItem);
+    },
+    [updateFileItem]
   );
 
   // Connect to a storage provider
   const connect = useCallback(
     async (type: StorageProviderType): Promise<void> => {
       const result = await StorageProviderFactory.connect({ type });
-      internalState.provider = result;
-      setSyncConnection({ providerName: result.getName() });
+      provider = result;
+      setProviderState(result);
+      setSyncStatus({
+        status: 'not-connected',
+        providerName: result.getName(),
+        fileName: null,
+      });
+      // After successful authentication, show file picker
+      setShowFileSelection(true);
     },
-    [setSyncConnection]
+    [setSyncStatus, setShowFileSelection]
   );
 
   // Disconnect from storage provider
   const disconnect = useCallback(async (): Promise<void> => {
-    await StorageProviderFactory.disconnect(internalState.provider);
-    internalState.provider = null;
-    internalState.currentFileItem = null;
+    await StorageProviderFactory.disconnect(provider);
+    provider = null;
+    currentFileItem = null;
+    setProviderState(null);
+    setFileState(null);
     localStorage.removeItem(FILE_CACHE_KEY);
-    setSyncConnection({
+    setSyncStatus({
+      status: 'not-connected',
       providerName: null,
       fileName: null,
     });
-  }, [setSyncConnection]);
+    // Show welcome dialog after disconnection
+    setShowWelcomeDialog(true);
+  }, [setSyncStatus, setShowWelcomeDialog]);
 
   // Full bidirectional sync
   const fullSync = useCallback(async (): Promise<void> => {
     if (!syncService) {
       throw new Error('Sync service not initialized or no file selected');
     }
-    if (syncStatus.isSyncing) return; // Prevent concurrent syncs
+    if (syncState.isSyncing) {
+
+      return; // Prevent concurrent syncs
+    }
 
     try {
-      setSyncStatus({ isSyncing: true, lastSyncError: null });
+
+      syncState.isSyncing = true;
+      setSyncStatus({ status: 'syncing', errorMessage: null });
 
       const result = await syncService.fullSync();
-      setSyncStatus({ remoteLastModified: result.mergedLastModified });
+      // Update internal state remoteLastModified
+      syncState.remoteLastModified = result.mergedLastModified;
+      setSyncStatus({ status: 'synced' });
 
       // Update file item if it changed (new file got ID)
-      if (result.fileItem.id !== internalState.currentFileItem!.id) {
-        setFile(result.fileItem);
+      if (result.fileItem.id !== currentFileItem!.id) {
+
+        updateFileItem(result.fileItem);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to sync with cloud';
-      setSyncStatus({ lastSyncError: errorMessage });
-      console.error('Sync failed:', error);
+      console.error('[useSync] Sync failed:', error, {
+        errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+      setSyncStatus({ status: 'error', errorMessage });
       showSnackbar(errorMessage, 'warning');
-      throw error;
+      // Don't rethrow - error already logged, shown to user, and stored in state
     } finally {
-      setSyncStatus({ isSyncing: false });
+      syncState.isSyncing = false;
     }
-  }, [syncService, setFile, showSnackbar, setSyncStatus, syncStatus.isSyncing]);
+  }, [syncService, updateFileItem, showSnackbar, setSyncStatus]);
 
   // List items in cloud storage
-  const listItems = useCallback(
-    async (parent?: CloudItem): Promise<CloudItem[]> => {
-      if (!internalState.provider) {
-        throw new Error('Provider not initialized');
-      }
-      return internalState.provider.listItems(parent);
-    },
-    [internalState.provider]
-  );
+  const listItems = useCallback(async (parent?: CloudItem): Promise<CloudItem[]> => {
+    if (!provider) {
+      throw new Error('Provider not initialized');
+    }
+    return provider.listItems(parent);
+  }, []);
 
   // Debounced sync using useDebouncedCallback
   const debouncedSync = useDebouncedCallback(
     async () => {
       if (!syncService) return;
-      try {
-        await fullSync();
-      } catch {
-        // Error already logged and shown by fullSync
-      }
+      await fullSync();
     },
     DEBOUNCE_MS,
     { leading: false, trailing: true }
@@ -204,24 +275,33 @@ export function useSync(
   // Auto-sync when connection established
   const hasTriggeredInitialSync = useRef(false);
   useEffect(() => {
-    if (!isConnected || syncStatus.isSyncing || syncStatus.isInitializing) return;
+    const isConnected = !!(provider && currentFileItem);
+    if (!isConnected || syncState.isSyncing || syncState.isInitializing) return;
     if (hasTriggeredInitialSync.current) return;
+
     hasTriggeredInitialSync.current = true;
-    fullSync();
+    fullSync().catch((err) => {
+      console.error('[useSync] Initial sync error:', err);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isConnected]);
+  }, [syncService]);
 
   // Auto-sync whenever lastModified changes
   useEffect(() => {
-    if (!isConnected || !lastModified || syncStatus.isInitializing) return;
+    const isConnected = !!(provider && currentFileItem);
+    if (!isConnected || !lastModified || syncState.isInitializing) return;
     // Skip if local and remote are already in sync
-    if (lastModified === syncStatus.remoteLastModified) return;
+    if (lastModified === syncState.remoteLastModified) {
+
+      return;
+    }
+
     debouncedSync();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastModified]);
 
   return {
-    setFile,
+    selectFile,
     listItems,
     fullSync,
     connect,

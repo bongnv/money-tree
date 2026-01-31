@@ -30,6 +30,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useActiveAccounts } from '@/hooks/useAccounts';
 import { useCalculationService } from '@/hooks/useServices';
+import { useEnsureExchangeRates } from '@/hooks/useExchangeRates';
 import { LineChart } from '../common/charts/LineChart';
 import { PieChart } from '../common/charts/PieChart';
 import { PeriodSelector } from '../common/PeriodSelector';
@@ -69,9 +70,10 @@ export const CashFlowReport: React.FC = () => {
   const categories = useCategories();
   const accounts = useActiveAccounts();
   const calculationService = useCalculationService();
-  
+
   const {
     cashFlow,
+    isLoadingCashFlow,
     cashFlowTrend,
     startDate,
     setStartDate,
@@ -84,12 +86,12 @@ export const CashFlowReport: React.FC = () => {
     applyFilters,
     resetFilters,
   } = useCashFlowReport();
-  
+
   // UI state
   const [viewMode, setViewMode] = useState<'period' | 'cumulative'>('period');
-  
+
   // Calculate filtered transactions for the pie charts
-  const filteredTransactions = React.useMemo(() => {
+  const filteredTransactions = useMemo(() => {
     if (!allTransactions || !transactionTypes) return [];
     if (filters.categoryIds.length === 0) {
       return allTransactions;
@@ -100,6 +102,35 @@ export const CashFlowReport: React.FC = () => {
     });
   }, [allTransactions, transactionTypes, filters.categoryIds]);
 
+  // Calculate months for filtered chart rate loading from actual transactions
+  const months = useMemo(() => {
+    if (!filteredTransactions || filteredTransactions.length === 0) {
+      // Fallback to date range if no transactions
+      const monthsSet = new Set<string>();
+      monthsSet.add(startDate.substring(0, 7));
+      monthsSet.add(endDate.substring(0, 7));
+      return Array.from(monthsSet);
+    }
+    
+    // Extract unique months from actual filtered transactions
+    const monthsSet = new Set<string>();
+    filteredTransactions.forEach(tx => {
+      monthsSet.add(tx.date.substring(0, 7));
+    });
+    return Array.from(monthsSet);
+  }, [filteredTransactions, startDate, endDate]);
+
+  // Gather currencies for filtered chart
+  const currencies = useMemo(() => {
+    const set = new Set<CurrencyCode>();
+    accounts?.forEach(acc => set.add(acc.currencyCode));
+    set.add(conversionCurrency);
+    return set;
+  }, [accounts, conversionCurrency]);
+
+  // Pre-load exchange rates for filtered charts
+  const { ratesMap, isLoading: ratesLoading } = useEnsureExchangeRates(currencies, months, conversionCurrency);
+
   const handleDateRangeChange = (range: { startDate: string; endDate: string }) => {
     setStartDate(range.startDate);
     setEndDate(range.endDate);
@@ -108,7 +139,7 @@ export const CashFlowReport: React.FC = () => {
   // Calculate cumulative data
   const cumulativeData = React.useMemo(() => {
     if (!cashFlowTrend) return [];
-    
+
     let cumulativeIncome = 0;
     let cumulativeExpenses = 0;
     let cumulativeNet = 0;
@@ -131,7 +162,7 @@ export const CashFlowReport: React.FC = () => {
 
   // Prepare chart data based on view mode
   const chartData = React.useMemo(() => {
-    const dataSource = viewMode === 'cumulative' ? cumulativeData : (cashFlowTrend || []);
+    const dataSource = viewMode === 'cumulative' ? cumulativeData : cashFlowTrend || [];
     return dataSource.map(
       (point: { date: string; income: number; expenses: number; netCashFlow: number }) => ({
         name: new Date(point.date).toLocaleDateString('en-US', {
@@ -224,15 +255,16 @@ export const CashFlowReport: React.FC = () => {
       return;
     }
 
-    if (!filteredTransactions || !transactionTypes || !accounts) return;
+    if (!filteredTransactions || !transactionTypes || !accounts || ratesLoading || !ratesMap) return;
 
-    const calculateFiltered = async () => {
+    const calculateFiltered = () => {
       const { incomeByType, expenseByType } =
-        await calculationService.calculateTransactionTypeGrouping(
+        calculationService.calculateTransactionTypeGrouping(
           filteredTransactions,
           transactionTypes,
           accounts,
-          conversionCurrency
+          conversionCurrency,
+          ratesMap
         );
 
       setFilteredChartData({
@@ -264,7 +296,7 @@ export const CashFlowReport: React.FC = () => {
 
     calculateFiltered();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasFilter, filters.categoryIds, conversionCurrency, startDate, endDate]);
+  }, [hasFilter, filters.categoryIds, conversionCurrency, startDate, endDate, ratesMap, ratesLoading]);
   // filteredTransactions, transactionTypes, and accounts are stable or captured in closure
 
   // Use the appropriate data source
@@ -353,223 +385,232 @@ export const CashFlowReport: React.FC = () => {
       </Paper>
 
       {/* Summary Cards */}
-      {!cashFlow ? (
+      {isLoadingCashFlow || !cashFlow ? (
         <Paper sx={{ p: 3, textAlign: 'center', mb: 3 }}>
           <Typography color="text.secondary">Loading cash flow data...</Typography>
         </Paper>
       ) : (
         <>
           <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
-                Total Income
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <TrendingUpIcon color="success" />
-                <Typography variant="h5">
-                  {formatCurrency(cashFlow.totalIncome, conversionCurrency)}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
-                Total Expenses
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <TrendingDownIcon color="error" />
-                <Typography variant="h5">
-                  {formatCurrency(cashFlow.totalExpenses, conversionCurrency)}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
-                Net Cash Flow
-              </Typography>
-              <Typography
-                variant="h5"
-                color={cashFlow.netCashFlow >= 0 ? 'success.main' : 'error.main'}
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card>
+                <CardContent>
+                  <Typography color="text.secondary" gutterBottom>
+                    Total Income
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <TrendingUpIcon color="success" />
+                    <Typography variant="h5">
+                      {formatCurrency(cashFlow.totalIncome, conversionCurrency)}
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card>
+                <CardContent>
+                  <Typography color="text.secondary" gutterBottom>
+                    Total Expenses
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <TrendingDownIcon color="error" />
+                    <Typography variant="h5">
+                      {formatCurrency(cashFlow.totalExpenses, conversionCurrency)}
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card>
+                <CardContent>
+                  <Typography color="text.secondary" gutterBottom>
+                    Net Cash Flow
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    color={cashFlow.netCashFlow >= 0 ? 'success.main' : 'error.main'}
+                  >
+                    {formatCurrency(cashFlow.netCashFlow, conversionCurrency)}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+
+          {/* Trend Chart */}
+          {cashFlowTrend && cashFlowTrend.length > 0 && (
+            <Paper sx={{ p: 3, mb: 3 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
               >
-                {formatCurrency(cashFlow.netCashFlow, conversionCurrency)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+                <Typography variant="h6">Cash Flow Trend</Typography>
+                <ToggleButtonGroup
+                  size="small"
+                  value={viewMode}
+                  exclusive
+                  onChange={(_event, newMode) => {
+                    if (newMode !== null) {
+                      setViewMode(newMode);
+                    }
+                  }}
+                  aria-label="chart view mode"
+                >
+                  <ToggleButton value="period" aria-label="period view">
+                    Period
+                  </ToggleButton>
+                  <ToggleButton value="cumulative" aria-label="cumulative view">
+                    Cumulative
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+              <LineChart
+                data={chartData}
+                lines={trendChartLines}
+                height={300}
+                formatValue={(value: number) => formatCurrency(value, conversionCurrency)}
+              />
+            </Paper>
+          )}
 
-      {/* Trend Chart */}
-      {cashFlowTrend && cashFlowTrend.length > 0 && (
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Box
-            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+          {/* Category Breakdown Charts */}
+          <Grid
+            container
+            spacing={3}
+            sx={{ mb: 3 }}
+            justifyContent={
+              incomePieData.length > 0 && expensesPieData.length > 0 ? 'flex-start' : 'center'
+            }
           >
-            <Typography variant="h6">Cash Flow Trend</Typography>
-            <ToggleButtonGroup
-              size="small"
-              value={viewMode}
-              exclusive
-              onChange={(_event, newMode) => {
-                if (newMode !== null) {
-                  setViewMode(newMode);
-                }
-              }}
-              aria-label="chart view mode"
-            >
-              <ToggleButton value="period" aria-label="period view">
-                Period
-              </ToggleButton>
-              <ToggleButton value="cumulative" aria-label="cumulative view">
-                Cumulative
-              </ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
-          <LineChart
-            data={chartData}
-            lines={trendChartLines}
-            height={300}
-            formatValue={(value: number) => formatCurrency(value, conversionCurrency)}
-          />
-        </Paper>
-      )}
+            {incomePieData.length > 0 && (
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Paper sx={{ p: 3 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Income by {groupingLabel}
+                  </Typography>
+                  <PieChart
+                    data={incomePieData}
+                    height={300}
+                    formatter={(value) => formatCurrency(value, conversionCurrency)}
+                  />
+                </Paper>
+              </Grid>
+            )}
+            {expensesPieData.length > 0 && (
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Paper sx={{ p: 3 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Expenses by {groupingLabel}
+                  </Typography>
+                  <PieChart
+                    data={expensesPieData}
+                    height={300}
+                    formatter={(value) => formatCurrency(value, conversionCurrency)}
+                  />
+                </Paper>
+              </Grid>
+            )}
+          </Grid>
 
-      {/* Category Breakdown Charts */}
-      <Grid
-        container
-        spacing={3}
-        sx={{ mb: 3 }}
-        justifyContent={
-          incomePieData.length > 0 && expensesPieData.length > 0 ? 'flex-start' : 'center'
-        }
-      >
-        {incomePieData.length > 0 && (
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Income by {groupingLabel}
-              </Typography>
-              <PieChart
-                data={incomePieData}
-                height={300}
-                formatter={(value) => formatCurrency(value, conversionCurrency)}
-              />
-            </Paper>
+          {/* Detailed Tables */}
+          <Grid container spacing={3}>
+            {hasIncomeTypes && (
+              <Grid size={{ xs: 12, md: hasExpenseTypes ? 6 : 12 }}>
+                <Paper sx={{ p: 3 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Income Details
+                  </Typography>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>{groupingLabel}</TableCell>
+                          <TableCell align="right">Total</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {incomeDetailData.map((item) => (
+                          <TableRow
+                            key={item.categoryId}
+                            onClick={() =>
+                              handleCategoryClick(item.categoryId, item.isTransactionType)
+                            }
+                            sx={{
+                              cursor: 'pointer',
+                              '&:hover': { backgroundColor: 'action.hover' },
+                            }}
+                          >
+                            <TableCell>{item.categoryName}</TableCell>
+                            <TableCell align="right">
+                              {formatCurrency(item.total, conversionCurrency)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {incomeDetailData.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={2} align="center">
+                              No income transactions
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Paper>
+              </Grid>
+            )}
+            {hasExpenseTypes && (
+              <Grid size={{ xs: 12, md: hasIncomeTypes ? 6 : 12 }}>
+                <Paper sx={{ p: 3 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Expense Details
+                  </Typography>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>{groupingLabel}</TableCell>
+                          <TableCell align="right">Total</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {expenseDetailData.map((item) => (
+                          <TableRow
+                            key={item.categoryId}
+                            onClick={() =>
+                              handleCategoryClick(item.categoryId, item.isTransactionType)
+                            }
+                            sx={{
+                              cursor: 'pointer',
+                              '&:hover': { backgroundColor: 'action.hover' },
+                            }}
+                          >
+                            <TableCell>{item.categoryName}</TableCell>
+                            <TableCell align="right">
+                              {formatCurrency(item.total, conversionCurrency)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {expenseDetailData.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={2} align="center">
+                              No expense transactions
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Paper>
+              </Grid>
+            )}
           </Grid>
-        )}
-        {expensesPieData.length > 0 && (
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Expenses by {groupingLabel}
-              </Typography>
-              <PieChart
-                data={expensesPieData}
-                height={300}
-                formatter={(value) => formatCurrency(value, conversionCurrency)}
-              />
-            </Paper>
-          </Grid>
-        )}
-      </Grid>
-
-      {/* Detailed Tables */}
-      <Grid container spacing={3}>
-        {hasIncomeTypes && (
-          <Grid size={{ xs: 12, md: hasExpenseTypes ? 6 : 12 }}>
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Income Details
-              </Typography>
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>{groupingLabel}</TableCell>
-                      <TableCell align="right">Total</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {incomeDetailData.map((item) => (
-                      <TableRow
-                        key={item.categoryId}
-                        onClick={() => handleCategoryClick(item.categoryId, item.isTransactionType)}
-                        sx={{
-                          cursor: 'pointer',
-                          '&:hover': { backgroundColor: 'action.hover' },
-                        }}
-                      >
-                        <TableCell>{item.categoryName}</TableCell>
-                        <TableCell align="right">
-                          {formatCurrency(item.total, conversionCurrency)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {incomeDetailData.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={2} align="center">
-                          No income transactions
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
-          </Grid>
-        )}
-        {hasExpenseTypes && (
-          <Grid size={{ xs: 12, md: hasIncomeTypes ? 6 : 12 }}>
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Expense Details
-              </Typography>
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>{groupingLabel}</TableCell>
-                      <TableCell align="right">Total</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {expenseDetailData.map((item) => (
-                      <TableRow
-                        key={item.categoryId}
-                        onClick={() => handleCategoryClick(item.categoryId, item.isTransactionType)}
-                        sx={{
-                          cursor: 'pointer',
-                          '&:hover': { backgroundColor: 'action.hover' },
-                        }}
-                      >
-                        <TableCell>{item.categoryName}</TableCell>
-                        <TableCell align="right">
-                          {formatCurrency(item.total, conversionCurrency)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {expenseDetailData.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={2} align="center">
-                          No expense transactions
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
-          </Grid>
-        )}
-      </Grid>
         </>
       )}
     </Box>

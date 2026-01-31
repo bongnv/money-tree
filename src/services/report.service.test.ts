@@ -126,7 +126,8 @@ describe('ReportService', () => {
         mockManualAssets,
         mockTransactions,
         '',
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result.totalAssets).toBeGreaterThan(0);
@@ -142,7 +143,8 @@ describe('ReportService', () => {
         mockManualAssets,
         mockTransactions,
         '2024-01-16',
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       // Should only include transactions up to 2024-01-16 (first transaction)
@@ -150,7 +152,7 @@ describe('ReportService', () => {
     });
 
     it('should handle empty accounts and assets', async () => {
-      const result = await reportService.calculateBalanceSheet([], [], [], '', CurrencyCode.USD);
+      const result = await reportService.calculateBalanceSheet([], [], [], '', CurrencyCode.USD, new Map());
 
       expect(result.totalAssets).toBe(0);
       expect(result.totalLiabilities).toBe(0);
@@ -165,7 +167,8 @@ describe('ReportService', () => {
         mockManualAssets,
         mockTransactions,
         '',
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result.assets.length).toBeGreaterThan(0);
@@ -178,7 +181,8 @@ describe('ReportService', () => {
         mockManualAssets,
         mockTransactions,
         '',
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result.liabilities.length).toBeGreaterThan(0);
@@ -190,7 +194,8 @@ describe('ReportService', () => {
         mockManualAssets,
         mockTransactions,
         '',
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result.netWorth).toBe(result.totalAssets - result.totalLiabilities);

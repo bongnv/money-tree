@@ -26,7 +26,7 @@ const ReconnectDialog: React.FC<ReconnectDialogProps> = ({
   onDismiss,
 }) => {
   return (
-    <Dialog open={open} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onDismiss} maxWidth="sm" fullWidth>
       <DialogTitle>Session Expired</DialogTitle>
       <DialogContent>
         <Typography>

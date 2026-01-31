@@ -49,9 +49,14 @@ async function fetchRateFromAPI(fromCurrency: CurrencyCode): Promise<number> {
  * Find fallback rate by searching nearest months (both past and future, up to 12 months)
  * @param month Month in YYYY-MM format
  * @param fromCurrency Source currency code
+ * @param preloadedRatesMap Pre-loaded rates map to check
  * @returns Exchange rate value or null if not found
  */
-async function findFallbackRate(month: string, fromCurrency: CurrencyCode): Promise<number | null> {
+async function findFallbackRate(
+  month: string,
+  fromCurrency: CurrencyCode,
+  preloadedRatesMap: Map<string, number>
+): Promise<number | null> {
   if (fromCurrency === CurrencyCode.USD) {
     return 1;
   }
@@ -64,24 +69,20 @@ async function findFallbackRate(month: string, fromCurrency: CurrencyCode): Prom
     const pastDate = new Date(targetYear, targetMonth - 1 - i, 1);
     const pastMonth = `${pastDate.getFullYear()}-${String(pastDate.getMonth() + 1).padStart(2, '0')}`;
 
-    const pastRate = await db.exchangeRates
-      .where({ month: pastMonth, fromCurrency, toCurrency: CurrencyCode.USD })
-      .first();
-
-    if (pastRate) {
-      return pastRate.rate;
+    const pastKey = `${pastMonth}_${fromCurrency}_${CurrencyCode.USD}`;
+    const pastRate = preloadedRatesMap.get(pastKey);
+    if (pastRate !== undefined) {
+      return pastRate;
     }
 
     // Check future month
     const futureDate = new Date(targetYear, targetMonth - 1 + i, 1);
     const futureMonth = `${futureDate.getFullYear()}-${String(futureDate.getMonth() + 1).padStart(2, '0')}`;
 
-    const futureRate = await db.exchangeRates
-      .where({ month: futureMonth, fromCurrency, toCurrency: CurrencyCode.USD })
-      .first();
-
-    if (futureRate) {
-      return futureRate.rate;
+    const futureKey = `${futureMonth}_${fromCurrency}_${CurrencyCode.USD}`;
+    const futureRate = preloadedRatesMap.get(futureKey);
+    if (futureRate !== undefined) {
+      return futureRate;
     }
   }
 
@@ -93,24 +94,27 @@ async function findFallbackRate(month: string, fromCurrency: CurrencyCode): Prom
  * Checks cache, fallback, then fetches from API if needed
  * @param month Month in YYYY-MM format
  * @param currency Source currency
+ * @param preloadedRatesMap Pre-loaded rates map to check
  * @returns Exchange rate to USD
  */
-async function getToUsdRate(month: string, currency: CurrencyCode): Promise<number> {
+async function getToUsdRate(
+  month: string,
+  currency: CurrencyCode,
+  preloadedRatesMap: Map<string, number>
+): Promise<number> {
   if (currency === CurrencyCode.USD) {
     return 1;
   }
 
-  // Check cache first
-  const exactRate = await db.exchangeRates
-    .where({ month, fromCurrency: currency, toCurrency: CurrencyCode.USD })
-    .first();
-
-  if (exactRate) {
-    return exactRate.rate;
+  // Check pre-loaded rates
+  const rateKey = `${month}_${currency}_${CurrencyCode.USD}`;
+  const preloadedRate = preloadedRatesMap.get(rateKey);
+  if (preloadedRate !== undefined) {
+    return preloadedRate;
   }
 
   // Try fallback to nearby months
-  const fallbackRate = await findFallbackRate(month, currency);
+  const fallbackRate = await findFallbackRate(month, currency, preloadedRatesMap);
 
   let rateValue: number;
 
@@ -159,20 +163,87 @@ export async function getRateForMonth(
   if (fromCurrency === toCurrency) {
     return 1;
   }
-
+  
+  // Fetch all existing rates from DB once
+  const allRates = await db.exchangeRates.toArray();
+  const preloadedRatesMap = new Map<string, number>();
+  for (const rate of allRates) {
+    const key = `${rate.month}_${rate.fromCurrency}_${rate.toCurrency}`;
+    preloadedRatesMap.set(key, rate.rate);
+  }
+  
   // If converting to USD, get direct rate
   if (toCurrency === CurrencyCode.USD) {
-    return await getToUsdRate(month, fromCurrency);
+    return await getToUsdRate(month, fromCurrency, preloadedRatesMap);
   }
   // If converting from USD, get inverse of target->USD rate
   else if (fromCurrency === CurrencyCode.USD) {
-    const rate = await getToUsdRate(month, toCurrency);
+    const rate = await getToUsdRate(month, toCurrency, preloadedRatesMap);
     return 1 / rate;
   }
   // For X->Y, calculate through USD: X->USD / Y->USD
   else {
-    const fromToUsd = await getToUsdRate(month, fromCurrency);
-    const toToUsd = await getToUsdRate(month, toCurrency);
+    const fromToUsd = await getToUsdRate(month, fromCurrency, preloadedRatesMap);
+    const toToUsd = await getToUsdRate(month, toCurrency, preloadedRatesMap);
     return fromToUsd / toToUsd;
   }
+}
+
+/**
+ * Ensure all required exchange rates are loaded for a report
+ * Pre-fetches missing rates to enable synchronous computation
+ * 
+ * @param currencies Set of currencies that need conversion
+ * @param months Array of months in YYYY-MM format
+ * @param baseCurrency Target currency for conversions
+ * @param preloadedRates Array of existing rates (required)
+ * @returns Map of rates ready for synchronous lookup
+ */
+export async function ensureRatesForReport(
+  currencies: Set<CurrencyCode>,
+  months: string[],
+  baseCurrency: CurrencyCode,
+  preloadedRates: ExchangeRate[]
+): Promise<Map<string, number>> {
+  // Build map from provided rates
+  const preloadedRatesMap = new Map<string, number>();
+  for (const rate of preloadedRates) {
+    const key = `${rate.month}_${rate.fromCurrency}_${rate.toCurrency}`;
+    preloadedRatesMap.set(key, rate.rate);
+  }
+  
+  const ratesMap = new Map<string, number>();
+
+  // Fetch all required rates
+  const fetchPromises: Promise<void>[] = [];
+
+  for (const month of months) {
+    for (const currency of currencies) {
+      if (currency === baseCurrency || currency === CurrencyCode.USD) {
+        continue; // No need to fetch for same currency or USD base
+      }
+
+      // Fetch X->USD rate (our storage format)
+      const rateKey = `${month}_${currency}_${CurrencyCode.USD}`;
+      const promise = getToUsdRate(month, currency, preloadedRatesMap).then((rate) => {
+        ratesMap.set(rateKey, rate);
+      });
+
+      fetchPromises.push(promise);
+    }
+
+    // Also ensure baseCurrency->USD if not USD
+    if (baseCurrency !== CurrencyCode.USD) {
+      const rateKey = `${month}_${baseCurrency}_${CurrencyCode.USD}`;
+      const promise = getToUsdRate(month, baseCurrency, preloadedRatesMap).then((rate) => {
+        ratesMap.set(rateKey, rate);
+      });
+      fetchPromises.push(promise);
+    }
+  }
+
+  // Fetch all rates concurrently
+  await Promise.all(fetchPromises);
+
+  return ratesMap;
 }

@@ -5,7 +5,9 @@ import type { Category } from '@/types/models';
 
 interface UseCategoryFormProps {
   category?: Category;
-  onSubmit?: (categoryData: Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
+  onSubmit?: (
+    categoryData: Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
+  ) => Promise<void>;
 }
 
 /**
@@ -52,7 +54,7 @@ export function useCategoryForm({ category, onSubmit }: UseCategoryFormProps = {
     formState.setIsSubmitting(true);
     try {
       const categoryData = categoryService.transformFormToCategory(formState.formData);
-      
+
       if (category) {
         // Edit mode
         await categoryService.update(category.id, categoryData);
@@ -60,7 +62,7 @@ export function useCategoryForm({ category, onSubmit }: UseCategoryFormProps = {
         // Create mode
         await categoryService.create(categoryData);
       }
-      
+
       if (onSubmit) {
         await onSubmit(categoryData);
       }

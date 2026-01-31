@@ -20,7 +20,7 @@ export function useExchangeRates(): ExchangeRate[] | undefined {
 /**
  * Ensure required exchange rates are loaded and return them as a map
  * Fetches missing rates, stores them in DB, and returns the complete rates map
- * 
+ *
  * @param currencies Set of currencies that need conversion
  * @param months Array of months in YYYY-MM format
  * @param baseCurrency Target currency for conversions
@@ -39,13 +39,17 @@ export function useEnsureExchangeRates(
   const allRates = useExchangeRates();
 
   useEffect(() => {
-    if (!currencies || currencies.size === 0) {
-      setRatesMap(new Map());
+    // Wait for rates to load
+    if (allRates === undefined) {
       return;
     }
 
-    // Wait for rates to load
-    if (allRates === undefined) {
+    if (!currencies || currencies.size === 0) {
+      // Defer state updates to avoid synchronous setState in effect
+      Promise.resolve().then(() => {
+        setRatesMap(new Map());
+        setIsLoading(false);
+      });
       return;
     }
 
@@ -63,7 +67,7 @@ export function useEnsureExchangeRates(
           baseCurrency,
           allRates
         );
-        
+
         if (!cancelled) {
           setRatesMap(loadedRatesMap);
           setIsLoading(false);

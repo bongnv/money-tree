@@ -79,38 +79,47 @@ export function useFinancialSummary(period: PeriodOption): FinancialSummaryData 
   }, [accounts, manualAssets, budgets, baseCurrency]);
 
   // Pre-load exchange rates
-  const { ratesMap, isLoading: ratesLoading, error: ratesError } = useEnsureExchangeRates(
-    currencies,
-    months,
-    baseCurrency
-  );
+  const {
+    ratesMap,
+    isLoading: ratesLoading,
+    error: ratesError,
+  } = useEnsureExchangeRates(currencies, months, baseCurrency);
 
   // Calculate net worth with currency conversion
   useEffect(() => {
-    if (!accounts || !transactions || !manualAssets || ratesLoading || !ratesMap) return;
-
-    if (ratesError) {
-      setError(ratesError.message);
+    if (!accounts || !transactions || !manualAssets || ratesLoading || !ratesMap) {
+      Promise.resolve().then(() => setNetWorth(0));
       return;
     }
 
-    try {
-      const worth = calculationService.calculateNetWorth(
-        accounts,
-        transactions,
-        manualAssets,
-        baseCurrency,
-        currentMonth,
-        ratesMap
-      );
-      setNetWorth(worth);
-      setError(null);
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      }
-      setNetWorth(0);
+    if (ratesError) {
+      Promise.resolve().then(() => {
+        setError(ratesError.message);
+        setNetWorth(0);
+      });
+      return;
     }
+
+    // Defer state updates using Promise
+    Promise.resolve().then(() => {
+      try {
+        const worth = calculationService.calculateNetWorth(
+          accounts,
+          transactions,
+          manualAssets,
+          baseCurrency,
+          currentMonth,
+          ratesMap
+        );
+        setNetWorth(worth);
+        setError(null);
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err.message);
+        }
+        setNetWorth(0);
+      }
+    });
   }, [
     accounts,
     transactions,
@@ -133,50 +142,59 @@ export function useFinancialSummary(period: PeriodOption): FinancialSummaryData 
       !budgets ||
       ratesLoading ||
       !ratesMap
-    )
+    ) {
+      Promise.resolve().then(() => {
+        setCashFlow(0);
+        setSavingsRate(0);
+        setBudgetHealth(0);
+      });
       return;
-
-    try {
-      const periodTransactions = transactions.filter(
-        (t) => t.date >= period.startDate && t.date <= period.endDate
-      );
-
-      const cashFlowData = reportService.calculateCashFlow(
-        periodTransactions,
-        transactionTypes,
-        categories,
-        period.startDate,
-        period.endDate,
-        accounts,
-        baseCurrency,
-        ratesMap
-      );
-
-      setCashFlow(cashFlowData.netCashFlow);
-
-      const rate = calculationService.calculateSavingsRate(
-        cashFlowData.totalIncome,
-        cashFlowData.totalExpenses
-      );
-      setSavingsRate(rate);
-
-      const budgetPerformance = reportService.calculateBudgetPerformance(
-        budgets,
-        periodTransactions,
-        transactionTypes,
-        categories,
-        period.startDate,
-        period.endDate,
-        accounts,
-        baseCurrency,
-        ratesMap
-      );
-
-      setBudgetHealth(budgetPerformance.overallHealthScore);
-    } catch (err) {
-      // Handle errors silently for now
-      console.error('Error calculating metrics:', err);
     }
+
+    // Defer state updates using Promise
+    Promise.resolve().then(() => {
+      try {
+        const periodTransactions = transactions.filter(
+          (t) => t.date >= period.startDate && t.date <= period.endDate
+        );
+
+        const cashFlowData = reportService.calculateCashFlow(
+          periodTransactions,
+          transactionTypes,
+          categories,
+          period.startDate,
+          period.endDate,
+          accounts,
+          baseCurrency,
+          ratesMap
+        );
+
+        setCashFlow(cashFlowData.netCashFlow);
+
+        const rate = calculationService.calculateSavingsRate(
+          cashFlowData.totalIncome,
+          cashFlowData.totalExpenses
+        );
+        setSavingsRate(rate);
+
+        const budgetPerformance = reportService.calculateBudgetPerformance(
+          budgets,
+          periodTransactions,
+          transactionTypes,
+          categories,
+          period.startDate,
+          period.endDate,
+          accounts,
+          baseCurrency,
+          ratesMap
+        );
+
+        setBudgetHealth(budgetPerformance.overallHealthScore);
+      } catch (err) {
+        // Handle errors silently for now
+        console.error('Error calculating metrics:', err);
+      }
+    });
   }, [
     transactions,
     period,

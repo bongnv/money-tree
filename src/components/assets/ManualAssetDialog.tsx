@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, Box, Typography, Alert } from '@mui/material';
 import { ManualAssetForm } from './ManualAssetForm';
-import { useAssetService } from '@/hooks/useServices';
 import type { ManualAsset } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
 import { formatDate, getTodayDate } from '../../utils/date.utils';
@@ -21,7 +20,6 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
   onClose,
   mode = 'create',
 }) => {
-  const assetService = useAssetService();
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [previousValue, setPreviousValue] = useState<{ value: number; date: string } | null>(null);
 
@@ -42,33 +40,19 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
     onClose();
   };
 
-  const handleSubmit = async (
-    assetData: Omit<ManualAsset, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
-  ) => {
+  const handleSuccess = async () => {
     if (asset && isUpdateMode) {
-      // Update value workflow: add new value to history
+      // Update value workflow: show success message
       const currentValue = getAssetCurrentValue(asset);
       const latestEntry = [...asset.valueHistory].sort((a, b) => b.date.localeCompare(a.date))[0];
       setPreviousValue({ value: currentValue, date: latestEntry.date });
-      // Extract the new value entry from assetData
-      const newEntry = assetData.valueHistory[assetData.valueHistory.length - 1];
-      await assetService.addValueHistory(asset.id, {
-        value: newEntry.value,
-        date: newEntry.date,
-        notes: newEntry.notes,
-      });
       setShowSuccessMessage(true);
       // Auto-close after showing success message
       setTimeout(() => {
         handleClose();
       }, 2000);
-    } else if (asset?.id) {
-      // Regular edit workflow
-      await assetService.update(asset.id, assetData);
-      handleClose();
     } else {
-      // Create new asset
-      await assetService.create(assetData);
+      // Regular edit or create workflow - just close
       handleClose();
     }
   };
@@ -137,7 +121,7 @@ export const ManualAssetDialog: React.FC<ManualAssetDialogProps> = ({
                 }
               : asset
           }
-          onSubmit={handleSubmit}
+          onSubmit={handleSuccess}
           onCancel={handleClose}
           updateValueOnly={isUpdateMode}
         />

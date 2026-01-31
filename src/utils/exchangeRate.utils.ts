@@ -163,7 +163,7 @@ export async function getRateForMonth(
   if (fromCurrency === toCurrency) {
     return 1;
   }
-  
+
   // Fetch all existing rates from DB once
   const allRates = await db.exchangeRates.toArray();
   const preloadedRatesMap = new Map<string, number>();
@@ -171,7 +171,7 @@ export async function getRateForMonth(
     const key = `${rate.month}_${rate.fromCurrency}_${rate.toCurrency}`;
     preloadedRatesMap.set(key, rate.rate);
   }
-  
+
   // If converting to USD, get direct rate
   if (toCurrency === CurrencyCode.USD) {
     return await getToUsdRate(month, fromCurrency, preloadedRatesMap);
@@ -192,7 +192,7 @@ export async function getRateForMonth(
 /**
  * Ensure all required exchange rates are loaded for a report
  * Pre-fetches missing rates to enable synchronous computation
- * 
+ *
  * @param currencies Set of currencies that need conversion
  * @param months Array of months in YYYY-MM format
  * @param baseCurrency Target currency for conversions
@@ -211,7 +211,7 @@ export async function ensureRatesForReport(
     const key = `${rate.month}_${rate.fromCurrency}_${rate.toCurrency}`;
     preloadedRatesMap.set(key, rate.rate);
   }
-  
+
   const ratesMap = new Map<string, number>();
 
   // Fetch all required rates

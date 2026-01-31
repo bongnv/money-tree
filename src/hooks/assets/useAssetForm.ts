@@ -10,7 +10,7 @@ type AssetFormMode = 'create' | 'edit' | 'update-value';
 interface UseAssetFormProps {
   asset?: ManualAsset;
   mode?: AssetFormMode;
-  onSubmit?: (assetData: any) => Promise<void>;
+  onSubmit?: () => Promise<void>;
 }
 
 /**
@@ -48,7 +48,7 @@ export function useAssetForm({ asset, mode = 'create', onSubmit }: UseAssetFormP
           };
 
   // Custom validation function
-  const validate = (data: any) => {
+  const validate = (data: AssetFormData | AssetValueUpdateData) => {
     if (isUpdateValueMode && asset) {
       const errors = assetService.validateAssetValueUpdate(data as AssetValueUpdateData, asset);
       return errors.reduce(
@@ -105,7 +105,7 @@ export function useAssetForm({ asset, mode = 'create', onSubmit }: UseAssetFormP
       }
 
       if (onSubmit) {
-        await onSubmit(formState.formData);
+        await onSubmit();
       }
     } finally {
       formState.setIsSubmitting(false);

@@ -725,12 +725,13 @@ describe('CalculationService', () => {
 
     describe('calculateNetWorth', () => {
       it('should calculate net worth from accounts and assets', async () => {
-        const netWorth = await calculationService.calculateNetWorth(
+        const netWorth = calculationService.calculateNetWorth(
           [mockAccount1, mockAccount2],
           [incomeTransaction, expenseTransaction, transferTransaction],
           mockAssets,
           CurrencyCode.USD,
-          '2026-01'
+          '2026-01',
+          new Map()
         );
         // acc-1: 1000 + 3000 - 200 - 500 = 3300
         // acc-2: 5000 + 500 = 5500
@@ -740,24 +741,26 @@ describe('CalculationService', () => {
       });
 
       it('should handle empty assets', async () => {
-        const netWorth = await calculationService.calculateNetWorth(
+        const netWorth = calculationService.calculateNetWorth(
           [mockAccount1],
           [incomeTransaction, expenseTransaction],
           [],
           CurrencyCode.USD,
-          '2026-01'
+          '2026-01',
+          new Map()
         );
         // acc-1: 1000 + 3000 - 200 = 3800
         expect(netWorth).toBe(3800);
       });
 
       it('should handle empty accounts', async () => {
-        const netWorth = await calculationService.calculateNetWorth(
+        const netWorth = calculationService.calculateNetWorth(
           [],
           [],
           mockAssets,
           CurrencyCode.USD,
-          '2026-01'
+          '2026-01',
+          new Map()
         );
         // assets only: 500000 + 25000 = 525000
         expect(netWorth).toBe(525000);
@@ -826,8 +829,9 @@ describe('CalculationService', () => {
           isDeleted: false,
         };
 
-        const result = await calculationService.convertTransactionAmount(
+        const result = calculationService.convertTransactionAmount(
           transaction,
+          new Map(),
           [accountUSD],
           CurrencyCode.VND
         );
@@ -847,18 +851,16 @@ describe('CalculationService', () => {
           isDeleted: false,
         };
 
-        const result = await calculationService.convertTransactionAmount(
+        const result = calculationService.convertTransactionAmount(
           transaction,
+          new Map(),
           [accountUSD],
           CurrencyCode.USD
         );
         expect(result).toBe(100);
       });
 
-      it('should return original amount when conversion rate not available', async () => {
-        // Mock getRateForMonth to return null (no rate available)
-        (exchangeRateUtils.getRateForMonth as jest.Mock).mockResolvedValue(null);
-
+      it('should throw error when conversion rate not available', () => {
         const transaction: Transaction = {
           id: 'tx1',
           date: '2026-01-15',
@@ -871,12 +873,14 @@ describe('CalculationService', () => {
           isDeleted: false,
         };
 
-        const result = await calculationService.convertTransactionAmount(
-          transaction,
-          [accountEUR],
-          CurrencyCode.USD
-        );
-        expect(result).toBe(100);
+        expect(() =>
+          calculationService.convertTransactionAmount(
+            transaction,
+            new Map(), // Empty ratesMap - no rates available
+            [accountEUR],
+            CurrencyCode.USD
+          )
+        ).toThrow(/Exchange rate not found/);
       });
     });
 
@@ -895,10 +899,11 @@ describe('CalculationService', () => {
           updatedAt: '2026-01-01T00:00:00.000Z',
         };
 
-        const result = await calculationService.convertBudgetAmount(
+        const result = calculationService.convertBudgetAmount(
           budget,
           '2026-01',
-          CurrencyCode.USD
+          CurrencyCode.USD,
+          new Map()
         );
         expect(result).toBe(500);
       });
@@ -920,9 +925,9 @@ describe('CalculationService', () => {
           updatedAt: '2026-01-01T00:00:00.000Z',
         };
 
-        await expect(
-          calculationService.convertBudgetAmount(budget, '2026-01', CurrencyCode.USD)
-        ).rejects.toThrow(/Missing exchange rate/);
+        expect(() =>
+          calculationService.convertBudgetAmount(budget, '2026-01', CurrencyCode.USD, new Map())
+        ).toThrow(/Exchange rate not found/);
       });
     });
 
@@ -965,19 +970,21 @@ describe('CalculationService', () => {
           },
         ];
 
-        const result = await calculationService.sumTransactionAmounts(
+        const result = calculationService.sumTransactionAmounts(
           transactions,
           [accountUSD],
-          CurrencyCode.USD
+          CurrencyCode.USD,
+          new Map()
         );
         expect(result).toBe(300);
       });
 
       it('should return 0 for empty transaction list', async () => {
-        const result = await calculationService.sumTransactionAmounts(
+        const result = calculationService.sumTransactionAmounts(
           [],
           [accountUSD],
-          CurrencyCode.USD
+          CurrencyCode.USD,
+          new Map()
         );
         expect(result).toBe(0);
       });
@@ -1045,11 +1052,12 @@ describe('CalculationService', () => {
           },
         ];
 
-        const result = await calculationService.calculateTransactionTypeGrouping(
+        const result = calculationService.calculateTransactionTypeGrouping(
           transactions,
           transactionTypes,
           [accountUSD],
-          CurrencyCode.USD
+          CurrencyCode.USD,
+          new Map()
         );
 
         expect(result.incomeByType.size).toBe(1);
@@ -1059,11 +1067,12 @@ describe('CalculationService', () => {
       });
 
       it('should handle empty transactions', async () => {
-        const result = await calculationService.calculateTransactionTypeGrouping(
+        const result = calculationService.calculateTransactionTypeGrouping(
           [],
           transactionTypes,
           [accountUSD],
-          CurrencyCode.USD
+          CurrencyCode.USD,
+          new Map()
         );
 
         expect(result.incomeByType.size).toBe(0);
@@ -1085,11 +1094,12 @@ describe('CalculationService', () => {
           },
         ];
 
-        const result = await calculationService.calculateTransactionTypeGrouping(
+        const result = calculationService.calculateTransactionTypeGrouping(
           transactions,
           transactionTypes,
           [accountUSD],
-          CurrencyCode.USD
+          CurrencyCode.USD,
+          new Map()
         );
 
         expect(result.incomeByType.size).toBe(0);
@@ -1163,13 +1173,14 @@ describe('CalculationService', () => {
           },
         ];
 
-        const result = await calculationService.calculateBudgetGrouping(
+        const result = calculationService.calculateBudgetGrouping(
           budgets,
           transactions,
           transactionTypes,
           [accountUSD],
           { startDate: '2026-01-01', endDate: '2026-01-31' },
           CurrencyCode.USD,
+          new Map(),
           getCategoryById
         );
 
@@ -1195,13 +1206,14 @@ describe('CalculationService', () => {
           },
         ];
 
-        const result = await calculationService.calculateBudgetGrouping(
+        const result = calculationService.calculateBudgetGrouping(
           budgets,
           [],
           transactionTypes,
           [accountUSD],
           { startDate: '2026-01-01', endDate: '2026-01-31' },
           CurrencyCode.USD,
+          new Map(),
           getCategoryById
         );
 
@@ -1226,13 +1238,14 @@ describe('CalculationService', () => {
 
         const getCategoryByIdMissing = () => undefined;
 
-        const result = await calculationService.calculateBudgetGrouping(
+        const result = calculationService.calculateBudgetGrouping(
           budgets,
           [],
           transactionTypes,
           [accountUSD],
           { startDate: '2026-01-01', endDate: '2026-01-31' },
           CurrencyCode.USD,
+          new Map(),
           getCategoryByIdMissing
         );
 
@@ -1240,13 +1253,14 @@ describe('CalculationService', () => {
       });
 
       it('should handle empty budgets', async () => {
-        const result = await calculationService.calculateBudgetGrouping(
+        const result = calculationService.calculateBudgetGrouping(
           [],
           [],
           transactionTypes,
           [accountUSD],
           { startDate: '2026-01-01', endDate: '2026-01-31' },
           CurrencyCode.USD,
+          new Map(),
           getCategoryById
         );
 

@@ -53,10 +53,10 @@ export function useBudgetPerformance() {
       monthsSet.add(endDate.substring(0, 7));
       return Array.from(monthsSet);
     }
-    
+
     // Extract unique months from actual transactions
     const monthsSet = new Set<string>();
-    transactions.forEach(tx => {
+    transactions.forEach((tx) => {
       monthsSet.add(tx.date.substring(0, 7));
     });
     return Array.from(monthsSet);
@@ -65,27 +65,26 @@ export function useBudgetPerformance() {
   // Gather currencies
   const currencies = useMemo(() => {
     const set = new Set<CurrencyCode>();
-    accounts?.forEach(acc => set.add(acc.currencyCode));
-    budgets?.forEach(budget => set.add(budget.currencyCode));
+    accounts?.forEach((acc) => set.add(acc.currencyCode));
+    budgets?.forEach((budget) => set.add(budget.currencyCode));
     set.add(conversionCurrency);
     return set;
   }, [accounts, budgets, conversionCurrency]);
 
   // Pre-load exchange rates
-  const { ratesMap, isLoading: ratesLoading, error: ratesError } = useEnsureExchangeRates(currencies, months, conversionCurrency);
-
-  // Create stable key for transactions
-  const transactionsKey = useMemo(
-    () => transactions?.map(t => t.id).sort().join(',') || '',
-    [transactions]
-  );
+  const {
+    ratesMap,
+    isLoading: ratesLoading,
+    error: ratesError,
+  } = useEnsureExchangeRates(currencies, months, conversionCurrency);
 
   // Budget performance computation
   useEffect(() => {
-
     if (ratesError) {
-      setPerformanceError(ratesError);
-      setIsLoadingPerformance(false);
+      Promise.resolve().then(() => {
+        setPerformanceError(ratesError);
+        setIsLoadingPerformance(false);
+      });
       return;
     }
 
@@ -97,7 +96,8 @@ export function useBudgetPerformance() {
 
       try {
         // TypeScript narrowing: we know these are defined
-        if (!budgets || !transactions || !transactionTypes || !categories || !accounts || !ratesMap) return;
+        if (!budgets || !transactions || !transactionTypes || !categories || !accounts || !ratesMap)
+          return;
 
         const result = reportService.calculateBudgetPerformance(
           budgets,
@@ -131,7 +131,7 @@ export function useBudgetPerformance() {
     };
   }, [
     budgets,
-    transactionsKey,
+    transactions,
     transactionTypes,
     categories,
     accounts,

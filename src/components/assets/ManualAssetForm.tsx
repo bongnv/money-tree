@@ -8,9 +8,7 @@ import { useAssetForm } from '@/hooks/assets/useAssetForm';
 
 interface ManualAssetFormProps {
   asset?: ManualAsset;
-  onSubmit: (
-    asset: Omit<ManualAsset, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
-  ) => Promise<void>;
+  onSubmit: () => Promise<void>;
   onCancel: () => void;
   updateValueOnly?: boolean;
 }

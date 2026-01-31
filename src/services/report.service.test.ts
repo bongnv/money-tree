@@ -2,12 +2,6 @@ import { ReportService } from './report.service';
 import { CalculationService } from './calculation.service';
 import type { Account, ManualAsset, Transaction, TransactionType, Category } from '../types/models';
 import { AccountType, AssetType, Group, CurrencyCode } from '../types/enums';
-import { getRateForMonth } from '../utils/exchangeRate.utils';
-
-// Mock exchange rate utils
-jest.mock('../utils/exchangeRate.utils', () => ({
-  getRateForMonth: jest.fn().mockResolvedValue(1),
-}));
 
 const calculationService = new CalculationService();
 const reportService = new ReportService(calculationService);
@@ -152,7 +146,14 @@ describe('ReportService', () => {
     });
 
     it('should handle empty accounts and assets', async () => {
-      const result = await reportService.calculateBalanceSheet([], [], [], '', CurrencyCode.USD, new Map());
+      const result = await reportService.calculateBalanceSheet(
+        [],
+        [],
+        [],
+        '',
+        CurrencyCode.USD,
+        new Map()
+      );
 
       expect(result.totalAssets).toBe(0);
       expect(result.totalLiabilities).toBe(0);
@@ -214,7 +215,8 @@ describe('ReportService', () => {
         startDate,
         endDate,
         30,
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(trend.length).toBeGreaterThan(0);
@@ -235,7 +237,8 @@ describe('ReportService', () => {
         startDate,
         endDate,
         10,
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       // With 10-day intervals, should have about 3-4 points in a month
@@ -253,7 +256,8 @@ describe('ReportService', () => {
         startDate,
         endDate,
         30,
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(trend).toHaveLength(0);
@@ -267,7 +271,8 @@ describe('ReportService', () => {
         mockManualAssets,
         mockTransactions,
         '2024-02-15',
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result.current).toBeDefined();
@@ -282,7 +287,8 @@ describe('ReportService', () => {
         mockManualAssets,
         mockTransactions,
         '2024-02-15',
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result.change).toBe(result.current.netWorth - result.previous.netWorth);
@@ -294,7 +300,8 @@ describe('ReportService', () => {
         mockManualAssets,
         mockTransactions,
         '2024-02-15',
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       if (result.previous.netWorth !== 0) {
@@ -313,7 +320,8 @@ describe('ReportService', () => {
         mockManualAssets,
         mockTransactions,
         '2025-01-15',
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result.current).toBeDefined();
@@ -328,7 +336,8 @@ describe('ReportService', () => {
         mockManualAssets,
         mockTransactions,
         '2025-01-15',
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result.change).toBe(result.current.netWorth - result.previous.netWorth);
@@ -343,7 +352,8 @@ describe('ReportService', () => {
         emptyAssets,
         [],
         '2024-01-15',
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result.changePercent).toBe(0);
@@ -464,7 +474,8 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result.totalIncome).toBe(3000);
@@ -482,7 +493,8 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       // Transfer should not appear in income or expenses
@@ -498,7 +510,8 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       // Should not include February transaction
@@ -513,7 +526,8 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result.income[0].categoryName).toBe('Salary');
@@ -532,7 +546,8 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result.totalIncome).toBe(0);
@@ -640,7 +655,8 @@ describe('ReportService', () => {
         '2024-02-29',
         30,
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result.length).toBeGreaterThan(0);
@@ -659,7 +675,8 @@ describe('ReportService', () => {
         '2024-01-31',
         15,
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       // Should have approximately 2 data points for 30-day period with 15-day intervals
@@ -675,7 +692,8 @@ describe('ReportService', () => {
         '2024-01-01', // End before start
         30,
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result).toHaveLength(0);
@@ -690,7 +708,8 @@ describe('ReportService', () => {
         '2024-01-31',
         30,
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       // First period should have income 3000 and expense 500
@@ -800,7 +819,8 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result.items).toHaveLength(2);
@@ -819,7 +839,8 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       const groceryItem = result.items.find((item) => item.transactionTypeId === 'type1');
@@ -838,7 +859,8 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       const groceryItem = result.items.find((item) => item.transactionTypeId === 'type1');
@@ -857,7 +879,8 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       const groceryItem = result.items.find((item) => item.transactionTypeId === 'type1');
@@ -876,7 +899,8 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       // Expense score: (500-300)/500 * 100 = 40
@@ -894,7 +918,8 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-03-31', // 3 months
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       // Monthly budget * 3 months
@@ -911,7 +936,8 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result.items).toHaveLength(0);
@@ -929,7 +955,8 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result.items).toHaveLength(2);
@@ -950,8 +977,9 @@ describe('ReportService', () => {
         },
       ];
 
-      // Mock exchange rate
-      (getRateForMonth as jest.Mock).mockResolvedValue(1.1);
+      // Create ratesMap with SGD->USD rate (use underscore separator)
+      const ratesMap = new Map<string, number>();
+      ratesMap.set('2024-01_SGD_USD', 1.1);
 
       const result = await reportService.calculateBudgetPerformance(
         sgdBudgets,
@@ -960,8 +988,9 @@ describe('ReportService', () => {
         mockCategories,
         '2024-01-01',
         '2024-01-31',
-        mockAccounts,
-        CurrencyCode.USD
+        [], // Empty accounts since there are no transactions
+        CurrencyCode.USD,
+        ratesMap
       );
 
       expect(result.totalBudgetedExpenses).toBe(550); // 500 SGD * 1.1
@@ -975,8 +1004,9 @@ describe('ReportService', () => {
         },
       ];
 
-      // Mock exchange rate
-      (getRateForMonth as jest.Mock).mockResolvedValue(1.1);
+      // Create ratesMap with SGD->USD rate (use underscore separator)
+      const ratesMap = new Map<string, number>();
+      ratesMap.set('2024-01_SGD_USD', 1.1);
 
       const result = await reportService.calculateBudgetPerformance(
         mockBudgets,
@@ -986,7 +1016,8 @@ describe('ReportService', () => {
         '2024-01-01',
         '2024-01-31',
         sgdAccounts,
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        ratesMap
       );
 
       // Transaction amount 300 SGD * 1.1 = 330 USD
@@ -1066,7 +1097,8 @@ describe('ReportService', () => {
         '2024-02-29',
         30,
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result.length).toBeGreaterThan(0);
@@ -1086,7 +1118,8 @@ describe('ReportService', () => {
         '2024-01-31',
         30,
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       // First period: budgeted 500, actual 300, variance = -200 (under budget)
@@ -1105,7 +1138,8 @@ describe('ReportService', () => {
         '2024-02-29',
         15,
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       // Should have approximately 4 data points for 60-day period with 15-day intervals
@@ -1122,7 +1156,8 @@ describe('ReportService', () => {
         '2024-01-01', // End before start
         30,
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result).toHaveLength(0);
@@ -1138,7 +1173,8 @@ describe('ReportService', () => {
         '2024-01-31',
         30,
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result.length).toBeGreaterThan(0);
@@ -1155,7 +1191,8 @@ describe('ReportService', () => {
         '2024-01-31',
         30,
         [],
-        CurrencyCode.USD
+        CurrencyCode.USD,
+        new Map()
       );
 
       expect(result.length).toBeGreaterThan(0);

@@ -28,49 +28,54 @@ export function useNetWorthTrend(
   // Calculate months for rate loading - need ALL months in the trend period, not just transaction months
   const months = useMemo(() => {
     const monthsSet = new Set<string>();
-    
+
     // Parse start and end dates
     const [startYear, startMonth] = startDate.split('-').map(Number);
     const [endYear, endMonth] = endDate.split('-').map(Number);
-    
+
     // Generate all months in the date range
     let currentYear = startYear;
     let currentMonth = startMonth;
-    
+
     while (currentYear < endYear || (currentYear === endYear && currentMonth <= endMonth)) {
       monthsSet.add(`${currentYear}-${String(currentMonth).padStart(2, '0')}`);
-      
+
       currentMonth++;
       if (currentMonth > 12) {
         currentMonth = 1;
         currentYear++;
       }
     }
-    
+
     return Array.from(monthsSet);
   }, [startDate, endDate]);
 
   // Gather currencies
   const currencies = useMemo(() => {
     const set = new Set<CurrencyCode>();
-    accounts?.forEach(acc => set.add(acc.currencyCode));
-    manualAssets?.forEach(asset => set.add(asset.currencyCode));
+    accounts?.forEach((acc) => set.add(acc.currencyCode));
+    manualAssets?.forEach((asset) => set.add(asset.currencyCode));
     set.add(conversionCurrency);
     return set;
   }, [accounts, manualAssets, conversionCurrency]);
 
   // Pre-load exchange rates
-  const { ratesMap, isLoading: ratesLoading, error: ratesError } = useEnsureExchangeRates(currencies, months, conversionCurrency);
+  const {
+    ratesMap,
+    isLoading: ratesLoading,
+    error: ratesError,
+  } = useEnsureExchangeRates(currencies, months, conversionCurrency);
 
   const [data, setData] = useState<NetWorthTrendPoint[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-
     if (ratesError) {
-      setError(ratesError);
-      setIsLoading(false);
+      Promise.resolve().then(() => {
+        setError(ratesError);
+        setIsLoading(false);
+      });
       return;
     }
 
@@ -113,7 +118,19 @@ export function useNetWorthTrend(
     return () => {
       cancelled = true;
     };
-  }, [accounts, manualAssets, transactions, startDate, endDate, interval, conversionCurrency, reportService, ratesMap, ratesLoading, ratesError]);
+  }, [
+    accounts,
+    manualAssets,
+    transactions,
+    startDate,
+    endDate,
+    interval,
+    conversionCurrency,
+    reportService,
+    ratesMap,
+    ratesLoading,
+    ratesError,
+  ]);
 
   return { data, isLoading, error };
 }

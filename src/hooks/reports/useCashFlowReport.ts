@@ -59,48 +59,47 @@ export function useCashFlowReport() {
   });
 
   // Filter transactions based on current filters
-  const filteredTransactions = useMemo(() => allTransactions?.filter((transaction) => {
-    // Filter by account
-    if (filterState.filters.accountIds.length > 0) {
-      const matchesFrom =
-        transaction.fromAccountId &&
-        filterState.filters.accountIds.includes(transaction.fromAccountId);
-      const matchesTo =
-        transaction.toAccountId && filterState.filters.accountIds.includes(transaction.toAccountId);
-      if (!matchesFrom && !matchesTo) {
-        return false;
-      }
-    }
+  const filteredTransactions = useMemo(
+    () =>
+      allTransactions?.filter((transaction) => {
+        // Filter by account
+        if (filterState.filters.accountIds.length > 0) {
+          const matchesFrom =
+            transaction.fromAccountId &&
+            filterState.filters.accountIds.includes(transaction.fromAccountId);
+          const matchesTo =
+            transaction.toAccountId &&
+            filterState.filters.accountIds.includes(transaction.toAccountId);
+          if (!matchesFrom && !matchesTo) {
+            return false;
+          }
+        }
 
-    // Filter by category (via transaction type)
-    if (filterState.filters.categoryIds.length > 0) {
-      const transactionType = transactionTypes?.find(
-        (tt) => tt.id === transaction.transactionTypeId
-      );
-      if (
-        !transactionType ||
-        !filterState.filters.categoryIds.includes(transactionType.categoryId)
-      ) {
-        return false;
-      }
-    }
+        // Filter by category (via transaction type)
+        if (filterState.filters.categoryIds.length > 0) {
+          const transactionType = transactionTypes?.find(
+            (tt) => tt.id === transaction.transactionTypeId
+          );
+          if (
+            !transactionType ||
+            !filterState.filters.categoryIds.includes(transactionType.categoryId)
+          ) {
+            return false;
+          }
+        }
 
-    // Filter by search text
-    if (filterState.filters.searchText) {
-      const searchLower = filterState.filters.searchText.toLowerCase();
-      return (
-        transaction.description?.toLowerCase().includes(searchLower) ||
-        transaction.transactionTypeId.toLowerCase().includes(searchLower)
-      );
-    }
+        // Filter by search text
+        if (filterState.filters.searchText) {
+          const searchLower = filterState.filters.searchText.toLowerCase();
+          return (
+            transaction.description?.toLowerCase().includes(searchLower) ||
+            transaction.transactionTypeId.toLowerCase().includes(searchLower)
+          );
+        }
 
-    return true;
-  }) ?? [], [allTransactions, filterState.filters, transactionTypes]);
-
-  // Create stable key for filtered transactions
-  const filteredTransactionsKey = useMemo(
-    () => filteredTransactions.map(t => t.id).sort().join(','),
-    [filteredTransactions]
+        return true;
+      }) ?? [],
+    [allTransactions, filterState.filters, transactionTypes]
   );
 
   // Calculate months for rate loading (combine both cash flow and trend needs)
@@ -112,10 +111,10 @@ export function useCashFlowReport() {
       monthsSet.add(endDate.substring(0, 7));
       return Array.from(monthsSet);
     }
-    
+
     // Extract unique months from actual transactions
     const monthsSet = new Set<string>();
-    filteredTransactions.forEach(tx => {
+    filteredTransactions.forEach((tx) => {
       monthsSet.add(tx.date.substring(0, 7));
     });
     return Array.from(monthsSet);
@@ -124,24 +123,30 @@ export function useCashFlowReport() {
   // Gather currencies
   const currencies = useMemo(() => {
     const set = new Set<CurrencyCode>();
-    accounts?.forEach(acc => set.add(acc.currencyCode));
+    accounts?.forEach((acc) => set.add(acc.currencyCode));
     set.add(conversionCurrency);
     return set;
   }, [accounts, conversionCurrency]);
 
   // Pre-load exchange rates
-  const { ratesMap, isLoading: ratesLoading, error: ratesError } = useEnsureExchangeRates(currencies, months, conversionCurrency);
+  const {
+    ratesMap,
+    isLoading: ratesLoading,
+    error: ratesError,
+  } = useEnsureExchangeRates(currencies, months, conversionCurrency);
 
   // Cash flow computation
   useEffect(() => {
     if (!transactionTypes || !categories || !accounts || ratesLoading || !ratesMap) {
-      setIsLoadingCashFlow(true);
+      Promise.resolve().then(() => setIsLoadingCashFlow(true));
       return;
     }
 
     if (ratesError) {
-      setCashFlowError(ratesError);
-      setIsLoadingCashFlow(false);
+      Promise.resolve().then(() => {
+        setCashFlowError(ratesError);
+        setIsLoadingCashFlow(false);
+      });
       return;
     }
 
@@ -181,7 +186,7 @@ export function useCashFlowReport() {
       cancelled = true;
     };
   }, [
-    filteredTransactionsKey,
+    filteredTransactions,
     startDate,
     endDate,
     conversionCurrency,
@@ -197,13 +202,15 @@ export function useCashFlowReport() {
   // Cash flow trend computation
   useEffect(() => {
     if (!transactionTypes || !categories || !accounts || ratesLoading || !ratesMap) {
-      setIsLoadingTrend(true);
+      Promise.resolve().then(() => setIsLoadingTrend(true));
       return;
     }
 
     if (ratesError) {
-      setTrendError(ratesError);
-      setIsLoadingTrend(false);
+      Promise.resolve().then(() => {
+        setTrendError(ratesError);
+        setIsLoadingTrend(false);
+      });
       return;
     }
 
@@ -244,7 +251,7 @@ export function useCashFlowReport() {
       cancelled = true;
     };
   }, [
-    filteredTransactionsKey,
+    filteredTransactions,
     startDate,
     endDate,
     conversionCurrency,

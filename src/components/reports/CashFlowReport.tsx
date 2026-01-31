@@ -111,10 +111,10 @@ export const CashFlowReport: React.FC = () => {
       monthsSet.add(endDate.substring(0, 7));
       return Array.from(monthsSet);
     }
-    
+
     // Extract unique months from actual filtered transactions
     const monthsSet = new Set<string>();
-    filteredTransactions.forEach(tx => {
+    filteredTransactions.forEach((tx) => {
       monthsSet.add(tx.date.substring(0, 7));
     });
     return Array.from(monthsSet);
@@ -123,13 +123,17 @@ export const CashFlowReport: React.FC = () => {
   // Gather currencies for filtered chart
   const currencies = useMemo(() => {
     const set = new Set<CurrencyCode>();
-    accounts?.forEach(acc => set.add(acc.currencyCode));
+    accounts?.forEach((acc) => set.add(acc.currencyCode));
     set.add(conversionCurrency);
     return set;
   }, [accounts, conversionCurrency]);
 
   // Pre-load exchange rates for filtered charts
-  const { ratesMap, isLoading: ratesLoading } = useEnsureExchangeRates(currencies, months, conversionCurrency);
+  const { ratesMap, isLoading: ratesLoading } = useEnsureExchangeRates(
+    currencies,
+    months,
+    conversionCurrency
+  );
 
   const handleDateRangeChange = (range: { startDate: string; endDate: string }) => {
     setStartDate(range.startDate);
@@ -255,17 +259,17 @@ export const CashFlowReport: React.FC = () => {
       return;
     }
 
-    if (!filteredTransactions || !transactionTypes || !accounts || ratesLoading || !ratesMap) return;
+    if (!filteredTransactions || !transactionTypes || !accounts || ratesLoading || !ratesMap)
+      return;
 
     const calculateFiltered = () => {
-      const { incomeByType, expenseByType } =
-        calculationService.calculateTransactionTypeGrouping(
-          filteredTransactions,
-          transactionTypes,
-          accounts,
-          conversionCurrency,
-          ratesMap
-        );
+      const { incomeByType, expenseByType } = calculationService.calculateTransactionTypeGrouping(
+        filteredTransactions,
+        transactionTypes,
+        accounts,
+        conversionCurrency,
+        ratesMap
+      );
 
       setFilteredChartData({
         incomePieData: Array.from(incomeByType.values()).map((item) => ({
@@ -296,7 +300,15 @@ export const CashFlowReport: React.FC = () => {
 
     calculateFiltered();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasFilter, filters.categoryIds, conversionCurrency, startDate, endDate, ratesMap, ratesLoading]);
+  }, [
+    hasFilter,
+    filters.categoryIds,
+    conversionCurrency,
+    startDate,
+    endDate,
+    ratesMap,
+    ratesLoading,
+  ]);
   // filteredTransactions, transactionTypes, and accounts are stable or captured in closure
 
   // Use the appropriate data source

@@ -67,7 +67,10 @@ describe('Header', () => {
 
   it('should show "Never synced" when lastSynced is null', () => {
     renderWithRouter(<Header />);
-    expect(screen.getByText('Never synced')).toBeInTheDocument();
+    // The header shows sync status via icon with tooltip, not direct text
+    // When not synced, it shows "Not Synced" in the tooltip
+    const syncButton = screen.getByRole('button', { name: /not synced/i });
+    expect(syncButton).toBeInTheDocument();
   });
 
   it('should render all navigation buttons', () => {

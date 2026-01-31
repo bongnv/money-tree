@@ -15,8 +15,14 @@ export interface FinancialSummaryProps {
 export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) => {
   const navigate = useNavigate();
   const baseCurrency = useBaseCurrency();
-  
-  const { netWorth, cashFlow, savingsRate, budgetHealth, error: errorMessage } = useFinancialSummary(period);
+
+  const {
+    netWorth,
+    cashFlow,
+    savingsRate,
+    budgetHealth,
+    error: errorMessage,
+  } = useFinancialSummary(period);
 
   // Determine savings rate color
   const getSavingsRateColor = (): 'success' | 'warning' | 'error' => {

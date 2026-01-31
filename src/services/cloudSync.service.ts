@@ -405,7 +405,6 @@ export class CloudSyncService {
       };
     }
 
-
     const { hasLocalChanges, mergedData } = await this.downloadFromCloud(localSnapshot);
 
     // Only upload if we have local changes that are newer than remote

@@ -32,7 +32,7 @@ let onReconnectNeeded: ((providerName: string) => Promise<'reconnect' | 'dismiss
 const DEBOUNCE_MS = 30000; // 30 seconds for all syncs
 
 // Internal sync state (separate from app UI state for timing accuracy)
-let syncState = {
+const syncState = {
   isInitialized: false,
   isSyncing: false,
   isInitializing: false,
@@ -70,14 +70,11 @@ export function useSync(
         syncState.isInitializing = true;
         setSyncStatus({ status: 'not-connected' });
 
-
-
         const result = await StorageProviderFactory.initialize(
           onReconnectNeeded || (() => Promise.resolve('dismiss' as const))
         );
 
         if (result) {
-
           provider = result;
           setProviderState(result);
 
@@ -90,12 +87,11 @@ export function useSync(
               currentFileItem = fileItem;
               setFileState(fileItem);
               fileName = fileItem.name;
-              
+
               // Load last synced timestamp from database
               const lastSyncedRecord = await db.syncMetadata.get('lastModified');
               if (lastSyncedRecord?.value) {
                 syncState.remoteLastModified = lastSyncedRecord.value as string;
-
               }
             }
           } catch (error) {
@@ -122,7 +118,6 @@ export function useSync(
 
         // Show welcome dialog if no provider after initialization
         if (!provider) {
-
           setShowWelcomeDialog(true);
         }
       } catch (error) {
@@ -136,7 +131,7 @@ export function useSync(
     };
 
     initialize();
-  }, [setSyncStatus]);
+  }, [setSyncStatus, setShowFileSelection, setShowWelcomeDialog]);
 
   // Watch lastModified timestamp for changes
   const lastModified = useLiveQuery(() =>
@@ -221,12 +216,10 @@ export function useSync(
       throw new Error('Sync service not initialized or no file selected');
     }
     if (syncState.isSyncing) {
-
       return; // Prevent concurrent syncs
     }
 
     try {
-
       syncState.isSyncing = true;
       setSyncStatus({ status: 'syncing', errorMessage: null });
 
@@ -237,7 +230,6 @@ export function useSync(
 
       // Update file item if it changed (new file got ID)
       if (result.fileItem.id !== currentFileItem!.id) {
-
         updateFileItem(result.fileItem);
       }
     } catch (error) {
@@ -292,7 +284,6 @@ export function useSync(
     if (!isConnected || !lastModified || syncState.isInitializing) return;
     // Skip if local and remote are already in sync
     if (lastModified === syncState.remoteLastModified) {
-
       return;
     }
 

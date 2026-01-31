@@ -49,14 +49,18 @@ export function useComparisonData(
   // Gather currencies
   const currencies = useMemo(() => {
     const set = new Set<CurrencyCode>();
-    accounts?.forEach(acc => set.add(acc.currencyCode));
-    manualAssets?.forEach(asset => set.add(asset.currencyCode));
+    accounts?.forEach((acc) => set.add(acc.currencyCode));
+    manualAssets?.forEach((asset) => set.add(asset.currencyCode));
     set.add(conversionCurrency);
     return set;
   }, [accounts, manualAssets, conversionCurrency]);
 
   // Pre-load exchange rates
-  const { ratesMap, isLoading: ratesLoading, error: ratesError } = useEnsureExchangeRates(currencies, months, conversionCurrency);
+  const {
+    ratesMap,
+    isLoading: ratesLoading,
+    error: ratesError,
+  } = useEnsureExchangeRates(currencies, months, conversionCurrency);
 
   const [data, setData] = useState<ComparisonData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,7 +68,11 @@ export function useComparisonData(
 
   // Create stable key for transactions
   const transactionsKey = useMemo(
-    () => transactions?.map(t => t.id).sort().join(',') || '',
+    () =>
+      transactions
+        ?.map((t) => t.id)
+        .sort()
+        .join(',') || '',
     [transactions]
   );
 

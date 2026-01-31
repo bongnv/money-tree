@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import {
   useBudgets,
   useTransactions,
@@ -94,9 +94,7 @@ export function useBudgetGrouping(
     baseCurrency
   );
 
-  const [groupedBudgets, setGroupedBudgets] = useState<BudgetGroupingData>({});
-
-  useEffect(() => {
+  const groupedBudgets = useMemo(() => {
     if (
       !budgets ||
       !transactionTypes ||
@@ -106,14 +104,13 @@ export function useBudgetGrouping(
       ratesLoading ||
       !ratesMap
     )
-      return;
+      return {};
 
     // Filter budgets that are active during the selected period
     let activeBudgets = budgets.filter((budget) => {
       // Check if budget overlaps with selected period
       return (
-        budget.startDate <= selectedPeriod.endDate &&
-        budget.endDate >= selectedPeriod.startDate
+        budget.startDate <= selectedPeriod.endDate && budget.endDate >= selectedPeriod.startDate
       );
     });
 
@@ -125,7 +122,7 @@ export function useBudgetGrouping(
       });
     }
 
-    const grouped = calculationService.calculateBudgetGrouping(
+    return calculationService.calculateBudgetGrouping(
       activeBudgets,
       transactions,
       transactionTypes,
@@ -135,8 +132,6 @@ export function useBudgetGrouping(
       ratesMap,
       getCategoryById
     );
-
-    setGroupedBudgets(grouped);
   }, [
     budgets,
     transactionTypes,
@@ -155,11 +150,6 @@ export function useBudgetGrouping(
   return {
     groupedBudgets,
     isLoading:
-      ratesLoading ||
-      !budgets ||
-      !transactionTypes ||
-      !transactions ||
-      !accounts ||
-      !categories,
+      ratesLoading || !budgets || !transactionTypes || !transactions || !accounts || !categories,
   };
 }

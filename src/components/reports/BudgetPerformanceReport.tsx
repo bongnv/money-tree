@@ -65,23 +65,25 @@ export const BudgetPerformanceReport: React.FC = () => {
     setSelectedCategories([]);
   };
 
-  // Use budget performance from hook
-  // Note: The hook calculates based on all budgets/transactions
-  // UI filtering is cosmetic for display purposes only
-  const performance = budgetPerformance || {
-    items: [],
-    totalBudgetedIncome: 0,
-    totalActualIncome: 0,
-    totalRemainingIncome: 0,
-    totalBudgetedExpenses: 0,
-    totalActualExpenses: 0,
-    totalRemainingExpenses: 0,
-    overallHealthScore: 100,
-  };
+  // Use budget performance from hook with default fallback
+  const performance = useMemo(
+    () =>
+      budgetPerformance || {
+        items: [],
+        totalBudgetedIncome: 0,
+        totalActualIncome: 0,
+        totalRemainingIncome: 0,
+        totalBudgetedExpenses: 0,
+        totalActualExpenses: 0,
+        totalRemainingExpenses: 0,
+        overallHealthScore: 100,
+      },
+    [budgetPerformance]
+  );
 
   // Filter performance items by selected categories for display
   const displayPerformance = useMemo(() => {
-    if (selectedCategories.length === 0 || !budgetPerformance) {
+    if (selectedCategories.length === 0) {
       return performance;
     }
 
@@ -120,7 +122,7 @@ export const BudgetPerformanceReport: React.FC = () => {
       totalRemainingExpenses,
       overallHealthScore: performance.overallHealthScore,
     };
-  }, [performance, selectedCategories, budgetPerformance]);
+  }, [performance, selectedCategories]);
 
   // Determine health score color
   const getHealthColor = (score: number) => {

@@ -108,12 +108,10 @@ describe('WelcomeDialog', () => {
 
       expect(screen.getByText('Connect to OneDrive')).toBeInTheDocument();
       expect(screen.getByText('Sync your data with Microsoft OneDrive')).toBeInTheDocument();
-      // OneDrive has 2 buttons: Open Existing and Create New
-      const allOpenButtons = screen.getAllByRole('button', { name: /open existing/i });
-      const allCreateButtons = screen.getAllByRole('button', { name: /create new/i });
-      // Should have buttons for OneDrive and optionally Google Drive
-      expect(allOpenButtons.length).toBeGreaterThanOrEqual(1);
-      expect(allCreateButtons.length).toBeGreaterThanOrEqual(1);
+      // OneDrive has a single Connect button
+      const connectButtons = screen.getAllByRole('button', { name: /^connect$/i });
+      // Should have at least one connect button for OneDrive
+      expect(connectButtons.length).toBeGreaterThanOrEqual(1);
     });
 
     it('should show disabled state when OneDrive not configured', () => {
@@ -138,9 +136,9 @@ describe('WelcomeDialog', () => {
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
-      // Get all 'Open Existing' buttons and click the first one (OneDrive)
-      const openButtons = screen.getAllByRole('button', { name: /open existing/i });
-      fireEvent.click(openButtons[0]);
+      // Get all 'Connect' buttons and click the first one (OneDrive)
+      const connectButtons = screen.getAllByRole('button', { name: /^connect$/i });
+      fireEvent.click(connectButtons[0]);
 
       await waitFor(() => {
         expect(mockSyncService.connect).toHaveBeenCalledWith(StorageProviderType.ONEDRIVE);
@@ -154,9 +152,9 @@ describe('WelcomeDialog', () => {
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
-      // Get all 'Create New' buttons and click the first one (OneDrive)
-      const createButtons = screen.getAllByRole('button', { name: /create new/i });
-      fireEvent.click(createButtons[0]);
+      // Get all 'Connect' buttons and click the first one (OneDrive)
+      const connectButtons = screen.getAllByRole('button', { name: /^connect$/i });
+      fireEvent.click(connectButtons[0]);
 
       await waitFor(() => {
         expect(screen.getByText('Auth failed')).toBeInTheDocument();
@@ -169,9 +167,9 @@ describe('WelcomeDialog', () => {
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
-      // Get all 'Open Existing' buttons and click the first one (OneDrive)
-      const openButtons = screen.getAllByRole('button', { name: /open existing/i });
-      fireEvent.click(openButtons[0]);
+      // Get all 'Connect' buttons and click the first one (OneDrive)
+      const connectButtons = screen.getAllByRole('button', { name: /^connect$/i });
+      fireEvent.click(connectButtons[0]);
 
       await waitFor(() => {
         expect(mockSyncService.connect).toHaveBeenCalledWith(StorageProviderType.ONEDRIVE);
@@ -183,9 +181,9 @@ describe('WelcomeDialog', () => {
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
-      // Get all 'Create New' buttons and click the first one (OneDrive)
-      const createButtons = screen.getAllByRole('button', { name: /create new/i });
-      fireEvent.click(createButtons[0]);
+      // Get all 'Connect' buttons and click the first one (OneDrive)
+      const connectButtons = screen.getAllByRole('button', { name: /^connect$/i });
+      fireEvent.click(connectButtons[0]);
 
       await waitFor(() => {
         expect(mockSyncService.connect).toHaveBeenCalledWith(StorageProviderType.ONEDRIVE);
@@ -199,12 +197,12 @@ describe('WelcomeDialog', () => {
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
-      // Get all 'Create New' buttons and click the first one (OneDrive)
-      const createButtons = screen.getAllByRole('button', { name: /create new/i });
-      fireEvent.click(createButtons[0]);
+      // Get all 'Connect' buttons and click the first one (OneDrive)
+      const connectButtons = screen.getAllByRole('button', { name: /^connect$/i });
+      fireEvent.click(connectButtons[0]);
 
       await waitFor(() => {
-        // The OneDrive Create New button should show "Connecting..." and be disabled
+        // The OneDrive Connect button should show "Connecting..." and be disabled
         const connectingButtons = screen.getAllByRole('button', { name: /connecting/i });
         expect(connectingButtons.length).toBeGreaterThanOrEqual(1);
         expect(connectingButtons[0]).toBeDisabled();
@@ -219,8 +217,8 @@ describe('WelcomeDialog', () => {
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
       // Trigger error
-      const openButtons = screen.getAllByRole('button', { name: /open existing/i });
-      fireEvent.click(openButtons[0]);
+      const connectButtons = screen.getAllByRole('button', { name: /^connect$/i });
+      fireEvent.click(connectButtons[0]);
 
       await waitFor(() => {
         expect(screen.getByText('Failed to connect')).toBeInTheDocument();
@@ -229,8 +227,8 @@ describe('WelcomeDialog', () => {
       // Clear error by starting new action
       mockSyncService.connect.mockResolvedValue(undefined);
 
-      const createButtons = screen.getAllByRole('button', { name: /create new/i });
-      fireEvent.click(createButtons[0]);
+      const connectButtonsAgain = screen.getAllByRole('button', { name: /^connect$/i });
+      fireEvent.click(connectButtonsAgain[0]);
 
       await waitFor(() => {
         expect(screen.queryByText('Failed to connect')).not.toBeInTheDocument();
@@ -242,8 +240,8 @@ describe('WelcomeDialog', () => {
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
-      const openButtons = screen.getAllByRole('button', { name: /open existing/i });
-      fireEvent.click(openButtons[0]);
+      const connectButtons = screen.getAllByRole('button', { name: /^connect$/i });
+      fireEvent.click(connectButtons[0]);
 
       await waitFor(() => {
         expect(screen.getByText('Permission denied')).toBeInTheDocument();
@@ -252,30 +250,30 @@ describe('WelcomeDialog', () => {
   });
 
   describe('Cloud Storage Integration', () => {
-    it('should connect to OneDrive when Open Existing clicked', async () => {
+    it('should connect to OneDrive when Connect clicked', async () => {
       mockSyncService.connect.mockResolvedValue(undefined);
       mockOneDriveProvider.listDriveItems.mockResolvedValue([]);
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
-      const openButtons = screen.getAllByRole('button', { name: /open existing/i });
-      fireEvent.click(openButtons[0]);
+      const connectButtons = screen.getAllByRole('button', { name: /^connect$/i });
+      fireEvent.click(connectButtons[0]);
 
       await waitFor(() => {
         expect(mockSyncService.connect).toHaveBeenCalledWith(StorageProviderType.ONEDRIVE);
       });
     });
 
-    it('should connect to Google Drive when Create New clicked', async () => {
+    it('should connect to Google Drive when Connect clicked', async () => {
       mockSyncService.connect.mockResolvedValue(undefined);
       mockGoogleDriveProvider.listDriveFiles.mockResolvedValue([]);
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
-      const createButtons = screen.getAllByRole('button', { name: /create new/i });
-      const googleDriveButtons = createButtons.filter((btn) => !btn.closest('[disabled]'));
-      if (googleDriveButtons.length > 1) {
-        fireEvent.click(googleDriveButtons[1]); // Google Drive is second option
+      const connectButtons = screen.getAllByRole('button', { name: /^connect$/i });
+      // Google Drive is the second connect button if it's configured
+      if (connectButtons.length > 1) {
+        fireEvent.click(connectButtons[1]); // Google Drive is second option
 
         await waitFor(() => {
           expect(mockSyncService.connect).toHaveBeenCalledWith(StorageProviderType.GOOGLE_DRIVE);
@@ -288,8 +286,8 @@ describe('WelcomeDialog', () => {
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
-      const openButtons = screen.getAllByRole('button', { name: /open existing/i });
-      fireEvent.click(openButtons[0]);
+      const connectButtons = screen.getAllByRole('button', { name: /^connect$/i });
+      fireEvent.click(connectButtons[0]);
 
       await waitFor(() => {
         expect(screen.getByText('Auth failed')).toBeInTheDocument();
@@ -316,8 +314,8 @@ describe('WelcomeDialog', () => {
       expect(screen.getByText('Welcome to Money Tree')).toBeInTheDocument();
 
       // User selects OneDrive
-      const createButtons = screen.getAllByRole('button', { name: /create new/i });
-      fireEvent.click(createButtons[0]);
+      const connectButtons = screen.getAllByRole('button', { name: /^connect$/i });
+      fireEvent.click(connectButtons[0]);
 
       await waitFor(() => {
         expect(mockSyncService.connect).toHaveBeenCalledWith(StorageProviderType.ONEDRIVE);
@@ -331,16 +329,17 @@ describe('WelcomeDialog', () => {
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
-      const createButtons = screen.getAllByRole('button', { name: /create new/i });
+      const connectButtons = screen.getAllByRole('button', { name: /^connect$/i });
 
       // First attempt fails
-      fireEvent.click(createButtons[0]);
+      fireEvent.click(connectButtons[0]);
       await waitFor(() => {
         expect(screen.getByText('First attempt failed')).toBeInTheDocument();
       });
 
-      // Second attempt succeeds
-      fireEvent.click(createButtons[0]);
+      // Second attempt succeeds - need to get fresh button reference
+      const connectButtonsAgain = screen.getAllByRole('button', { name: /^connect$/i });
+      fireEvent.click(connectButtonsAgain[0]);
       await waitFor(() => {
         expect(mockSyncService.connect).toHaveBeenCalledTimes(2);
       });

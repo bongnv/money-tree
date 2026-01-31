@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useBudgets, useTransactions, useTransactionTypes, useAccounts } from '../index';
 import { useCalculationService } from '../useServices';
 import { useBaseCurrency } from '../useSyncMetadata';
@@ -66,19 +66,10 @@ export function useBudgetOverview(period: PeriodOption) {
     baseCurrency
   );
 
-  const [budgetsWithUsage, setBudgetsWithUsage] = useState<BudgetWithUsage[]>([]);
-
   // Calculate budget usage for the selected period
-  useEffect(() => {
-    if (
-      !budgets ||
-      !transactions ||
-      !transactionTypes ||
-      !accounts ||
-      ratesLoading ||
-      !ratesMap
-    )
-      return;
+  const budgetsWithUsage = useMemo(() => {
+    if (!budgets || !transactions || !transactionTypes || !accounts || ratesLoading || !ratesMap)
+      return [];
 
     const results: BudgetWithUsage[] = [];
 
@@ -141,8 +132,7 @@ export function useBudgetOverview(period: PeriodOption) {
     }
 
     // Sort and take top 5
-    const sorted = results.sort((a, b) => b.percentage - a.percentage).slice(0, 5);
-    setBudgetsWithUsage(sorted);
+    return results.sort((a, b) => b.percentage - a.percentage).slice(0, 5);
   }, [
     budgets,
     transactions,

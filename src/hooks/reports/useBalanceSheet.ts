@@ -39,17 +39,24 @@ export function useBalanceSheet() {
   const [balanceSheetError, setBalanceSheetError] = useState<Error | null>(null);
 
   // Create stable dependency key for transactions
-  const transactionsKey = useMemo(() => transactions?.map(t => t.id).sort().join(',') || '', [transactions]);
+  const transactionsKey = useMemo(
+    () =>
+      transactions
+        ?.map((t) => t.id)
+        .sort()
+        .join(',') || '',
+    [transactions]
+  );
 
   // Collect all currencies used
   const currencies = useMemo(() => {
     if (!accounts || !manualAssets) return undefined;
-    
+
     const currencySet = new Set<CurrencyCode>();
-    accounts.forEach(acc => currencySet.add(acc.currencyCode));
-    manualAssets.forEach(asset => currencySet.add(asset.currencyCode));
+    accounts.forEach((acc) => currencySet.add(acc.currencyCode));
+    manualAssets.forEach((asset) => currencySet.add(asset.currencyCode));
     currencySet.add(conversionCurrency);
-    
+
     return currencySet;
   }, [accounts, manualAssets, conversionCurrency]);
 
@@ -57,11 +64,11 @@ export function useBalanceSheet() {
   const rateMonths = useMemo(() => [reportDate.substring(0, 7)], [reportDate]);
 
   // Load exchange rates and get rates map
-  const { ratesMap, isLoading: isLoadingRates, error: ratesError } = useEnsureExchangeRates(
-    currencies,
-    rateMonths,
-    conversionCurrency
-  );
+  const {
+    ratesMap,
+    isLoading: isLoadingRates,
+    error: ratesError,
+  } = useEnsureExchangeRates(currencies, rateMonths, conversionCurrency);
 
   // Update error state from rates loading
   useEffect(() => {

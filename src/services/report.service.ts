@@ -127,7 +127,6 @@ export class ReportService {
     baseCurrency: CurrencyCode,
     ratesMap: Map<string, number>
   ): BalanceSheetData {
-
     // Filter transactions up to the date
     const filteredTransactions = asOfDate
       ? transactions.filter((t) => t.date <= asOfDate)

@@ -26,13 +26,15 @@ describe('PeriodSelector', () => {
 
       fireEvent.mouseDown(screen.getByRole('combobox'));
 
+      // Use getAllByText and check that we have the expected items
+      // The dropdown may show text in both the select value and menu items
       expect(screen.getAllByText('This Month').length).toBeGreaterThan(0);
-      expect(screen.getByText('Last Month')).toBeInTheDocument();
-      expect(screen.getByText('This Quarter')).toBeInTheDocument();
-      expect(screen.getByText('Last Quarter')).toBeInTheDocument();
-      expect(screen.getByText('Year to Date')).toBeInTheDocument();
-      expect(screen.getByText('This Year')).toBeInTheDocument();
-      expect(screen.getByText('Last Year')).toBeInTheDocument();
+      expect(screen.getAllByText('Last Month').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('This Quarter').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Last Quarter').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Year to Date').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('This Year').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Last Year').length).toBeGreaterThan(0);
       expect(screen.getByText('Custom Range...')).toBeInTheDocument();
     });
 

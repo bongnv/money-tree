@@ -39,10 +39,10 @@ export function getRateSync(
   // Cross-rate through USD: X->USD / Y->USD
   const fromToUsdKey = `${month}_${fromCurrency}_${CurrencyCode.USD}`;
   const toToUsdKey = `${month}_${toCurrency}_${CurrencyCode.USD}`;
-  
+
   const fromToUsd = ratesMap.get(fromToUsdKey);
   const toToUsd = ratesMap.get(toToUsdKey);
-  
+
   if (fromToUsd !== undefined && toToUsd !== undefined) {
     return fromToUsd / toToUsd;
   }
@@ -50,6 +50,6 @@ export function getRateSync(
   // No rate found - throw error
   throw new Error(
     `Exchange rate not found: ${month} ${fromCurrency}->${toCurrency}. ` +
-    `Ensure rates are pre-loaded with ensureRatesForReport().`
+      `Ensure rates are pre-loaded with ensureRatesForReport().`
   );
 }

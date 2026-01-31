@@ -71,9 +71,15 @@ export function useFinancialSummary(period: PeriodOption): FinancialSummaryData 
   // Gather currencies
   const currencies = useMemo(() => {
     const set = new Set<CurrencyCode>();
-    accounts?.forEach((acc) => set.add(acc.currencyCode));
-    manualAssets?.forEach((asset) => set.add(asset.currencyCode));
-    budgets?.forEach((budget) => set.add(budget.currencyCode));
+    accounts?.forEach((acc) => {
+      if (acc.currencyCode) set.add(acc.currencyCode);
+    });
+    manualAssets?.forEach((asset) => {
+      if (asset.currencyCode) set.add(asset.currencyCode);
+    });
+    budgets?.forEach((budget) => {
+      if (budget.currencyCode) set.add(budget.currencyCode);
+    });
     set.add(baseCurrency);
     return set;
   }, [accounts, manualAssets, budgets, baseCurrency]);

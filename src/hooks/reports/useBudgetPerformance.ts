@@ -44,29 +44,33 @@ export function useBudgetPerformance() {
   const [isLoadingPerformance, setIsLoadingPerformance] = useState(true);
   const [performanceError, setPerformanceError] = useState<Error | null>(null);
 
-  // Calculate months for rate loading from actual transactions
+  // Calculate months for rate loading - include report date range and transaction months
   const months = useMemo(() => {
-    if (!transactions || transactions.length === 0) {
-      // Fallback to date range if no transactions
-      const monthsSet = new Set<string>();
-      monthsSet.add(startDate.substring(0, 7));
-      monthsSet.add(endDate.substring(0, 7));
-      return Array.from(monthsSet);
+    const monthsSet = new Set<string>();
+    
+    // Always include start and end month of the report
+    monthsSet.add(startDate.substring(0, 7));
+    monthsSet.add(endDate.substring(0, 7));
+
+    // Add all months from transactions within or near the date range
+    if (transactions && transactions.length > 0) {
+      transactions.forEach((tx) => {
+        monthsSet.add(tx.date.substring(0, 7));
+      });
     }
 
-    // Extract unique months from actual transactions
-    const monthsSet = new Set<string>();
-    transactions.forEach((tx) => {
-      monthsSet.add(tx.date.substring(0, 7));
-    });
     return Array.from(monthsSet);
   }, [transactions, startDate, endDate]);
 
   // Gather currencies
   const currencies = useMemo(() => {
     const set = new Set<CurrencyCode>();
-    accounts?.forEach((acc) => set.add(acc.currencyCode));
-    budgets?.forEach((budget) => set.add(budget.currencyCode));
+    accounts?.forEach((acc) => {
+      if (acc.currencyCode) set.add(acc.currencyCode);
+    });
+    budgets?.forEach((budget) => {
+      if (budget.currencyCode) set.add(budget.currencyCode);
+    });
     set.add(conversionCurrency);
     return set;
   }, [accounts, budgets, conversionCurrency]);

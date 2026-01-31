@@ -9,6 +9,7 @@ import { useState, useCallback } from 'react';
  * @param validate - Optional validation function that returns errors
  * @returns Form state and handlers
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useFormState<T extends Record<string, any>>(
   initialData: T,
   validate?: (data: T) => Partial<Record<keyof T, string>>

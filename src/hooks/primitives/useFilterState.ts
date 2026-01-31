@@ -7,6 +7,7 @@ import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
  * @template TFilters - The type of the filter object
  * @returns Filter state and handlers
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useFilterState<TFilters extends Record<string, any>>(initialFilters: TFilters) {
   const [filters, setFilters] = useState<TFilters>(initialFilters);
   const [appliedFilters, setAppliedFilters] = useState<TFilters>(initialFilters);

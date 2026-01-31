@@ -12,6 +12,7 @@ export type DialogMode = 'create' | 'edit' | 'view';
  * @template T - The type of item being displayed/edited in the dialog
  * @returns Dialog state and handlers
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useDialogState<T = any>() {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<DialogMode>('create');

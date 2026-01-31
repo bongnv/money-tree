@@ -53,8 +53,12 @@ export function useBalanceSheet() {
     if (!accounts || !manualAssets) return undefined;
 
     const currencySet = new Set<CurrencyCode>();
-    accounts.forEach((acc) => currencySet.add(acc.currencyCode));
-    manualAssets.forEach((asset) => currencySet.add(asset.currencyCode));
+    accounts.forEach((acc) => {
+      if (acc.currencyCode) currencySet.add(acc.currencyCode);
+    });
+    manualAssets.forEach((asset) => {
+      if (asset.currencyCode) currencySet.add(asset.currencyCode);
+    });
     currencySet.add(conversionCurrency);
 
     return currencySet;

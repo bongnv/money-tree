@@ -123,7 +123,9 @@ export const CashFlowReport: React.FC = () => {
   // Gather currencies for filtered chart
   const currencies = useMemo(() => {
     const set = new Set<CurrencyCode>();
-    accounts?.forEach((acc) => set.add(acc.currencyCode));
+    accounts?.forEach((acc) => {
+      if (acc.currencyCode) set.add(acc.currencyCode);
+    });
     set.add(conversionCurrency);
     return set;
   }, [accounts, conversionCurrency]);

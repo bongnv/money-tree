@@ -78,11 +78,16 @@ export function useBudgetGrouping(
     return Array.from(monthsSet);
   }, [transactions, selectedPeriod]);
 
-  // Gather currencies
+  // Gather currencies from accounts and budgets
+  // Transactions inherit currency from their accounts
   const currencies = useMemo(() => {
     const set = new Set<CurrencyCode>();
-    accounts?.forEach((acc) => set.add(acc.currencyCode));
-    budgets?.forEach((budget) => set.add(budget.currencyCode));
+    accounts?.forEach((acc) => {
+      if (acc.currencyCode) set.add(acc.currencyCode);
+    });
+    budgets?.forEach((budget) => {
+      if (budget.currencyCode) set.add(budget.currencyCode);
+    });
     set.add(baseCurrency);
     return set;
   }, [accounts, budgets, baseCurrency]);

@@ -53,8 +53,12 @@ export function useNetWorthTrend(
   // Gather currencies
   const currencies = useMemo(() => {
     const set = new Set<CurrencyCode>();
-    accounts?.forEach((acc) => set.add(acc.currencyCode));
-    manualAssets?.forEach((asset) => set.add(asset.currencyCode));
+    accounts?.forEach((acc) => {
+      if (acc.currencyCode) set.add(acc.currencyCode);
+    });
+    manualAssets?.forEach((asset) => {
+      if (asset.currencyCode) set.add(asset.currencyCode);
+    });
     set.add(conversionCurrency);
     return set;
   }, [accounts, manualAssets, conversionCurrency]);

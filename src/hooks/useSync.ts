@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useDebouncedCallback } from 'use-debounce';
 import { CloudSyncService } from '@/services/cloudSync.service';
@@ -264,19 +264,14 @@ export function useSync(
     { leading: false, trailing: true }
   );
 
-  // Auto-sync when connection established
-  const hasTriggeredInitialSync = useRef(false);
+  // Auto-sync when connection established or file changes
   useEffect(() => {
-    const isConnected = !!(provider && currentFileItem);
-    if (!isConnected || syncState.isSyncing || syncState.isInitializing) return;
-    if (hasTriggeredInitialSync.current) return;
+    if (!syncService) return;
 
-    hasTriggeredInitialSync.current = true;
     fullSync().catch((err) => {
       console.error('[useSync] Initial sync error:', err);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [syncService]);
+  }, [syncService, fullSync]);
 
   // Auto-sync whenever lastModified changes
   useEffect(() => {

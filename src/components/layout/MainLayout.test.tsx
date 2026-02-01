@@ -16,23 +16,20 @@ jest.mock('../../services/cloudSync.service', () => ({
 }));
 
 // Mock SyncProvider
-jest.mock('@/hooks/useSync', () => ({
+jest.mock('@/contexts/SyncContext', () => ({
   useSync: jest.fn(() => ({
-    isConnected: false,
-    providerName: null,
-    fileName: null,
-    isSyncing: false,
-    lastSynced: null,
-    pendingChanges: false,
-    provider: null,
-    uploadToCloud: jest.fn().mockResolvedValue(undefined),
-    downloadFromCloud: jest.fn().mockResolvedValue(undefined),
+    selectFile: jest.fn().mockResolvedValue(undefined),
+    listItems: jest.fn().mockResolvedValue([]),
     fullSync: jest.fn().mockResolvedValue(undefined),
-    debouncedSync: jest.fn(),
     connect: jest.fn().mockResolvedValue(undefined),
     disconnect: jest.fn().mockResolvedValue(undefined),
+    syncStatus: {
+      status: 'synced' as const,
+      errorMessage: null,
+      providerName: 'OneDrive',
+      fileName: 'test.json',
+    },
   })),
-  useSyncService: jest.fn(() => ({ isConnected: false, isSyncing: false })),
 }));
 
 const renderWithProviders = (ui: React.ReactElement) => {

@@ -22,7 +22,7 @@ import {
 import ArchiveIcon from '@mui/icons-material/Archive';
 import WarningIcon from '@mui/icons-material/Warning';
 import { useArchiveService } from '@/hooks/useServices';
-import { useAppContext } from '@/hooks/useApp';
+import { useAppContext } from '@/contexts/AppContext';
 import { formatCurrency } from '../../utils/currency.utils';
 import type { YearEndSummary } from '../../types/models';
 import { useBaseCurrency, useArchivedYears } from '../../hooks/useSyncMetadata';

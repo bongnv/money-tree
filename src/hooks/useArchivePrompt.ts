@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBaseCurrency } from './useSyncMetadata';
 import { useArchiveService } from './useServices';
-import { useApp } from './useApp';
+import { useSync } from '@/contexts/SyncContext';
 import { CurrencyCode } from '@/types/enums';
 
 interface ArchiveYearSummary {
@@ -16,7 +16,7 @@ export function useArchivePrompt() {
   const navigate = useNavigate();
   const archiveService = useArchiveService();
   const baseCurrency = useBaseCurrency() ?? CurrencyCode.USD;
-  const { isConnected } = useApp();
+  const { syncStatus } = useSync();
 
   const [showPrompt, setShowPrompt] = useState(false);
   const [archiveYear, setArchiveYear] = useState<number | null>(null);
@@ -26,7 +26,7 @@ export function useArchivePrompt() {
   useEffect(() => {
     const checkArchive = async () => {
       // Only check when connected
-      if (!isConnected) return;
+      if (syncStatus.status === 'not-connected') return;
 
       const archivableYear = await archiveService.identifyArchivableYear();
       if (archivableYear !== null) {
@@ -38,7 +38,7 @@ export function useArchivePrompt() {
     };
 
     checkArchive();
-  }, [isConnected, archiveService, baseCurrency]);
+  }, [syncStatus, archiveService, baseCurrency]);
 
   const handleGoToSettings = () => {
     setShowPrompt(false);

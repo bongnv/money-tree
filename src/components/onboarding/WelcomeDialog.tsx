@@ -18,7 +18,7 @@ import {
 import { Cloud as CloudIcon } from '@mui/icons-material';
 import { isOneDriveConfigured } from '../../config/onedrive.config';
 import { isGoogleDriveConfigured } from '../../config/googledrive.config';
-import { useSync } from '@/hooks/useSync';
+import { useSync } from '@/contexts/SyncContext';
 import { StorageProviderType } from '../../services/storage/StorageProviderFactory';
 import { isUserCancellationError } from '../../utils/error.utils';
 

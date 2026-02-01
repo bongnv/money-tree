@@ -387,7 +387,7 @@ export class CloudSyncService {
       exchangeRates,
       baseCurrency: (baseCurrency as CurrencyCode) || CurrencyCode.USD,
       archivedYears: archivedYears || [],
-      lastModified: lastModified || new Date().toISOString(),
+      lastModified: lastModified || '1970-01-01T00:00:00.000Z',
     };
 
     // If file doesn't have an ID yet, it's a new file that hasn't been uploaded

@@ -7,21 +7,6 @@ interface SnackbarState {
   severity: AlertColor;
 }
 
-// Simplified sync status for UI display
-export type SyncUIStatus =
-  | 'not-connected' // No provider or file configured
-  | 'connected' // Provider and file set, but not yet synced
-  | 'syncing' // Currently syncing
-  | 'synced' // Successfully synced
-  | 'error'; // Sync error occurred
-
-interface SyncStatusState {
-  status: SyncUIStatus;
-  errorMessage: string | null;
-  providerName: string | null;
-  fileName: string | null;
-}
-
 interface AppState {
   // Snackbar
   snackbar: SnackbarState;
@@ -33,13 +18,6 @@ interface AppState {
   setShowWelcomeDialog: (show: boolean) => void;
   showFileSelection: boolean;
   setShowFileSelection: (show: boolean) => void;
-
-  // Sync status for UI
-  syncStatus: SyncStatusState;
-  setSyncStatus: (status: Partial<SyncStatusState>) => void;
-
-  // Computed convenience properties
-  isConnected: boolean;
 }
 
 // Module-level state (singleton pattern)
@@ -58,12 +36,6 @@ function getAppState(): AppState {
       open: false,
       message: '',
       severity: 'info',
-    };
-    let syncStatus: SyncStatusState = {
-      status: 'not-connected',
-      errorMessage: null,
-      providerName: null,
-      fileName: null,
     };
 
     appState = {
@@ -91,17 +63,6 @@ function getAppState(): AppState {
       setShowFileSelection: (show: boolean) => {
         showFileSelection = show;
         notifyListeners();
-      },
-      get syncStatus() {
-        return syncStatus;
-      },
-      setSyncStatus: (status: Partial<SyncStatusState>) => {
-        syncStatus = { ...syncStatus, ...status };
-
-        notifyListeners();
-      },
-      get isConnected() {
-        return syncStatus.status !== 'not-connected';
       },
     };
   }
@@ -136,12 +97,6 @@ export function useApp(): AppState {
     setShowWelcomeDialog: useCallback((show: boolean) => state.setShowWelcomeDialog(show), [state]),
     showFileSelection: state.showFileSelection,
     setShowFileSelection: useCallback((show: boolean) => state.setShowFileSelection(show), [state]),
-    syncStatus: state.syncStatus,
-    setSyncStatus: useCallback(
-      (status: Partial<SyncStatusState>) => state.setSyncStatus(status),
-      [state]
-    ),
-    isConnected: state.isConnected,
   };
 }
 

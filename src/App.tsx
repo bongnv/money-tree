@@ -11,16 +11,15 @@ import ReconnectDialog from './components/common/ReconnectDialog';
 import { ArchivePrompt } from './components/common/ArchivePrompt';
 import { AppRoutes } from './routes';
 import { useBaseCurrency } from '@hooks/useSyncMetadata';
-import { useApp } from '@/hooks/useApp';
-import { useSync } from '@/hooks/useSync';
+import { useApp, AppProvider } from '@/contexts/AppContext';
+import { useSync, SyncProvider } from '@/contexts/SyncContext';
 import { useArchivePrompt } from '@/hooks/useArchivePrompt';
 import { CurrencyCode } from '@/types/enums';
 import type { CloudItem } from './services/storage/IStorageProvider';
 
-const AppContent: React.FC<{
-  onReconnectNeeded: (providerName: string) => Promise<'reconnect' | 'dismiss'>;
-}> = ({ onReconnectNeeded }) => {
-  const syncOps = useSync(onReconnectNeeded);
+const AppContent: React.FC = () => {
+  const syncOps = useSync();
+  const { syncStatus } = syncOps;
   const baseCurrency = useBaseCurrency() ?? CurrencyCode.USD;
   const {
     snackbar,
@@ -29,7 +28,6 @@ const AppContent: React.FC<{
     setShowWelcomeDialog,
     showFileSelection,
     setShowFileSelection,
-    syncStatus,
   } = useApp();
 
   const {
@@ -141,7 +139,11 @@ const App: React.FC = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <BrowserRouter>
-        <AppContent onReconnectNeeded={handleReconnectNeeded} />
+        <AppProvider>
+          <SyncProvider onReconnectNeeded={handleReconnectNeeded}>
+            <AppContent />
+          </SyncProvider>
+        </AppProvider>
       </BrowserRouter>
       <ReconnectDialog
         open={reconnectDialogState.open}

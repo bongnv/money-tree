@@ -14,8 +14,7 @@ import {
 import Grid from '@mui/material/Grid';
 import { useNavigate } from 'react-router-dom';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { useSync } from '@/hooks/useSync';
-import { useAppContext } from '@/hooks/useApp';
+import { useSync } from '@/contexts/SyncContext';
 import { db } from '../../db/database';
 import { useActiveAccounts } from '../../hooks/useAccounts';
 import { useTransactions } from '../../hooks/useTransactions';
@@ -27,7 +26,7 @@ import { useAssets } from '../../hooks/useAssets';
 export const DataSyncSettings: React.FC = () => {
   const navigate = useNavigate();
   const syncOps = useSync();
-  const { syncStatus } = useAppContext();
+  const { syncStatus } = syncOps;
   const cloudFileName = syncStatus.fileName;
   const accounts = useActiveAccounts();
   const categories = useCategories();

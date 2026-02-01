@@ -24,37 +24,34 @@ const mockGoogleDriveProvider = {
   setFileInfo: jest.fn().mockResolvedValue(undefined),
 };
 
-const mockSyncService = {
-  connect: jest.fn().mockImplementation(async (type) => {
-    // Set connection state based on the type
-    if (type === StorageProviderType.ONEDRIVE) {
-      mockSyncService.providerName = 'OneDrive' as string | null;
-      mockSyncService.isConnected = true;
-    } else if (type === StorageProviderType.GOOGLE_DRIVE) {
-      mockSyncService.providerName = 'Google Drive' as string | null;
-      mockSyncService.isConnected = true;
-    }
-  }),
-  setFile: jest.fn(),
-  listItems: jest.fn().mockResolvedValue([]),
-  downloadFromCloud: jest.fn(),
-  uploadToCloud: jest.fn(),
-  fullSync: jest.fn(),
-  isConnected: false,
+const mockSyncStatus = {
+  status: 'not-connected' as 'not-connected' | 'connected' | 'syncing' | 'synced' | 'error',
+  errorMessage: null as string | null,
   providerName: null as string | null,
-  fileName: null,
-  providerType: null,
-  isSyncing: false,
-  lastSynced: null,
-  isInitializing: false,
-  disconnect: jest.fn(),
-  debouncedSync: jest.fn(),
+  fileName: null as string | null,
 };
 
+const mockConnect = jest.fn().mockImplementation(async (type) => {
+  // Set connection state based on the type
+  if (type === StorageProviderType.ONEDRIVE) {
+    mockSyncStatus.providerName = 'OneDrive';
+    mockSyncStatus.status = 'connected';
+  } else if (type === StorageProviderType.GOOGLE_DRIVE) {
+    mockSyncStatus.providerName = 'Google Drive';
+    mockSyncStatus.status = 'connected';
+  }
+});
+
 // Mock SyncProvider context
-jest.mock('@/hooks/useSync', () => ({
-  useSync: () => mockSyncService,
-  useSyncService: () => mockSyncService,
+jest.mock('@/contexts/SyncContext', () => ({
+  useSync: () => ({
+    connect: mockConnect,
+    selectFile: jest.fn(),
+    listItems: jest.fn().mockResolvedValue([]),
+    fullSync: jest.fn(),
+    disconnect: jest.fn(),
+    syncStatus: mockSyncStatus,
+  }),
 }));
 
 describe('WelcomeDialog', () => {
@@ -132,7 +129,7 @@ describe('WelcomeDialog', () => {
     });
 
     it('should authenticate and close welcome dialog when OneDrive button clicked', async () => {
-      mockSyncService.connect.mockResolvedValue(undefined);
+      mockConnect.mockResolvedValue(undefined);
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
@@ -141,14 +138,14 @@ describe('WelcomeDialog', () => {
       fireEvent.click(connectButtons[0]);
 
       await waitFor(() => {
-        expect(mockSyncService.connect).toHaveBeenCalledWith(StorageProviderType.ONEDRIVE);
+        expect(mockConnect).toHaveBeenCalledWith(StorageProviderType.ONEDRIVE);
         // Welcome dialog should close and trigger file selection
         expect(mockOnClose).toHaveBeenCalled();
       });
     });
 
     it('should show error when OneDrive authentication fails', async () => {
-      mockSyncService.connect.mockRejectedValue(new Error('Auth failed'));
+      mockConnect.mockRejectedValue(new Error('Auth failed'));
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
@@ -162,8 +159,8 @@ describe('WelcomeDialog', () => {
     });
 
     it('should handle OneDrive file selection for existing file', async () => {
-      mockSyncService.connect.mockResolvedValue(undefined);
-      mockSyncService.downloadFromCloud.mockResolvedValue(undefined);
+      mockConnect.mockResolvedValue(undefined);
+      // mockConnect.mockResolvedValue(undefined);
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
@@ -172,12 +169,12 @@ describe('WelcomeDialog', () => {
       fireEvent.click(connectButtons[0]);
 
       await waitFor(() => {
-        expect(mockSyncService.connect).toHaveBeenCalledWith(StorageProviderType.ONEDRIVE);
+        expect(mockConnect).toHaveBeenCalledWith(StorageProviderType.ONEDRIVE);
       });
     });
 
     it('should handle OneDrive file selection for new file', async () => {
-      mockSyncService.connect.mockResolvedValue(undefined);
+      mockConnect.mockResolvedValue(undefined);
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
@@ -186,12 +183,12 @@ describe('WelcomeDialog', () => {
       fireEvent.click(connectButtons[0]);
 
       await waitFor(() => {
-        expect(mockSyncService.connect).toHaveBeenCalledWith(StorageProviderType.ONEDRIVE);
+        expect(mockConnect).toHaveBeenCalledWith(StorageProviderType.ONEDRIVE);
       });
     });
 
     it('should disable OneDrive button while connecting', async () => {
-      mockSyncService.connect.mockReturnValue(
+      mockConnect.mockReturnValue(
         new Promise(() => {}) // Never resolves
       );
 
@@ -212,7 +209,7 @@ describe('WelcomeDialog', () => {
 
   describe('Error Handling', () => {
     it('should clear error when new action is taken', async () => {
-      mockSyncService.connect.mockRejectedValueOnce(new Error('Failed to connect'));
+      mockConnect.mockRejectedValueOnce(new Error('Failed to connect'));
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
@@ -225,7 +222,7 @@ describe('WelcomeDialog', () => {
       });
 
       // Clear error by starting new action
-      mockSyncService.connect.mockResolvedValue(undefined);
+      mockConnect.mockResolvedValue(undefined);
 
       const connectButtonsAgain = screen.getAllByRole('button', { name: /^connect$/i });
       fireEvent.click(connectButtonsAgain[0]);
@@ -236,7 +233,7 @@ describe('WelcomeDialog', () => {
     });
 
     it('should handle connection error', async () => {
-      mockSyncService.connect.mockRejectedValue(new Error('Permission denied'));
+      mockConnect.mockRejectedValue(new Error('Permission denied'));
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
@@ -251,7 +248,7 @@ describe('WelcomeDialog', () => {
 
   describe('Cloud Storage Integration', () => {
     it('should connect to OneDrive when Connect clicked', async () => {
-      mockSyncService.connect.mockResolvedValue(undefined);
+      mockConnect.mockResolvedValue(undefined);
       mockOneDriveProvider.listDriveItems.mockResolvedValue([]);
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
@@ -260,12 +257,12 @@ describe('WelcomeDialog', () => {
       fireEvent.click(connectButtons[0]);
 
       await waitFor(() => {
-        expect(mockSyncService.connect).toHaveBeenCalledWith(StorageProviderType.ONEDRIVE);
+        expect(mockConnect).toHaveBeenCalledWith(StorageProviderType.ONEDRIVE);
       });
     });
 
     it('should connect to Google Drive when Connect clicked', async () => {
-      mockSyncService.connect.mockResolvedValue(undefined);
+      mockConnect.mockResolvedValue(undefined);
       mockGoogleDriveProvider.listDriveFiles.mockResolvedValue([]);
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
@@ -276,13 +273,13 @@ describe('WelcomeDialog', () => {
         fireEvent.click(connectButtons[1]); // Google Drive is second option
 
         await waitFor(() => {
-          expect(mockSyncService.connect).toHaveBeenCalledWith(StorageProviderType.GOOGLE_DRIVE);
+          expect(mockConnect).toHaveBeenCalledWith(StorageProviderType.GOOGLE_DRIVE);
         });
       }
     });
 
     it('should handle cloud connection errors', async () => {
-      mockSyncService.connect.mockRejectedValue(new Error('Auth failed'));
+      mockConnect.mockRejectedValue(new Error('Auth failed'));
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
@@ -305,7 +302,7 @@ describe('WelcomeDialog', () => {
 
   describe('User Interaction Flow', () => {
     it('should complete full onboarding flow with OneDrive', async () => {
-      mockSyncService.connect.mockResolvedValue(undefined);
+      mockConnect.mockResolvedValue(undefined);
       mockOneDriveProvider.listDriveItems.mockResolvedValue([]);
 
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
@@ -318,12 +315,12 @@ describe('WelcomeDialog', () => {
       fireEvent.click(connectButtons[0]);
 
       await waitFor(() => {
-        expect(mockSyncService.connect).toHaveBeenCalledWith(StorageProviderType.ONEDRIVE);
+        expect(mockConnect).toHaveBeenCalledWith(StorageProviderType.ONEDRIVE);
       });
     });
 
     it('should allow retrying after error', async () => {
-      mockSyncService.connect
+      mockConnect
         .mockRejectedValueOnce(new Error('First attempt failed'))
         .mockResolvedValueOnce(undefined);
 
@@ -341,7 +338,7 @@ describe('WelcomeDialog', () => {
       const connectButtonsAgain = screen.getAllByRole('button', { name: /^connect$/i });
       fireEvent.click(connectButtonsAgain[0]);
       await waitFor(() => {
-        expect(mockSyncService.connect).toHaveBeenCalledTimes(2);
+        expect(mockConnect).toHaveBeenCalledTimes(2);
       });
     });
   });

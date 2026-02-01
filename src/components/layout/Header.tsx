@@ -27,10 +27,10 @@ import {
   Menu as MenuIcon,
   CloudDone as CloudDoneIcon,
   CloudOff as CloudOffIcon,
+  CloudQueue as CloudQueueIcon,
   Error as ErrorIcon,
 } from '@mui/icons-material';
-import { useApp } from '@/hooks/useApp';
-import { useSync } from '@/hooks/useSync';
+import { useSync } from '@/contexts/SyncContext';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -38,8 +38,8 @@ export const Header: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { syncStatus } = useApp();
   const syncOps = useSync();
+  const { syncStatus } = syncOps;
   const cloudFileName = syncStatus.fileName;
 
   const handleSync = async () => {
@@ -50,50 +50,45 @@ export const Header: React.FC = () => {
     }
   };
 
-  const getSyncStatus = (): 'syncing' | 'synced' | 'not-synced' | 'error' => {
-    return syncStatus.status === 'syncing'
-      ? 'syncing'
-      : syncStatus.status === 'error'
-        ? 'error'
-        : syncStatus.status === 'synced'
-          ? 'synced'
-          : 'not-synced';
-  };
-
   const getSyncIcon = () => {
-    const status = getSyncStatus();
-    switch (status) {
+    switch (syncStatus.status) {
       case 'syncing':
         return <CircularProgress size={20} color="inherit" />;
       case 'error':
         return <ErrorIcon />;
-      case 'not-synced':
-        return <CloudOffIcon />;
       case 'synced':
         return <CloudDoneIcon />;
+      case 'connected':
+        return <CloudQueueIcon />;
+      case 'not-connected':
+      default:
+        return <CloudOffIcon />;
     }
   };
 
   const getSyncLabel = () => {
-    const status = getSyncStatus();
-    switch (status) {
+    switch (syncStatus.status) {
       case 'syncing':
         return 'Syncing';
       case 'error':
         return syncStatus.errorMessage || 'Sync error';
-      case 'not-synced':
-        return 'Not Synced';
       case 'synced':
         return 'Synced';
+      case 'connected':
+        return 'Connected';
+      case 'not-connected':
+        return 'Not Connected';
+      default:
+        return 'Unknown';
     }
   };
 
   const getSyncColor = () => {
-    const status = getSyncStatus();
-    switch (status) {
+    switch (syncStatus.status) {
       case 'error':
         return 'error.main';
-      case 'not-synced':
+      case 'not-connected':
+      case 'connected':
         return 'warning.main';
       default:
         return 'inherit';

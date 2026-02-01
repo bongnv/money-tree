@@ -18,13 +18,19 @@ jest.mock('./services/cloudSync.service', () => {
 });
 
 // Mock useSync for all tests (operations only)
-jest.mock('./hooks/useSync', () => ({
+jest.mock('./contexts/SyncContext', () => ({
   useSync: jest.fn(() => ({
-    setFile: jest.fn(),
+    selectFile: jest.fn(),
     listItems: jest.fn().mockResolvedValue([]),
     fullSync: jest.fn().mockResolvedValue(undefined),
     connect: jest.fn().mockResolvedValue(undefined),
     disconnect: jest.fn().mockResolvedValue(undefined),
+    syncStatus: {
+      status: 'synced',
+      errorMessage: null,
+      providerName: 'OneDrive',
+      fileName: 'test.json',
+    },
   })),
 }));
 

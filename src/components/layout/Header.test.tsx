@@ -17,27 +17,20 @@ jest.mock('../../services/cloudSync.service', () => ({
 }));
 
 // Mock SyncProvider
-jest.mock('@/hooks/useSync', () => ({
+jest.mock('@/contexts/SyncContext', () => ({
   useSync: jest.fn(() => ({
-    isConnected: false,
-    providerName: null,
-    fileName: null,
-    providerType: null,
-    isSyncing: false,
-    lastSynced: null,
-    pendingChanges: false,
-    provider: null,
-    uploadToCloud: jest.fn().mockResolvedValue(undefined),
-    downloadFromCloud: jest.fn().mockResolvedValue(undefined),
+    selectFile: jest.fn().mockResolvedValue(undefined),
+    listItems: jest.fn().mockResolvedValue([]),
     fullSync: jest.fn().mockResolvedValue(undefined),
-    debouncedSync: jest.fn(),
     connect: jest.fn().mockResolvedValue(undefined),
     disconnect: jest.fn().mockResolvedValue(undefined),
-    initialize: jest.fn().mockResolvedValue(undefined),
-    saveDataFile: jest.fn().mockResolvedValue(undefined),
-    loadDataFile: jest.fn().mockResolvedValue(undefined),
+    syncStatus: {
+      status: 'not-connected' as const,
+      errorMessage: null,
+      providerName: null,
+      fileName: null,
+    },
   })),
-  useSyncService: jest.fn(() => ({ isConnected: false, isSyncing: false })),
 }));
 
 const renderWithRouter = (component: React.ReactElement, initialRoute = '/') => {
@@ -62,14 +55,15 @@ describe('Header', () => {
 
   it('should render Sync button', () => {
     renderWithRouter(<Header />);
-    expect(screen.getByRole('button', { name: /sync/i })).toBeInTheDocument();
+    // Button shows status based on syncStatus - in this case "Not Connected"
+    expect(screen.getByRole('button', { name: /not connected/i })).toBeInTheDocument();
   });
 
   it('should show "Never synced" when lastSynced is null', () => {
     renderWithRouter(<Header />);
     // The header shows sync status via icon with tooltip, not direct text
-    // When not synced, it shows "Not Synced" in the tooltip
-    const syncButton = screen.getByRole('button', { name: /not synced/i });
+    // When not connected, it shows "Not Connected" in the tooltip
+    const syncButton = screen.getByRole('button', { name: /not connected/i });
     expect(syncButton).toBeInTheDocument();
   });
 

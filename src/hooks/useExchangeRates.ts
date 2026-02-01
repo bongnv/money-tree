@@ -2,13 +2,17 @@
  * Custom hooks for ExchangeRate data access
  * Uses useLiveQuery for reactive database queries
  */
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useExchangeRateService } from './useServices';
 import { getCurrentMonth } from '@/utils/date.utils';
 import { fetchRateFromAPI } from '@/utils/exchangeRate.utils';
 import type { ExchangeRate } from '../types/models';
 import { CurrencyCode } from '@/types/enums';
+
+// Module-level fetching state shared across all hook instances
+// Prevents duplicate API calls when multiple components use the hook
+let isFetching = false;
 
 /**
  * Get all exchange rates as an array
@@ -20,7 +24,6 @@ export function useExchangeRatesArray(): ExchangeRate[] | undefined {
   const exchangeRateService = useExchangeRateService();
   const rates = useLiveQuery(() => exchangeRateService.getAll());
   const currentMonth = getCurrentMonth();
-  const isFetchingRef = useRef(false);
 
   // Gather all supported currencies from enum
   const allCurrencies = useMemo(() => {
@@ -29,7 +32,7 @@ export function useExchangeRatesArray(): ExchangeRate[] | undefined {
 
   // Ensure current month rates are available
   useEffect(() => {
-    if (!rates || isFetchingRef.current) {
+    if (!rates || isFetching) {
       return;
     }
 
@@ -61,7 +64,7 @@ export function useExchangeRatesArray(): ExchangeRate[] | undefined {
       }
 
       // Fetch missing rates
-      isFetchingRef.current = true;
+      isFetching = true;
 
       try {
         for (const currency of missingRates) {
@@ -86,7 +89,7 @@ export function useExchangeRatesArray(): ExchangeRate[] | undefined {
         }
       } finally {
         if (!cancelled) {
-          isFetchingRef.current = false;
+          isFetching = false;
         }
       }
     };

@@ -37,8 +37,6 @@ export function useComparisonData(
   const ratesMap = useExchangeRates();
 
   const [data, setData] = useState<ComparisonData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
 
   // Create stable key for transactions
   const transactionsKey = useMemo(
@@ -58,9 +56,6 @@ export function useComparisonData(
     let cancelled = false;
 
     const compute = () => {
-      setIsLoading(true);
-      setError(null);
-
       try {
         const result =
           comparisonType === 'month'
@@ -83,13 +78,9 @@ export function useComparisonData(
 
         if (!cancelled) {
           setData(result);
-          setIsLoading(false);
         }
       } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err : new Error(String(err)));
-          setIsLoading(false);
-        }
+        console.error('[useComparisonData] Computation failed:', err);
       }
     };
 
@@ -101,5 +92,5 @@ export function useComparisonData(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transactionsKey, reportDate, comparisonType, conversionCurrency, reportService, ratesMap]);
 
-  return { data, isLoading, error };
+  return { data };
 }

@@ -52,8 +52,6 @@ export function useBudgetPerformance() {
   }, [defaultCurrency, conversionCurrency]);
 
   const [budgetPerformance, setBudgetPerformance] = useState<BudgetPerformanceData | null>(null);
-  const [isLoadingPerformance, setIsLoadingPerformance] = useState(true);
-  const [performanceError, setPerformanceError] = useState<Error | null>(null);
 
   // Get exchange rates map
   const ratesMap = useExchangeRates();
@@ -69,16 +67,12 @@ export function useBudgetPerformance() {
       !ratesMap ||
       !conversionCurrency
     ) {
-      // isLoadingPerformance is already true from initial state
       return;
     }
 
     let cancelled = false;
 
     const compute = () => {
-      setIsLoadingPerformance(true);
-      setPerformanceError(null);
-
       try {
         const result = reportService.calculateBudgetPerformance(
           budgets,
@@ -94,14 +88,9 @@ export function useBudgetPerformance() {
 
         if (!cancelled) {
           setBudgetPerformance(result);
-          setIsLoadingPerformance(false);
         }
       } catch (err) {
         console.error('[useBudgetPerformance] Error computing budget performance', err);
-        if (!cancelled) {
-          setPerformanceError(err instanceof Error ? err : new Error(String(err)));
-          setIsLoadingPerformance(false);
-        }
       }
     };
 
@@ -126,8 +115,6 @@ export function useBudgetPerformance() {
   return {
     // Performance data
     budgetPerformance,
-    isLoadingPerformance,
-    performanceError,
 
     // Parameters
     startDate,

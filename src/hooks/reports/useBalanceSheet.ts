@@ -120,13 +120,9 @@ export function useBalanceSheet() {
 
     // Net worth trend
     netWorthTrend: netWorthTrendResult.data,
-    isLoadingTrend: netWorthTrendResult.isLoading,
-    trendError: netWorthTrendResult.error,
 
     // Comparison
     comparison: comparisonResult.data,
-    isLoadingComparison: comparisonResult.isLoading,
-    comparisonError: comparisonResult.error,
 
     // Parameters
     reportDate,

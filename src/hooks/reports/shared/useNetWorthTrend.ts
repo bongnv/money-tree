@@ -29,21 +29,15 @@ export function useNetWorthTrend(
   const ratesMap = useExchangeRates();
 
   const [data, setData] = useState<NetWorthTrendPoint[] | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     if (!accounts || !manualAssets || !transactions || !ratesMap) {
-      // isLoading is already true from initial state
       return;
     }
 
     let cancelled = false;
 
     const compute = () => {
-      setIsLoading(true);
-      setError(null);
-
       try {
         const result = reportService.calculateNetWorthTrend(
           accounts,
@@ -58,14 +52,9 @@ export function useNetWorthTrend(
 
         if (!cancelled) {
           setData(result);
-          setIsLoading(false);
         }
       } catch (err) {
         console.error('[useNetWorthTrend] Computation failed:', err);
-        if (!cancelled) {
-          setError(err instanceof Error ? err : new Error(String(err)));
-          setIsLoading(false);
-        }
       }
     };
 
@@ -86,5 +75,5 @@ export function useNetWorthTrend(
     ratesMap,
   ]);
 
-  return { data, isLoading, error };
+  return { data };
 }

@@ -78,13 +78,9 @@ export function useCashFlowReport() {
 
   // Cash flow state
   const [cashFlow, setCashFlow] = useState<CashFlowData | null>(null);
-  const [isLoadingCashFlow, setIsLoadingCashFlow] = useState(true);
-  const [cashFlowError, setCashFlowError] = useState<Error | null>(null);
 
   // Trend state
   const [cashFlowTrend, setCashFlowTrend] = useState<CashFlowTrendPoint[] | null>(null);
-  const [isLoadingTrend, setIsLoadingTrend] = useState(true);
-  const [trendError, setTrendError] = useState<Error | null>(null);
 
   // Filters
   const filterState = useFilterState<CashFlowFilters>({
@@ -149,8 +145,6 @@ export function useCashFlowReport() {
     let cancelled = false;
 
     const compute = () => {
-      setCashFlowError(null);
-
       try {
         const result = reportService.calculateCashFlow(
           filteredTransactions,
@@ -165,13 +159,9 @@ export function useCashFlowReport() {
 
         if (!cancelled) {
           setCashFlow(result);
-          setIsLoadingCashFlow(false);
         }
       } catch (err) {
-        if (!cancelled) {
-          setCashFlowError(err instanceof Error ? err : new Error(String(err)));
-          setIsLoadingCashFlow(false);
-        }
+        console.error('[useCashFlowReport] Error computing cash flow', err);
       }
     };
 
@@ -201,9 +191,6 @@ export function useCashFlowReport() {
     let cancelled = false;
 
     const compute = () => {
-      setIsLoadingTrend(true);
-      setTrendError(null);
-
       try {
         // Calculate dynamic interval based on date range
         const start = new Date(startDate);
@@ -237,13 +224,9 @@ export function useCashFlowReport() {
 
         if (!cancelled) {
           setCashFlowTrend(result);
-          setIsLoadingTrend(false);
         }
       } catch (err) {
-        if (!cancelled) {
-          setTrendError(err instanceof Error ? err : new Error(String(err)));
-          setIsLoadingTrend(false);
-        }
+        console.error('[useCashFlowReport] Error computing trend', err);
       }
     };
 
@@ -338,13 +321,9 @@ export function useCashFlowReport() {
   return {
     // Cash flow data
     cashFlow,
-    isLoadingCashFlow,
-    cashFlowError,
 
     // Trend data
     cashFlowTrend,
-    isLoadingTrend,
-    trendError,
 
     // Chart data for pie charts and tables
     chartData,

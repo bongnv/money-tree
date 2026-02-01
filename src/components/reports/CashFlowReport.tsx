@@ -66,7 +66,6 @@ export const CashFlowReport: React.FC = () => {
 
   const {
     cashFlow,
-    isLoadingCashFlow,
     cashFlowTrend,
     startDate,
     setStartDate,
@@ -82,7 +81,7 @@ export const CashFlowReport: React.FC = () => {
   } = useCashFlowReport();
 
   // UI state
-  const [viewMode, setViewMode] = useState<'period' | 'cumulative'>('period');
+  const [viewMode, setViewMode] = useState<'period' | 'cumulative'>('cumulative');
 
   const handleDateRangeChange = (range: { startDate: string; endDate: string }) => {
     setStartDate(range.startDate);
@@ -244,9 +243,9 @@ export const CashFlowReport: React.FC = () => {
       </Paper>
 
       {/* Summary Cards */}
-      {isLoadingCashFlow || !cashFlow ? (
+      {!cashFlow ? (
         <Paper sx={{ p: 3, textAlign: 'center', mb: 3 }}>
-          <Typography color="text.secondary">Loading cash flow data...</Typography>
+          <Typography color="text.secondary">No cash flow data available</Typography>
         </Paper>
       ) : (
         <>

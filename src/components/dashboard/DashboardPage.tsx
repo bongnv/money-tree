@@ -11,7 +11,7 @@ export const DashboardPage: React.FC = () => {
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   const selectedPeriod = useMemo(
-    () => ({ startDate, endDate, label: 'Year to Date', value: 'ytd' }),
+    () => ({ startDate, endDate, label: 'Year to Date', value: 'ytd' as const }),
     [startDate, endDate]
   );
 

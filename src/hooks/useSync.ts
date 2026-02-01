@@ -87,12 +87,6 @@ export function useSync(
               currentFileItem = fileItem;
               setFileState(fileItem);
               fileName = fileItem.name;
-
-              // Load last synced timestamp from database
-              const lastSyncedRecord = await db.syncMetadata.get('lastModified');
-              if (lastSyncedRecord?.value) {
-                syncState.remoteLastModified = lastSyncedRecord.value as string;
-              }
             }
           } catch (error) {
             console.warn('Failed to load cached file info:', error);

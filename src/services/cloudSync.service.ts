@@ -51,9 +51,7 @@ export class CloudSyncService {
    * Takes merged result to avoid reloading from DB
    * Returns updated CloudItem (may have new id if it was a new file)
    */
-  private async uploadToCloud(
-    mergedData: LocalDataSnapshot
-  ): Promise<{ timestamp: string; fileItem: CloudItem }> {
+  private async uploadToCloud(mergedData: LocalDataSnapshot): Promise<{ fileItem: CloudItem }> {
     // Filter out soft-deleted resources
     const transactions = mergedData.transactions.filter((t) => !t.isDeleted);
     const categories = mergedData.categories.filter((c) => !c.isDeleted);
@@ -81,16 +79,14 @@ export class CloudSyncService {
     const content = JSON.stringify(dataFile);
     const blob = new Blob([content], { type: 'application/json' });
     const updatedFileItem = await this.provider.writeFile(this.fileItem, blob);
-    const timestamp = new Date().toISOString();
-    return { timestamp, fileItem: updatedFileItem };
+    return { fileItem: updatedFileItem };
   }
 
   /**
    * Download from cloud and merge with local snapshot (Last-Write-Wins)
-   * Returns timestamp, whether local has newer changes, and merged results
+   * Returns whether local has newer changes and merged results
    */
   private async downloadFromCloud(localSnapshot: LocalDataSnapshot): Promise<{
-    timestamp: string;
     hasLocalChanges: boolean;
     mergedData: LocalDataSnapshot;
   }> {
@@ -111,8 +107,7 @@ export class CloudSyncService {
 
     // Merge with local snapshot using Last-Write-Wins
     const { hasLocalChanges, mergedData } = await this.mergeData(cloudData, localSnapshot);
-    const timestamp = new Date().toISOString();
-    return { timestamp, hasLocalChanges, mergedData };
+    return { hasLocalChanges, mergedData };
   }
 
   /**

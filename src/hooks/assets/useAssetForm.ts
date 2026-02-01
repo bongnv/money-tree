@@ -1,4 +1,4 @@
-import { useFormState } from '../primitives/useFormState';
+import { useState, useCallback } from 'react';
 import { useAssetService } from '../useServices';
 import type { AssetFormData, AssetValueUpdateData } from '@/services/asset.service';
 import type { ManualAsset } from '@/types/models';
@@ -16,7 +16,7 @@ interface UseAssetFormProps {
 /**
  * Domain hook for asset form management
  * Supports create, edit, and update-value modes
- * Wraps useFormState primitive with asset-specific validation and transformation
+ * Manages form state with asset-specific validation and transformation
  */
 export function useAssetForm({ asset, mode = 'create', onSubmit }: UseAssetFormProps = {}) {
   const assetService = useAssetService();
@@ -47,53 +47,78 @@ export function useAssetForm({ asset, mode = 'create', onSubmit }: UseAssetFormP
             date: getTodayDate(),
           };
 
-  // Custom validation function
-  const validate = (data: AssetFormData | AssetValueUpdateData) => {
-    if (isUpdateValueMode && asset) {
-      const errors = assetService.validateAssetValueUpdate(data as AssetValueUpdateData, asset);
-      return errors.reduce(
-        (acc, err) => {
-          acc[err.field] = err.message;
-          return acc;
-        },
-        {} as Record<string, string>
-      );
-    } else {
-      const errors = assetService.validateAssetForm(data as AssetFormData);
-      return errors.reduce(
-        (acc, err) => {
-          acc[err.field] = err.message;
-          return acc;
-        },
-        {} as Record<string, string>
-      );
-    }
-  };
+  const [formData, setFormData] = useState<AssetFormData | AssetValueUpdateData>(initialData);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Use primitive form state hook
-  const formState = useFormState(initialData, validate);
+  // Custom validation function
+  const validate = useCallback(
+    (data: AssetFormData | AssetValueUpdateData) => {
+      if (isUpdateValueMode && asset) {
+        const validationErrors = assetService.validateAssetValueUpdate(
+          data as AssetValueUpdateData,
+          asset
+        );
+        return validationErrors.reduce(
+          (acc, err) => {
+            acc[err.field] = err.message;
+            return acc;
+          },
+          {} as Record<string, string>
+        );
+      } else {
+        const validationErrors = assetService.validateAssetForm(data as AssetFormData);
+        return validationErrors.reduce(
+          (acc, err) => {
+            acc[err.field] = err.message;
+            return acc;
+          },
+          {} as Record<string, string>
+        );
+      }
+    },
+    [assetService, isUpdateValueMode, asset]
+  );
+
+  const setField = useCallback(
+    <K extends keyof (AssetFormData | AssetValueUpdateData)>(
+      field: K,
+      value: (AssetFormData | AssetValueUpdateData)[K]
+    ) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+
+      if (errors[field as string]) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[field as string];
+          return newErrors;
+        });
+      }
+    },
+    [errors]
+  );
 
   // Custom submit handler
   const handleSubmit = async () => {
     // Validate before submit
-    const errors = validate(formState.formData);
-    if (Object.keys(errors).length > 0) {
-      formState.setErrors(errors);
+    const validationErrors = validate(formData);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
 
-    formState.setIsSubmitting(true);
+    setIsSubmitting(true);
     try {
       if (isUpdateValueMode && asset) {
         // Update value mode
-        const valueData = formState.formData as AssetValueUpdateData;
+        const valueData = formData as AssetValueUpdateData;
         await assetService.addValueHistory(asset.id, {
           date: valueData.date,
           value: parseFloat(valueData.value),
           notes: valueData.note,
         });
       } else {
-        const assetData = assetService.transformFormToAsset(formState.formData as AssetFormData);
+        const assetData = assetService.transformFormToAsset(formData as AssetFormData);
 
         if (asset && mode === 'edit') {
           // Edit mode
@@ -108,14 +133,15 @@ export function useAssetForm({ asset, mode = 'create', onSubmit }: UseAssetFormP
         await onSubmit();
       }
     } finally {
-      formState.setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
   return {
-    ...formState,
+    formData,
+    errors,
+    isSubmitting,
+    setField,
     handleSubmit,
-    isEditMode: mode === 'edit',
-    isUpdateValueMode,
   };
 }

@@ -1,6 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useAccounts, useTransactions, useTransactionTypes, useCategories } from '../index';
-import { useFilterState } from '../primitives/useFilterState';
 import { useReportService, useCalculationService } from '../useServices';
 import { useBaseCurrency } from '../useSyncMetadata';
 import { useExchangeRates } from '../useExchangeRates';
@@ -82,46 +81,66 @@ export function useCashFlowReport() {
   // Trend state
   const [cashFlowTrend, setCashFlowTrend] = useState<CashFlowTrendPoint[] | null>(null);
 
-  // Filters
-  const filterState = useFilterState<CashFlowFilters>({
+  // Filters - inline filter state management
+  const initialFilters: CashFlowFilters = {
     categoryIds: [],
     accountIds: [],
     searchText: '',
-  });
+  };
+
+  const [filters, setFilters] = useState<CashFlowFilters>(initialFilters);
+  const [appliedFilters, setAppliedFilters] = useState<CashFlowFilters>(initialFilters);
+
+  const filtersRef = useRef<CashFlowFilters>(filters);
+  useEffect(() => {
+    filtersRef.current = filters;
+  }, [filters]);
+
+  const setFilter = useCallback(<K extends keyof CashFlowFilters>(key: K, value: CashFlowFilters[K]) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  const applyFilters = useCallback(() => {
+    setAppliedFilters(filtersRef.current);
+  }, []);
+
+  const resetFilters = useCallback(() => {
+    setFilters(initialFilters);
+    setAppliedFilters(initialFilters);
+  }, []);
+
+  const hasActiveFilters = useMemo(() => {
+    return JSON.stringify(appliedFilters) !== JSON.stringify(initialFilters);
+  }, [appliedFilters]);
 
   // Filter transactions based on current filters
   const filteredTransactions = useMemo(
     () =>
       allTransactions?.filter((transaction) => {
         // Filter by account
-        if (filterState.filters.accountIds.length > 0) {
+        if (filters.accountIds.length > 0) {
           const matchesFrom =
-            transaction.fromAccountId &&
-            filterState.filters.accountIds.includes(transaction.fromAccountId);
+            transaction.fromAccountId && filters.accountIds.includes(transaction.fromAccountId);
           const matchesTo =
-            transaction.toAccountId &&
-            filterState.filters.accountIds.includes(transaction.toAccountId);
+            transaction.toAccountId && filters.accountIds.includes(transaction.toAccountId);
           if (!matchesFrom && !matchesTo) {
             return false;
           }
         }
 
         // Filter by category (via transaction type)
-        if (filterState.filters.categoryIds.length > 0) {
+        if (filters.categoryIds.length > 0) {
           const transactionType = transactionTypes?.find(
             (tt) => tt.id === transaction.transactionTypeId
           );
-          if (
-            !transactionType ||
-            !filterState.filters.categoryIds.includes(transactionType.categoryId)
-          ) {
+          if (!transactionType || !filters.categoryIds.includes(transactionType.categoryId)) {
             return false;
           }
         }
 
         // Filter by search text
-        if (filterState.filters.searchText) {
-          const searchLower = filterState.filters.searchText.toLowerCase();
+        if (filters.searchText) {
+          const searchLower = filters.searchText.toLowerCase();
           return (
             transaction.description?.toLowerCase().includes(searchLower) ||
             transaction.transactionTypeId.toLowerCase().includes(searchLower)
@@ -130,7 +149,7 @@ export function useCashFlowReport() {
 
         return true;
       }) ?? [],
-    [allTransactions, filterState.filters, transactionTypes]
+    [allTransactions, filters, transactionTypes]
   );
 
   // Get exchange rates map
@@ -249,7 +268,7 @@ export function useCashFlowReport() {
 
   // Chart data for filtered views
   const chartData = useMemo<ChartData | null>(() => {
-    const hasFilter = filterState.filters.categoryIds.length > 0;
+    const hasFilter = filters.categoryIds.length > 0;
 
     // No filter - use category grouping from cashFlow
     if (!hasFilter || !cashFlow) {
@@ -309,7 +328,7 @@ export function useCashFlowReport() {
     };
   }, [
     cashFlow,
-    filterState.filters.categoryIds,
+    filters.categoryIds,
     filteredTransactions,
     transactionTypes,
     accounts,
@@ -329,12 +348,12 @@ export function useCashFlowReport() {
     chartData,
 
     // Filters
-    filters: filterState.filters,
-    appliedFilters: filterState.appliedFilters,
-    setFilter: filterState.setFilter,
-    applyFilters: filterState.applyFilters,
-    resetFilters: filterState.resetFilters,
-    hasActiveFilters: filterState.hasActiveFilters,
+    filters,
+    appliedFilters,
+    setFilter,
+    applyFilters,
+    resetFilters,
+    hasActiveFilters,
 
     // Parameters
     startDate,

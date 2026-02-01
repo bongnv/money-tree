@@ -43,43 +43,45 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
 
   return (
     <Box component="form" onSubmit={handleFormSubmit} noValidate>
-      <TextField
-        fullWidth
-        label="Asset Name"
-        value={formData.name}
-        onChange={(e) => setField('name', e.target.value)}
-        error={!!errors.name}
-        helperText={errors.name}
-        margin="normal"
-        required
-        disabled={updateValueOnly}
-      />
+      {!updateValueOnly && (
+        <>
+          <TextField
+            fullWidth
+            label="Asset Name"
+            value={'name' in formData ? formData.name : ''}
+            onChange={(e) => setField('name' as never, e.target.value as never)}
+            error={!!errors.name}
+            helperText={errors.name}
+            margin="normal"
+            required
+          />
 
-      <TextField
-        fullWidth
-        select
-        label="Asset Type"
-        value={formData.type}
-        onChange={(e) => setField('type', e.target.value as AssetType)}
-        error={!!errors.type}
-        helperText={errors.type}
-        margin="normal"
-        required
-        disabled={updateValueOnly}
-      >
-        {Object.values(AssetType).map((type) => (
-          <MenuItem key={type} value={type}>
-            {assetTypeLabels[type]}
-          </MenuItem>
-        ))}
-      </TextField>
+          <TextField
+            fullWidth
+            select
+            label="Asset Type"
+            value={'type' in formData ? formData.type : AssetType.OTHER}
+            onChange={(e) => setField('type' as never, e.target.value as AssetType as never)}
+            error={!!errors.type}
+            helperText={errors.type}
+            margin="normal"
+            required
+          >
+            {Object.values(AssetType).map((type) => (
+              <MenuItem key={type} value={type}>
+                {assetTypeLabels[type]}
+              </MenuItem>
+            ))}
+          </TextField>
+        </>
+      )}
 
       <TextField
         fullWidth
         label="Value"
         type="number"
         value={formData.value}
-        onChange={(e) => setField('value', e.target.value)}
+        onChange={(e) => setField('value' as never, e.target.value as never)}
         error={!!errors.value}
         helperText={errors.value}
         margin="normal"
@@ -87,43 +89,46 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
         inputProps={{ step: '0.01' }}
       />
 
-      <TextField
-        fullWidth
-        select
-        label="Currency"
-        value={formData.currencyCode}
-        onChange={(e) => setField('currencyCode', e.target.value as CurrencyCode)}
-        error={!!errors.currencyCode}
-        helperText={errors.currencyCode}
-        margin="normal"
-        required
-        disabled={updateValueOnly}
-      >
-        {currencies.map((currency) => (
-          <MenuItem key={currency.code} value={currency.code}>
-            {currency.code} - {currency.name}
-          </MenuItem>
-        ))}
-      </TextField>
+      {!updateValueOnly && (
+        <TextField
+          fullWidth
+          select
+          label="Currency"
+          value={'currencyCode' in formData ? formData.currencyCode : CurrencyCode.USD}
+          onChange={(e) => setField('currencyCode' as never, e.target.value as CurrencyCode as never)}
+          error={!!errors.currencyCode}
+          helperText={errors.currencyCode}
+          margin="normal"
+          required
+        >
+          {currencies.map((currency) => (
+            <MenuItem key={currency.code} value={currency.code}>
+              {currency.code} - {currency.name}
+            </MenuItem>
+          ))}
+        </TextField>
+      )}
 
       <FormDatePicker
         label="Date"
         value={formData.date}
-        onChange={(date) => setField('date', date)}
+        onChange={(date) => setField('date' as never, date as never)}
         error={!!errors.date}
         helperText={errors.date}
         required
       />
 
-      <TextField
-        fullWidth
-        label="Notes"
-        value={formData.notes || ''}
-        onChange={(e) => setField('notes', e.target.value)}
-        margin="normal"
-        multiline
-        rows={3}
-      />
+      {!updateValueOnly && (
+        <TextField
+          fullWidth
+          label="Notes"
+          value={'notes' in formData ? formData.notes || '' : ''}
+          onChange={(e) => setField('notes' as never, e.target.value as never)}
+          margin="normal"
+          multiline
+          rows={3}
+        />
+      )}
 
       <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
         <Button onClick={onCancel}>Cancel</Button>

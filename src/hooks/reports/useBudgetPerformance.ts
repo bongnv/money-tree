@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   useBudgets,
   useTransactions,
@@ -14,13 +14,48 @@ import type { BudgetPerformanceData } from '@/services/report.service';
 import { CurrencyCode } from '@/types/enums';
 import type { CurrencyCode as CurrencyCodeType } from '@/types/enums';
 
+export interface GroupedBudgetItem {
+  categoryId: string;
+  categoryName: string;
+  isCategory: boolean;
+  transactionTypeId?: string;
+  transactionTypeName?: string;
+  budgetedAmount: number;
+  actualAmount: number;
+  remaining: number;
+  percentUsed: number;
+  isIncome: boolean;
+}
+
+export interface DisplayPerformance {
+  items: Array<{
+    categoryId: string;
+    categoryName: string;
+    transactionTypeId: string;
+    transactionTypeName: string;
+    budgetedAmount: number;
+    actualAmount: number;
+    remaining: number;
+    percentUsed: number;
+    isIncome: boolean;
+  }>;
+  totalBudgetedIncome: number;
+  totalActualIncome: number;
+  totalRemainingIncome: number;
+  totalBudgetedExpenses: number;
+  totalActualExpenses: number;
+  totalRemainingExpenses: number;
+  overallHealthScore: number;
+}
+
 /**
  * Comprehensive budget performance report hook
- * Combines budget vs actual analysis with trend data
+ * Combines budget vs actual analysis with filtering and grouping logic
  *
  * Manages:
  * - Budget performance for a date range (budgeted vs actual)
- * - Budget performance trend over time
+ * - Category filtering
+ * - Grouping by category or transaction type
  * - Currency conversion
  *
  * @returns All data and controls needed for budget performance reports
@@ -42,6 +77,7 @@ export function useBudgetPerformance() {
   const [conversionCurrency, setConversionCurrency] = useState<CurrencyCodeType | undefined>(
     undefined
   );
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   // Set conversion currency to base currency when it loads
   useEffect(() => {
@@ -112,9 +148,147 @@ export function useBudgetPerformance() {
     ratesMap,
   ]);
 
+  // Default performance with fallback
+  const performance = useMemo<DisplayPerformance>(
+    () =>
+      budgetPerformance || {
+        items: [],
+        totalBudgetedIncome: 0,
+        totalActualIncome: 0,
+        totalRemainingIncome: 0,
+        totalBudgetedExpenses: 0,
+        totalActualExpenses: 0,
+        totalRemainingExpenses: 0,
+        overallHealthScore: 100,
+      },
+    [budgetPerformance]
+  );
+
+  // Filter performance by selected categories
+  const displayPerformance = useMemo<DisplayPerformance>(() => {
+    if (selectedCategories.length === 0) {
+      return performance;
+    }
+
+    const filteredItems = performance.items.filter((item) =>
+      selectedCategories.includes(item.categoryId)
+    );
+
+    let totalBudgetedIncome = 0;
+    let totalActualIncome = 0;
+    let totalRemainingIncome = 0;
+    let totalBudgetedExpenses = 0;
+    let totalActualExpenses = 0;
+    let totalRemainingExpenses = 0;
+
+    filteredItems.forEach((item) => {
+      if (item.isIncome) {
+        totalBudgetedIncome += item.budgetedAmount;
+        totalActualIncome += item.actualAmount;
+        totalRemainingIncome += item.remaining;
+      } else {
+        totalBudgetedExpenses += item.budgetedAmount;
+        totalActualExpenses += item.actualAmount;
+        totalRemainingExpenses += item.remaining;
+      }
+    });
+
+    return {
+      items: filteredItems,
+      totalBudgetedIncome,
+      totalActualIncome,
+      totalRemainingIncome,
+      totalBudgetedExpenses,
+      totalActualExpenses,
+      totalRemainingExpenses,
+      overallHealthScore: performance.overallHealthScore,
+    };
+  }, [performance, selectedCategories]);
+
+  // Group items by category or transaction type
+  const groupedItems = useMemo<GroupedBudgetItem[]>(() => {
+    if (selectedCategories.length > 0) {
+      // When filtered, show individual transaction types
+      return performance.items
+        .filter((item) => selectedCategories.includes(item.categoryId))
+        .map((item) => ({
+          categoryId: item.categoryId,
+          categoryName: item.categoryName,
+          isCategory: false,
+          transactionTypeId: item.transactionTypeId,
+          transactionTypeName: item.transactionTypeName,
+          budgetedAmount: item.budgetedAmount,
+          actualAmount: item.actualAmount,
+          remaining: item.remaining,
+          percentUsed: item.percentUsed,
+          isIncome: item.isIncome,
+        }));
+    }
+
+    // When no filter, aggregate by category
+    const categoryMap = new Map<
+      string,
+      {
+        categoryId: string;
+        categoryName: string;
+        budgetedAmount: number;
+        actualAmount: number;
+        isIncome: boolean;
+      }
+    >();
+
+    performance.items.forEach((item) => {
+      const existing = categoryMap.get(item.categoryId);
+      if (existing) {
+        existing.budgetedAmount += item.budgetedAmount;
+        existing.actualAmount += item.actualAmount;
+      } else {
+        categoryMap.set(item.categoryId, {
+          categoryId: item.categoryId,
+          categoryName: item.categoryName,
+          budgetedAmount: item.budgetedAmount,
+          actualAmount: item.actualAmount,
+          isIncome: item.isIncome,
+        });
+      }
+    });
+
+    return Array.from(categoryMap.values()).map((cat) => ({
+      categoryId: cat.categoryId,
+      categoryName: cat.categoryName,
+      isCategory: true,
+      budgetedAmount: cat.budgetedAmount,
+      actualAmount: cat.actualAmount,
+      remaining: cat.budgetedAmount - cat.actualAmount,
+      percentUsed: cat.budgetedAmount > 0 ? (cat.actualAmount / cat.budgetedAmount) * 100 : 0,
+      isIncome: cat.isIncome,
+    }));
+  }, [performance.items, selectedCategories]);
+
+  // Handlers
+  const handleCategoryChange = useCallback((categoryIds: string[]) => {
+    setSelectedCategories(categoryIds);
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setSelectedCategories([]);
+  }, []);
+
+  const handleItemClick = useCallback(
+    (itemId: string, isCategory: boolean) => {
+      if (isCategory) {
+        setSelectedCategories([itemId]);
+      }
+      return { itemId, isCategory, startDate, endDate };
+    },
+    [startDate, endDate]
+  );
+
   return {
     // Performance data
     budgetPerformance,
+    displayPerformance,
+    groupedItems,
 
     // Parameters
     startDate,
@@ -123,5 +297,11 @@ export function useBudgetPerformance() {
     setEndDate,
     conversionCurrency: conversionCurrency ?? CurrencyCode.USD,
     setConversionCurrency,
+
+    // Filters
+    selectedCategories,
+    handleCategoryChange,
+    handleClearFilters,
+    handleItemClick,
   };
 }

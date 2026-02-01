@@ -1,4 +1,4 @@
-import { useFormState } from '../primitives/useFormState';
+import { useState, useCallback } from 'react';
 import { useAccountService } from '../useServices';
 import type { AccountFormData } from '@/services/account.service';
 import type { Account } from '@/types/models';
@@ -11,7 +11,7 @@ interface UseAccountFormProps {
 
 /**
  * Domain hook for account form management
- * Wraps useFormState primitive with account-specific validation and transformation
+ * Manages form state with account-specific validation and transformation
  */
 export function useAccountForm({ account, onSubmit }: UseAccountFormProps = {}) {
   const accountService = useAccountService();
@@ -34,34 +34,53 @@ export function useAccountForm({ account, onSubmit }: UseAccountFormProps = {}) 
         isActive: true,
       };
 
-  // Custom validation function
-  const validate = (data: AccountFormData) => {
-    const errors = accountService.validateAccountForm(data);
-    // Convert service errors array to Record format
-    return errors.reduce(
-      (acc, err) => {
-        acc[err.field] = err.message;
-        return acc;
-      },
-      {} as Partial<Record<keyof AccountFormData, string>>
-    );
-  };
+  const [formData, setFormData] = useState<AccountFormData>(initialData);
+  const [errors, setErrors] = useState<Partial<Record<keyof AccountFormData, string>>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Use primitive form state hook
-  const formState = useFormState<AccountFormData>(initialData, validate);
+  // Custom validation function
+  const validate = useCallback(
+    (data: AccountFormData) => {
+      const validationErrors = accountService.validateAccountForm(data);
+      // Convert service errors array to Record format
+      return validationErrors.reduce(
+        (acc, err) => {
+          acc[err.field] = err.message;
+          return acc;
+        },
+        {} as Partial<Record<keyof AccountFormData, string>>
+      );
+    },
+    [accountService]
+  );
+
+  const setField = useCallback(
+    <K extends keyof AccountFormData>(field: K, value: AccountFormData[K]) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+
+      if (errors[field]) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[field];
+          return newErrors;
+        });
+      }
+    },
+    [errors]
+  );
 
   // Custom submit handler
   const handleSubmit = async () => {
     // Validate before submit
-    const errors = validate(formState.formData);
-    if (Object.keys(errors).length > 0) {
-      formState.setErrors(errors);
+    const validationErrors = validate(formData);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
 
-    formState.setIsSubmitting(true);
+    setIsSubmitting(true);
     try {
-      const accountData = accountService.transformFormToAccount(formState.formData);
+      const accountData = accountService.transformFormToAccount(formData);
 
       if (account) {
         // Edit mode
@@ -75,13 +94,15 @@ export function useAccountForm({ account, onSubmit }: UseAccountFormProps = {}) 
         await onSubmit(accountData);
       }
     } finally {
-      formState.setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
   return {
-    ...formState,
+    formData,
+    errors,
+    isSubmitting,
+    setField,
     handleSubmit,
-    isEditMode: !!account,
   };
 }

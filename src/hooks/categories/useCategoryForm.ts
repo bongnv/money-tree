@@ -1,4 +1,4 @@
-import { useFormState } from '../primitives/useFormState';
+import { useState, useCallback } from 'react';
 import { useCategoryService } from '../useServices';
 import type { CategoryFormData } from '@/services/category.service';
 import type { Category } from '@/types/models';
@@ -12,7 +12,7 @@ interface UseCategoryFormProps {
 
 /**
  * Domain hook for category form management
- * Wraps useFormState primitive with category-specific validation and transformation
+ * Manages form state with category-specific validation and transformation
  */
 export function useCategoryForm({ category, onSubmit }: UseCategoryFormProps = {}) {
   const categoryService = useCategoryService();
@@ -26,34 +26,53 @@ export function useCategoryForm({ category, onSubmit }: UseCategoryFormProps = {
         name: '',
       };
 
-  // Custom validation function
-  const validate = (data: CategoryFormData) => {
-    const errors = categoryService.validateCategoryForm(data);
-    // Convert service errors array to Record format
-    return errors.reduce(
-      (acc, err) => {
-        acc[err.field] = err.message;
-        return acc;
-      },
-      {} as Partial<Record<keyof CategoryFormData, string>>
-    );
-  };
+  const [formData, setFormData] = useState<CategoryFormData>(initialData);
+  const [errors, setErrors] = useState<Partial<Record<keyof CategoryFormData, string>>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Use primitive form state hook
-  const formState = useFormState<CategoryFormData>(initialData, validate);
+  // Custom validation function
+  const validate = useCallback(
+    (data: CategoryFormData) => {
+      const validationErrors = categoryService.validateCategoryForm(data);
+      // Convert service errors array to Record format
+      return validationErrors.reduce(
+        (acc, err) => {
+          acc[err.field] = err.message;
+          return acc;
+        },
+        {} as Partial<Record<keyof CategoryFormData, string>>
+      );
+    },
+    [categoryService]
+  );
+
+  const setField = useCallback(
+    <K extends keyof CategoryFormData>(field: K, value: CategoryFormData[K]) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+
+      if (errors[field]) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[field];
+          return newErrors;
+        });
+      }
+    },
+    [errors]
+  );
 
   // Custom submit handler
   const handleSubmit = async () => {
     // Validate before submit
-    const errors = validate(formState.formData);
-    if (Object.keys(errors).length > 0) {
-      formState.setErrors(errors);
+    const validationErrors = validate(formData);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
 
-    formState.setIsSubmitting(true);
+    setIsSubmitting(true);
     try {
-      const categoryData = categoryService.transformFormToCategory(formState.formData);
+      const categoryData = categoryService.transformFormToCategory(formData);
 
       if (category) {
         // Edit mode
@@ -67,13 +86,15 @@ export function useCategoryForm({ category, onSubmit }: UseCategoryFormProps = {
         await onSubmit(categoryData);
       }
     } finally {
-      formState.setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
   return {
-    ...formState,
+    formData,
+    errors,
+    isSubmitting,
+    setField,
     handleSubmit,
-    isEditMode: !!category,
   };
 }

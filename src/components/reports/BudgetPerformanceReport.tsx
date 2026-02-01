@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -39,90 +39,29 @@ export const BudgetPerformanceReport: React.FC = () => {
   const categories = useCategories();
 
   const {
-    budgetPerformance,
+    displayPerformance,
+    groupedItems,
     startDate,
     setStartDate,
     endDate,
     setEndDate,
     conversionCurrency,
     setConversionCurrency,
+    selectedCategories,
+    handleCategoryChange,
+    handleClearFilters,
+    handleItemClick,
   } = useBudgetPerformance();
-
-  // UI state
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const handleDateRangeChange = (range: { startDate: string; endDate: string }) => {
     setStartDate(range.startDate);
     setEndDate(range.endDate);
   };
 
-  const handleCategoryChange = (event: SelectChangeEvent<string[]>) => {
+  const handleCategoryFilterChange = (event: SelectChangeEvent<string[]>) => {
     const value = event.target.value;
-    setSelectedCategories(typeof value === 'string' ? value.split(',') : value);
+    handleCategoryChange(typeof value === 'string' ? value.split(',') : value);
   };
-
-  const handleClearFilters = () => {
-    setSelectedCategories([]);
-  };
-
-  // Use budget performance from hook with default fallback
-  const performance = useMemo(
-    () =>
-      budgetPerformance || {
-        items: [],
-        totalBudgetedIncome: 0,
-        totalActualIncome: 0,
-        totalRemainingIncome: 0,
-        totalBudgetedExpenses: 0,
-        totalActualExpenses: 0,
-        totalRemainingExpenses: 0,
-        overallHealthScore: 100,
-      },
-    [budgetPerformance]
-  );
-
-  // Filter performance items by selected categories for display
-  const displayPerformance = useMemo(() => {
-    if (selectedCategories.length === 0) {
-      return performance;
-    }
-
-    // Filter items by category
-    const filteredItems = performance.items.filter((item) =>
-      selectedCategories.includes(item.categoryId)
-    );
-
-    // Recalculate totals based on filtered items
-    let totalBudgetedIncome = 0;
-    let totalActualIncome = 0;
-    let totalRemainingIncome = 0;
-    let totalBudgetedExpenses = 0;
-    let totalActualExpenses = 0;
-    let totalRemainingExpenses = 0;
-
-    filteredItems.forEach((item) => {
-      if (item.isIncome) {
-        totalBudgetedIncome += item.budgetedAmount;
-        totalActualIncome += item.actualAmount;
-        totalRemainingIncome += item.remaining;
-      } else {
-        totalBudgetedExpenses += item.budgetedAmount;
-        totalActualExpenses += item.actualAmount;
-        totalRemainingExpenses += item.remaining;
-      }
-    });
-
-    return {
-      items: filteredItems,
-      totalBudgetedIncome,
-      totalActualIncome,
-      totalRemainingIncome,
-      totalBudgetedExpenses,
-      totalActualExpenses,
-      totalRemainingExpenses,
-      overallHealthScore: performance.overallHealthScore,
-    };
-  }, [performance, selectedCategories]);
 
   // Determine health score color
   const getHealthColor = (score: number) => {
@@ -136,101 +75,17 @@ export const BudgetPerformanceReport: React.FC = () => {
     return <WarningIcon sx={{ fontSize: 40, color: 'warning.main' }} />;
   };
 
-  const handleItemClick = (itemId: string, isCategory: boolean) => {
-    if (isCategory) {
-      // Filter on same page for category clicks
-      setSelectedCategories([itemId]);
-    } else {
+  const onItemClick = (itemId: string, isCategory: boolean) => {
+    const result = handleItemClick(itemId, isCategory);
+    if (!isCategory) {
       // Navigate to transactions page for transaction type clicks
       const params = new URLSearchParams();
-      params.set('transactionTypeId', itemId);
-      params.set('dateFrom', startDate);
-      params.set('dateTo', endDate);
+      params.set('transactionTypeId', result.itemId);
+      params.set('dateFrom', result.startDate);
+      params.set('dateTo', result.endDate);
       navigate(`/transactions?${params.toString()}`);
     }
   };
-
-  // Group items by category for display
-  const groupedItems: Array<
-    | {
-        categoryId: string;
-        categoryName: string;
-        isCategory: true;
-        budgetedAmount: number;
-        actualAmount: number;
-        remaining: number;
-        percentUsed: number;
-        isIncome: boolean;
-      }
-    | {
-        categoryId: string;
-        categoryName: string;
-        isCategory: false;
-        transactionTypeId: string;
-        transactionTypeName: string;
-        budgetedAmount: number;
-        actualAmount: number;
-        remaining: number;
-        percentUsed: number;
-        isIncome: boolean;
-      }
-  > = useMemo(() => {
-    if (selectedCategories.length > 0) {
-      // When filtered, show individual transaction types
-      return performance.items.map((item) => ({
-        categoryId: item.categoryId,
-        categoryName: item.categoryName,
-        isCategory: false as const,
-        // Transaction type details
-        transactionTypeId: item.transactionTypeId,
-        transactionTypeName: item.transactionTypeName,
-        budgetedAmount: item.budgetedAmount,
-        actualAmount: item.actualAmount,
-        remaining: item.remaining,
-        percentUsed: item.percentUsed,
-        isIncome: item.isIncome,
-      }));
-    }
-
-    // When no filter, aggregate by category
-    const categoryMap = new Map<
-      string,
-      {
-        categoryId: string;
-        categoryName: string;
-        budgetedAmount: number;
-        actualAmount: number;
-        isIncome: boolean;
-      }
-    >();
-
-    performance.items.forEach((item) => {
-      const existing = categoryMap.get(item.categoryId);
-      if (existing) {
-        existing.budgetedAmount += item.budgetedAmount;
-        existing.actualAmount += item.actualAmount;
-      } else {
-        categoryMap.set(item.categoryId, {
-          categoryId: item.categoryId,
-          categoryName: item.categoryName,
-          budgetedAmount: item.budgetedAmount,
-          actualAmount: item.actualAmount,
-          isIncome: item.isIncome,
-        });
-      }
-    });
-
-    return Array.from(categoryMap.values()).map((cat) => ({
-      categoryId: cat.categoryId,
-      categoryName: cat.categoryName,
-      isCategory: true as const,
-      budgetedAmount: cat.budgetedAmount,
-      actualAmount: cat.actualAmount,
-      remaining: cat.budgetedAmount - cat.actualAmount,
-      percentUsed: cat.budgetedAmount > 0 ? (cat.actualAmount / cat.budgetedAmount) * 100 : 0,
-      isIncome: cat.isIncome,
-    }));
-  }, [performance.items, selectedCategories]);
 
   return (
     <Box sx={{ p: 3 }}>
@@ -272,7 +127,7 @@ export const BudgetPerformanceReport: React.FC = () => {
             <CategoryFilter
               categories={categories || []}
               selectedCategories={selectedCategories}
-              onChange={handleCategoryChange}
+              onChange={handleCategoryFilterChange}
               onClear={handleClearFilters}
             />
           </Grid>
@@ -388,9 +243,6 @@ export const BudgetPerformanceReport: React.FC = () => {
         </Grid>
       </Grid>
 
-      {/* Trend Chart - Disabled: would require useBudgetTrend hook */}
-      {/* TODO: Implement trend chart with separate useBudgetTrend hook */}
-
       {/* Budget Performance Table */}
       <Paper sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>
@@ -437,8 +289,8 @@ export const BudgetPerformanceReport: React.FC = () => {
                       hover
                       sx={{ cursor: 'pointer' }}
                       onClick={() =>
-                        handleItemClick(
-                          item.isCategory ? item.categoryId : item.transactionTypeId,
+                        onItemClick(
+                          item.isCategory ? item.categoryId : item.transactionTypeId!,
                           item.isCategory
                         )
                       }

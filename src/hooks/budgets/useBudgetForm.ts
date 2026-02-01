@@ -1,4 +1,4 @@
-import { useFormState } from '../primitives/useFormState';
+import { useState, useCallback } from 'react';
 import { useBudgetService } from '../useServices';
 import type { BudgetFormData } from '@/services/budget.service';
 import type { Budget } from '@/types/models';
@@ -13,7 +13,7 @@ interface UseBudgetFormProps {
 
 /**
  * Domain hook for budget form management
- * Wraps useFormState primitive with budget-specific validation and transformation
+ * Manages form state with budget-specific validation and transformation
  */
 export function useBudgetForm({ budget, onSubmit }: UseBudgetFormProps = {}) {
   const budgetService = useBudgetService();
@@ -37,34 +37,53 @@ export function useBudgetForm({ budget, onSubmit }: UseBudgetFormProps = {}) {
         endDate: '',
       };
 
-  // Custom validation function
-  const validate = (data: BudgetFormData) => {
-    const errors = budgetService.validateBudgetForm(data);
-    // Convert service errors array to Record format
-    return errors.reduce(
-      (acc, err) => {
-        acc[err.field] = err.message;
-        return acc;
-      },
-      {} as Partial<Record<keyof BudgetFormData, string>>
-    );
-  };
+  const [formData, setFormData] = useState<BudgetFormData>(initialData);
+  const [errors, setErrors] = useState<Partial<Record<keyof BudgetFormData, string>>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Use primitive form state hook
-  const formState = useFormState<BudgetFormData>(initialData, validate);
+  // Custom validation function
+  const validate = useCallback(
+    (data: BudgetFormData) => {
+      const validationErrors = budgetService.validateBudgetForm(data);
+      // Convert service errors array to Record format
+      return validationErrors.reduce(
+        (acc, err) => {
+          acc[err.field] = err.message;
+          return acc;
+        },
+        {} as Partial<Record<keyof BudgetFormData, string>>
+      );
+    },
+    [budgetService]
+  );
+
+  const setField = useCallback(
+    <K extends keyof BudgetFormData>(field: K, value: BudgetFormData[K]) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+
+      if (errors[field]) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[field];
+          return newErrors;
+        });
+      }
+    },
+    [errors]
+  );
 
   // Custom submit handler
   const handleSubmit = async () => {
     // Validate before submit
-    const errors = validate(formState.formData);
-    if (Object.keys(errors).length > 0) {
-      formState.setErrors(errors);
+    const validationErrors = validate(formData);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
 
-    formState.setIsSubmitting(true);
+    setIsSubmitting(true);
     try {
-      const budgetData = budgetService.transformFormToBudget(formState.formData);
+      const budgetData = budgetService.transformFormToBudget(formData);
 
       if (budget) {
         // Edit mode
@@ -78,13 +97,15 @@ export function useBudgetForm({ budget, onSubmit }: UseBudgetFormProps = {}) {
         await onSubmit(budgetData);
       }
     } finally {
-      formState.setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
   return {
-    ...formState,
+    formData,
+    errors,
+    isSubmitting,
+    setField,
     handleSubmit,
-    isEditMode: !!budget,
   };
 }

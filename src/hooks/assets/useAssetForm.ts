@@ -49,7 +49,6 @@ export function useAssetForm({ asset, mode = 'create', onSubmit }: UseAssetFormP
 
   const [formData, setFormData] = useState<AssetFormData | AssetValueUpdateData>(initialData);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Custom validation function
   const validate = useCallback(
@@ -107,7 +106,6 @@ export function useAssetForm({ asset, mode = 'create', onSubmit }: UseAssetFormP
       return;
     }
 
-    setIsSubmitting(true);
     try {
       if (isUpdateValueMode && asset) {
         // Update value mode
@@ -132,15 +130,15 @@ export function useAssetForm({ asset, mode = 'create', onSubmit }: UseAssetFormP
       if (onSubmit) {
         await onSubmit();
       }
-    } finally {
-      setIsSubmitting(false);
+    } catch (error) {
+      // Error is handled in service, just prevent form from continuing
+      throw error;
     }
   };
 
   return {
     formData,
     errors,
-    isSubmitting,
     setField,
     handleSubmit,
   };

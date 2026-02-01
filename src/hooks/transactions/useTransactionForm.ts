@@ -43,7 +43,6 @@ export function useTransactionForm({ transaction, onSubmit }: UseTransactionForm
 
   const [formData, setFormData] = useState<TransactionFormData>(initialData);
   const [errors, setErrors] = useState<Partial<Record<keyof TransactionFormData, string>>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Custom validation function
   const validate = useCallback(
@@ -85,7 +84,6 @@ export function useTransactionForm({ transaction, onSubmit }: UseTransactionForm
       return;
     }
 
-    setIsSubmitting(true);
     try {
       const transactionData = transactionService.transformFormToTransaction(formData);
 
@@ -100,15 +98,15 @@ export function useTransactionForm({ transaction, onSubmit }: UseTransactionForm
       if (onSubmit) {
         await onSubmit(transactionData);
       }
-    } finally {
-      setIsSubmitting(false);
+    } catch (error) {
+      // Error is handled in service, just prevent form from continuing
+      throw error;
     }
   };
 
   return {
     formData,
     errors,
-    isSubmitting,
     setField,
     handleSubmit,
   };

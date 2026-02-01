@@ -28,7 +28,6 @@ export function useCategoryForm({ category, onSubmit }: UseCategoryFormProps = {
 
   const [formData, setFormData] = useState<CategoryFormData>(initialData);
   const [errors, setErrors] = useState<Partial<Record<keyof CategoryFormData, string>>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Custom validation function
   const validate = useCallback(
@@ -70,7 +69,6 @@ export function useCategoryForm({ category, onSubmit }: UseCategoryFormProps = {
       return;
     }
 
-    setIsSubmitting(true);
     try {
       const categoryData = categoryService.transformFormToCategory(formData);
 
@@ -85,15 +83,15 @@ export function useCategoryForm({ category, onSubmit }: UseCategoryFormProps = {
       if (onSubmit) {
         await onSubmit(categoryData);
       }
-    } finally {
-      setIsSubmitting(false);
+    } catch (error) {
+      // Error is handled in service, just prevent form from continuing
+      throw error;
     }
   };
 
   return {
     formData,
     errors,
-    isSubmitting,
     setField,
     handleSubmit,
   };

@@ -1,51 +1,71 @@
 import { useState, useCallback } from 'react';
 
-interface UseConfirmDialogOptions {
+export interface ConfirmDialogOptions {
   title: string;
   message: string;
+  severity?: 'info' | 'warning' | 'error';
   confirmText?: string;
   cancelText?: string;
-  severity?: 'error' | 'warning' | 'info';
 }
 
-interface UseConfirmDialogReturn {
+export interface ConfirmDialogProps {
+  title: string;
+  message: string;
+  severity?: 'info' | 'warning' | 'error';
+  confirmText?: string;
+  cancelText?: string;
+}
+
+export interface UseConfirmDialogResult {
   open: boolean;
-  dialogProps: UseConfirmDialogOptions;
-  confirm: (options: UseConfirmDialogOptions) => Promise<boolean>;
+  dialogProps: ConfirmDialogProps;
+  confirm: (options: ConfirmDialogOptions) => Promise<boolean>;
   handleConfirm: () => void;
   handleCancel: () => void;
 }
 
-export const useConfirmDialog = (): UseConfirmDialogReturn => {
+/**
+ * Hook for managing a confirmation dialog
+ * Returns a promise that resolves to true if confirmed, false if cancelled
+ */
+export function useConfirmDialog(): UseConfirmDialogResult {
   const [open, setOpen] = useState(false);
-  const [dialogProps, setDialogProps] = useState<UseConfirmDialogOptions>({
+  const [dialogProps, setDialogProps] = useState<ConfirmDialogProps>({
     title: '',
     message: '',
   });
-  const [resolvePromise, setResolvePromise] = useState<((value: boolean) => void) | null>(null);
+  const [resolver, setResolver] = useState<((value: boolean) => void) | null>(null);
 
-  const confirm = useCallback((options: UseConfirmDialogOptions): Promise<boolean> => {
-    setDialogProps(options);
+  const confirm = useCallback((options: ConfirmDialogOptions): Promise<boolean> => {
+    setDialogProps({
+      title: options.title,
+      message: options.message,
+      severity: options.severity,
+      confirmText: options.confirmText,
+      cancelText: options.cancelText,
+    });
     setOpen(true);
 
     return new Promise<boolean>((resolve) => {
-      setResolvePromise(() => resolve);
+      setResolver(() => resolve);
     });
   }, []);
 
   const handleConfirm = useCallback(() => {
     setOpen(false);
-    if (resolvePromise) {
-      resolvePromise(true);
+    if (resolver) {
+      resolver(true);
+      setResolver(null);
     }
-  }, [resolvePromise]);
+  }, [resolver]);
 
   const handleCancel = useCallback(() => {
     setOpen(false);
-    if (resolvePromise) {
-      resolvePromise(false);
+    if (resolver) {
+      resolver(false);
+      setResolver(null);
     }
-  }, [resolvePromise]);
+  }, [resolver]);
 
   return {
     open,
@@ -54,4 +74,4 @@ export const useConfirmDialog = (): UseConfirmDialogReturn => {
     handleConfirm,
     handleCancel,
   };
-};
+}

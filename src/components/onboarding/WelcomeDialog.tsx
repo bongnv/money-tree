@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -18,9 +18,8 @@ import {
 import { Cloud as CloudIcon } from '@mui/icons-material';
 import { isOneDriveConfigured } from '../../config/onedrive.config';
 import { isGoogleDriveConfigured } from '../../config/googledrive.config';
-import { useSync } from '@/contexts/SyncContext';
 import { StorageProviderType } from '../../services/storage/StorageProviderFactory';
-import { isUserCancellationError } from '../../utils/error.utils';
+import { useWelcomeDialog } from '@/hooks/onboarding/useWelcomeDialog';
 
 interface WelcomeDialogProps {
   open: boolean;
@@ -30,35 +29,7 @@ interface WelcomeDialogProps {
 export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const syncOps = useSync();
-
-  const [state, setState] = useState({
-    isConnecting: false,
-    error: null as string | null,
-  });
-
-  const handleConnect = useCallback(
-    async (provider: StorageProviderType) => {
-      setState((s) => ({ ...s, isConnecting: true, error: null }));
-
-      try {
-        // Cloud: authenticate (hook will show file picker automatically)
-        await syncOps.connect(provider);
-        setState((s) => ({ ...s, isConnecting: false }));
-        // Close welcome dialog
-        onClose();
-      } catch (error) {
-        setState((s) => ({ ...s, isConnecting: false }));
-        if (!isUserCancellationError(error)) {
-          setState((s) => ({
-            ...s,
-            error: error instanceof Error ? error.message : 'Unknown error',
-          }));
-        }
-      }
-    },
-    [syncOps, onClose]
-  );
+  const { isConnecting, error, handleConnect } = useWelcomeDialog(onClose);
 
   return (
     <Dialog open={open} maxWidth="md" fullWidth fullScreen={isMobile} sx={{ zIndex: 1000 }}>
@@ -72,9 +43,9 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
           Choose how you&apos;d like to manage your financial data:
         </Typography>
 
-        {state.error && (
+        {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            {state.error}
+            {error}
           </Alert>
         )}
 
@@ -106,12 +77,12 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
             <CardActions>
               <Button
                 variant="contained"
-                startIcon={state.isConnecting ? <CircularProgress size={20} /> : <CloudIcon />}
+                startIcon={isConnecting ? <CircularProgress size={20} /> : <CloudIcon />}
                 onClick={() => handleConnect(StorageProviderType.ONEDRIVE)}
-                disabled={!isOneDriveConfigured() || state.isConnecting}
+                disabled={!isOneDriveConfigured() || isConnecting}
                 fullWidth
               >
-                {state.isConnecting ? 'Connecting...' : 'Connect'}
+                {isConnecting ? 'Connecting...' : 'Connect'}
               </Button>
             </CardActions>
           </Card>
@@ -135,12 +106,12 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
               <CardActions>
                 <Button
                   variant="contained"
-                  startIcon={state.isConnecting ? <CircularProgress size={20} /> : <CloudIcon />}
+                  startIcon={isConnecting ? <CircularProgress size={20} /> : <CloudIcon />}
                   onClick={() => handleConnect(StorageProviderType.GOOGLE_DRIVE)}
-                  disabled={state.isConnecting}
+                  disabled={isConnecting}
                   fullWidth
                 >
-                  {state.isConnecting ? 'Connecting...' : 'Connect'}
+                  {isConnecting ? 'Connecting...' : 'Connect'}
                 </Button>
               </CardActions>
             </Card>

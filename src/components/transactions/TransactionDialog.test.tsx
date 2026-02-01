@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { TransactionDialog } from './TransactionDialog';
 import type { Transaction, Account, TransactionType, Category } from '../../types/models';

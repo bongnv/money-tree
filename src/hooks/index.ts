@@ -11,4 +11,3 @@ export * from './useBudgets';
 export * from './useAssets';
 export * from './useExchangeRates';
 export * from './useSyncMetadata';
-export * from './useConfirmDialog';

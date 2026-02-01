@@ -12,6 +12,8 @@ import { SyncMetadataService } from '@/services/syncMetadata.service';
 import { db } from '@/db/database';
 import type { ArchivedYearReference, YearEndSummary } from '@/types/models';
 import { CurrencyCode } from '@/types/enums';
+import { getRateSync } from '@/utils/exchangeRate.utils';
+import { getAssetCurrentValue } from '@/utils/asset.utils';
 
 /**
  * Archive Service for Dexie architecture
@@ -22,20 +24,31 @@ class DexieArchiveService {
 
   /**
    * Calculate year-end summary with closing balances
+   * Converts all balances to the base currency using year-end exchange rates
    */
-  async calculateYearEndSummary(
-    year: number,
-    _baseCurrency: CurrencyCode
-  ): Promise<YearEndSummary> {
+  async calculateYearEndSummary(year: number, baseCurrency: CurrencyCode): Promise<YearEndSummary> {
     const transactions = await db.transactions.toArray();
     const accounts = await db.accounts.toArray();
     const assets = await db.manualAssets.toArray();
+
+    // Load all exchange rates for currency conversion
+    const exchangeRates = await db.exchangeRates.toArray();
+    const ratesMap = new Map<string, number>();
+    for (const rate of exchangeRates) {
+      const key = `${rate.month}_${rate.fromCurrency}_${rate.toCurrency}`;
+      ratesMap.set(key, rate.rate);
+    }
+
+    // Use December of the year for exchange rate lookups
+    const rateMonth = `${year}-12`;
 
     // Get transactions up to and including the archived year
     const transactionsUpToYear = transactions.filter((t) => new Date(t.date).getFullYear() <= year);
 
     // Calculate closing balances for each account (starting from initialBalance)
     const closingBalances: Record<string, number> = {};
+    let totalAccountBalances = 0;
+
     for (const account of accounts) {
       let balance = account.initialBalance || 0;
 
@@ -50,27 +63,61 @@ class DexieArchiveService {
       }
 
       closingBalances[account.id] = balance;
+
+      // Convert to base currency for net worth calculation
+      let convertedBalance = balance;
+      if (account.currencyCode !== baseCurrency) {
+        try {
+          const rate = getRateSync(ratesMap, rateMonth, account.currencyCode, baseCurrency);
+          convertedBalance = balance * rate;
+        } catch (err) {
+          console.warn(
+            `Exchange rate not found for ${account.currencyCode} to ${baseCurrency} in ${rateMonth}, using original balance`
+          );
+          // If rate not found, use original balance as fallback
+        }
+      }
+      totalAccountBalances += convertedBalance;
     }
 
     // Calculate asset valuations at year end
     const closingAssetValuations: Record<string, number> = {};
+    let totalAssetValue = 0;
+
     for (const asset of assets) {
-      // Get the last valuation for this asset up to year end
-      const assetTxns = transactionsUpToYear
-        .filter((t) => t.fromAssetId === asset.id || t.toAssetId === asset.id)
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      // Get current value at year end
+      let assetValue = getAssetCurrentValue(asset);
 
-      if (assetTxns.length > 0) {
-        closingAssetValuations[asset.id] = assetTxns[0].amount;
+      // For assets with value history, get the value at year end
+      if (asset.valueHistory && asset.valueHistory.length > 0) {
+        const yearEndDate = `${year}-12-31`;
+        // Find the last value on or before year end
+        const relevantValues = asset.valueHistory
+          .filter((v) => v.date <= yearEndDate)
+          .sort((a, b) => b.date.localeCompare(a.date));
+
+        if (relevantValues.length > 0) {
+          assetValue = relevantValues[0].value;
+        }
       }
-    }
 
-    // Calculate net worth
-    const totalAccountBalances = Object.values(closingBalances).reduce((sum, bal) => sum + bal, 0);
-    const totalAssetValue = Object.values(closingAssetValuations).reduce(
-      (sum, val) => sum + val,
-      0
-    );
+      closingAssetValuations[asset.id] = assetValue;
+
+      // Convert to base currency for net worth calculation
+      let convertedValue = assetValue;
+      if (asset.currencyCode !== baseCurrency) {
+        try {
+          const rate = getRateSync(ratesMap, rateMonth, asset.currencyCode, baseCurrency);
+          convertedValue = assetValue * rate;
+        } catch (err) {
+          console.warn(
+            `Exchange rate not found for ${asset.currencyCode} to ${baseCurrency} in ${rateMonth}, using original value`
+          );
+          // If rate not found, use original value as fallback
+        }
+      }
+      totalAssetValue += convertedValue;
+    }
 
     const yearTransactions = transactions.filter((t) => new Date(t.date).getFullYear() === year);
 
@@ -210,10 +257,6 @@ class DexieArchiveService {
 
     // Archive file is created but cloud storage handled by user download
     // User can manually download archive file if needed
-  }
-
-  updateMainFileAfterArchive(_year: number, _reference: ArchivedYearReference): void {
-    // No-op - saveArchiveFile handles everything
   }
 }
 

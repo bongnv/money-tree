@@ -105,10 +105,6 @@ export const ArchiveManager: React.FC = () => {
         summary: archiveFile.summary,
       };
       await syncMetadataService.addArchivedYear(archiveReference);
-      // Sync triggered automatically by SyncProvider watching lastModified
-
-      // Update main file - remove archived data
-      archiveService.updateMainFileAfterArchive(year, archiveReference);
 
       showSnackbar(
         `Year ${year} archived successfully. Data has been removed from the main file.`,

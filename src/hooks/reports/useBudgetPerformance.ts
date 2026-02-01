@@ -9,8 +9,8 @@ import {
 import { useReportService } from '../useServices';
 import { useBaseCurrency } from '../useSyncMetadata';
 import { useExchangeRates } from '../useExchangeRates';
-import { getTodayDate, getCurrentMonth } from '@/utils/date.utils';
-import type { BudgetPerformanceData } from '@/services/report.service';
+import { getTodayDate } from '@/utils/date.utils';
+import type { BudgetPerformanceData, BudgetTrendPoint } from '@/services/report.service';
 import { CurrencyCode } from '@/types/enums';
 import type { CurrencyCode as CurrencyCodeType } from '@/types/enums';
 
@@ -71,8 +71,8 @@ export function useBudgetPerformance() {
 
   // Report parameters
   const today = getTodayDate();
-  const firstDayOfMonth = getCurrentMonth() + '-01';
-  const [startDate, setStartDate] = useState<string>(firstDayOfMonth);
+  const yearStart = today.slice(0, 4) + '-01-01';
+  const [startDate, setStartDate] = useState<string>(yearStart);
   const [endDate, setEndDate] = useState<string>(today);
   const [conversionCurrency, setConversionCurrency] = useState<CurrencyCodeType | undefined>(
     undefined
@@ -88,6 +88,7 @@ export function useBudgetPerformance() {
   }, [defaultCurrency, conversionCurrency]);
 
   const [budgetPerformance, setBudgetPerformance] = useState<BudgetPerformanceData | null>(null);
+  const [trendData, setTrendData] = useState<BudgetTrendPoint[]>([]);
 
   // Get exchange rates map
   const ratesMap = useExchangeRates();
@@ -122,8 +123,28 @@ export function useBudgetPerformance() {
           ratesMap
         );
 
+        // Calculate trend data
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        const intervalDays = daysDiff > 180 ? 30 : daysDiff > 60 ? 7 : 1;
+
+        const trend = reportService.calculateBudgetTrend(
+          budgets,
+          transactions,
+          transactionTypes,
+          categories,
+          startDate,
+          endDate,
+          intervalDays,
+          accounts,
+          conversionCurrency,
+          ratesMap
+        );
+
         if (!cancelled) {
           setBudgetPerformance(result);
+          setTrendData(trend);
         }
       } catch (err) {
         console.error('[useBudgetPerformance] Error computing budget performance', err);
@@ -209,7 +230,7 @@ export function useBudgetPerformance() {
   const groupedItems = useMemo<GroupedBudgetItem[]>(() => {
     if (selectedCategories.length > 0) {
       // When filtered, show individual transaction types
-      return performance.items
+      const filtered = performance.items
         .filter((item) => selectedCategories.includes(item.categoryId))
         .map((item) => ({
           categoryId: item.categoryId,
@@ -223,6 +244,8 @@ export function useBudgetPerformance() {
           percentUsed: item.percentUsed,
           isIncome: item.isIncome,
         }));
+
+      return filtered;
     }
 
     // When no filter, aggregate by category
@@ -253,7 +276,7 @@ export function useBudgetPerformance() {
       }
     });
 
-    return Array.from(categoryMap.values()).map((cat) => ({
+    const aggregated = Array.from(categoryMap.values()).map((cat) => ({
       categoryId: cat.categoryId,
       categoryName: cat.categoryName,
       isCategory: true,
@@ -263,7 +286,15 @@ export function useBudgetPerformance() {
       percentUsed: cat.budgetedAmount > 0 ? (cat.actualAmount / cat.budgetedAmount) * 100 : 0,
       isIncome: cat.isIncome,
     }));
+
+    return aggregated;
   }, [performance.items, selectedCategories]);
+
+  // Date range setter
+  const setDateRange = useCallback((newStartDate: string, newEndDate: string) => {
+    setStartDate(newStartDate);
+    setEndDate(newEndDate);
+  }, []);
 
   // Handlers
   const handleCategoryChange = useCallback((categoryIds: string[]) => {
@@ -289,12 +320,12 @@ export function useBudgetPerformance() {
     budgetPerformance,
     displayPerformance,
     groupedItems,
+    trendData,
 
     // Parameters
     startDate,
-    setStartDate,
     endDate,
-    setEndDate,
+    setDateRange,
     conversionCurrency: conversionCurrency ?? CurrencyCode.USD,
     setConversionCurrency,
 

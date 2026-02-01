@@ -29,6 +29,8 @@ import WarningIcon from '@mui/icons-material/Warning';
 import { useBudgetPerformance } from '@/hooks/reports/useBudgetPerformance';
 import { PeriodSelector } from '../common/PeriodSelector';
 import { CategoryFilter } from '../common/CategoryFilter';
+import { LineChart } from '../common/charts/LineChart';
+import { CHART_COLORS } from '../../theme';
 import { formatCurrency } from '../../utils/currency.utils';
 import { CurrencyCode } from '../../types/enums';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
@@ -41,10 +43,10 @@ export const BudgetPerformanceReport: React.FC = () => {
   const {
     displayPerformance,
     groupedItems,
+    trendData,
     startDate,
-    setStartDate,
     endDate,
-    setEndDate,
+    setDateRange,
     conversionCurrency,
     setConversionCurrency,
     selectedCategories,
@@ -54,8 +56,7 @@ export const BudgetPerformanceReport: React.FC = () => {
   } = useBudgetPerformance();
 
   const handleDateRangeChange = (range: { startDate: string; endDate: string }) => {
-    setStartDate(range.startDate);
-    setEndDate(range.endDate);
+    setDateRange(range.startDate, range.endDate);
   };
 
   const handleCategoryFilterChange = (event: SelectChangeEvent<string[]>) => {
@@ -193,7 +194,7 @@ export const BudgetPerformanceReport: React.FC = () => {
                   {formatCurrency(displayPerformance.totalActualExpenses, conversionCurrency)}
                 </Typography>
               </Box>
-              {displayPerformance.totalActualIncome > 0 && (
+              {displayPerformance.totalBudgetedIncome > 0 && (
                 <Box sx={{ mt: 2 }}>
                   <Typography color="text.secondary" variant="body2" gutterBottom>
                     Total Actual (Income)
@@ -242,6 +243,53 @@ export const BudgetPerformanceReport: React.FC = () => {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Budget vs Actual Trend Chart */}
+      {trendData.length > 0 && (
+        <Paper sx={{ p: 3, mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Budget vs Actual Trend
+          </Typography>
+          <LineChart
+            data={trendData.map((point) => ({
+              name: new Date(point.date).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+              }),
+              'Income Target': point.budgetedIncome,
+              'Income Actual': point.actualIncome,
+              'Expense Budgeted': point.budgeted,
+              'Expense Actual': point.actual,
+            }))}
+            lines={[
+              {
+                dataKey: 'Income Target',
+                name: 'Income Target',
+                color: CHART_COLORS.income.target,
+                strokeDasharray: '5 5',
+              },
+              {
+                dataKey: 'Income Actual',
+                name: 'Income Actual',
+                color: CHART_COLORS.income.actual,
+              },
+              {
+                dataKey: 'Expense Budgeted',
+                name: 'Expense Budgeted',
+                color: CHART_COLORS.expense.budgeted,
+                strokeDasharray: '5 5',
+              },
+              {
+                dataKey: 'Expense Actual',
+                name: 'Expense Actual',
+                color: CHART_COLORS.expense.actual,
+              },
+            ]}
+            height={400}
+            formatValue={(value) => formatCurrency(value, conversionCurrency)}
+          />
+        </Paper>
+      )}
 
       {/* Budget Performance Table */}
       <Paper sx={{ p: 3 }}>

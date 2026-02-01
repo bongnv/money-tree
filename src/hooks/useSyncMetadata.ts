@@ -9,10 +9,11 @@ import type { ArchivedYearReference } from '../types/models';
 
 /**
  * Get base currency
+ * Returns undefined while loading from database
  */
-export function useBaseCurrency(): CurrencyCode {
+export function useBaseCurrency(): CurrencyCode | undefined {
   const syncMetadataService = useSyncMetadataService();
-  return useLiveQuery(() => syncMetadataService.getBaseCurrency()) || CurrencyCode.USD;
+  return useLiveQuery(() => syncMetadataService.getBaseCurrency());
 }
 
 /**

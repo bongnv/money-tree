@@ -2,110 +2,123 @@
  * Custom hooks for ExchangeRate data access
  * Uses useLiveQuery for reactive database queries
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useExchangeRateService } from './useServices';
-import { ensureRatesForReport } from '@/utils/exchangeRate.utils';
+import { getCurrentMonth } from '@/utils/date.utils';
+import { fetchRateFromAPI } from '@/utils/exchangeRate.utils';
 import type { ExchangeRate } from '../types/models';
-import type { CurrencyCode } from '@/types/enums';
+import { CurrencyCode } from '@/types/enums';
 
 /**
- * Get all exchange rates
+ * Get all exchange rates as an array
+ * Used by settings page for displaying and managing rates
+ * Automatically ensures current month rates are available for all supported currencies
+ * Returns undefined while loading, empty array if no rates exist
  */
-export function useExchangeRates(): ExchangeRate[] | undefined {
+export function useExchangeRatesArray(): ExchangeRate[] | undefined {
   const exchangeRateService = useExchangeRateService();
-  return useLiveQuery(() => exchangeRateService.getAll());
-}
+  const rates = useLiveQuery(() => exchangeRateService.getAll());
+  const currentMonth = getCurrentMonth();
+  const isFetchingRef = useRef(false);
 
-/**
- * Ensure required exchange rates are loaded and return them as a map
- * Fetches missing rates, stores them in DB, and returns the complete rates map
- *
- * Filters out undefined/null currencies automatically for defensive programming.
- *
- * @param currencies Set of currencies that need conversion (undefined values are filtered out)
- * @param months Array of months in YYYY-MM format
- * @param baseCurrency Target currency for conversions
- * @returns Object with ratesMap, loading state, and error
- *   - ratesMap: undefined while loading, Map when ready (use both isLoading and ratesMap checks)
- *   - isLoading: true when fetching rates, false when complete (success or error)
- *   - error: null on success, Error object on failure
- */
-export function useEnsureExchangeRates(
-  currencies: Set<CurrencyCode> | undefined,
-  months: string[],
-  baseCurrency: CurrencyCode
-): { ratesMap: Map<string, number> | undefined; isLoading: boolean; error: Error | null } {
-  const [ratesMap, setRatesMap] = useState<Map<string, number>>(new Map());
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  // Gather all supported currencies from enum
+  const allCurrencies = useMemo(() => {
+    return Object.values(CurrencyCode);
+  }, []);
 
-  // Fetch all existing rates once using useLiveQuery
-  const allRates = useExchangeRates();
-
+  // Ensure current month rates are available
   useEffect(() => {
-    // Wait for rates to load
-    if (allRates === undefined) {
-      // isLoading is already true from initial state, no need to set it again
-      return;
-    }
-
-    // Filter out undefined currencies (defensive programming)
-    const validCurrencies = new Set<CurrencyCode>();
-    if (currencies) {
-      currencies.forEach((currency) => {
-        if (currency !== undefined && currency !== null) {
-          validCurrencies.add(currency);
-        }
-      });
-    }
-
-    if (validCurrencies.size === 0) {
-      // No currencies to load - immediately ready with empty map
-      Promise.resolve().then(() => {
-        setRatesMap(new Map());
-        setIsLoading(false);
-        setError(null);
-      });
+    if (!rates || isFetchingRef.current) {
       return;
     }
 
     let cancelled = false;
 
-    const loadRates = async () => {
-      setIsLoading(true);
-      setError(null);
-      setRatesMap(new Map()); // Clear map while loading
+    const ensureCurrentMonthRates = async () => {
+      // Build a map of existing rates for quick lookup
+      const existingRatesMap = new Set<string>();
+      for (const rate of rates) {
+        if (rate.month === currentMonth) {
+          const key = `${rate.fromCurrency}_${rate.toCurrency}`;
+          existingRatesMap.add(key);
+        }
+      }
+
+      // Check which rates are missing
+      const missingRates: CurrencyCode[] = [];
+      for (const currency of allCurrencies) {
+        if (currency === CurrencyCode.USD) continue;
+
+        const key = `${currency}_${CurrencyCode.USD}`;
+        if (!existingRatesMap.has(key)) {
+          missingRates.push(currency);
+        }
+      }
+
+      if (missingRates.length === 0) {
+        return;
+      }
+
+      // Fetch missing rates
+      isFetchingRef.current = true;
 
       try {
-        // Pass existing rates to avoid DB call inside ensureRatesForReport
-        const loadedRatesMap = await ensureRatesForReport(
-          validCurrencies,
-          months,
-          baseCurrency,
-          allRates
-        );
+        for (const currency of missingRates) {
+          if (cancelled) break;
 
-        if (!cancelled) {
-          setRatesMap(loadedRatesMap);
-          setIsLoading(false);
+          const rate = await fetchRateFromAPI(currency);
+
+          const newRate: ExchangeRate = {
+            id: `rate-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            month: currentMonth,
+            fromCurrency: currency,
+            toCurrency: CurrencyCode.USD,
+            rate,
+            createdAt: new Date().toISOString(),
+          };
+
+          await exchangeRateService.create(newRate);
         }
       } catch (err) {
         if (!cancelled) {
-          console.error('Error loading exchange rates:', err);
-          setError(err instanceof Error ? err : new Error(String(err)));
-          setRatesMap(new Map());
-          setIsLoading(false);
+          console.error('Error fetching exchange rates:', err);
+        }
+      } finally {
+        if (!cancelled) {
+          isFetchingRef.current = false;
         }
       }
     };
 
-    loadRates();
+    ensureCurrentMonthRates();
 
     return () => {
       cancelled = true;
     };
-  }, [currencies, months, baseCurrency, allRates]);
+  }, [rates, allCurrencies, currentMonth, exchangeRateService]);
 
-  return { ratesMap, isLoading, error };
+  return rates;
+}
+
+/**
+ * Get all exchange rates as a map for efficient lookups
+ * Map key format: "YYYY-MM_FROM_TO" -> rate
+ * Returns undefined while loading, empty Map if no rates exist
+ * Automatically ensures current month rates are available for all currencies in use
+ */
+export function useExchangeRates(): Map<string, number> | undefined {
+  const rates = useExchangeRatesArray();
+
+  return useMemo(() => {
+    if (rates === undefined) return undefined;
+
+    const ratesMap = new Map<string, number>();
+    for (const rate of rates) {
+      const key = `${rate.month}_${rate.fromCurrency}_${rate.toCurrency}`;
+      ratesMap.set(key, rate.rate);
+    }
+
+    return ratesMap;
+  }, [rates]);
 }

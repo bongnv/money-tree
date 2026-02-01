@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useBaseCurrency } from './useSyncMetadata';
 import { useArchiveService } from './useServices';
 import { useApp } from './useApp';
+import { CurrencyCode } from '@/types/enums';
 
 interface ArchiveYearSummary {
   transactionCount: number;
@@ -14,7 +15,7 @@ interface ArchiveYearSummary {
 export function useArchivePrompt() {
   const navigate = useNavigate();
   const archiveService = useArchiveService();
-  const baseCurrency = useBaseCurrency();
+  const baseCurrency = useBaseCurrency() ?? CurrencyCode.USD;
   const { isConnected } = useApp();
 
   const [showPrompt, setShowPrompt] = useState(false);

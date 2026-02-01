@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useAccounts, useAssets, useTransactions } from '../../index';
 import { useReportService } from '../../useServices';
-import { useEnsureExchangeRates } from '../../useExchangeRates';
+import { useExchangeRates } from '../../useExchangeRates';
 import type { NetWorthTrendPoint } from '@/services/report.service';
 import type { CurrencyCode } from '@/types/enums';
 
@@ -25,61 +25,16 @@ export function useNetWorthTrend(
   const transactions = useTransactions();
   const reportService = useReportService();
 
-  // Calculate months for rate loading - need ALL months in the trend period, not just transaction months
-  const months = useMemo(() => {
-    const monthsSet = new Set<string>();
-
-    // Parse start and end dates
-    const [startYear, startMonth] = startDate.split('-').map(Number);
-    const [endYear, endMonth] = endDate.split('-').map(Number);
-
-    // Generate all months in the date range
-    let currentYear = startYear;
-    let currentMonth = startMonth;
-
-    while (currentYear < endYear || (currentYear === endYear && currentMonth <= endMonth)) {
-      monthsSet.add(`${currentYear}-${String(currentMonth).padStart(2, '0')}`);
-
-      currentMonth++;
-      if (currentMonth > 12) {
-        currentMonth = 1;
-        currentYear++;
-      }
-    }
-
-    return Array.from(monthsSet);
-  }, [startDate, endDate]);
-
-  // Gather currencies
-  const currencies = useMemo(() => {
-    const set = new Set<CurrencyCode>();
-    accounts?.forEach((acc) => {
-      if (acc.currencyCode) set.add(acc.currencyCode);
-    });
-    manualAssets?.forEach((asset) => {
-      if (asset.currencyCode) set.add(asset.currencyCode);
-    });
-    set.add(conversionCurrency);
-    return set;
-  }, [accounts, manualAssets, conversionCurrency]);
-
-  // Pre-load exchange rates
-  const {
-    ratesMap,
-    isLoading: ratesLoading,
-    error: ratesError,
-  } = useEnsureExchangeRates(currencies, months, conversionCurrency);
+  // Get exchange rates map
+  const ratesMap = useExchangeRates();
 
   const [data, setData] = useState<NetWorthTrendPoint[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (ratesError) {
-      Promise.resolve().then(() => {
-        setError(ratesError);
-        setIsLoading(false);
-      });
+    if (!accounts || !manualAssets || !transactions || !ratesMap) {
+      // isLoading is already true from initial state
       return;
     }
 
@@ -90,9 +45,6 @@ export function useNetWorthTrend(
       setError(null);
 
       try {
-        // TypeScript narrowing: we know these are defined from the checks above
-        if (!accounts || !manualAssets || !transactions || !ratesMap) return;
-
         const result = reportService.calculateNetWorthTrend(
           accounts,
           manualAssets,
@@ -132,8 +84,6 @@ export function useNetWorthTrend(
     conversionCurrency,
     reportService,
     ratesMap,
-    ratesLoading,
-    ratesError,
   ]);
 
   return { data, isLoading, error };

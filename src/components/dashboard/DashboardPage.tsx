@@ -1,17 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import { Box, Typography, Container } from '@mui/material';
-import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { startOfYear, format } from 'date-fns';
 import { PeriodSelector } from '../common/PeriodSelector';
 import { FinancialSummary } from './FinancialSummary';
 import { BudgetOverview } from './BudgetOverview';
 import { RecentTransactionsList } from './RecentTransactionsList';
 
 export const DashboardPage: React.FC = () => {
-  const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
-  const [endDate, setEndDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [startDate, setStartDate] = useState(format(startOfYear(new Date()), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   const selectedPeriod = useMemo(
-    () => ({ startDate, endDate, label: 'This Month', value: 'this-month' }),
+    () => ({ startDate, endDate, label: 'Year to Date', value: 'ytd' }),
     [startDate, endDate]
   );
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -27,10 +27,6 @@ import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import { useCashFlowReport } from '@/hooks/reports/useCashFlowReport';
 import { useTransactionTypes } from '@/hooks/useTransactionTypes';
 import { useCategories } from '@/hooks/useCategories';
-import { useTransactions } from '@/hooks/useTransactions';
-import { useActiveAccounts } from '@/hooks/useAccounts';
-import { useCalculationService } from '@/hooks/useServices';
-import { useEnsureExchangeRates } from '@/hooks/useExchangeRates';
 import { LineChart } from '../common/charts/LineChart';
 import { PieChart } from '../common/charts/PieChart';
 import { PeriodSelector } from '../common/PeriodSelector';
@@ -65,11 +61,8 @@ const buildCashFlowTrendLines = (hasIncomeTypes: boolean, hasExpenseTypes: boole
 
 export const CashFlowReport: React.FC = () => {
   const navigate = useNavigate();
-  const allTransactions = useTransactions();
   const transactionTypes = useTransactionTypes();
   const categories = useCategories();
-  const accounts = useActiveAccounts();
-  const calculationService = useCalculationService();
 
   const {
     cashFlow,
@@ -85,57 +78,11 @@ export const CashFlowReport: React.FC = () => {
     setFilter,
     applyFilters,
     resetFilters,
+    chartData,
   } = useCashFlowReport();
 
   // UI state
   const [viewMode, setViewMode] = useState<'period' | 'cumulative'>('period');
-
-  // Calculate filtered transactions for the pie charts
-  const filteredTransactions = useMemo(() => {
-    if (!allTransactions || !transactionTypes) return [];
-    if (filters.categoryIds.length === 0) {
-      return allTransactions;
-    }
-    return allTransactions.filter((tx) => {
-      const txType = transactionTypes.find((tt) => tt.id === tx.transactionTypeId);
-      return txType && filters.categoryIds.includes(txType.categoryId);
-    });
-  }, [allTransactions, transactionTypes, filters.categoryIds]);
-
-  // Calculate months for filtered chart rate loading from actual transactions
-  const months = useMemo(() => {
-    if (!filteredTransactions || filteredTransactions.length === 0) {
-      // Fallback to date range if no transactions
-      const monthsSet = new Set<string>();
-      monthsSet.add(startDate.substring(0, 7));
-      monthsSet.add(endDate.substring(0, 7));
-      return Array.from(monthsSet);
-    }
-
-    // Extract unique months from actual filtered transactions
-    const monthsSet = new Set<string>();
-    filteredTransactions.forEach((tx) => {
-      monthsSet.add(tx.date.substring(0, 7));
-    });
-    return Array.from(monthsSet);
-  }, [filteredTransactions, startDate, endDate]);
-
-  // Gather currencies for filtered chart
-  const currencies = useMemo(() => {
-    const set = new Set<CurrencyCode>();
-    accounts?.forEach((acc) => {
-      if (acc.currencyCode) set.add(acc.currencyCode);
-    });
-    set.add(conversionCurrency);
-    return set;
-  }, [accounts, conversionCurrency]);
-
-  // Pre-load exchange rates for filtered charts
-  const { ratesMap, isLoading: ratesLoading } = useEnsureExchangeRates(
-    currencies,
-    months,
-    conversionCurrency
-  );
 
   const handleDateRangeChange = (range: { startDate: string; endDate: string }) => {
     setStartDate(range.startDate);
@@ -167,7 +114,7 @@ export const CashFlowReport: React.FC = () => {
   }, [cashFlowTrend]);
 
   // Prepare chart data based on view mode
-  const chartData = React.useMemo(() => {
+  const trendChartData = React.useMemo(() => {
     const dataSource = viewMode === 'cumulative' ? cumulativeData : cashFlowTrend || [];
     return dataSource.map(
       (point: { date: string; income: number; expenses: number; netCashFlow: number }) => ({
@@ -212,111 +159,9 @@ export const CashFlowReport: React.FC = () => {
     resetFilters();
   };
 
-  // Prepare pie chart and table data - derive from cashFlow when no filter
-  // When filter is applied, calculate by transaction type
-  const hasFilter = filters.categoryIds.length > 0;
-
-  // For no filter case - use cashFlow data directly
-  const unfiltered = React.useMemo(() => {
-    if (hasFilter || !cashFlow) return null;
-    return {
-      incomePieData: cashFlow.income.map((cat) => ({
-        name: cat.categoryName,
-        value: cat.total,
-      })),
-      expensesPieData: cashFlow.expenses.map((cat) => ({
-        name: cat.categoryName,
-        value: cat.total,
-      })),
-      incomeDetailData: cashFlow.income.map((cat) => ({ ...cat, isTransactionType: false })),
-      expenseDetailData: cashFlow.expenses.map((cat) => ({ ...cat, isTransactionType: false })),
-      groupingLabel: 'Category',
-    };
-  }, [hasFilter, cashFlow]);
-
-  // For filtered case - group by transaction type
-  const [filteredChartData, setFilteredChartData] = useState<{
-    incomePieData: { name: string; value: number }[];
-    expensesPieData: { name: string; value: number }[];
-    incomeDetailData: Array<{
-      isTransactionType: boolean;
-      categoryId: string;
-      categoryName: string;
-      total: number;
-      transactionCount: number;
-    }>;
-    expenseDetailData: Array<{
-      isTransactionType: boolean;
-      categoryId: string;
-      categoryName: string;
-      total: number;
-      transactionCount: number;
-    }>;
-    groupingLabel: string;
-  } | null>(null);
-
-  useEffect(() => {
-    if (!hasFilter) {
-      setFilteredChartData(null);
-      return;
-    }
-
-    if (!filteredTransactions || !transactionTypes || !accounts || ratesLoading || !ratesMap)
-      return;
-
-    const calculateFiltered = () => {
-      const { incomeByType, expenseByType } = calculationService.calculateTransactionTypeGrouping(
-        filteredTransactions,
-        transactionTypes,
-        accounts,
-        conversionCurrency,
-        ratesMap
-      );
-
-      setFilteredChartData({
-        incomePieData: Array.from(incomeByType.values()).map((item) => ({
-          name: item.name,
-          value: item.total,
-        })),
-        expensesPieData: Array.from(expenseByType.values()).map((item) => ({
-          name: item.name,
-          value: item.total,
-        })),
-        incomeDetailData: Array.from(incomeByType.entries()).map(([id, item]) => ({
-          categoryId: id,
-          categoryName: item.name,
-          total: item.total,
-          transactionCount: item.count,
-          isTransactionType: true,
-        })),
-        expenseDetailData: Array.from(expenseByType.entries()).map(([id, item]) => ({
-          categoryId: id,
-          categoryName: item.name,
-          total: item.total,
-          transactionCount: item.count,
-          isTransactionType: true,
-        })),
-        groupingLabel: 'Transaction Type',
-      });
-    };
-
-    calculateFiltered();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    hasFilter,
-    filters.categoryIds,
-    conversionCurrency,
-    startDate,
-    endDate,
-    ratesMap,
-    ratesLoading,
-  ]);
-  // filteredTransactions, transactionTypes, and accounts are stable or captured in closure
-
-  // Use the appropriate data source
-  const chartTableData = hasFilter ? filteredChartData : unfiltered;
+  // Use chart data from hook
   const { incomePieData, expensesPieData, incomeDetailData, expenseDetailData, groupingLabel } =
-    chartTableData || {
+    chartData || {
       incomePieData: [],
       expensesPieData: [],
       incomeDetailData: [],
@@ -485,7 +330,7 @@ export const CashFlowReport: React.FC = () => {
                 </ToggleButtonGroup>
               </Box>
               <LineChart
-                data={chartData}
+                data={trendChartData}
                 lines={trendChartLines}
                 height={300}
                 formatValue={(value: number) => formatCurrency(value, conversionCurrency)}

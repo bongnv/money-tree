@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import { useBudgets, useTransactions, useTransactionTypes, useAccounts } from '../index';
 import { useCalculationService } from '../useServices';
 import { useBaseCurrency } from '../useSyncMetadata';
-import { useEnsureExchangeRates } from '../useExchangeRates';
-import { Group, type CurrencyCode } from '@/types/enums';
+import { useExchangeRates } from '../useExchangeRates';
+import { Group, CurrencyCode } from '@/types/enums';
 import type { PeriodOption } from '@/components/common/PeriodSelector';
 
 export interface BudgetWithUsage {
@@ -24,56 +24,15 @@ export function useBudgetOverview(period: PeriodOption) {
   const transactions = useTransactions();
   const transactionTypes = useTransactionTypes();
   const accounts = useAccounts();
-  const baseCurrency = useBaseCurrency();
+  const baseCurrency = useBaseCurrency() ?? CurrencyCode.USD;
   const calculationService = useCalculationService();
 
-  // Calculate months for rate loading from actual transactions
-  const months = useMemo(() => {
-    if (!transactions || transactions.length === 0) {
-      // Fallback to period start month if no transactions
-      return [period.startDate.substring(0, 7)];
-    }
-
-    // Extract unique months from actual transactions within period
-    const monthsSet = new Set<string>();
-    transactions.forEach((tx) => {
-      if (tx.date >= period.startDate && tx.date <= period.endDate) {
-        monthsSet.add(tx.date.substring(0, 7));
-      }
-    });
-
-    // Ensure period month is included even if no transactions
-    if (monthsSet.size === 0) {
-      monthsSet.add(period.startDate.substring(0, 7));
-    }
-
-    return Array.from(monthsSet);
-  }, [transactions, period.startDate, period.endDate]);
-
-  // Gather currencies
-  const currencies = useMemo(() => {
-    const set = new Set<CurrencyCode>();
-    accounts?.forEach((acc) => {
-      if (acc.currencyCode) set.add(acc.currencyCode);
-    });
-    budgets?.forEach((budget) => {
-      if (budget.currencyCode) set.add(budget.currencyCode);
-    });
-    set.add(baseCurrency);
-    return set;
-  }, [accounts, budgets, baseCurrency]);
-
-  // Pre-load exchange rates
-  const { ratesMap, isLoading: ratesLoading } = useEnsureExchangeRates(
-    currencies,
-    months,
-    baseCurrency
-  );
+  // Get exchange rates map
+  const ratesMap = useExchangeRates();
 
   // Calculate budget usage for the selected period
   const budgetsWithUsage = useMemo(() => {
-    if (!budgets || !transactions || !transactionTypes || !accounts || ratesLoading || !ratesMap)
-      return [];
+    if (!budgets || !transactions || !transactionTypes || !accounts || !ratesMap) return [];
 
     const results: BudgetWithUsage[] = [];
 
@@ -147,11 +106,10 @@ export function useBudgetOverview(period: PeriodOption) {
     baseCurrency,
     calculationService,
     ratesMap,
-    ratesLoading,
   ]);
 
   return {
     budgetsWithUsage,
-    isLoading: ratesLoading || !budgets || !transactions || !transactionTypes || !accounts,
+    isLoading: !budgets || !transactions || !transactionTypes || !accounts || !ratesMap,
   };
 }

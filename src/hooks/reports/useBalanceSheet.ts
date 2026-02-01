@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useAccounts, useAssets, useTransactions, useEnsureExchangeRates } from '../index';
+import { useAccounts, useAssets, useTransactions, useExchangeRates } from '../index';
 import { useReportService } from '../useServices';
 import { useBaseCurrency } from '../useSyncMetadata';
 import { useNetWorthTrend } from './shared/useNetWorthTrend';
 import { useComparisonData, type ComparisonType } from './shared/useComparisonData';
-import type { BalanceSheetData } from '@/services/report.service';
-import type { CurrencyCode } from '@/types/enums';
+import { CurrencyCode } from '@/types/enums';
+import type { CurrencyCode as CurrencyCodeType } from '@/types/enums';
 import { getTodayDate } from '@/utils/date.utils';
 
 /**
@@ -31,100 +31,54 @@ export function useBalanceSheet() {
   const today = getTodayDate();
   const [reportDate, setReportDate] = useState<string>(today);
   const [comparisonType, setComparisonType] = useState<ComparisonType>('month');
-  const [conversionCurrency, setConversionCurrency] = useState<CurrencyCode>(defaultCurrency);
-
-  // Balance sheet state
-  const [balanceSheet, setBalanceSheet] = useState<BalanceSheetData | null>(null);
-  const [isLoadingBalanceSheet, setIsLoadingBalanceSheet] = useState(true);
-  const [balanceSheetError, setBalanceSheetError] = useState<Error | null>(null);
-
-  // Create stable dependency key for transactions
-  const transactionsKey = useMemo(
-    () =>
-      transactions
-        ?.map((t) => t.id)
-        .sort()
-        .join(',') || '',
-    [transactions]
+  const [conversionCurrency, setConversionCurrency] = useState<CurrencyCodeType | undefined>(
+    undefined
   );
 
-  // Collect all currencies used
-  const currencies = useMemo(() => {
-    if (!accounts || !manualAssets) return undefined;
+  // Set conversion currency to base currency when it loads
+  useEffect(() => {
+    if (defaultCurrency && conversionCurrency === undefined) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setConversionCurrency(defaultCurrency);
+    }
+  }, [defaultCurrency, conversionCurrency]);
 
-    const currencySet = new Set<CurrencyCode>();
-    accounts.forEach((acc) => {
-      if (acc.currencyCode) currencySet.add(acc.currencyCode);
-    });
-    manualAssets.forEach((asset) => {
-      if (asset.currencyCode) currencySet.add(asset.currencyCode);
-    });
-    currencySet.add(conversionCurrency);
+  // Get exchange rates map
+  const ratesMap = useExchangeRates();
 
-    return currencySet;
-  }, [accounts, manualAssets, conversionCurrency]);
+  // Compute balance sheet with loaded rates using useMemo
+  const balanceSheetResult = useMemo(() => {
+    if (!accounts || !manualAssets || !transactions || !ratesMap || !conversionCurrency) {
+      return { data: null, error: null };
+    }
 
-  // Get month for rate lookup
-  const rateMonths = useMemo(() => [reportDate.substring(0, 7)], [reportDate]);
+    try {
+      const result = reportService.calculateBalanceSheet(
+        accounts,
+        manualAssets,
+        transactions,
+        reportDate,
+        conversionCurrency,
+        ratesMap
+      );
 
-  // Load exchange rates and get rates map
-  const {
+      return { data: result, error: null };
+    } catch (err) {
+      console.error('[useBalanceSheet] Computation failed', err);
+      return { data: null, error: err instanceof Error ? err : new Error(String(err)) };
+    }
+  }, [
+    accounts,
+    manualAssets,
+    transactions,
+    reportDate,
+    conversionCurrency,
     ratesMap,
-    isLoading: isLoadingRates,
-    error: ratesError,
-  } = useEnsureExchangeRates(currencies, rateMonths, conversionCurrency);
+    reportService,
+  ]);
 
-  // Update error state from rates loading
-  useEffect(() => {
-    if (ratesError) {
-      setBalanceSheetError(ratesError);
-      setIsLoadingBalanceSheet(false);
-    }
-  }, [ratesError]);
-
-  // Compute balance sheet with loaded rates
-  useEffect(() => {
-    if (!accounts || !manualAssets || !transactions || !ratesMap || isLoadingRates) {
-      setIsLoadingBalanceSheet(true);
-      return;
-    }
-
-    let cancelled = false;
-
-    const compute = async () => {
-      setIsLoadingBalanceSheet(true);
-
-      try {
-        const result = await reportService.calculateBalanceSheet(
-          accounts,
-          manualAssets,
-          transactions,
-          reportDate,
-          conversionCurrency,
-          ratesMap
-        );
-
-        if (!cancelled) {
-          setBalanceSheet(result);
-          setIsLoadingBalanceSheet(false);
-          setBalanceSheetError(null);
-        }
-      } catch (err) {
-        console.error('[useBalanceSheet] Computation failed', err);
-        if (!cancelled) {
-          setBalanceSheetError(err instanceof Error ? err : new Error(String(err)));
-          setIsLoadingBalanceSheet(false);
-        }
-      }
-    };
-
-    compute();
-
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transactionsKey, reportDate, conversionCurrency, ratesMap, isLoadingRates, reportService]);
+  const balanceSheet = balanceSheetResult.data;
+  const balanceSheetError = balanceSheetResult.error;
 
   // Net worth trend (last 12 months)
   const trendStartDate = useMemo(() => {
@@ -139,11 +93,24 @@ export function useBalanceSheet() {
     trendStartDate,
     reportDate,
     30, // 30-day intervals
-    conversionCurrency
+    conversionCurrency ?? CurrencyCode.USD
   );
 
   // Comparison data
-  const comparisonResult = useComparisonData(reportDate, comparisonType, conversionCurrency);
+  const comparisonResult = useComparisonData(
+    reportDate,
+    comparisonType,
+    conversionCurrency ?? CurrencyCode.USD
+  );
+
+  // Derive loading state from data availability
+  const isLoadingBalanceSheet =
+    !accounts ||
+    !manualAssets ||
+    !transactions ||
+    !ratesMap ||
+    !conversionCurrency ||
+    balanceSheet === null;
 
   return {
     // Balance sheet data
@@ -166,7 +133,7 @@ export function useBalanceSheet() {
     setReportDate,
     comparisonType,
     setComparisonType,
-    conversionCurrency,
+    conversionCurrency: conversionCurrency ?? CurrencyCode.USD,
     setConversionCurrency,
 
     // Data for child components

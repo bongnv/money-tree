@@ -1,17 +1,38 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAccounts, useTransactions, useTransactionTypes, useCategories } from '../index';
 import { useFilterState } from '../primitives/useFilterState';
-import { useReportService } from '../useServices';
+import { useReportService, useCalculationService } from '../useServices';
 import { useBaseCurrency } from '../useSyncMetadata';
-import { useEnsureExchangeRates } from '../useExchangeRates';
-import { getTodayDate, getCurrentMonth } from '@/utils/date.utils';
+import { useExchangeRates } from '../useExchangeRates';
+import { getTodayDate } from '@/utils/date.utils';
 import type { CashFlowData, CashFlowTrendPoint } from '@/services/report.service';
-import type { CurrencyCode } from '@/types/enums';
+import { CurrencyCode } from '@/types/enums';
+import type { CurrencyCode as CurrencyCodeType } from '@/types/enums';
 
 interface CashFlowFilters {
   categoryIds: string[];
   accountIds: string[];
   searchText: string;
+}
+
+interface ChartData {
+  incomePieData: { name: string; value: number }[];
+  expensesPieData: { name: string; value: number }[];
+  incomeDetailData: Array<{
+    isTransactionType: boolean;
+    categoryId: string;
+    categoryName: string;
+    total: number;
+    transactionCount: number;
+  }>;
+  expenseDetailData: Array<{
+    isTransactionType: boolean;
+    categoryId: string;
+    categoryName: string;
+    total: number;
+    transactionCount: number;
+  }>;
+  groupingLabel: string;
 }
 
 /**
@@ -32,14 +53,28 @@ export function useCashFlowReport() {
   const transactionTypes = useTransactionTypes();
   const categories = useCategories();
   const reportService = useReportService();
+  const calculationService = useCalculationService();
   const defaultCurrency = useBaseCurrency();
 
   // Report parameters
   const today = getTodayDate();
-  const firstDayOfMonth = getCurrentMonth() + '-01';
-  const [startDate, setStartDate] = useState<string>(firstDayOfMonth);
+  const yearToDate = (() => {
+    const date = new Date();
+    return `${date.getFullYear()}-01-01`;
+  })();
+  const [startDate, setStartDate] = useState<string>(yearToDate);
   const [endDate, setEndDate] = useState<string>(today);
-  const [conversionCurrency, setConversionCurrency] = useState<CurrencyCode>(defaultCurrency);
+  const [conversionCurrency, setConversionCurrency] = useState<CurrencyCodeType | undefined>(
+    undefined
+  );
+
+  // Set conversion currency to base currency when it loads
+  useEffect(() => {
+    if (defaultCurrency && conversionCurrency === undefined) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setConversionCurrency(defaultCurrency);
+    }
+  }, [defaultCurrency, conversionCurrency]);
 
   // Cash flow state
   const [cashFlow, setCashFlow] = useState<CashFlowData | null>(null);
@@ -102,60 +137,18 @@ export function useCashFlowReport() {
     [allTransactions, filterState.filters, transactionTypes]
   );
 
-  // Calculate months for rate loading (combine both cash flow and trend needs)
-  const months = useMemo(() => {
-    if (!filteredTransactions || filteredTransactions.length === 0) {
-      // Fallback to date range if no transactions
-      const monthsSet = new Set<string>();
-      monthsSet.add(startDate.substring(0, 7));
-      monthsSet.add(endDate.substring(0, 7));
-      return Array.from(monthsSet);
-    }
-
-    // Extract unique months from actual transactions
-    const monthsSet = new Set<string>();
-    filteredTransactions.forEach((tx) => {
-      monthsSet.add(tx.date.substring(0, 7));
-    });
-    return Array.from(monthsSet);
-  }, [filteredTransactions, startDate, endDate]);
-
-  // Gather currencies
-  const currencies = useMemo(() => {
-    const set = new Set<CurrencyCode>();
-    accounts?.forEach((acc) => {
-      if (acc.currencyCode) set.add(acc.currencyCode);
-    });
-    set.add(conversionCurrency);
-    return set;
-  }, [accounts, conversionCurrency]);
-
-  // Pre-load exchange rates
-  const {
-    ratesMap,
-    isLoading: ratesLoading,
-    error: ratesError,
-  } = useEnsureExchangeRates(currencies, months, conversionCurrency);
+  // Get exchange rates map
+  const ratesMap = useExchangeRates();
 
   // Cash flow computation
   useEffect(() => {
-    if (!transactionTypes || !categories || !accounts || ratesLoading || !ratesMap) {
-      Promise.resolve().then(() => setIsLoadingCashFlow(true));
-      return;
-    }
-
-    if (ratesError) {
-      Promise.resolve().then(() => {
-        setCashFlowError(ratesError);
-        setIsLoadingCashFlow(false);
-      });
+    if (!transactionTypes || !categories || !accounts || !ratesMap || !conversionCurrency) {
       return;
     }
 
     let cancelled = false;
 
     const compute = () => {
-      setIsLoadingCashFlow(true);
       setCashFlowError(null);
 
       try {
@@ -194,25 +187,14 @@ export function useCashFlowReport() {
     conversionCurrency,
     reportService,
     ratesMap,
-    ratesLoading,
     transactionTypes,
     categories,
     accounts,
-    ratesError,
   ]);
 
   // Cash flow trend computation
   useEffect(() => {
-    if (!transactionTypes || !categories || !accounts || ratesLoading || !ratesMap) {
-      Promise.resolve().then(() => setIsLoadingTrend(true));
-      return;
-    }
-
-    if (ratesError) {
-      Promise.resolve().then(() => {
-        setTrendError(ratesError);
-        setIsLoadingTrend(false);
-      });
+    if (!transactionTypes || !categories || !accounts || !ratesMap || !conversionCurrency) {
       return;
     }
 
@@ -223,13 +205,31 @@ export function useCashFlowReport() {
       setTrendError(null);
 
       try {
+        // Calculate dynamic interval based on date range
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+        let interval: number;
+        if (daysDiff <= 7) {
+          interval = 1; // Daily for week or less
+        } else if (daysDiff <= 60) {
+          interval = 7; // Weekly for up to 2 months
+        } else if (daysDiff <= 180) {
+          interval = 14; // Bi-weekly for up to 6 months
+        } else if (daysDiff <= 365) {
+          interval = 30; // Monthly for up to 1 year
+        } else {
+          interval = 90; // Quarterly for over 1 year
+        }
+
         const result = reportService.calculateCashFlowTrend(
           filteredTransactions,
           transactionTypes,
           categories,
           startDate,
           endDate,
-          30, // 30-day intervals
+          interval,
           accounts,
           conversionCurrency,
           ratesMap
@@ -259,11 +259,80 @@ export function useCashFlowReport() {
     conversionCurrency,
     reportService,
     ratesMap,
-    ratesLoading,
     transactionTypes,
     categories,
     accounts,
-    ratesError,
+  ]);
+
+  // Chart data for filtered views
+  const chartData = useMemo<ChartData | null>(() => {
+    const hasFilter = filterState.filters.categoryIds.length > 0;
+
+    // No filter - use category grouping from cashFlow
+    if (!hasFilter || !cashFlow) {
+      if (!cashFlow) return null;
+      return {
+        incomePieData: cashFlow.income.map((cat) => ({
+          name: cat.categoryName,
+          value: cat.total,
+        })),
+        expensesPieData: cashFlow.expenses.map((cat) => ({
+          name: cat.categoryName,
+          value: cat.total,
+        })),
+        incomeDetailData: cashFlow.income.map((cat) => ({ ...cat, isTransactionType: false })),
+        expenseDetailData: cashFlow.expenses.map((cat) => ({ ...cat, isTransactionType: false })),
+        groupingLabel: 'Category',
+      };
+    }
+
+    // Filtered - use transaction type grouping
+    if (!transactionTypes || !accounts || !ratesMap || !conversionCurrency) {
+      return null;
+    }
+
+    const { incomeByType, expenseByType } = calculationService.calculateTransactionTypeGrouping(
+      filteredTransactions,
+      transactionTypes,
+      accounts,
+      conversionCurrency,
+      ratesMap
+    );
+
+    return {
+      incomePieData: Array.from(incomeByType.values()).map((item) => ({
+        name: item.name,
+        value: item.total,
+      })),
+      expensesPieData: Array.from(expenseByType.values()).map((item) => ({
+        name: item.name,
+        value: item.total,
+      })),
+      incomeDetailData: Array.from(incomeByType.entries()).map(([id, item]) => ({
+        categoryId: id,
+        categoryName: item.name,
+        total: item.total,
+        transactionCount: item.count,
+        isTransactionType: true,
+      })),
+      expenseDetailData: Array.from(expenseByType.entries()).map(([id, item]) => ({
+        categoryId: id,
+        categoryName: item.name,
+        total: item.total,
+        transactionCount: item.count,
+        isTransactionType: true,
+      })),
+      groupingLabel: 'Transaction Type',
+    };
+  }, [
+    cashFlow,
+    filterState.filters.categoryIds,
+    filteredTransactions,
+    transactionTypes,
+    accounts,
+    ratesMap,
+    conversionCurrency,
+    calculationService,
   ]);
 
   return {
@@ -276,6 +345,9 @@ export function useCashFlowReport() {
     cashFlowTrend,
     isLoadingTrend,
     trendError,
+
+    // Chart data for pie charts and tables
+    chartData,
 
     // Filters
     filters: filterState.filters,
@@ -290,7 +362,7 @@ export function useCashFlowReport() {
     setStartDate,
     endDate,
     setEndDate,
-    conversionCurrency,
+    conversionCurrency: conversionCurrency ?? CurrencyCode.USD,
     setConversionCurrency,
   };
 }

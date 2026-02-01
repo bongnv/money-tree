@@ -1,6 +1,6 @@
 import type { Transaction, Account, Budget, ManualAsset, TransactionType } from '../types/models';
 import { getAssetCurrentValue } from '../utils/asset.utils';
-import { getRateSync } from '../utils/exchangeRateLookup';
+import { getRateSync } from '../utils/exchangeRate.utils';
 import { CurrencyCode, Group } from '../types/enums';
 
 /**

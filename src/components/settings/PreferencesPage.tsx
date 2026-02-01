@@ -20,7 +20,6 @@ export const PreferencesPage: React.FC = () => {
   const baseCurrency = useBaseCurrency();
   const handleCurrencyChange = async (newCurrency: CurrencyCode) => {
     await syncMetadataService.setBaseCurrency(newCurrency);
-    // Sync triggered automatically by SyncProvider watching lastModified
   };
 
   return (
@@ -39,7 +38,7 @@ export const PreferencesPage: React.FC = () => {
           <Select
             labelId="base-currency-label"
             id="base-currency-select"
-            value={baseCurrency}
+            value={baseCurrency || CurrencyCode.USD}
             label="Base Currency"
             onChange={(e) => handleCurrencyChange(e.target.value as CurrencyCode)}
           >

@@ -4,6 +4,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { BudgetProgressBar } from './BudgetProgressBar';
 import { useBudgetOverview } from '@/hooks/dashboard/useBudgetOverview';
 import { useBaseCurrency } from '@/hooks/useSyncMetadata';
+import { CurrencyCode } from '@/types/enums';
 import type { PeriodOption } from '../common/PeriodSelector';
 
 export interface BudgetOverviewProps {
@@ -11,7 +12,7 @@ export interface BudgetOverviewProps {
 }
 
 export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ period }) => {
-  const baseCurrency = useBaseCurrency();
+  const baseCurrency = useBaseCurrency() ?? CurrencyCode.USD;
   const { budgetsWithUsage, isLoading } = useBudgetOverview(period);
 
   if (isLoading || budgetsWithUsage.length === 0) {

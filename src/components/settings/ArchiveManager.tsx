@@ -27,12 +27,13 @@ import { formatCurrency } from '../../utils/currency.utils';
 import type { YearEndSummary } from '../../types/models';
 import { useBaseCurrency, useArchivedYears } from '../../hooks/useSyncMetadata';
 import { useSyncMetadataService } from '@/hooks/useServices';
+import { CurrencyCode } from '../../types/enums';
 
 export const ArchiveManager: React.FC = () => {
   const syncMetadataService = useSyncMetadataService();
   const archiveService = useArchiveService();
   const { showSnackbar } = useAppContext();
-  const baseCurrency = useBaseCurrency();
+  const baseCurrency = useBaseCurrency() ?? CurrencyCode.USD;
   const archivedYears = useArchivedYears();
   const [isExporting, setIsExporting] = useState(false);
   const [exportingYear, setExportingYear] = useState<number | null>(null);

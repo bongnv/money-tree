@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAccounts, useAssets, useTransactions } from '../../index';
 import { useReportService } from '../../useServices';
-import { useEnsureExchangeRates } from '../../useExchangeRates';
+import { useExchangeRates } from '../../useExchangeRates';
 import type { BalanceSheetData } from '@/services/report.service';
 import type { CurrencyCode } from '@/types/enums';
 
@@ -33,38 +33,8 @@ export function useComparisonData(
   const transactions = useTransactions();
   const reportService = useReportService();
 
-  // Calculate months for rate loading
-  const months = useMemo(() => {
-    const [year, month, day] = reportDate.split('-').map(Number);
-    const dateObj = new Date(year, month - 1, day);
-    if (comparisonType === 'month') {
-      dateObj.setMonth(dateObj.getMonth() - 1);
-    } else {
-      dateObj.setFullYear(dateObj.getFullYear() - 1);
-    }
-    const previousDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
-    return [reportDate.substring(0, 7), previousDate.substring(0, 7)];
-  }, [reportDate, comparisonType]);
-
-  // Gather currencies
-  const currencies = useMemo(() => {
-    const set = new Set<CurrencyCode>();
-    accounts?.forEach((acc) => {
-      if (acc.currencyCode) set.add(acc.currencyCode);
-    });
-    manualAssets?.forEach((asset) => {
-      if (asset.currencyCode) set.add(asset.currencyCode);
-    });
-    set.add(conversionCurrency);
-    return set;
-  }, [accounts, manualAssets, conversionCurrency]);
-
-  // Pre-load exchange rates
-  const {
-    ratesMap,
-    isLoading: ratesLoading,
-    error: ratesError,
-  } = useEnsureExchangeRates(currencies, months, conversionCurrency);
+  // Get exchange rates map
+  const ratesMap = useExchangeRates();
 
   const [data, setData] = useState<ComparisonData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -81,14 +51,7 @@ export function useComparisonData(
   );
 
   useEffect(() => {
-    if (!accounts || !manualAssets || !transactions || ratesLoading || !ratesMap) {
-      setIsLoading(true);
-      return;
-    }
-
-    if (ratesError) {
-      setError(ratesError);
-      setIsLoading(false);
+    if (!accounts || !manualAssets || !transactions || !ratesMap) {
       return;
     }
 

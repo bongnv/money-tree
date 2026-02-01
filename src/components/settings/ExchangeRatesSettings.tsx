@@ -16,11 +16,12 @@ import {
   Alert,
 } from '@mui/material';
 import { useBaseCurrency } from '../../hooks/useSyncMetadata';
-import { useExchangeRates } from '../../hooks/useExchangeRates';
+import { useExchangeRatesArray } from '../../hooks/useExchangeRates';
+import { CurrencyCode } from '@/types/enums';
 
 export const ExchangeRatesSettings: React.FC = () => {
-  const baseCurrency = useBaseCurrency();
-  const rates = useExchangeRates();
+  const baseCurrency = useBaseCurrency() ?? CurrencyCode.USD;
+  const rates = useExchangeRatesArray();
 
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);

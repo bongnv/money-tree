@@ -147,9 +147,7 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
           )}
         </Box>
       </DialogContent>
-      <DialogActions
-        sx={{ px: 3, pb: 2, justifyContent: 'space-between', alignItems: 'flex-start' }}
-      >
+      <DialogActions sx={{ px: 3, pb: 2, justifyContent: 'space-between', alignItems: 'center' }}>
         <Button onClick={onClose} color="inherit">
           Skip for now
         </Button>

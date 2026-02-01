@@ -17,7 +17,7 @@ import { CategoryFilter } from '../common/CategoryFilter';
 import { getBudgetPresets } from './periodPresets';
 import type { Budget } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
-import { Group } from '../../types/enums';
+import { Group, CurrencyCode } from '../../types/enums';
 import { useCategories } from '../../hooks/useCategories';
 import { useTransactionTypes } from '../../hooks/useTransactionTypes';
 import { useBudgets } from '../../hooks/useBudgets';
@@ -29,7 +29,7 @@ export const BudgetsPage: React.FC = () => {
   const budgets = useBudgets();
   const transactionTypes = useTransactionTypes();
   const categories = useCategories();
-  const baseCurrency = useBaseCurrency();
+  const baseCurrency = useBaseCurrency() ?? CurrencyCode.USD;
   const budgetService = useBudgetService();
 
   const [dialogOpen, setDialogOpen] = useState(false);

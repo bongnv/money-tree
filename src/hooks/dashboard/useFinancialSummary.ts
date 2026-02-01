@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   useActiveAccounts,
   useTransactions,
@@ -9,10 +9,10 @@ import {
 } from '../index';
 import { useCalculationService, useReportService } from '../useServices';
 import { useBaseCurrency } from '../useSyncMetadata';
-import { useEnsureExchangeRates } from '../useExchangeRates';
+import { useExchangeRates } from '../useExchangeRates';
 import { getCurrentMonth } from '@/utils/date.utils';
+import { CurrencyCode } from '@/types/enums';
 import type { PeriodOption } from '@/components/common/PeriodSelector';
-import type { CurrencyCode } from '@/types/enums';
 
 export interface FinancialSummaryData {
   netWorth: number;
@@ -34,98 +34,38 @@ export function useFinancialSummary(period: PeriodOption): FinancialSummaryData 
   const budgets = useBudgets();
   const categories = useCategories();
   const transactionTypes = useTransactionTypes();
-  const baseCurrency = useBaseCurrency();
+  const baseCurrency = useBaseCurrency() ?? CurrencyCode.USD;
   const calculationService = useCalculationService();
   const reportService = useReportService();
-
-  const [netWorth, setNetWorth] = useState<number>(0);
-  const [cashFlow, setCashFlow] = useState<number>(0);
-  const [savingsRate, setSavingsRate] = useState<number>(0);
-  const [budgetHealth, setBudgetHealth] = useState<number>(0);
-  const [error, setError] = useState<string | null>(null);
 
   // Get current month in YYYY-MM format (local timezone)
   const currentMonth = getCurrentMonth();
 
-  // Calculate months for rate loading from actual transactions
-  const months = useMemo(() => {
-    const monthsSet = new Set<string>();
-    monthsSet.add(currentMonth); // For net worth
+  // Get exchange rates map
+  const ratesMap = useExchangeRates();
 
-    if (transactions && transactions.length > 0) {
-      // Extract unique months from actual transactions within period
-      transactions.forEach((tx) => {
-        if (tx.date >= period.startDate && tx.date <= period.endDate) {
-          monthsSet.add(tx.date.substring(0, 7));
-        }
-      });
+  // Calculate net worth with currency conversion using useMemo
+  const netWorthResult = useMemo(() => {
+    if (!accounts || !transactions || !manualAssets || !ratesMap) {
+      return { value: 0, error: null };
     }
 
-    // Ensure period months are included even if no transactions
-    monthsSet.add(period.startDate.substring(0, 7));
-    monthsSet.add(period.endDate.substring(0, 7));
-
-    return Array.from(monthsSet);
-  }, [currentMonth, period, transactions]);
-
-  // Gather currencies
-  const currencies = useMemo(() => {
-    const set = new Set<CurrencyCode>();
-    accounts?.forEach((acc) => {
-      if (acc.currencyCode) set.add(acc.currencyCode);
-    });
-    manualAssets?.forEach((asset) => {
-      if (asset.currencyCode) set.add(asset.currencyCode);
-    });
-    budgets?.forEach((budget) => {
-      if (budget.currencyCode) set.add(budget.currencyCode);
-    });
-    set.add(baseCurrency);
-    return set;
-  }, [accounts, manualAssets, budgets, baseCurrency]);
-
-  // Pre-load exchange rates
-  const {
-    ratesMap,
-    isLoading: ratesLoading,
-    error: ratesError,
-  } = useEnsureExchangeRates(currencies, months, baseCurrency);
-
-  // Calculate net worth with currency conversion
-  useEffect(() => {
-    if (!accounts || !transactions || !manualAssets || ratesLoading || !ratesMap) {
-      Promise.resolve().then(() => setNetWorth(0));
-      return;
+    try {
+      const worth = calculationService.calculateNetWorth(
+        accounts,
+        transactions,
+        manualAssets,
+        baseCurrency,
+        currentMonth,
+        ratesMap
+      );
+      return { value: worth, error: null };
+    } catch (err) {
+      return {
+        value: 0,
+        error: err instanceof Error ? err.message : 'Unknown error',
+      };
     }
-
-    if (ratesError) {
-      Promise.resolve().then(() => {
-        setError(ratesError.message);
-        setNetWorth(0);
-      });
-      return;
-    }
-
-    // Defer state updates using Promise
-    Promise.resolve().then(() => {
-      try {
-        const worth = calculationService.calculateNetWorth(
-          accounts,
-          transactions,
-          manualAssets,
-          baseCurrency,
-          currentMonth,
-          ratesMap
-        );
-        setNetWorth(worth);
-        setError(null);
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        }
-        setNetWorth(0);
-      }
-    });
   }, [
     accounts,
     transactions,
@@ -134,73 +74,59 @@ export function useFinancialSummary(period: PeriodOption): FinancialSummaryData 
     currentMonth,
     calculationService,
     ratesMap,
-    ratesLoading,
-    ratesError,
   ]);
 
-  // Calculate cash flow and budget performance
-  useEffect(() => {
-    if (
-      !transactions ||
-      !transactionTypes ||
-      !categories ||
-      !accounts ||
-      !budgets ||
-      ratesLoading ||
-      !ratesMap
-    ) {
-      Promise.resolve().then(() => {
-        setCashFlow(0);
-        setSavingsRate(0);
-        setBudgetHealth(0);
-      });
-      return;
+  const netWorth = netWorthResult.value;
+  const error = netWorthResult.error;
+
+  // Calculate cash flow and budget performance using useMemo
+  const { cashFlow, savingsRate, budgetHealth } = useMemo(() => {
+    if (!transactions || !transactionTypes || !categories || !accounts || !budgets || !ratesMap) {
+      return { cashFlow: 0, savingsRate: 0, budgetHealth: 0 };
     }
 
-    // Defer state updates using Promise
-    Promise.resolve().then(() => {
-      try {
-        const periodTransactions = transactions.filter(
-          (t) => t.date >= period.startDate && t.date <= period.endDate
-        );
+    try {
+      const periodTransactions = transactions.filter(
+        (t) => t.date >= period.startDate && t.date <= period.endDate
+      );
 
-        const cashFlowData = reportService.calculateCashFlow(
-          periodTransactions,
-          transactionTypes,
-          categories,
-          period.startDate,
-          period.endDate,
-          accounts,
-          baseCurrency,
-          ratesMap
-        );
+      const cashFlowData = reportService.calculateCashFlow(
+        periodTransactions,
+        transactionTypes,
+        categories,
+        period.startDate,
+        period.endDate,
+        accounts,
+        baseCurrency,
+        ratesMap
+      );
 
-        setCashFlow(cashFlowData.netCashFlow);
+      const rate = calculationService.calculateSavingsRate(
+        cashFlowData.totalIncome,
+        cashFlowData.totalExpenses
+      );
 
-        const rate = calculationService.calculateSavingsRate(
-          cashFlowData.totalIncome,
-          cashFlowData.totalExpenses
-        );
-        setSavingsRate(rate);
+      const budgetPerformance = reportService.calculateBudgetPerformance(
+        budgets,
+        periodTransactions,
+        transactionTypes,
+        categories,
+        period.startDate,
+        period.endDate,
+        accounts,
+        baseCurrency,
+        ratesMap
+      );
 
-        const budgetPerformance = reportService.calculateBudgetPerformance(
-          budgets,
-          periodTransactions,
-          transactionTypes,
-          categories,
-          period.startDate,
-          period.endDate,
-          accounts,
-          baseCurrency,
-          ratesMap
-        );
-
-        setBudgetHealth(budgetPerformance.overallHealthScore);
-      } catch (err) {
-        // Handle errors silently for now
-        console.error('Error calculating metrics:', err);
-      }
-    });
+      return {
+        cashFlow: cashFlowData.netCashFlow,
+        savingsRate: rate,
+        budgetHealth: budgetPerformance.overallHealthScore,
+      };
+    } catch (err) {
+      console.error('Error calculating metrics:', err);
+      return { cashFlow: 0, savingsRate: 0, budgetHealth: 0 };
+    }
   }, [
     transactions,
     period,
@@ -212,17 +138,10 @@ export function useFinancialSummary(period: PeriodOption): FinancialSummaryData 
     calculationService,
     reportService,
     ratesMap,
-    ratesLoading,
   ]);
 
   const isLoading =
-    ratesLoading ||
-    !accounts ||
-    !transactions ||
-    !manualAssets ||
-    !budgets ||
-    !categories ||
-    !transactionTypes;
+    !accounts || !transactions || !manualAssets || !budgets || !categories || !transactionTypes;
 
   return {
     netWorth,

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import {
   useBudgets,
   useTransactions,
@@ -8,10 +8,11 @@ import {
 } from '../index';
 import { useReportService } from '../useServices';
 import { useBaseCurrency } from '../useSyncMetadata';
-import { useEnsureExchangeRates } from '../useExchangeRates';
+import { useExchangeRates } from '../useExchangeRates';
 import { getTodayDate, getCurrentMonth } from '@/utils/date.utils';
 import type { BudgetPerformanceData } from '@/services/report.service';
-import type { CurrencyCode } from '@/types/enums';
+import { CurrencyCode } from '@/types/enums';
+import type { CurrencyCode as CurrencyCodeType } from '@/types/enums';
 
 /**
  * Comprehensive budget performance report hook
@@ -38,57 +39,37 @@ export function useBudgetPerformance() {
   const firstDayOfMonth = getCurrentMonth() + '-01';
   const [startDate, setStartDate] = useState<string>(firstDayOfMonth);
   const [endDate, setEndDate] = useState<string>(today);
-  const [conversionCurrency, setConversionCurrency] = useState<CurrencyCode>(defaultCurrency);
+  const [conversionCurrency, setConversionCurrency] = useState<CurrencyCodeType | undefined>(
+    undefined
+  );
+
+  // Set conversion currency to base currency when it loads
+  useEffect(() => {
+    if (defaultCurrency && conversionCurrency === undefined) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setConversionCurrency(defaultCurrency);
+    }
+  }, [defaultCurrency, conversionCurrency]);
 
   const [budgetPerformance, setBudgetPerformance] = useState<BudgetPerformanceData | null>(null);
   const [isLoadingPerformance, setIsLoadingPerformance] = useState(true);
   const [performanceError, setPerformanceError] = useState<Error | null>(null);
 
-  // Calculate months for rate loading - include report date range and transaction months
-  const months = useMemo(() => {
-    const monthsSet = new Set<string>();
-    
-    // Always include start and end month of the report
-    monthsSet.add(startDate.substring(0, 7));
-    monthsSet.add(endDate.substring(0, 7));
-
-    // Add all months from transactions within or near the date range
-    if (transactions && transactions.length > 0) {
-      transactions.forEach((tx) => {
-        monthsSet.add(tx.date.substring(0, 7));
-      });
-    }
-
-    return Array.from(monthsSet);
-  }, [transactions, startDate, endDate]);
-
-  // Gather currencies
-  const currencies = useMemo(() => {
-    const set = new Set<CurrencyCode>();
-    accounts?.forEach((acc) => {
-      if (acc.currencyCode) set.add(acc.currencyCode);
-    });
-    budgets?.forEach((budget) => {
-      if (budget.currencyCode) set.add(budget.currencyCode);
-    });
-    set.add(conversionCurrency);
-    return set;
-  }, [accounts, budgets, conversionCurrency]);
-
-  // Pre-load exchange rates
-  const {
-    ratesMap,
-    isLoading: ratesLoading,
-    error: ratesError,
-  } = useEnsureExchangeRates(currencies, months, conversionCurrency);
+  // Get exchange rates map
+  const ratesMap = useExchangeRates();
 
   // Budget performance computation
   useEffect(() => {
-    if (ratesError) {
-      Promise.resolve().then(() => {
-        setPerformanceError(ratesError);
-        setIsLoadingPerformance(false);
-      });
+    if (
+      !budgets ||
+      !transactions ||
+      !transactionTypes ||
+      !categories ||
+      !accounts ||
+      !ratesMap ||
+      !conversionCurrency
+    ) {
+      // isLoadingPerformance is already true from initial state
       return;
     }
 
@@ -99,10 +80,6 @@ export function useBudgetPerformance() {
       setPerformanceError(null);
 
       try {
-        // TypeScript narrowing: we know these are defined
-        if (!budgets || !transactions || !transactionTypes || !categories || !accounts || !ratesMap)
-          return;
-
         const result = reportService.calculateBudgetPerformance(
           budgets,
           transactions,
@@ -144,8 +121,6 @@ export function useBudgetPerformance() {
     conversionCurrency,
     reportService,
     ratesMap,
-    ratesLoading,
-    ratesError,
   ]);
 
   return {
@@ -159,7 +134,7 @@ export function useBudgetPerformance() {
     setStartDate,
     endDate,
     setEndDate,
-    conversionCurrency,
+    conversionCurrency: conversionCurrency ?? CurrencyCode.USD,
     setConversionCurrency,
   };
 }

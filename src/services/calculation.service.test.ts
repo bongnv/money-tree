@@ -10,9 +10,10 @@ import type {
 import { AccountType, AssetType, CurrencyCode, Group } from '../types/enums';
 import * as exchangeRateUtils from '../utils/exchangeRate.utils';
 
-// Mock the getRateForMonth function
+// Mock the exchange rate utils
 jest.mock('../utils/exchangeRate.utils', () => ({
-  getRateForMonth: jest.fn(),
+  getRateSync: jest.fn(),
+  fetchRateFromAPI: jest.fn(),
 }));
 
 const calculationService = new CalculationService();
@@ -861,6 +862,11 @@ describe('CalculationService', () => {
       });
 
       it('should throw error when conversion rate not available', () => {
+        // Mock getRateSync to throw error (no rate available)
+        (exchangeRateUtils.getRateSync as jest.Mock).mockImplementation(() => {
+          throw new Error('Exchange rate not found');
+        });
+
         const transaction: Transaction = {
           id: 'tx1',
           date: '2026-01-15',
@@ -909,8 +915,10 @@ describe('CalculationService', () => {
       });
 
       it('should throw error when conversion rate not available', async () => {
-        // Mock getRateForMonth to return null (no rate available)
-        (exchangeRateUtils.getRateForMonth as jest.Mock).mockResolvedValue(null);
+        // Mock getRateSync to throw error (no rate available)
+        (exchangeRateUtils.getRateSync as jest.Mock).mockImplementation(() => {
+          throw new Error('Exchange rate not found');
+        });
 
         const budget = {
           id: 'b1',

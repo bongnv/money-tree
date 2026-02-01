@@ -14,13 +14,14 @@ import { useBaseCurrency } from '@hooks/useSyncMetadata';
 import { useApp } from '@/hooks/useApp';
 import { useSync } from '@/hooks/useSync';
 import { useArchivePrompt } from '@/hooks/useArchivePrompt';
+import { CurrencyCode } from '@/types/enums';
 import type { CloudItem } from './services/storage/IStorageProvider';
 
 const AppContent: React.FC<{
   onReconnectNeeded: (providerName: string) => Promise<'reconnect' | 'dismiss'>;
 }> = ({ onReconnectNeeded }) => {
   const syncOps = useSync(onReconnectNeeded);
-  const baseCurrency = useBaseCurrency();
+  const baseCurrency = useBaseCurrency() ?? CurrencyCode.USD;
   const {
     snackbar,
     hideSnackbar,

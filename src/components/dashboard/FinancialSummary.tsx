@@ -7,6 +7,7 @@ import { useFinancialSummary } from '@/hooks/dashboard/useFinancialSummary';
 import type { PeriodOption } from '../common/PeriodSelector';
 import { formatCurrency } from '../../utils/currency.utils';
 import { useBaseCurrency } from '../../hooks/useSyncMetadata';
+import { CurrencyCode } from '../../types/enums';
 
 export interface FinancialSummaryProps {
   period: PeriodOption;
@@ -14,7 +15,7 @@ export interface FinancialSummaryProps {
 
 export const FinancialSummary: React.FC<FinancialSummaryProps> = ({ period }) => {
   const navigate = useNavigate();
-  const baseCurrency = useBaseCurrency();
+  const baseCurrency = useBaseCurrency() ?? CurrencyCode.USD;
 
   const {
     netWorth,

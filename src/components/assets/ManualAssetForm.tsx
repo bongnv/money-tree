@@ -95,7 +95,9 @@ export const ManualAssetForm: React.FC<ManualAssetFormProps> = ({
           select
           label="Currency"
           value={'currencyCode' in formData ? formData.currencyCode : CurrencyCode.USD}
-          onChange={(e) => setField('currencyCode' as never, e.target.value as CurrencyCode as never)}
+          onChange={(e) =>
+            setField('currencyCode' as never, e.target.value as CurrencyCode as never)
+          }
           error={!!errors.currencyCode}
           helperText={errors.currencyCode}
           margin="normal"

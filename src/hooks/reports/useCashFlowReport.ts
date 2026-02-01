@@ -82,11 +82,14 @@ export function useCashFlowReport() {
   const [cashFlowTrend, setCashFlowTrend] = useState<CashFlowTrendPoint[] | null>(null);
 
   // Filters - inline filter state management
-  const initialFilters: CashFlowFilters = {
-    categoryIds: [],
-    accountIds: [],
-    searchText: '',
-  };
+  const initialFilters: CashFlowFilters = useMemo(
+    () => ({
+      categoryIds: [],
+      accountIds: [],
+      searchText: '',
+    }),
+    []
+  );
 
   const [filters, setFilters] = useState<CashFlowFilters>(initialFilters);
   const [appliedFilters, setAppliedFilters] = useState<CashFlowFilters>(initialFilters);
@@ -96,9 +99,12 @@ export function useCashFlowReport() {
     filtersRef.current = filters;
   }, [filters]);
 
-  const setFilter = useCallback(<K extends keyof CashFlowFilters>(key: K, value: CashFlowFilters[K]) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-  }, []);
+  const setFilter = useCallback(
+    <K extends keyof CashFlowFilters>(key: K, value: CashFlowFilters[K]) => {
+      setFilters((prev) => ({ ...prev, [key]: value }));
+    },
+    []
+  );
 
   const applyFilters = useCallback(() => {
     setAppliedFilters(filtersRef.current);
@@ -107,11 +113,11 @@ export function useCashFlowReport() {
   const resetFilters = useCallback(() => {
     setFilters(initialFilters);
     setAppliedFilters(initialFilters);
-  }, []);
+  }, [initialFilters]);
 
   const hasActiveFilters = useMemo(() => {
     return JSON.stringify(appliedFilters) !== JSON.stringify(initialFilters);
-  }, [appliedFilters]);
+  }, [appliedFilters, initialFilters]);
 
   // Filter transactions based on current filters
   const filteredTransactions = useMemo(

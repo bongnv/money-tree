@@ -160,7 +160,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({
 
   // Watch lastModified timestamp for changes
   const lastModified = useLiveQuery(() =>
-    db.syncMetadata.get('lastModified').then((r) => r?.value as string | null)
+    db.syncMetadata.get('lastModified').then((r) => r?.value as string | undefined)
   );
 
   // Create sync service
@@ -297,10 +297,15 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [syncService]);
 
-  // Auto-sync whenever lastModified changes
+  // Auto-sync whenever lastModified changes (only for subsequent changes after initial sync)
   useEffect(() => {
-    const isConnected = !!(provider && currentFileItem);
-    if (!isConnected || !lastModified || syncState.isInitializing) return;
+    if (!provider || !currentFileItem || !lastModified || syncState.isInitializing) return;
+    
+    // Don't trigger debounced sync if we haven't established the remote state yet
+    // (initial sync will handle it)
+    if (!syncState.remoteLastModified) return;
+    
+    // Don't sync if already synced to this timestamp
     if (lastModified === syncState.remoteLastModified) {
       return;
     }

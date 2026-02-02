@@ -5,10 +5,11 @@ import { PeriodSelector } from '../common/PeriodSelector';
 import { FinancialSummary } from './FinancialSummary';
 import { BudgetOverview } from './BudgetOverview';
 import { RecentTransactionsList } from './RecentTransactionsList';
+import { getTodayDate } from '@/utils/date.utils';
 
 export const DashboardPage: React.FC = () => {
   const [startDate, setStartDate] = useState(format(startOfYear(new Date()), 'yyyy-MM-dd'));
-  const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(getTodayDate);
 
   const selectedPeriod = useMemo(
     () => ({ startDate, endDate, label: 'Year to Date', value: 'ytd' as const }),

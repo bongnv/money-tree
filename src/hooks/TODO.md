@@ -1,0 +1,2 @@
+- [ ] T1: addArchivedYear should upload the archived data to storage
+- [x] T2: calculateYearEndSummary should take currency into calculation

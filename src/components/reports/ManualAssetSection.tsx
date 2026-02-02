@@ -137,7 +137,7 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
       navigate('/transactions', {
         state: {
           filters: {
-            account: [accountId],
+            accountIds: [accountId],
           },
         },
       });

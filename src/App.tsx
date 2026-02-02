@@ -10,17 +10,16 @@ import { NotificationSnackbar } from './components/common/NotificationSnackbar';
 import ReconnectDialog from './components/common/ReconnectDialog';
 import { ArchivePrompt } from './components/common/ArchivePrompt';
 import { AppRoutes } from './routes';
-import { useBaseCurrency } from '@hooks/useSyncMetadata';
 import { useApp, AppProvider } from '@/contexts/AppContext';
 import { useSync, SyncProvider } from '@/contexts/SyncContext';
+import { StoreProvider, useStore } from '@/contexts/StoreContext';
 import { useArchivePrompt } from '@/hooks/useArchivePrompt';
-import { CurrencyCode } from '@/types/enums';
 import type { CloudItem } from './services/storage/IStorageProvider';
 
 const AppContent: React.FC = () => {
   const syncOps = useSync();
   const { syncStatus } = syncOps;
-  const baseCurrency = useBaseCurrency() ?? CurrencyCode.USD;
+  const { baseCurrency } = useStore();
   const {
     snackbar,
     hideSnackbar,
@@ -141,7 +140,9 @@ const App: React.FC = () => {
       <BrowserRouter>
         <AppProvider>
           <SyncProvider onReconnectNeeded={handleReconnectNeeded}>
-            <AppContent />
+            <StoreProvider>
+              <AppContent />
+            </StoreProvider>
           </SyncProvider>
         </AppProvider>
       </BrowserRouter>

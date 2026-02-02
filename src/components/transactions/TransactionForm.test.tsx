@@ -1,15 +1,15 @@
 import { render } from '@testing-library/react';
 import { TransactionForm } from './TransactionForm';
 import { useTransactionForm } from '@/hooks/transactions/useTransactionForm';
-import { useAssets } from '../../hooks/useAssets';
+import { useStore } from '@/contexts/StoreContext';
 import type { Transaction, Account, TransactionType, Category } from '../../types/models';
 import { AccountType, Group, CurrencyCode } from '../../types/enums';
 
 jest.mock('@/hooks/transactions/useTransactionForm');
-jest.mock('../../hooks/useAssets');
+jest.mock('@/contexts/StoreContext');
 
 const mockUseTransactionForm = useTransactionForm as jest.MockedFunction<typeof useTransactionForm>;
-const mockUseAssets = useAssets as jest.MockedFunction<typeof useAssets>;
+const mockUseStore = useStore as jest.MockedFunction<typeof useStore>;
 
 describe('TransactionForm', () => {
   const mockAccount: Account = {
@@ -61,9 +61,17 @@ describe('TransactionForm', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    mockUseAssets.mockReturnValue([]);
-    
+
+    mockUseStore.mockReturnValue({
+      assets: [],
+      transactions: [],
+      accounts: [],
+      budgets: [],
+      categories: [],
+      transactionTypes: [],
+      exchangeRates: [],
+    } as any);
+
     mockUseTransactionForm.mockReturnValue({
       formData: {
         date: '2024-01-15',

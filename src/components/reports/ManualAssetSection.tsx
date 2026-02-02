@@ -27,7 +27,7 @@ import { getTodayDate } from '../../utils/date.utils';
 import { LineChart } from '../common/charts/LineChart';
 import { getCompleteValueHistory, calculateAssetValueGrowth } from '../../utils/asset.utils';
 import type { CurrencyCode } from '../../types/enums';
-import { useAssets } from '../../hooks/useAssets';
+import { useStore } from '@/contexts/StoreContext';
 
 export interface ManualAssetSectionProps {
   title: string;
@@ -47,7 +47,7 @@ export const ManualAssetSection: React.FC<ManualAssetSectionProps> = ({
   const navigate = useNavigate();
   const [expandedAssetId, setExpandedAssetId] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>('1y');
-  const manualAssets = useAssets();
+  const { assets: manualAssets } = useStore();
 
   const total = groups.reduce((sum, group) => sum + group.total, 0);
 

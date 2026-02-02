@@ -6,23 +6,22 @@ import { TransactionDialog } from './TransactionDialog';
 import { TransactionList } from './TransactionList';
 import { TransactionFilters } from './TransactionFilters';
 import { QuickEntryRow } from './QuickEntryRow';
-import { useActiveAccounts } from '../../hooks/useAccounts';
-import { useTransactions } from '../../hooks/useTransactions';
-import { useCategories } from '../../hooks/useCategories';
-import { useTransactionTypes } from '../../hooks/useTransactionTypes';
-import { useAssets } from '../../hooks/useAssets';
-import { useTransactionService } from '@/hooks/useServices';
+import { useStore } from '@/contexts/StoreContext';
 import { useTransactionDialog } from '@/hooks/transactions/useTransactionDialog';
 import { useTransactionFilters } from '@/hooks/transactions/useTransactionFilters';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 
 export const TransactionsPage: React.FC = () => {
-  const transactions = useTransactions();
-  const accounts = useActiveAccounts();
-  const categories = useCategories();
-  const transactionTypes = useTransactionTypes();
-  const manualAssets = useAssets();
-  const transactionService = useTransactionService();
+  const {
+    transactions,
+    accounts,
+    categories,
+    transactionTypes,
+    assets,
+    addTransaction,
+    updateTransaction,
+    deleteTransaction: deleteTransactionOp,
+  } = useStore();
   const transactionDialog = useTransactionDialog();
   const [deleteTransaction, setDeleteTransaction] = useState<Transaction | null>(null);
 
@@ -30,6 +29,9 @@ export const TransactionsPage: React.FC = () => {
     transactions,
     transactionTypes,
   });
+
+  // Filter accounts to active only
+  const activeAccounts = accounts?.filter((acc) => acc.isActive && !acc.isDeleted) || [];
 
   const handleOpenDialog = () => {
     transactionDialog.openCreate();
@@ -45,7 +47,7 @@ export const TransactionsPage: React.FC = () => {
 
   const handleConfirmDelete = async () => {
     if (deleteTransaction?.id) {
-      await transactionService.delete(deleteTransaction.id);
+      await deleteTransactionOp(deleteTransaction.id);
       setDeleteTransaction(null);
     }
   };
@@ -54,9 +56,9 @@ export const TransactionsPage: React.FC = () => {
     transactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
   ) => {
     if (transactionDialog.selectedItem?.id) {
-      await transactionService.update(transactionDialog.selectedItem.id, transactionData);
+      await updateTransaction(transactionDialog.selectedItem.id, transactionData);
     } else {
-      await transactionService.create(transactionData);
+      await addTransaction(transactionData);
     }
   };
 
@@ -77,7 +79,7 @@ export const TransactionsPage: React.FC = () => {
       </Box>
 
       <TransactionFilters
-        accounts={accounts || []}
+        accounts={activeAccounts || []}
         categories={categories || []}
         transactionTypes={transactionTypes || []}
         filters={filters}
@@ -86,11 +88,11 @@ export const TransactionsPage: React.FC = () => {
 
       <Box sx={{ display: { xs: 'none', md: 'block' } }}>
         <QuickEntryRow
-          accounts={accounts || []}
+          accounts={activeAccounts || []}
           categories={categories || []}
           transactionTypes={transactionTypes || []}
           transactions={transactions || []}
-          manualAssets={manualAssets || []}
+          manualAssets={assets || []}
           onSubmit={handleSubmit}
           onOpenFullDialog={handleOpenDialog}
         />
@@ -98,7 +100,7 @@ export const TransactionsPage: React.FC = () => {
 
       <TransactionList
         transactions={filteredTransactions}
-        accounts={accounts || []}
+        accounts={activeAccounts || []}
         categories={categories || []}
         transactionTypes={transactionTypes || []}
         onEdit={handleEdit}
@@ -108,7 +110,7 @@ export const TransactionsPage: React.FC = () => {
       <TransactionDialog
         open={transactionDialog.isOpen}
         transaction={transactionDialog.selectedItem || undefined}
-        accounts={accounts || []}
+        accounts={activeAccounts || []}
         categories={categories || []}
         transactionTypes={transactionTypes || []}
         onClose={transactionDialog.close}

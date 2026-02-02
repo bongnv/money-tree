@@ -5,9 +5,7 @@ import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { formatDate } from '../../utils/date.utils';
 import { formatCurrency } from '../../utils/currency.utils';
 import { Group, CurrencyCode } from '../../types/enums';
-import { useActiveAccounts } from '../../hooks/useAccounts';
-import { useTransactions } from '../../hooks/useTransactions';
-import { useTransactionTypes } from '../../hooks/useTransactionTypes';
+import { useStore } from '@/contexts/StoreContext';
 
 export interface RecentTransactionsListProps {
   limit?: number;
@@ -20,9 +18,7 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const transactions = useTransactions();
-  const transactionTypes = useTransactionTypes();
-  const accounts = useActiveAccounts();
+  const { transactions, transactionTypes, accounts } = useStore();
 
   // Get recent transactions sorted by date (newest first)
   const recentTransactions = transactions

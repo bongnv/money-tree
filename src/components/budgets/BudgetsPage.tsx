@@ -17,20 +17,20 @@ import { CategoryFilter } from '../common/CategoryFilter';
 import { getBudgetPresets } from './periodPresets';
 import type { Budget } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
-import { Group, CurrencyCode } from '../../types/enums';
-import { useCategories } from '../../hooks/useCategories';
-import { useTransactionTypes } from '../../hooks/useTransactionTypes';
-import { useBudgets } from '../../hooks/useBudgets';
-import { useBaseCurrency } from '../../hooks/useSyncMetadata';
-import { useBudgetService } from '@/hooks/useServices';
+import { Group } from '../../types/enums';
+import { useStore } from '@/contexts/StoreContext';
 import { useBudgetGrouping } from '@/hooks/budgets/useBudgetGrouping';
 
 export const BudgetsPage: React.FC = () => {
-  const budgets = useBudgets();
-  const transactionTypes = useTransactionTypes();
-  const categories = useCategories();
-  const baseCurrency = useBaseCurrency() ?? CurrencyCode.USD;
-  const budgetService = useBudgetService();
+  const {
+    budgets,
+    transactionTypes,
+    categories,
+    baseCurrency,
+    addBudget,
+    updateBudget,
+    deleteBudget,
+  } = useStore();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | undefined>(undefined);
@@ -60,7 +60,7 @@ export const BudgetsPage: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState(getCurrentMonthPeriod());
 
   // Use budget grouping hook
-  const { groupedBudgets } = useBudgetGrouping(selectedPeriod, selectedCategories);
+  const { groupedBudgets } = useBudgetGrouping(selectedPeriod, selectedCategories, baseCurrency);
 
   const handleAdd = () => {
     setEditingBudget(undefined);
@@ -73,11 +73,11 @@ export const BudgetsPage: React.FC = () => {
   };
 
   const handleDelete = async (budget: Budget) => {
-    const transactionType = transactionTypes?.find((tt) => tt.id === budget.transactionTypeId);
+    const transactionType = transactionTypes.find((tt) => tt.id === budget.transactionTypeId);
     const confirmMessage = `Are you sure you want to delete the budget for "${transactionType?.name}"?`;
 
     if (window.confirm(confirmMessage)) {
-      await budgetService.delete(budget.id);
+      await deleteBudget(budget.id);
     }
   };
 
@@ -87,10 +87,10 @@ export const BudgetsPage: React.FC = () => {
     try {
       if (editingBudget?.id) {
         // Update existing budget item
-        await budgetService.update(editingBudget.id, budgetData);
+        await updateBudget(editingBudget.id, budgetData);
       } else {
         // Add new budget item
-        await budgetService.create(budgetData);
+        await addBudget(budgetData);
       }
       setDialogOpen(false);
     } catch (error) {
@@ -148,7 +148,7 @@ export const BudgetsPage: React.FC = () => {
             allowCustom={false}
           />
           <CategoryFilter
-            categories={categories || []}
+            categories={categories}
             selectedCategories={selectedCategories}
             onChange={(e) => {
               const value = e.target.value;

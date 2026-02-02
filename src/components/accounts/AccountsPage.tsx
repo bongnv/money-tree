@@ -4,14 +4,12 @@ import { Add as AddIcon } from '@mui/icons-material';
 import type { Account } from '../../types/models';
 import { AccountList } from './AccountList';
 import { AccountDialog } from './AccountDialog';
-import { useActiveAccounts } from '../../hooks/useAccounts';
-import { useAccountService } from '@/hooks/useServices';
+import { useStore } from '@/contexts/StoreContext';
 import { useAccountDialog } from '@/hooks/accounts/useAccountDialog';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 
 export const AccountsPage: React.FC = () => {
-  const accounts = useActiveAccounts();
-  const accountService = useAccountService();
+  const { accounts, addAccount, updateAccount, deleteAccount: deleteAccountOp } = useStore();
   const accountDialog = useAccountDialog();
   const [deleteAccount, setDeleteAccount] = React.useState<Account | null>(null);
 
@@ -29,16 +27,16 @@ export const AccountsPage: React.FC = () => {
 
   const handleConfirmDelete = async () => {
     if (deleteAccount?.id) {
-      await accountService.delete(deleteAccount.id);
+      await deleteAccountOp(deleteAccount.id);
       setDeleteAccount(null);
     }
   };
 
   const handleSubmit = async (accountData: Omit<Account, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (accountDialog.selectedItem?.id) {
-      await accountService.update(accountDialog.selectedItem.id, accountData);
+      await updateAccount(accountDialog.selectedItem.id, accountData);
     } else {
-      await accountService.create(accountData);
+      await addAccount(accountData);
     }
   };
 

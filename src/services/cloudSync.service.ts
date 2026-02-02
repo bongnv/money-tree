@@ -2,7 +2,6 @@ import type { MoneyTreeDB } from '../db/database';
 import { IStorageProvider, CloudItem } from './storage/IStorageProvider';
 import type { DataFile, ExchangeRate, ArchivedYearReference } from '../types/models';
 import { CurrencyCode } from '../types/enums';
-import type { SyncMetadataService } from './syncMetadata.service';
 import { DataFileSchema } from '../schemas/models.schema';
 
 /**
@@ -32,18 +31,11 @@ export class CloudSyncService {
   private provider: IStorageProvider;
   private fileItem: CloudItem;
   private db: MoneyTreeDB;
-  private syncMetadata: SyncMetadataService;
 
-  constructor(
-    provider: IStorageProvider,
-    fileItem: CloudItem,
-    db: MoneyTreeDB,
-    syncMetadata: SyncMetadataService
-  ) {
+  constructor(provider: IStorageProvider, fileItem: CloudItem, db: MoneyTreeDB) {
     this.provider = provider;
     this.fileItem = fileItem;
     this.db = db;
-    this.syncMetadata = syncMetadata;
   }
 
   /**
@@ -372,9 +364,9 @@ export class CloudSyncService {
       this.db.budgets.toArray(),
       this.db.manualAssets.toArray(),
       this.db.exchangeRates.toArray(),
-      this.syncMetadata.getBaseCurrency(),
-      this.syncMetadata.getArchivedYears(),
-      this.syncMetadata.getLastModified(),
+      this.db.syncMetadata.get('baseCurrency'),
+      this.db.syncMetadata.get('archivedYears'),
+      this.db.syncMetadata.get('lastModified'),
     ]);
 
     const localSnapshot: LocalDataSnapshot = {
@@ -385,9 +377,9 @@ export class CloudSyncService {
       budgets: allBudgets,
       manualAssets: allManualAssets,
       exchangeRates,
-      baseCurrency: (baseCurrency as CurrencyCode) || CurrencyCode.USD,
-      archivedYears: archivedYears || [],
-      lastModified: lastModified || '1970-01-01T00:00:00.000Z',
+      baseCurrency: (baseCurrency?.value as CurrencyCode) || CurrencyCode.USD,
+      archivedYears: (archivedYears?.value as ArchivedYearReference[]) || [],
+      lastModified: (lastModified?.value as string) || '1970-01-01T00:00:00.000Z',
     };
 
     // If file doesn't have an ID yet, it's a new file that hasn't been uploaded

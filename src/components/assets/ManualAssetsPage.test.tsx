@@ -1,13 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ManualAssetsPage } from './ManualAssetsPage';
-import { useAssets } from '../../hooks/useAssets';
-import { useAssetService } from '@/hooks/useServices';
+import { useStore } from '@/contexts/StoreContext';
 import { useAssetDialog } from '@/hooks/assets/useAssetDialog';
 import type { ManualAsset } from '../../types/models';
 import { CurrencyCode } from '../../types/enums';
 
-jest.mock('../../hooks/useAssets');
+jest.mock('@/contexts/StoreContext');
 jest.mock('@/hooks/useServices');
 jest.mock('@/hooks/assets/useAssetDialog');
 
@@ -27,24 +26,21 @@ jest.mock('./ManualAssetList', () => ({
 }));
 
 jest.mock('./ManualAssetDialog', () => ({
-  ManualAssetDialog: ({ open }: any) => (
-    open ? <div data-testid="asset-dialog">Asset Dialog</div> : null
-  ),
+  ManualAssetDialog: ({ open }: any) =>
+    open ? <div data-testid="asset-dialog">Asset Dialog</div> : null,
 }));
 
 jest.mock('@/components/common/ConfirmDialog', () => ({
-  ConfirmDialog: ({ open, onConfirm, onCancel }: any) => (
+  ConfirmDialog: ({ open, onConfirm, onCancel }: any) =>
     open ? (
       <div data-testid="confirm-dialog">
         <button onClick={onConfirm}>Confirm</button>
         <button onClick={onCancel}>Cancel</button>
       </div>
-    ) : null
-  ),
+    ) : null,
 }));
 
-const mockUseAssets = useAssets as jest.MockedFunction<typeof useAssets>;
-const mockUseAssetService = useAssetService as jest.MockedFunction<typeof useAssetService>;
+const mockUseStore = useStore as jest.MockedFunction<typeof useStore>;
 const mockUseAssetDialog = useAssetDialog as jest.MockedFunction<typeof useAssetDialog>;
 
 describe('ManualAssetsPage', () => {
@@ -59,12 +55,6 @@ describe('ManualAssetsPage', () => {
     updatedAt: '2024-01-01T00:00:00Z',
   };
 
-  const mockAssetService = {
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-  };
-
   const mockAssetDialog = {
     isOpen: false,
     selectedItem: null,
@@ -75,10 +65,20 @@ describe('ManualAssetsPage', () => {
     close: jest.fn(),
   };
 
+  const mockDeleteAsset = jest.fn();
+
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseAssets.mockReturnValue([mockAsset]);
-    mockUseAssetService.mockReturnValue(mockAssetService as any);
+    mockUseStore.mockReturnValue({
+      assets: [mockAsset],
+      transactions: [],
+      accounts: [],
+      budgets: [],
+      categories: [],
+      transactionTypes: [],
+      exchangeRates: [],
+      deleteAsset: mockDeleteAsset,
+    } as any);
     mockUseAssetDialog.mockReturnValue(mockAssetDialog as any);
   });
 
@@ -140,7 +140,7 @@ describe('ManualAssetsPage', () => {
 
   it('should delete asset when confirmed', async () => {
     const user = userEvent.setup();
-    mockAssetService.delete.mockResolvedValue(undefined);
+    mockDeleteAsset.mockResolvedValue(undefined);
 
     render(<ManualAssetsPage />);
 
@@ -151,7 +151,7 @@ describe('ManualAssetsPage', () => {
     await user.click(confirmButton);
 
     await waitFor(() => {
-      expect(mockAssetService.delete).toHaveBeenCalledWith('asset-1');
+      expect(mockDeleteAsset).toHaveBeenCalledWith('asset-1');
     });
   });
 
@@ -179,13 +179,17 @@ describe('ManualAssetsPage', () => {
   });
 
   it('should handle empty assets list', () => {
-    mockUseAssets.mockReturnValue([]);
+    mockUseStore.mockReturnValue({
+      assets: [],
+    } as any);
     render(<ManualAssetsPage />);
     expect(screen.getByTestId('asset-list')).toBeInTheDocument();
   });
 
   it('should handle undefined assets', () => {
-    mockUseAssets.mockReturnValue(undefined);
+    mockUseStore.mockReturnValue({
+      assets: undefined,
+    } as any);
     render(<ManualAssetsPage />);
     expect(screen.getByTestId('asset-list')).toBeInTheDocument();
   });

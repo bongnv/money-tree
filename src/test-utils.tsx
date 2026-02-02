@@ -1,6 +1,7 @@
 import { render, RenderOptions } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import React from 'react';
+import { StoreProvider } from './contexts/StoreContext';
 
 // Mock CloudSyncService class
 jest.mock('./services/cloudSync.service', () => {
@@ -39,7 +40,7 @@ interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
 }
 
 /**
- * Custom render that wraps components with BrowserRouter
+ * Custom render that wraps components with BrowserRouter and StoreProvider
  */
 export function renderWithProviders(ui: React.ReactElement, options?: CustomRenderOptions) {
   const { initialRoute = '/', ...renderOptions } = options || {};
@@ -50,7 +51,11 @@ export function renderWithProviders(ui: React.ReactElement, options?: CustomRend
   }
 
   function Wrapper({ children }: { children: React.ReactNode }) {
-    return <BrowserRouter>{children}</BrowserRouter>;
+    return (
+      <BrowserRouter>
+        <StoreProvider>{children}</StoreProvider>
+      </BrowserRouter>
+    );
   }
 
   return render(ui, { wrapper: Wrapper, ...renderOptions });

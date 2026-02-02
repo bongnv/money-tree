@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { TextField, MenuItem, Box, Button } from '@mui/material';
 import type { TransactionType, Category } from '../../types/models';
 import { Group } from '../../types/enums';
-import { useActiveAccounts } from '../../hooks/useAccounts';
+import { useStore } from '@/contexts/StoreContext';
 
 interface TransactionTypeFormProps {
   transactionType?: TransactionType;
@@ -19,7 +19,8 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
-  const accounts = useActiveAccounts();
+  const { accounts } = useStore();
+  const activeAccounts = useMemo(() => accounts.filter((acc) => acc.isActive), [accounts]);
 
   const [formData, setFormData] = useState({
     name: transactionType?.name || '',
@@ -189,7 +190,7 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
             <MenuItem value="">
               <em>None</em>
             </MenuItem>
-            {(accounts || [])
+            {activeAccounts
               .filter((account) => account.isActive)
               .map((account) => (
                 <MenuItem key={account.id} value={account.id}>
@@ -210,7 +211,7 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
             <MenuItem value="">
               <em>None</em>
             </MenuItem>
-            {(accounts || [])
+            {activeAccounts
               .filter((account) => account.isActive)
               .map((account) => (
                 <MenuItem key={account.id} value={account.id}>

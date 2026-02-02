@@ -1,14 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AccountsPage } from './AccountsPage';
-import { useActiveAccounts } from '../../hooks/useAccounts';
-import { useAccountService } from '@/hooks/useServices';
+import { useStore } from '@/contexts/StoreContext';
 import { useAccountDialog } from '@/hooks/accounts/useAccountDialog';
 import type { Account } from '../../types/models';
 import { AccountType, CurrencyCode } from '../../types/enums';
 
-jest.mock('../../hooks/useAccounts');
-jest.mock('@/hooks/useServices');
+jest.mock('@/contexts/StoreContext');
 jest.mock('@/hooks/accounts/useAccountDialog');
 
 jest.mock('./AccountList', () => ({
@@ -26,28 +24,27 @@ jest.mock('./AccountList', () => ({
 }));
 
 jest.mock('./AccountDialog', () => ({
-  AccountDialog: ({ open, onSubmit }: any) => (
+  AccountDialog: ({ open, onSubmit }: any) =>
     open ? (
       <div data-testid="account-dialog">
-        <button onClick={() => onSubmit({ name: 'New Account', type: AccountType.BANK_ACCOUNT })}>Submit</button>
+        <button onClick={() => onSubmit({ name: 'New Account', type: AccountType.BANK_ACCOUNT })}>
+          Submit
+        </button>
       </div>
-    ) : null
-  ),
+    ) : null,
 }));
 
 jest.mock('@/components/common/ConfirmDialog', () => ({
-  ConfirmDialog: ({ open, onConfirm, onCancel }: any) => (
+  ConfirmDialog: ({ open, onConfirm, onCancel }: any) =>
     open ? (
       <div data-testid="confirm-dialog">
         <button onClick={onConfirm}>Confirm</button>
         <button onClick={onCancel}>Cancel</button>
       </div>
-    ) : null
-  ),
+    ) : null,
 }));
 
-const mockUseActiveAccounts = useActiveAccounts as jest.MockedFunction<typeof useActiveAccounts>;
-const mockUseAccountService = useAccountService as jest.MockedFunction<typeof useAccountService>;
+const mockUseStore = useStore as jest.MockedFunction<typeof useStore>;
 const mockUseAccountDialog = useAccountDialog as jest.MockedFunction<typeof useAccountDialog>;
 
 describe('AccountsPage', () => {
@@ -63,12 +60,6 @@ describe('AccountsPage', () => {
     updatedAt: '2024-01-01T00:00:00Z',
   };
 
-  const mockAccountService = {
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-  };
-
   const mockAccountDialog = {
     isOpen: false,
     selectedItem: null,
@@ -77,10 +68,24 @@ describe('AccountsPage', () => {
     close: jest.fn(),
   };
 
+  const mockDeleteAccount = jest.fn();
+  const mockAddAccount = jest.fn();
+  const mockUpdateAccount = jest.fn();
+
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseActiveAccounts.mockReturnValue([mockAccount]);
-    mockUseAccountService.mockReturnValue(mockAccountService as any);
+    mockUseStore.mockReturnValue({
+      accounts: [mockAccount],
+      transactions: [],
+      budgets: [],
+      categories: [],
+      transactionTypes: [],
+      assets: [],
+      exchangeRates: [],
+      deleteAccount: mockDeleteAccount,
+      addAccount: mockAddAccount,
+      updateAccount: mockUpdateAccount,
+    } as any);
     mockUseAccountDialog.mockReturnValue(mockAccountDialog as any);
   });
 
@@ -132,7 +137,7 @@ describe('AccountsPage', () => {
 
   it('should delete account when confirmed', async () => {
     const user = userEvent.setup();
-    mockAccountService.delete.mockResolvedValue(undefined);
+    mockDeleteAccount.mockResolvedValue(undefined);
 
     render(<AccountsPage />);
 
@@ -143,7 +148,7 @@ describe('AccountsPage', () => {
     await user.click(confirmButton);
 
     await waitFor(() => {
-      expect(mockAccountService.delete).toHaveBeenCalledWith('account-1');
+      expect(mockDeleteAccount).toHaveBeenCalledWith('account-1');
     });
   });
 
@@ -162,7 +167,7 @@ describe('AccountsPage', () => {
 
   it('should create account when dialog is submitted in create mode', async () => {
     const user = userEvent.setup();
-    mockAccountService.create.mockResolvedValue(undefined);
+    mockAddAccount.mockResolvedValue(undefined);
     mockUseAccountDialog.mockReturnValue({
       ...mockAccountDialog,
       isOpen: true,
@@ -175,7 +180,7 @@ describe('AccountsPage', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockAccountService.create).toHaveBeenCalledWith({
+      expect(mockAddAccount).toHaveBeenCalledWith({
         name: 'New Account',
         type: AccountType.BANK_ACCOUNT,
       });
@@ -184,7 +189,7 @@ describe('AccountsPage', () => {
 
   it('should update account when dialog is submitted in edit mode', async () => {
     const user = userEvent.setup();
-    mockAccountService.update.mockResolvedValue(undefined);
+    mockUpdateAccount.mockResolvedValue(undefined);
     mockUseAccountDialog.mockReturnValue({
       ...mockAccountDialog,
       isOpen: true,
@@ -197,7 +202,7 @@ describe('AccountsPage', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockAccountService.update).toHaveBeenCalledWith('account-1', {
+      expect(mockUpdateAccount).toHaveBeenCalledWith('account-1', {
         name: 'New Account',
         type: AccountType.BANK_ACCOUNT,
       });
@@ -205,13 +210,29 @@ describe('AccountsPage', () => {
   });
 
   it('should handle empty accounts list', () => {
-    mockUseActiveAccounts.mockReturnValue([]);
+    mockUseStore.mockReturnValue({
+      accounts: [],
+      transactions: [],
+      budgets: [],
+      categories: [],
+      transactionTypes: [],
+      assets: [],
+      exchangeRates: [],
+    } as any);
     render(<AccountsPage />);
     expect(screen.getByTestId('account-list')).toBeInTheDocument();
   });
 
   it('should handle undefined accounts', () => {
-    mockUseActiveAccounts.mockReturnValue(undefined);
+    mockUseStore.mockReturnValue({
+      accounts: undefined,
+      transactions: [],
+      budgets: [],
+      categories: [],
+      transactionTypes: [],
+      assets: [],
+      exchangeRates: [],
+    } as any);
     render(<AccountsPage />);
     expect(screen.getByTestId('account-list')).toBeInTheDocument();
   });

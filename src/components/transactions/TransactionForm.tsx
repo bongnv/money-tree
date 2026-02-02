@@ -4,7 +4,7 @@ import { FormTextField } from '../common/FormTextField';
 import { FormDatePicker } from '../common/FormDatePicker';
 import type { Transaction, Account, TransactionType, Category } from '../../types/models';
 import { Group } from '../../types/enums';
-import { useAssets } from '../../hooks/useAssets';
+import { useStore } from '@/contexts/StoreContext';
 import { useTransactionForm } from '@/hooks/transactions/useTransactionForm';
 
 interface TransactionFormProps {
@@ -31,7 +31,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     onSubmit,
   });
 
-  const manualAssets = useAssets();
+  const { assets: manualAssets } = useStore();
 
   // Derive selected group from transaction type
   const selectedGroup = useMemo(() => {

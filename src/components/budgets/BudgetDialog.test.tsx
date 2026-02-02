@@ -1,35 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/test-utils';
 import { BudgetDialog } from './BudgetDialog';
 import type { Budget } from '../../types/models';
-import { Group, CurrencyCode } from '../../types/enums';
-
-// Mock all the complex hooks
-jest.mock('../../hooks/useCategories', () => ({
-  useCategories: () => [
-    {
-      id: 'category-1',
-      name: 'Food',
-      isDeleted: false,
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z',
-    },
-  ],
-}));
-
-jest.mock('../../hooks/useTransactionTypes', () => ({
-  useTransactionTypes: () => [
-    {
-      id: 'type-1',
-      name: 'Groceries',
-      categoryId: 'category-1',
-      group: Group.EXPENSE,
-      isActive: true,
-      isDeleted: false,
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z',
-    },
-  ],
-}));
+import { CurrencyCode } from '../../types/enums';
 
 describe('BudgetDialog', () => {
   const mockOnClose = jest.fn();

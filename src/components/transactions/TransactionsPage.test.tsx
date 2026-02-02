@@ -1,36 +1,27 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TransactionsPage } from './TransactionsPage';
-import { useActiveAccounts } from '../../hooks/useAccounts';
-import { useTransactions } from '../../hooks/useTransactions';
-import { useCategories } from '../../hooks/useCategories';
-import { useTransactionTypes } from '../../hooks/useTransactionTypes';
-import { useAssets } from '../../hooks/useAssets';
-import { useTransactionService } from '@/hooks/useServices';
+import { useStore } from '@/contexts/StoreContext';
+
 import { useTransactionDialog } from '@/hooks/transactions/useTransactionDialog';
 import { useTransactionFilters } from '@/hooks/transactions/useTransactionFilters';
 import type { Transaction, Account, Category, TransactionType } from '../../types/models';
 import { AccountType, Group, CurrencyCode } from '../../types/enums';
 
 // Mock hooks
-jest.mock('../../hooks/useAccounts');
-jest.mock('../../hooks/useTransactions');
-jest.mock('../../hooks/useCategories');
-jest.mock('../../hooks/useTransactionTypes');
-jest.mock('../../hooks/useAssets');
+jest.mock('@/contexts/StoreContext');
 jest.mock('@/hooks/useServices');
 jest.mock('@/hooks/transactions/useTransactionDialog');
 jest.mock('@/hooks/transactions/useTransactionFilters');
 
 // Mock components
 jest.mock('./TransactionDialog', () => ({
-  TransactionDialog: ({ open, onSubmit }: any) => (
+  TransactionDialog: ({ open, onSubmit }: any) =>
     open ? (
       <div data-testid="transaction-dialog">
         <button onClick={() => onSubmit({ date: '2024-01-01', amount: 100 })}>Submit</button>
       </div>
-    ) : null
-  ),
+    ) : null,
 }));
 
 jest.mock('./TransactionList', () => ({
@@ -64,24 +55,22 @@ jest.mock('./QuickEntryRow', () => ({
 }));
 
 jest.mock('@/components/common/ConfirmDialog', () => ({
-  ConfirmDialog: ({ open, onConfirm, onCancel }: any) => (
+  ConfirmDialog: ({ open, onConfirm, onCancel }: any) =>
     open ? (
       <div data-testid="confirm-dialog">
         <button onClick={onConfirm}>Confirm</button>
         <button onClick={onCancel}>Cancel</button>
       </div>
-    ) : null
-  ),
+    ) : null,
 }));
 
-const mockUseActiveAccounts = useActiveAccounts as jest.MockedFunction<typeof useActiveAccounts>;
-const mockUseTransactions = useTransactions as jest.MockedFunction<typeof useTransactions>;
-const mockUseCategories = useCategories as jest.MockedFunction<typeof useCategories>;
-const mockUseTransactionTypes = useTransactionTypes as jest.MockedFunction<typeof useTransactionTypes>;
-const mockUseAssets = useAssets as jest.MockedFunction<typeof useAssets>;
-const mockUseTransactionService = useTransactionService as jest.MockedFunction<typeof useTransactionService>;
-const mockUseTransactionDialog = useTransactionDialog as jest.MockedFunction<typeof useTransactionDialog>;
-const mockUseTransactionFilters = useTransactionFilters as jest.MockedFunction<typeof useTransactionFilters>;
+const mockUseStore = useStore as jest.MockedFunction<typeof useStore>;
+const mockUseTransactionDialog = useTransactionDialog as jest.MockedFunction<
+  typeof useTransactionDialog
+>;
+const mockUseTransactionFilters = useTransactionFilters as jest.MockedFunction<
+  typeof useTransactionFilters
+>;
 
 describe('TransactionsPage', () => {
   const mockAccount: Account = {
@@ -126,12 +115,6 @@ describe('TransactionsPage', () => {
     updatedAt: '2024-01-01T00:00:00Z',
   };
 
-  const mockTransactionService = {
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-  };
-
   const mockTransactionDialog = {
     isOpen: false,
     selectedItem: null,
@@ -141,16 +124,25 @@ describe('TransactionsPage', () => {
   };
 
   const mockSetFilters = jest.fn();
+  const mockDeleteTransaction = jest.fn();
+  const mockAddTransaction = jest.fn();
+  const mockUpdateTransaction = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockUseActiveAccounts.mockReturnValue([mockAccount]);
-    mockUseTransactions.mockReturnValue([mockTransaction]);
-    mockUseCategories.mockReturnValue([mockCategory]);
-    mockUseTransactionTypes.mockReturnValue([mockTransactionType]);
-    mockUseAssets.mockReturnValue([]);
-    mockUseTransactionService.mockReturnValue(mockTransactionService as any);
+    mockUseStore.mockReturnValue({
+      accounts: [mockAccount],
+      transactions: [mockTransaction],
+      categories: [mockCategory],
+      transactionTypes: [mockTransactionType],
+      assets: [],
+      budgets: [],
+      exchangeRates: [],
+      deleteTransaction: mockDeleteTransaction,
+      addTransaction: mockAddTransaction,
+      updateTransaction: mockUpdateTransaction,
+    } as any);
     mockUseTransactionDialog.mockReturnValue(mockTransactionDialog as any);
     mockUseTransactionFilters.mockReturnValue({
       filters: {
@@ -225,7 +217,7 @@ describe('TransactionsPage', () => {
 
   it('should delete transaction when confirmed', async () => {
     const user = userEvent.setup();
-    mockTransactionService.delete.mockResolvedValue(undefined);
+    mockDeleteTransaction.mockResolvedValue(undefined);
 
     render(<TransactionsPage />);
 
@@ -236,7 +228,7 @@ describe('TransactionsPage', () => {
     await user.click(confirmButton);
 
     await waitFor(() => {
-      expect(mockTransactionService.delete).toHaveBeenCalledWith('tx-1');
+      expect(mockDeleteTransaction).toHaveBeenCalledWith('tx-1');
     });
   });
 
@@ -257,7 +249,7 @@ describe('TransactionsPage', () => {
 
   it('should create transaction when dialog is submitted in create mode', async () => {
     const user = userEvent.setup();
-    mockTransactionService.create.mockResolvedValue(undefined);
+    mockAddTransaction.mockResolvedValue(undefined);
     mockUseTransactionDialog.mockReturnValue({
       ...mockTransactionDialog,
       isOpen: true,
@@ -270,7 +262,7 @@ describe('TransactionsPage', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockTransactionService.create).toHaveBeenCalledWith({
+      expect(mockAddTransaction).toHaveBeenCalledWith({
         date: '2024-01-01',
         amount: 100,
       });
@@ -279,7 +271,7 @@ describe('TransactionsPage', () => {
 
   it('should update transaction when dialog is submitted in edit mode', async () => {
     const user = userEvent.setup();
-    mockTransactionService.update.mockResolvedValue(undefined);
+    mockUpdateTransaction.mockResolvedValue(undefined);
     mockUseTransactionDialog.mockReturnValue({
       ...mockTransactionDialog,
       isOpen: true,
@@ -292,7 +284,7 @@ describe('TransactionsPage', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockTransactionService.update).toHaveBeenCalledWith('tx-1', {
+      expect(mockUpdateTransaction).toHaveBeenCalledWith('tx-1', {
         date: '2024-01-01',
         amount: 100,
       });
@@ -301,7 +293,7 @@ describe('TransactionsPage', () => {
 
   it('should create transaction from quick entry', async () => {
     const user = userEvent.setup();
-    mockTransactionService.create.mockResolvedValue(undefined);
+    mockAddTransaction.mockResolvedValue(undefined);
 
     render(<TransactionsPage />);
 
@@ -309,7 +301,7 @@ describe('TransactionsPage', () => {
     await user.click(quickAddButton);
 
     await waitFor(() => {
-      expect(mockTransactionService.create).toHaveBeenCalledWith({
+      expect(mockAddTransaction).toHaveBeenCalledWith({
         date: '2024-01-01',
         amount: 50,
       });
@@ -331,7 +323,7 @@ describe('TransactionsPage', () => {
       setFilters: mockSetFilters,
       filteredTransactions: [mockTransaction],
     });
-    
+
     render(<TransactionsPage />);
 
     const applyFiltersButton = screen.getByText('Apply Filters');
@@ -341,7 +333,13 @@ describe('TransactionsPage', () => {
   });
 
   it('should handle empty transactions list', () => {
-    mockUseTransactions.mockReturnValue([]);
+    mockUseStore.mockReturnValue({
+      transactions: [],
+      accounts: [mockAccount],
+      categories: [mockCategory],
+      transactionTypes: [mockTransactionType],
+      assets: [],
+    } as any);
     mockUseTransactionFilters.mockReturnValue({
       filters: {
         dateFrom: '',
@@ -362,11 +360,13 @@ describe('TransactionsPage', () => {
   });
 
   it('should handle undefined data from hooks', () => {
-    mockUseActiveAccounts.mockReturnValue(undefined);
-    mockUseTransactions.mockReturnValue(undefined);
-    mockUseCategories.mockReturnValue(undefined);
-    mockUseTransactionTypes.mockReturnValue(undefined);
-    mockUseAssets.mockReturnValue(undefined);
+    mockUseStore.mockReturnValue({
+      transactions: undefined,
+      accounts: undefined,
+      categories: undefined,
+      transactionTypes: undefined,
+      assets: undefined,
+    } as any);
     mockUseTransactionFilters.mockReturnValue({
       filters: {
         dateFrom: '',

@@ -22,6 +22,7 @@ import { LineChart } from '../common/charts/LineChart';
 import { formatCurrency } from '../../utils/currency.utils';
 import { FormDatePicker } from '../common/FormDatePicker';
 import { CurrencyCode } from '../../types/enums';
+import type { ManualAsset } from '../../types/models';
 import { useBalanceSheet } from '@/hooks/reports/useBalanceSheet';
 
 type ComparisonType = 'none' | 'month' | 'year';
@@ -40,7 +41,7 @@ export const BalanceSheet: React.FC = () => {
     conversionCurrency,
     setConversionCurrency,
     isLoadingBalanceSheet,
-    manualAssets,
+    assets: manualAssets,
   } = useBalanceSheet();
 
   const handleComparisonChange = (
@@ -286,7 +287,9 @@ export const BalanceSheet: React.FC = () => {
       {/* Asset Value History Dialog */}
       <AssetValueHistoryDialog
         open={historyDialogAssetId !== null}
-        asset={manualAssets?.find((asset) => asset.id === historyDialogAssetId) || null}
+        asset={
+          manualAssets?.find((asset: ManualAsset) => asset.id === historyDialogAssetId) || null
+        }
         onClose={handleCloseHistoryDialog}
       />
     </Box>

@@ -1,13 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-  useBudgets,
-  useTransactions,
-  useTransactionTypes,
-  useCategories,
-  useAccounts,
-} from '../index';
+import { useStore } from '@/contexts/StoreContext';
 import { useReportService } from '../useServices';
-import { useBaseCurrency } from '../useSyncMetadata';
 import { useExchangeRates } from '../useExchangeRates';
 import { getTodayDate } from '@/utils/date.utils';
 import type { BudgetPerformanceData, BudgetTrendPoint } from '@/services/report.service';
@@ -61,13 +54,9 @@ export interface DisplayPerformance {
  * @returns All data and controls needed for budget performance reports
  */
 export function useBudgetPerformance() {
-  const budgets = useBudgets();
-  const transactions = useTransactions();
-  const transactionTypes = useTransactionTypes();
-  const categories = useCategories();
-  const accounts = useAccounts();
+  const { budgets, transactions, transactionTypes, categories, accounts, baseCurrency } =
+    useStore();
   const reportService = useReportService();
-  const defaultCurrency = useBaseCurrency();
 
   // Report parameters
   const today = getTodayDate();
@@ -81,11 +70,11 @@ export function useBudgetPerformance() {
 
   // Set conversion currency to base currency when it loads
   useEffect(() => {
-    if (defaultCurrency && conversionCurrency === undefined) {
+    if (baseCurrency && conversionCurrency === undefined) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setConversionCurrency(defaultCurrency);
+      setConversionCurrency(baseCurrency);
     }
-  }, [defaultCurrency, conversionCurrency]);
+  }, [baseCurrency, conversionCurrency]);
 
   const [budgetPerformance, setBudgetPerformance] = useState<BudgetPerformanceData | null>(null);
   const [trendData, setTrendData] = useState<BudgetTrendPoint[]>([]);

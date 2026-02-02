@@ -2,7 +2,6 @@ import React, { createContext, useContext, useCallback, useEffect, useMemo, useS
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useDebouncedCallback } from 'use-debounce';
 import { CloudSyncService } from '@/services/cloudSync.service';
-import { SyncMetadataService } from '@/services/syncMetadata.service';
 import { StorageProviderFactory } from '@/services/storage/StorageProviderFactory';
 import { IStorageProvider, CloudItem } from '@/services/storage/IStorageProvider';
 import type { StorageProviderType } from '@/services/storage/StorageProviderFactory';
@@ -169,8 +168,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({
     if (!providerState || !fileState) {
       return null;
     }
-    const syncMetadataService = new SyncMetadataService(db);
-    return new CloudSyncService(providerState, fileState, db, syncMetadataService);
+    return new CloudSyncService(providerState, fileState, db);
   }, [providerState, fileState]);
 
   // Internal function to update file item without clearing DB (for sync updates)

@@ -5,15 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import { CategoryList } from '../categories/CategoryList';
 import { CategoryDialog } from '../categories/CategoryDialog';
 import type { Category } from '../../types/models';
-import { useCategories } from '../../hooks/useCategories';
-import { useTransactionTypes } from '../../hooks/useTransactionTypes';
-import { useCategoryService } from '@/hooks/useServices';
+import { useStore } from '@/contexts/StoreContext';
 
 export const CategoriesListPage: React.FC = () => {
   const navigate = useNavigate();
-  const categories = useCategories();
-  const transactionTypes = useTransactionTypes();
-  const categoryService = useCategoryService();
+  const { categories, transactionTypes, addCategory, updateCategory, deleteCategory } = useStore();
 
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | undefined>();
@@ -37,9 +33,9 @@ export const CategoriesListPage: React.FC = () => {
     categoryData: Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
   ) => {
     if (selectedCategory?.id) {
-      await categoryService.update(selectedCategory.id, categoryData);
+      await updateCategory(selectedCategory.id, categoryData);
     } else {
-      await categoryService.create(categoryData);
+      await addCategory(categoryData);
     }
     handleCloseCategoryDialog();
   };
@@ -50,7 +46,7 @@ export const CategoriesListPage: React.FC = () => {
         `Are you sure you want to delete the category "${category.name}"? This action cannot be undone.`
       )
     ) {
-      await categoryService.delete(category.id);
+      await deleteCategory(category.id);
     }
   };
 

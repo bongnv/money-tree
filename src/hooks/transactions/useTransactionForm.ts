@@ -1,7 +1,10 @@
 import { useState, useCallback } from 'react';
 import { getTodayDate } from '@/utils/date.utils';
-import { useTransactionService } from '../useServices';
-import type { TransactionFormData } from '@/services/transaction.service';
+import {
+  validateTransactionForm,
+  transformFormToTransaction,
+  type TransactionFormData,
+} from '@/utils/transaction.utils';
 import type { Transaction } from '@/types/models';
 
 interface UseTransactionFormProps {
@@ -16,8 +19,6 @@ interface UseTransactionFormProps {
  * Manages form state with transaction-specific validation and transformation
  */
 export function useTransactionForm({ transaction, onSubmit }: UseTransactionFormProps = {}) {
-  const transactionService = useTransactionService();
-
   // Initialize form data from transaction (edit mode) or defaults (create mode)
   const initialData: TransactionFormData = transaction
     ? {
@@ -45,20 +46,17 @@ export function useTransactionForm({ transaction, onSubmit }: UseTransactionForm
   const [errors, setErrors] = useState<Partial<Record<keyof TransactionFormData, string>>>({});
 
   // Custom validation function
-  const validate = useCallback(
-    (data: TransactionFormData) => {
-      const validationErrors = transactionService.validateTransactionForm(data);
-      // Convert service errors array to Record format
-      return validationErrors.reduce(
-        (acc, err) => {
-          acc[err.field as keyof TransactionFormData] = err.message;
-          return acc;
-        },
-        {} as Partial<Record<keyof TransactionFormData, string>>
-      );
-    },
-    [transactionService]
-  );
+  const validate = useCallback((data: TransactionFormData) => {
+    const validationErrors = validateTransactionForm(data);
+    // Convert service errors array to Record format
+    return validationErrors.reduce(
+      (acc, err) => {
+        acc[err.field as keyof TransactionFormData] = err.message;
+        return acc;
+      },
+      {} as Partial<Record<keyof TransactionFormData, string>>
+    );
+  }, []);
 
   const setField = useCallback(
     <K extends keyof TransactionFormData>(field: K, value: TransactionFormData[K]) => {
@@ -84,23 +82,10 @@ export function useTransactionForm({ transaction, onSubmit }: UseTransactionForm
       return;
     }
 
-    try {
-      const transactionData = transactionService.transformFormToTransaction(formData);
+    const transactionData = transformFormToTransaction(formData);
 
-      if (transaction) {
-        // Edit mode
-        await transactionService.update(transaction.id, transactionData);
-      } else {
-        // Create mode
-        await transactionService.create(transactionData);
-      }
-
-      if (onSubmit) {
-        await onSubmit(transactionData);
-      }
-    } catch (error) {
-      // Error is handled in service, just prevent form from continuing
-      throw error;
+    if (onSubmit) {
+      await onSubmit(transactionData);
     }
   };
 

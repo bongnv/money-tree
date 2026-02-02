@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { useAccounts, useTransactions, useTransactionTypes, useCategories } from '../index';
+import { useStore } from '@/contexts/StoreContext';
 import { useReportService, useCalculationService } from '../useServices';
-import { useBaseCurrency } from '../useSyncMetadata';
 import { useExchangeRates } from '../useExchangeRates';
 import { getTodayDate } from '@/utils/date.utils';
 import type { CashFlowData, CashFlowTrendPoint } from '@/services/report.service';
@@ -47,13 +46,9 @@ interface ChartData {
  * @returns All data and controls needed for cash flow reports
  */
 export function useCashFlowReport() {
-  const accounts = useAccounts();
-  const allTransactions = useTransactions();
-  const transactionTypes = useTransactionTypes();
-  const categories = useCategories();
+  const { accounts, transactions, transactionTypes, categories, baseCurrency } = useStore();
   const reportService = useReportService();
   const calculationService = useCalculationService();
-  const defaultCurrency = useBaseCurrency();
 
   // Report parameters
   const today = getTodayDate();
@@ -69,11 +64,8 @@ export function useCashFlowReport() {
 
   // Set conversion currency to base currency when it loads
   useEffect(() => {
-    if (defaultCurrency && conversionCurrency === undefined) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setConversionCurrency(defaultCurrency);
-    }
-  }, [defaultCurrency, conversionCurrency]);
+    setConversionCurrency(baseCurrency);
+  }, [baseCurrency]);
 
   // Cash flow state
   const [cashFlow, setCashFlow] = useState<CashFlowData | null>(null);
@@ -122,7 +114,7 @@ export function useCashFlowReport() {
   // Filter transactions based on current filters
   const filteredTransactions = useMemo(
     () =>
-      allTransactions?.filter((transaction) => {
+      transactions.filter((transaction) => {
         // Filter by account
         if (filters.accountIds.length > 0) {
           const matchesFrom =
@@ -136,7 +128,7 @@ export function useCashFlowReport() {
 
         // Filter by category (via transaction type)
         if (filters.categoryIds.length > 0) {
-          const transactionType = transactionTypes?.find(
+          const transactionType = transactionTypes.find(
             (tt) => tt.id === transaction.transactionTypeId
           );
           if (!transactionType || !filters.categoryIds.includes(transactionType.categoryId)) {
@@ -154,8 +146,8 @@ export function useCashFlowReport() {
         }
 
         return true;
-      }) ?? [],
-    [allTransactions, filters, transactionTypes]
+      }),
+    [transactions, filters, transactionTypes]
   );
 
   // Get exchange rates map

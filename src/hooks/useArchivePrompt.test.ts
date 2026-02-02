@@ -1,20 +1,20 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { useArchivePrompt } from './useArchivePrompt';
-import { useBaseCurrency } from './useSyncMetadata';
 import { useArchiveService } from './useServices';
 import { useSync } from '@/contexts/SyncContext';
+import { useStore } from '@/contexts/StoreContext';
 import { CurrencyCode } from '@/types/enums';
 import { act } from 'react';
 
 // Mock dependencies
-jest.mock('./useSyncMetadata');
 jest.mock('./useServices');
 jest.mock('@/contexts/SyncContext');
+jest.mock('@/contexts/StoreContext');
 jest.mock('react-router-dom', () => ({
   useNavigate: () => jest.fn(),
 }));
 
-const mockUseBaseCurrency = useBaseCurrency as jest.MockedFunction<typeof useBaseCurrency>;
+const mockUseStore = useStore as jest.MockedFunction<typeof useStore>;
 const mockUseArchiveService = useArchiveService as jest.MockedFunction<typeof useArchiveService>;
 const mockUseSync = useSync as jest.MockedFunction<typeof useSync>;
 
@@ -29,10 +29,17 @@ describe('useArchivePrompt', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseBaseCurrency.mockReturnValue(CurrencyCode.USD);
+    mockUseStore.mockReturnValue({
+      baseCurrency: CurrencyCode.USD,
+    } as any);
     mockUseArchiveService.mockReturnValue(mockArchiveService as any);
     mockUseSync.mockReturnValue({
-      syncStatus: { status: 'synced', errorMessage: null, providerName: 'OneDrive', fileName: 'test.json' },
+      syncStatus: {
+        status: 'synced',
+        errorMessage: null,
+        providerName: 'OneDrive',
+        fileName: 'test.json',
+      },
       selectFile: jest.fn(),
       listItems: jest.fn(),
       fullSync: jest.fn(),
@@ -43,7 +50,12 @@ describe('useArchivePrompt', () => {
 
   it('should not show prompt when not connected', async () => {
     mockUseSync.mockReturnValue({
-      syncStatus: { status: 'not-connected', errorMessage: null, providerName: null, fileName: null },
+      syncStatus: {
+        status: 'not-connected',
+        errorMessage: null,
+        providerName: null,
+        fileName: null,
+      },
       selectFile: jest.fn(),
       listItems: jest.fn(),
       fullSync: jest.fn(),
@@ -153,7 +165,12 @@ describe('useArchivePrompt', () => {
 
     // Change sync status
     mockUseSync.mockReturnValue({
-      syncStatus: { status: 'syncing', errorMessage: null, providerName: 'OneDrive', fileName: 'test.json' },
+      syncStatus: {
+        status: 'syncing',
+        errorMessage: null,
+        providerName: 'OneDrive',
+        fileName: 'test.json',
+      },
       selectFile: jest.fn(),
       listItems: jest.fn(),
       fullSync: jest.fn(),

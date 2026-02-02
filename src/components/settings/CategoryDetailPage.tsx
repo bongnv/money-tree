@@ -5,19 +5,21 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { TransactionTypeList } from '../categories/TransactionTypeList';
 import { TransactionTypeDialog } from '../categories/TransactionTypeDialog';
 import type { TransactionType } from '../../types/models';
-import { useCategories } from '../../hooks/useCategories';
-import { useTransactionTypes } from '../../hooks/useTransactionTypes';
-import { useTransactionTypeService } from '@/hooks/useServices';
+import { useStore } from '@/contexts/StoreContext';
 
 export const CategoryDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const categories = useCategories();
-  const allTransactionTypes = useTransactionTypes();
-  const transactionTypeService = useTransactionTypeService();
+  const {
+    categories,
+    transactionTypes: allTransactionTypes,
+    addTransactionType,
+    updateTransactionType,
+    deleteTransactionType,
+  } = useStore();
 
-  const category = categories?.find((c) => c.id === id);
-  const categoryTransactionTypes = allTransactionTypes?.filter((tt) => tt.categoryId === id) || [];
+  const category = categories.find((c) => c.id === id);
+  const categoryTransactionTypes = allTransactionTypes.filter((tt) => tt.categoryId === id);
 
   const [transactionTypeDialogOpen, setTransactionTypeDialogOpen] = useState(false);
   const [selectedTransactionType, setSelectedTransactionType] = useState<
@@ -54,9 +56,9 @@ export const CategoryDetailPage: React.FC = () => {
     transactionType: Omit<TransactionType, 'id' | 'createdAt' | 'updatedAt'>
   ) => {
     if (selectedTransactionType?.id) {
-      await transactionTypeService.update(selectedTransactionType.id, transactionType);
+      await updateTransactionType(selectedTransactionType.id, transactionType);
     } else {
-      await transactionTypeService.create(transactionType);
+      await addTransactionType(transactionType);
     }
     handleCloseTransactionTypeDialog();
   };
@@ -67,15 +69,15 @@ export const CategoryDetailPage: React.FC = () => {
         `Are you sure you want to delete the transaction type "${transactionType.name}"?`
       )
     ) {
-      await transactionTypeService.delete(transactionType.id);
+      await deleteTransactionType(transactionType.id);
     }
   };
 
   const handleArchiveTransactionType = async (transactionType: TransactionType) => {
     if (transactionType.isActive) {
-      await transactionTypeService.archive(transactionType.id);
+      await updateTransactionType(transactionType.id, { isActive: false });
     } else {
-      await transactionTypeService.unarchive(transactionType.id);
+      await updateTransactionType(transactionType.id, { isActive: true });
     }
   };
 

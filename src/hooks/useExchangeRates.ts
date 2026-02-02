@@ -1,10 +1,9 @@
 /**
  * Custom hooks for ExchangeRate data access
- * Uses useLiveQuery for reactive database queries
+ * Uses StoreContext for reactive database queries
  */
 import { useEffect, useMemo } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { useExchangeRateService } from './useServices';
+import { useStore } from '@/contexts/StoreContext';
 import { getCurrentMonth } from '@/utils/date.utils';
 import { fetchRateFromAPI } from '@/utils/exchangeRate.utils';
 import type { ExchangeRate } from '../types/models';
@@ -21,8 +20,7 @@ let isFetching = false;
  * Returns undefined while loading, empty array if no rates exist
  */
 export function useExchangeRatesArray(): ExchangeRate[] | undefined {
-  const exchangeRateService = useExchangeRateService();
-  const rates = useLiveQuery(() => exchangeRateService.getAll());
+  const { exchangeRates, addExchangeRate } = useStore();
   const currentMonth = getCurrentMonth();
 
   // Gather all supported currencies from enum
@@ -32,7 +30,7 @@ export function useExchangeRatesArray(): ExchangeRate[] | undefined {
 
   // Ensure current month rates are available
   useEffect(() => {
-    if (!rates || isFetching) {
+    if (!exchangeRates || isFetching) {
       return;
     }
 
@@ -41,7 +39,7 @@ export function useExchangeRatesArray(): ExchangeRate[] | undefined {
     const ensureCurrentMonthRates = async () => {
       // Build a map of existing rates for quick lookup
       const existingRatesMap = new Set<string>();
-      for (const rate of rates) {
+      for (const rate of exchangeRates) {
         if (rate.month === currentMonth) {
           const key = `${rate.fromCurrency}_${rate.toCurrency}`;
           existingRatesMap.add(key);
@@ -72,16 +70,14 @@ export function useExchangeRatesArray(): ExchangeRate[] | undefined {
 
           const rate = await fetchRateFromAPI(currency);
 
-          const newRate: ExchangeRate = {
-            id: `rate-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          const newRate: Omit<ExchangeRate, 'id' | 'createdAt'> = {
             month: currentMonth,
             fromCurrency: currency,
             toCurrency: CurrencyCode.USD,
             rate,
-            createdAt: new Date().toISOString(),
           };
 
-          await exchangeRateService.create(newRate);
+          await addExchangeRate(newRate);
         }
       } catch (err) {
         if (!cancelled) {
@@ -99,9 +95,9 @@ export function useExchangeRatesArray(): ExchangeRate[] | undefined {
     return () => {
       cancelled = true;
     };
-  }, [rates, allCurrencies, currentMonth, exchangeRateService]);
+  }, [exchangeRates, allCurrencies, currentMonth, addExchangeRate]);
 
-  return rates;
+  return exchangeRates;
 }
 
 /**
@@ -111,17 +107,17 @@ export function useExchangeRatesArray(): ExchangeRate[] | undefined {
  * Automatically ensures current month rates are available for all currencies in use
  */
 export function useExchangeRates(): Map<string, number> | undefined {
-  const rates = useExchangeRatesArray();
+  const exchangeRates = useExchangeRatesArray();
 
   return useMemo(() => {
-    if (rates === undefined) return undefined;
+    if (exchangeRates === undefined) return undefined;
 
     const ratesMap = new Map<string, number>();
-    for (const rate of rates) {
+    for (const rate of exchangeRates) {
       const key = `${rate.month}_${rate.fromCurrency}_${rate.toCurrency}`;
       ratesMap.set(key, rate.rate);
     }
 
     return ratesMap;
-  }, [rates]);
+  }, [exchangeRates]);
 }

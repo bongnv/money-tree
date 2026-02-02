@@ -1,30 +1,22 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BudgetsPage } from './BudgetsPage';
-import { useCategories } from '../../hooks/useCategories';
-import { useTransactionTypes } from '../../hooks/useTransactionTypes';
-import { useBudgets } from '../../hooks/useBudgets';
-import { useBaseCurrency } from '../../hooks/useSyncMetadata';
-import { useBudgetService } from '@/hooks/useServices';
+import { useStore } from '@/contexts/StoreContext';
 import { useBudgetGrouping } from '@/hooks/budgets/useBudgetGrouping';
 import type { Budget, Category, TransactionType } from '../../types/models';
 import { BudgetPeriod, Group, CurrencyCode } from '../../types/enums';
 
-jest.mock('../../hooks/useCategories');
-jest.mock('../../hooks/useTransactionTypes');
-jest.mock('../../hooks/useBudgets');
-jest.mock('../../hooks/useSyncMetadata');
+jest.mock('@/contexts/StoreContext');
 jest.mock('@/hooks/useServices');
 jest.mock('@/hooks/budgets/useBudgetGrouping');
 
 jest.mock('./BudgetDialog', () => ({
-  BudgetDialog: ({ open, onSubmit }: any) => (
+  BudgetDialog: ({ open, onSubmit }: any) =>
     open ? (
       <div data-testid="budget-dialog">
         <button onClick={() => onSubmit({ name: 'Test Budget', amount: 1000 })}>Submit</button>
       </div>
-    ) : null
-  ),
+    ) : null,
 }));
 
 jest.mock('../common/PeriodSelector', () => ({
@@ -45,14 +37,18 @@ jest.mock('../common/CategoryFilter', () => ({
   ),
 }));
 
-const mockUseCategories = useCategories as jest.MockedFunction<typeof useCategories>;
-const mockUseTransactionTypes = useTransactionTypes as jest.MockedFunction<typeof useTransactionTypes>;
-const mockUseBudgets = useBudgets as jest.MockedFunction<typeof useBudgets>;
-const mockUseBaseCurrency = useBaseCurrency as jest.MockedFunction<typeof useBaseCurrency>;
-const mockUseBudgetService = useBudgetService as jest.MockedFunction<typeof useBudgetService>;
+const mockUseStore = useStore as jest.MockedFunction<typeof useStore>;
 const mockUseBudgetGrouping = useBudgetGrouping as jest.MockedFunction<typeof useBudgetGrouping>;
 
 describe('BudgetsPage', () => {
+  // Mock window.alert for tests
+  beforeAll(() => {
+    global.alert = jest.fn();
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
+  });
   const mockCategory: Category = {
     id: 'category-1',
     name: 'Food',
@@ -85,19 +81,25 @@ describe('BudgetsPage', () => {
     updatedAt: '2024-01-01T00:00:00Z',
   };
 
-  const mockBudgetService = {
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-  };
+  const mockAddBudget = jest.fn();
+  const mockUpdateBudget = jest.fn();
+  const mockDeleteBudget = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseCategories.mockReturnValue([mockCategory]);
-    mockUseTransactionTypes.mockReturnValue([mockTransactionType]);
-    mockUseBudgets.mockReturnValue([mockBudget]);
-    mockUseBaseCurrency.mockReturnValue(CurrencyCode.USD);
-    mockUseBudgetService.mockReturnValue(mockBudgetService as any);
+    mockUseStore.mockReturnValue({
+      budgets: [mockBudget],
+      categories: [mockCategory],
+      transactionTypes: [mockTransactionType],
+      transactions: [],
+      accounts: [],
+      assets: [],
+      exchangeRates: [],
+      baseCurrency: CurrencyCode.USD,
+      addBudget: mockAddBudget,
+      updateBudget: mockUpdateBudget,
+      deleteBudget: mockDeleteBudget,
+    } as any);
     mockUseBudgetGrouping.mockReturnValue({
       groupedBudgets: {},
       isLoading: false,
@@ -136,7 +138,7 @@ describe('BudgetsPage', () => {
 
   it('should create budget when dialog is submitted in create mode', async () => {
     const user = userEvent.setup();
-    mockBudgetService.create.mockResolvedValue(undefined);
+    mockAddBudget.mockResolvedValue(undefined);
 
     render(<BudgetsPage />);
 
@@ -147,7 +149,7 @@ describe('BudgetsPage', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockBudgetService.create).toHaveBeenCalledWith({
+      expect(mockAddBudget).toHaveBeenCalledWith({
         name: 'Test Budget',
         amount: 1000,
       });
@@ -157,7 +159,7 @@ describe('BudgetsPage', () => {
   it('should handle create error with alert', async () => {
     const user = userEvent.setup();
     const alertSpy = jest.spyOn(window, 'alert').mockImplementation();
-    mockBudgetService.create.mockRejectedValue(new Error('Create failed'));
+    mockAddBudget.mockRejectedValue(new Error('Create failed'));
 
     render(<BudgetsPage />);
 
@@ -191,14 +193,11 @@ describe('BudgetsPage', () => {
     expect(screen.getByTestId('category-filter')).toBeInTheDocument();
   });
 
-  it('should handle undefined base currency with default USD', () => {
-    mockUseBaseCurrency.mockReturnValue(undefined);
-    render(<BudgetsPage />);
-    expect(screen.getByText('Budgets')).toBeInTheDocument();
-  });
-
   it('should handle empty budgets list', () => {
-    mockUseBudgets.mockReturnValue([]);
+    mockUseStore.mockReturnValue({
+      budgets: [],
+      categories: [mockCategory],
+    } as any);
     mockUseBudgetGrouping.mockReturnValue({
       groupedBudgets: {},
       isLoading: false,

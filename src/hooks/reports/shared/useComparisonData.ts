@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useAccounts, useAssets, useTransactions } from '../../index';
+import { useStore } from '@/contexts/StoreContext';
 import { useReportService } from '../../useServices';
 import { useExchangeRates } from '../../useExchangeRates';
 import type { BalanceSheetData } from '@/services/report.service';
@@ -28,9 +28,7 @@ export function useComparisonData(
   comparisonType: ComparisonType,
   conversionCurrency: CurrencyCode
 ) {
-  const accounts = useAccounts();
-  const manualAssets = useAssets();
-  const transactions = useTransactions();
+  const { accounts, assets, transactions } = useStore();
   const reportService = useReportService();
 
   // Get exchange rates map
@@ -42,14 +40,14 @@ export function useComparisonData(
   const transactionsKey = useMemo(
     () =>
       transactions
-        ?.map((t) => t.id)
+        ?.map((t: { id: string }) => t.id)
         .sort()
         .join(',') || '',
     [transactions]
   );
 
   useEffect(() => {
-    if (!accounts || !manualAssets || !transactions || !ratesMap) {
+    if (!accounts || !assets || !transactions || !ratesMap) {
       return;
     }
 
@@ -61,7 +59,7 @@ export function useComparisonData(
           comparisonType === 'month'
             ? reportService.calculateMonthOverMonthComparison(
                 accounts,
-                manualAssets,
+                assets,
                 transactions,
                 reportDate,
                 conversionCurrency,
@@ -69,7 +67,7 @@ export function useComparisonData(
               )
             : reportService.calculateYearOverYearComparison(
                 accounts,
-                manualAssets,
+                assets,
                 transactions,
                 reportDate,
                 conversionCurrency,

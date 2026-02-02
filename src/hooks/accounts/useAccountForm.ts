@@ -1,6 +1,9 @@
 import { useState, useCallback } from 'react';
-import { useAccountService } from '../useServices';
-import type { AccountFormData } from '@/services/account.service';
+import {
+  validateAccountForm,
+  transformFormToAccount,
+  type AccountFormData,
+} from '@/utils/account.utils';
 import type { Account } from '@/types/models';
 import { AccountType, CurrencyCode } from '@/types/enums';
 
@@ -14,8 +17,6 @@ interface UseAccountFormProps {
  * Manages form state with account-specific validation and transformation
  */
 export function useAccountForm({ account, onSubmit }: UseAccountFormProps = {}) {
-  const accountService = useAccountService();
-
   // Initialize form data from account (edit mode) or defaults (create mode)
   const initialData: AccountFormData = account
     ? {
@@ -39,20 +40,17 @@ export function useAccountForm({ account, onSubmit }: UseAccountFormProps = {}) 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Custom validation function
-  const validate = useCallback(
-    (data: AccountFormData) => {
-      const validationErrors = accountService.validateAccountForm(data);
-      // Convert service errors array to Record format
-      return validationErrors.reduce(
-        (acc, err) => {
-          acc[err.field] = err.message;
-          return acc;
-        },
-        {} as Partial<Record<keyof AccountFormData, string>>
-      );
-    },
-    [accountService]
-  );
+  const validate = useCallback((data: AccountFormData) => {
+    const validationErrors = validateAccountForm(data);
+    // Convert service errors array to Record format
+    return validationErrors.reduce(
+      (acc, err) => {
+        acc[err.field] = err.message;
+        return acc;
+      },
+      {} as Partial<Record<keyof AccountFormData, string>>
+    );
+  }, []);
 
   const setField = useCallback(
     <K extends keyof AccountFormData>(field: K, value: AccountFormData[K]) => {
@@ -80,15 +78,7 @@ export function useAccountForm({ account, onSubmit }: UseAccountFormProps = {}) 
 
     setIsSubmitting(true);
     try {
-      const accountData = accountService.transformFormToAccount(formData);
-
-      if (account) {
-        // Edit mode
-        await accountService.update(account.id, accountData);
-      } else {
-        // Create mode
-        await accountService.create(accountData);
-      }
+      const accountData = transformFormToAccount(formData);
 
       if (onSubmit) {
         await onSubmit(accountData);

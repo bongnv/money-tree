@@ -12,14 +12,12 @@ import {
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
 import { DataSyncSettings } from './DataSyncSettings';
 import { CurrencyCode } from '../../types/enums';
-import { useBaseCurrency } from '../../hooks/useSyncMetadata';
-import { useSyncMetadataService } from '@/hooks/useServices';
+import { useStore } from '@/contexts/StoreContext';
 
 export const PreferencesPage: React.FC = () => {
-  const syncMetadataService = useSyncMetadataService();
-  const baseCurrency = useBaseCurrency();
+  const { baseCurrency, setBaseCurrency } = useStore();
   const handleCurrencyChange = async (newCurrency: CurrencyCode) => {
-    await syncMetadataService.setBaseCurrency(newCurrency);
+    await setBaseCurrency(newCurrency);
   };
 
   return (
@@ -38,7 +36,7 @@ export const PreferencesPage: React.FC = () => {
           <Select
             labelId="base-currency-label"
             id="base-currency-select"
-            value={baseCurrency || CurrencyCode.USD}
+            value={baseCurrency}
             label="Base Currency"
             onChange={(e) => handleCurrencyChange(e.target.value as CurrencyCode)}
           >

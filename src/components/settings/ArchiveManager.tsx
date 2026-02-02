@@ -25,16 +25,14 @@ import { useArchiveService } from '@/hooks/useServices';
 import { useAppContext } from '@/contexts/AppContext';
 import { formatCurrency } from '../../utils/currency.utils';
 import type { YearEndSummary } from '../../types/models';
-import { useBaseCurrency, useArchivedYears } from '../../hooks/useSyncMetadata';
-import { useSyncMetadataService } from '@/hooks/useServices';
+import { useStore } from '@/contexts/StoreContext';
 import { CurrencyCode } from '../../types/enums';
 
 export const ArchiveManager: React.FC = () => {
-  const syncMetadataService = useSyncMetadataService();
+  const { baseCurrency, archivedYears, addArchivedYear } = useStore();
+  const effectiveBaseCurrency = baseCurrency || CurrencyCode.USD;
   const archiveService = useArchiveService();
   const { showSnackbar } = useAppContext();
-  const baseCurrency = useBaseCurrency() ?? CurrencyCode.USD;
-  const archivedYears = useArchivedYears();
   const [isExporting, setIsExporting] = useState(false);
   const [exportingYear, setExportingYear] = useState<number | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; year: number | null }>({
@@ -68,7 +66,10 @@ export const ArchiveManager: React.FC = () => {
 
     const calculateSummary = async () => {
       if (archivableYear !== null) {
-        const summary = await archiveService.calculateYearEndSummary(archivableYear, baseCurrency);
+        const summary = await archiveService.calculateYearEndSummary(
+          archivableYear,
+          effectiveBaseCurrency
+        );
         if (isMounted) {
           setYearSummaries({ [archivableYear]: summary });
         }
@@ -82,7 +83,7 @@ export const ArchiveManager: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [archivableYear, baseCurrency, archiveService]);
+  }, [archivableYear, effectiveBaseCurrency, archiveService]);
 
   const handleExportYear = async (year: number) => {
     // Close confirmation dialog
@@ -104,7 +105,7 @@ export const ArchiveManager: React.FC = () => {
         archivedDate: archiveFile.archivedDate,
         summary: archiveFile.summary,
       };
-      await syncMetadataService.addArchivedYear(archiveReference);
+      await addArchivedYear(archiveReference);
 
       showSnackbar(
         `Year ${year} archived successfully. Data has been removed from the main file.`,
@@ -182,7 +183,7 @@ export const ArchiveManager: React.FC = () => {
                       </TableCell>
                       <TableCell align="right">{summary.transactionCount}</TableCell>
                       <TableCell align="right">
-                        {formatCurrency(summary.closingNetWorth, baseCurrency)}
+                        {formatCurrency(summary.closingNetWorth, effectiveBaseCurrency)}
                       </TableCell>
                       <TableCell align="right">
                         <Button
@@ -241,7 +242,7 @@ export const ArchiveManager: React.FC = () => {
                     <TableCell>{new Date(archived.archivedDate).toLocaleDateString()}</TableCell>
                     <TableCell align="right">{archived.summary.transactionCount}</TableCell>
                     <TableCell align="right">
-                      {formatCurrency(archived.summary.closingNetWorth, baseCurrency)}
+                      {formatCurrency(archived.summary.closingNetWorth, effectiveBaseCurrency)}
                     </TableCell>
                   </TableRow>
                 ))}

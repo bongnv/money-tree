@@ -1,6 +1,9 @@
 import { useState, useCallback } from 'react';
-import { useCategoryService } from '../useServices';
-import type { CategoryFormData } from '@/services/category.service';
+import {
+  validateCategoryForm,
+  transformFormToCategory,
+  type CategoryFormData,
+} from '@/utils/category.utils';
 import type { Category } from '@/types/models';
 
 interface UseCategoryFormProps {
@@ -15,8 +18,6 @@ interface UseCategoryFormProps {
  * Manages form state with category-specific validation and transformation
  */
 export function useCategoryForm({ category, onSubmit }: UseCategoryFormProps = {}) {
-  const categoryService = useCategoryService();
-
   // Initialize form data from category (edit mode) or defaults (create mode)
   const initialData: CategoryFormData = category
     ? {
@@ -30,20 +31,17 @@ export function useCategoryForm({ category, onSubmit }: UseCategoryFormProps = {
   const [errors, setErrors] = useState<Partial<Record<keyof CategoryFormData, string>>>({});
 
   // Custom validation function
-  const validate = useCallback(
-    (data: CategoryFormData) => {
-      const validationErrors = categoryService.validateCategoryForm(data);
-      // Convert service errors array to Record format
-      return validationErrors.reduce(
-        (acc, err) => {
-          acc[err.field] = err.message;
-          return acc;
-        },
-        {} as Partial<Record<keyof CategoryFormData, string>>
-      );
-    },
-    [categoryService]
-  );
+  const validate = useCallback((data: CategoryFormData) => {
+    const validationErrors = validateCategoryForm(data);
+    // Convert service errors array to Record format
+    return validationErrors.reduce(
+      (acc, err) => {
+        acc[err.field] = err.message;
+        return acc;
+      },
+      {} as Partial<Record<keyof CategoryFormData, string>>
+    );
+  }, []);
 
   const setField = useCallback(
     <K extends keyof CategoryFormData>(field: K, value: CategoryFormData[K]) => {
@@ -69,23 +67,10 @@ export function useCategoryForm({ category, onSubmit }: UseCategoryFormProps = {
       return;
     }
 
-    try {
-      const categoryData = categoryService.transformFormToCategory(formData);
+    const categoryData = transformFormToCategory(formData);
 
-      if (category) {
-        // Edit mode
-        await categoryService.update(category.id, categoryData);
-      } else {
-        // Create mode
-        await categoryService.create(categoryData);
-      }
-
-      if (onSubmit) {
-        await onSubmit(categoryData);
-      }
-    } catch (error) {
-      // Error is handled in service, just prevent form from continuing
-      throw error;
+    if (onSubmit) {
+      await onSubmit(categoryData);
     }
   };
 

@@ -34,11 +34,11 @@ import { CHART_COLORS } from '../../theme';
 import { formatCurrency } from '../../utils/currency.utils';
 import { CurrencyCode } from '../../types/enums';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
-import { useCategories } from '../../hooks/useCategories';
+import { useStore } from '@/contexts/StoreContext';
 
 export const BudgetPerformanceReport: React.FC = () => {
   const navigate = useNavigate();
-  const categories = useCategories();
+  const { categories } = useStore();
 
   const {
     displayPerformance,

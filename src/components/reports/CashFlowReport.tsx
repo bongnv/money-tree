@@ -25,8 +25,7 @@ import Grid from '@mui/material/Grid';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import { useCashFlowReport } from '@/hooks/reports/useCashFlowReport';
-import { useTransactionTypes } from '@/hooks/useTransactionTypes';
-import { useCategories } from '@/hooks/useCategories';
+import { useStore } from '@/contexts/StoreContext';
 import { LineChart } from '../common/charts/LineChart';
 import { PieChart } from '../common/charts/PieChart';
 import { PeriodSelector } from '../common/PeriodSelector';
@@ -61,8 +60,7 @@ const buildCashFlowTrendLines = (hasIncomeTypes: boolean, hasExpenseTypes: boole
 
 export const CashFlowReport: React.FC = () => {
   const navigate = useNavigate();
-  const transactionTypes = useTransactionTypes();
-  const categories = useCategories();
+  const { transactionTypes, categories } = useStore();
 
   const {
     cashFlow,
@@ -170,12 +168,12 @@ export const CashFlowReport: React.FC = () => {
 
   // Determine which transaction types exist in filtered categories
   const hasIncomeTypes = React.useMemo(
-    () => hasTransactionTypesInGroup(filters.categoryIds, transactionTypes || [], Group.INCOME),
+    () => hasTransactionTypesInGroup(filters.categoryIds, transactionTypes, Group.INCOME),
     [filters.categoryIds, transactionTypes]
   );
 
   const hasExpenseTypes = React.useMemo(
-    () => hasTransactionTypesInGroup(filters.categoryIds, transactionTypes || [], Group.EXPENSE),
+    () => hasTransactionTypesInGroup(filters.categoryIds, transactionTypes, Group.EXPENSE),
     [filters.categoryIds, transactionTypes]
   );
 
@@ -223,7 +221,7 @@ export const CashFlowReport: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4.5 }}>
             <CategoryFilter
-              categories={categories || []}
+              categories={categories}
               selectedCategories={filters.categoryIds}
               onChange={handleCategoryChange}
               onClear={handleClearFilters}

@@ -4,14 +4,12 @@ import { Add as AddIcon } from '@mui/icons-material';
 import type { ManualAsset } from '../../types/models';
 import { ManualAssetList } from './ManualAssetList';
 import { ManualAssetDialog } from './ManualAssetDialog';
-import { useAssets } from '../../hooks/useAssets';
-import { useAssetService } from '@/hooks/useServices';
+import { useStore } from '@/contexts/StoreContext';
 import { useAssetDialog } from '@/hooks/assets/useAssetDialog';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 
 export const ManualAssetsPage: React.FC = () => {
-  const manualAssets = useAssets();
-  const assetService = useAssetService();
+  const { assets, deleteAsset: deleteAssetOp } = useStore();
   const assetDialog = useAssetDialog();
   const [deleteAsset, setDeleteAsset] = useState<ManualAsset | null>(null);
 
@@ -33,7 +31,7 @@ export const ManualAssetsPage: React.FC = () => {
 
   const handleConfirmDelete = async () => {
     if (deleteAsset?.id) {
-      await assetService.delete(deleteAsset.id);
+      await deleteAssetOp(deleteAsset.id);
       setDeleteAsset(null);
     }
   };
@@ -50,7 +48,7 @@ export const ManualAssetsPage: React.FC = () => {
       </Box>
 
       <ManualAssetList
-        assets={manualAssets || []}
+        assets={assets || []}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onUpdateValue={handleUpdateValue}

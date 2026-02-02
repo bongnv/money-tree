@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useAccounts, useAssets, useTransactions, useExchangeRates } from '../index';
+import { useStore } from '@/contexts/StoreContext';
 import { useReportService } from '../useServices';
-import { useBaseCurrency } from '../useSyncMetadata';
+import { useExchangeRates } from '../useExchangeRates';
 import { useNetWorthTrend } from './shared/useNetWorthTrend';
 import { useComparisonData, type ComparisonType } from './shared/useComparisonData';
 import { CurrencyCode } from '@/types/enums';
@@ -21,11 +21,8 @@ import { getTodayDate } from '@/utils/date.utils';
  * @returns All data and controls needed for balance sheet reports
  */
 export function useBalanceSheet() {
-  const accounts = useAccounts();
-  const manualAssets = useAssets();
-  const transactions = useTransactions();
+  const { accounts, assets, transactions, baseCurrency } = useStore();
   const reportService = useReportService();
-  const defaultCurrency = useBaseCurrency();
 
   // Report parameters
   const today = getTodayDate();
@@ -35,27 +32,24 @@ export function useBalanceSheet() {
     undefined
   );
 
-  // Set conversion currency to base currency when it loads
+  // Set conversion currency to default currency initially
   useEffect(() => {
-    if (defaultCurrency && conversionCurrency === undefined) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setConversionCurrency(defaultCurrency);
-    }
-  }, [defaultCurrency, conversionCurrency]);
+    setConversionCurrency(baseCurrency);
+  }, [baseCurrency]);
 
   // Get exchange rates map
   const ratesMap = useExchangeRates();
 
   // Compute balance sheet with loaded rates using useMemo
   const balanceSheetResult = useMemo(() => {
-    if (!accounts || !manualAssets || !transactions || !ratesMap || !conversionCurrency) {
+    if (!accounts || !assets || !transactions || !ratesMap || !conversionCurrency) {
       return { data: null, error: null };
     }
 
     try {
       const result = reportService.calculateBalanceSheet(
         accounts,
-        manualAssets,
+        assets,
         transactions,
         reportDate,
         conversionCurrency,
@@ -67,15 +61,7 @@ export function useBalanceSheet() {
       console.error('[useBalanceSheet] Computation failed', err);
       return { data: null, error: err instanceof Error ? err : new Error(String(err)) };
     }
-  }, [
-    accounts,
-    manualAssets,
-    transactions,
-    reportDate,
-    conversionCurrency,
-    ratesMap,
-    reportService,
-  ]);
+  }, [accounts, assets, transactions, reportDate, conversionCurrency, ratesMap, reportService]);
 
   const balanceSheet = balanceSheetResult.data;
   const balanceSheetError = balanceSheetResult.error;
@@ -106,7 +92,7 @@ export function useBalanceSheet() {
   // Derive loading state from data availability
   const isLoadingBalanceSheet =
     !accounts ||
-    !manualAssets ||
+    !assets ||
     !transactions ||
     !ratesMap ||
     !conversionCurrency ||
@@ -133,6 +119,6 @@ export function useBalanceSheet() {
     setConversionCurrency,
 
     // Data for child components
-    manualAssets,
+    assets,
   };
 }

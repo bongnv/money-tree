@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAccounts, useAssets, useTransactions } from '../../index';
+import { useStore } from '@/contexts/StoreContext';
 import { useReportService } from '../../useServices';
 import { useExchangeRates } from '../../useExchangeRates';
 import type { NetWorthTrendPoint } from '@/services/report.service';
@@ -20,9 +20,7 @@ export function useNetWorthTrend(
   interval: number = 30,
   conversionCurrency: CurrencyCode
 ) {
-  const accounts = useAccounts();
-  const manualAssets = useAssets();
-  const transactions = useTransactions();
+  const { accounts, assets: manualAssets, transactions } = useStore();
   const reportService = useReportService();
 
   // Get exchange rates map

@@ -13,8 +13,7 @@ import { FormDatePicker } from '../common/FormDatePicker';
 import type { Budget } from '../../types/models';
 import { DEFAULT_CURRENCIES } from '../../constants/defaults';
 import { CurrencyCode, Group } from '../../types/enums';
-import { useCategories } from '../../hooks/useCategories';
-import { useTransactionTypes } from '../../hooks/useTransactionTypes';
+import { useStore } from '@/contexts/StoreContext';
 
 interface BudgetDialogProps {
   open: boolean;
@@ -24,8 +23,7 @@ interface BudgetDialogProps {
 }
 
 export const BudgetDialog: React.FC<BudgetDialogProps> = ({ open, budget, onClose, onSubmit }) => {
-  const categories = useCategories();
-  const transactionTypes = useTransactionTypes();
+  const { categories, transactionTypes } = useStore();
 
   const [formData, setFormData] = useState({
     transactionTypeId: budget?.transactionTypeId || '',

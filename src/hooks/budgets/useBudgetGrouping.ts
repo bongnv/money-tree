@@ -1,15 +1,8 @@
 import { useMemo, useCallback } from 'react';
-import {
-  useBudgets,
-  useTransactions,
-  useTransactionTypes,
-  useCategories,
-  useAccounts,
-} from '../index';
+import { useStore } from '@/contexts/StoreContext';
 import { useCalculationService } from '../useServices';
-import { useBaseCurrency } from '../useSyncMetadata';
 import { useExchangeRates } from '../useExchangeRates';
-import { CurrencyCode } from '@/types/enums';
+import type { CurrencyCode } from '@/types/enums';
 import type { Budget } from '@/types/models';
 
 export interface BudgetGroupingItem {
@@ -35,19 +28,15 @@ export type BudgetGroupingData = Record<string, BudgetGroupingCategory>;
  */
 export function useBudgetGrouping(
   selectedPeriod: { startDate: string; endDate: string },
-  selectedCategories: string[]
+  selectedCategories: string[],
+  baseCurrency: CurrencyCode
 ) {
-  const budgets = useBudgets();
-  const transactions = useTransactions();
-  const transactionTypes = useTransactionTypes();
-  const categories = useCategories();
-  const accounts = useAccounts();
-  const baseCurrency = useBaseCurrency() ?? CurrencyCode.USD;
+  const { budgets, transactions, transactionTypes, categories, accounts } = useStore();
   const calculationService = useCalculationService();
 
   // Helper to get category by id - memoized to prevent infinite loops
   const getCategoryById = useCallback(
-    (id: string) => categories?.find((c) => c.id === id),
+    (id: string) => categories.find((c) => c.id === id),
     [categories]
   );
 
@@ -55,8 +44,7 @@ export function useBudgetGrouping(
   const ratesMap = useExchangeRates();
 
   const groupedBudgets = useMemo(() => {
-    if (!budgets || !transactionTypes || !transactions || !accounts || !categories || !ratesMap)
-      return {};
+    if (!ratesMap) return {};
 
     // Filter budgets that are active during the selected period
     let activeBudgets = budgets.filter((budget) => {
@@ -100,7 +88,6 @@ export function useBudgetGrouping(
 
   return {
     groupedBudgets,
-    isLoading:
-      !budgets || !transactionTypes || !transactions || !accounts || !categories || !ratesMap,
+    isLoading: !ratesMap,
   };
 }

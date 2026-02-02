@@ -3,7 +3,7 @@ import { useSearchParams, useLocation } from 'react-router-dom';
 import type { Transaction, TransactionType } from '@/types/models';
 import { Group } from '@/types/enums';
 import { getTodayDate } from '@/utils/date.utils';
-import { useTransactionService } from '@/hooks/useServices';
+import { filterTransactions } from '@/utils/transaction.utils';
 
 export interface TransactionFiltersState {
   dateFrom: string;
@@ -26,7 +26,6 @@ export function useTransactionFilters({
 }: UseTransactionFiltersParams) {
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  const transactionService = useTransactionService();
 
   // Default to Year to Date
   const today = getTodayDate();
@@ -71,9 +70,7 @@ export function useTransactionFilters({
   // Filter transactions based on filter state
   const filteredTransactions = useMemo(() => {
     if (!transactions || !transactionTypes) return [];
-    return transactionService.filterTransactions(transactions, filters, transactionTypes);
-    // transactionService is stable from context, no need to include
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return filterTransactions(transactions, filters, transactionTypes);
   }, [transactions, filters, transactionTypes]);
 
   return {

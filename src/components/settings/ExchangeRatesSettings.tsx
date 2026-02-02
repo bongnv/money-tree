@@ -15,12 +15,11 @@ import {
   InputLabel,
   Alert,
 } from '@mui/material';
-import { useBaseCurrency } from '../../hooks/useSyncMetadata';
 import { useExchangeRatesArray } from '../../hooks/useExchangeRates';
-import { CurrencyCode } from '@/types/enums';
+import { useStore } from '@/contexts/StoreContext';
 
 export const ExchangeRatesSettings: React.FC = () => {
-  const baseCurrency = useBaseCurrency() ?? CurrencyCode.USD;
+  const { baseCurrency } = useStore();
   const rates = useExchangeRatesArray();
 
   const currentYear = new Date().getFullYear();
@@ -86,8 +85,8 @@ export const ExchangeRatesSettings: React.FC = () => {
 
         {ratesByPairAndMonth.size === 0 ? (
           <Alert severity="info">
-            No exchange rates to USD found for {selectedYear}. Rates will be automatically fetched
-            when viewing reports with foreign currency accounts.
+            No exchange rates to {baseCurrency.toUpperCase()} found for {selectedYear}. Rates will
+            be automatically fetched when viewing reports with foreign currency accounts.
           </Alert>
         ) : (
           <TableContainer>
@@ -138,10 +137,11 @@ export const ExchangeRatesSettings: React.FC = () => {
 
         <Box sx={{ mt: 2 }}>
           <Typography variant="caption" color="text.secondary">
-            Exchange rates to USD are automatically fetched from exchangerate-api.com when viewing
-            reports and cached locally. Cross-currency conversions are calculated dynamically
-            through USD. Rates are used to convert foreign currency transactions and balances to
-            your base currency ({baseCurrency.toUpperCase()}).
+            Exchange rates to {baseCurrency.toUpperCase()} are automatically fetched from
+            exchangerate-api.com when viewing reports and cached locally. Cross-currency conversions
+            are calculated dynamically through {baseCurrency.toUpperCase()}. Rates are used to
+            convert foreign currency transactions and balances to your base currency (
+            {baseCurrency.toUpperCase()}).
           </Typography>
         </Box>
       </Paper>

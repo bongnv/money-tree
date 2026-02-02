@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import { useBudgets, useTransactions, useTransactionTypes, useAccounts } from '../index';
+import { useStore } from '@/contexts/StoreContext';
 import { useCalculationService } from '../useServices';
-import { useBaseCurrency } from '../useSyncMetadata';
 import { useExchangeRates } from '../useExchangeRates';
-import { Group, CurrencyCode } from '@/types/enums';
+import { Group } from '@/types/enums';
+import type { CurrencyCode } from '@/types/enums';
 import type { PeriodOption } from '@/components/common/PeriodSelector';
 
 export interface BudgetWithUsage {
@@ -19,12 +19,8 @@ export interface BudgetWithUsage {
  * Hook for budget overview on dashboard
  * Calculates top 5 budgets with usage for the selected period
  */
-export function useBudgetOverview(period: PeriodOption) {
-  const budgets = useBudgets();
-  const transactions = useTransactions();
-  const transactionTypes = useTransactionTypes();
-  const accounts = useAccounts();
-  const baseCurrency = useBaseCurrency() ?? CurrencyCode.USD;
+export function useBudgetOverview(period: PeriodOption, baseCurrency: CurrencyCode) {
+  const { budgets, transactions, transactionTypes, accounts } = useStore();
   const calculationService = useCalculationService();
 
   // Get exchange rates map

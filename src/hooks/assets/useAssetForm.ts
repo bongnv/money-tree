@@ -1,6 +1,10 @@
 import { useState, useCallback } from 'react';
-import { useAssetService } from '../useServices';
-import type { AssetFormData, AssetValueUpdateData } from '@/services/asset.service';
+import {
+  validateAssetForm,
+  validateAssetValueUpdate,
+  type AssetFormData,
+  type AssetValueUpdateData,
+} from '@/utils/manualAsset.utils';
 import type { ManualAsset } from '@/types/models';
 import { AssetType, CurrencyCode } from '@/types/enums';
 import { getTodayDate } from '@/utils/date.utils';
@@ -19,7 +23,6 @@ interface UseAssetFormProps {
  * Manages form state with asset-specific validation and transformation
  */
 export function useAssetForm({ asset, mode = 'create', onSubmit }: UseAssetFormProps = {}) {
-  const assetService = useAssetService();
   const isUpdateValueMode = mode === 'update-value';
 
   // Initialize form data based on mode
@@ -54,10 +57,7 @@ export function useAssetForm({ asset, mode = 'create', onSubmit }: UseAssetFormP
   const validate = useCallback(
     (data: AssetFormData | AssetValueUpdateData) => {
       if (isUpdateValueMode && asset) {
-        const validationErrors = assetService.validateAssetValueUpdate(
-          data as AssetValueUpdateData,
-          asset
-        );
+        const validationErrors = validateAssetValueUpdate(data as AssetValueUpdateData, asset);
         return validationErrors.reduce(
           (acc, err) => {
             acc[err.field] = err.message;
@@ -66,7 +66,7 @@ export function useAssetForm({ asset, mode = 'create', onSubmit }: UseAssetFormP
           {} as Record<string, string>
         );
       } else {
-        const validationErrors = assetService.validateAssetForm(data as AssetFormData);
+        const validationErrors = validateAssetForm(data as AssetFormData);
         return validationErrors.reduce(
           (acc, err) => {
             acc[err.field] = err.message;
@@ -76,7 +76,7 @@ export function useAssetForm({ asset, mode = 'create', onSubmit }: UseAssetFormP
         );
       }
     },
-    [assetService, isUpdateValueMode, asset]
+    [isUpdateValueMode, asset]
   );
 
   const setField = useCallback(
@@ -106,33 +106,10 @@ export function useAssetForm({ asset, mode = 'create', onSubmit }: UseAssetFormP
       return;
     }
 
-    try {
-      if (isUpdateValueMode && asset) {
-        // Update value mode
-        const valueData = formData as AssetValueUpdateData;
-        await assetService.addValueHistory(asset.id, {
-          date: valueData.date,
-          value: parseFloat(valueData.value),
-          notes: valueData.note,
-        });
-      } else {
-        const assetData = assetService.transformFormToAsset(formData as AssetFormData);
-
-        if (asset && mode === 'edit') {
-          // Edit mode
-          await assetService.update(asset.id, assetData);
-        } else {
-          // Create mode
-          await assetService.create(assetData);
-        }
-      }
-
-      if (onSubmit) {
-        await onSubmit();
-      }
-    } catch (error) {
-      // Error is handled in service, just prevent form from continuing
-      throw error;
+    // Note: CRUD operations are now handled by the component via onSubmit callback
+    // Component should use StoreContext for create/update operations
+    if (onSubmit) {
+      await onSubmit();
     }
   };
 

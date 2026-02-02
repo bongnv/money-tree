@@ -16,24 +16,14 @@ import { useNavigate } from 'react-router-dom';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useSync } from '@/contexts/SyncContext';
 import { db } from '../../db/database';
-import { useActiveAccounts } from '../../hooks/useAccounts';
-import { useTransactions } from '../../hooks/useTransactions';
-import { useCategories } from '../../hooks/useCategories';
-import { useTransactionTypes } from '../../hooks/useTransactionTypes';
-import { useBudgets } from '../../hooks/useBudgets';
-import { useAssets } from '../../hooks/useAssets';
+import { useStore } from '@/contexts/StoreContext';
 
 export const DataSyncSettings: React.FC = () => {
   const navigate = useNavigate();
   const syncOps = useSync();
   const { syncStatus } = syncOps;
   const cloudFileName = syncStatus.fileName;
-  const accounts = useActiveAccounts();
-  const categories = useCategories();
-  const transactionTypes = useTransactionTypes();
-  const transactions = useTransactions();
-  const assets = useAssets();
-  const budgets = useBudgets();
+  const { accounts, categories, transactionTypes, transactions, assets, budgets } = useStore();
 
   const [disconnectDialogOpen, setDisconnectDialogOpen] = React.useState(false);
 

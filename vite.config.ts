@@ -35,10 +35,6 @@ export default defineConfig(({ mode }) => {
         '@schemas': path.resolve(__dirname, './src/schemas'),
       },
     },
-    define: {
-      'process.env.ONEDRIVE_CLIENT_ID': JSON.stringify(env.ONEDRIVE_CLIENT_ID || ''),
-      'process.env.GOOGLE_DRIVE_CLIENT_ID': JSON.stringify(env.GOOGLE_DRIVE_CLIENT_ID || ''),
-    },
     build: {
       outDir: 'dist',
       sourcemap: mode === 'development',

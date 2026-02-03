@@ -12,12 +12,12 @@
  * 8. Grant admin consent for the permissions
  *
  * BUILD CONFIGURATION:
- * Set ONEDRIVE_CLIENT_ID environment variable when building:
- *   Development: ONEDRIVE_CLIENT_ID=your-client-id npm run dev
- *   Production:  ONEDRIVE_CLIENT_ID=your-client-id npm run build
+ * Set VITE_ONEDRIVE_CLIENT_ID environment variable when building:
+ *   Development: VITE_ONEDRIVE_CLIENT_ID=your-client-id npm run dev
+ *   Production:  VITE_ONEDRIVE_CLIENT_ID=your-client-id npm run build
  *
  * Or create a .env file (not committed to git):
- *   ONEDRIVE_CLIENT_ID=your-client-id
+ *   VITE_ONEDRIVE_CLIENT_ID=your-client-id
  */
 
 import { Configuration } from '@azure/msal-browser';
@@ -28,9 +28,9 @@ const isSafari =
 
 export const msalConfig: Configuration = {
   auth: {
-    // Client ID must be injected via ONEDRIVE_CLIENT_ID environment variable at build time
-    // Example: ONEDRIVE_CLIENT_ID=your-client-id npm run build
-    clientId: process.env.ONEDRIVE_CLIENT_ID || '',
+    // Client ID must be injected via VITE_ONEDRIVE_CLIENT_ID environment variable at build time
+    // Example: VITE_ONEDRIVE_CLIENT_ID=your-client-id npm run build
+    clientId: import.meta.env.VITE_ONEDRIVE_CLIENT_ID || '',
 
     // Authority for Microsoft personal accounts only
     // Use 'consumers' for personal accounts, 'common' for both personal and organizational

@@ -17,19 +17,19 @@
  * BUILD CONFIGURATION:
  * Set environment variables when building:
  *   Development:
- *     GOOGLE_DRIVE_CLIENT_ID=your-client-id \
+ *     VITE_GOOGLE_DRIVE_CLIENT_ID=your-client-id \
  *     npm run dev
  *   Production:
- *     GOOGLE_DRIVE_CLIENT_ID=your-client-id \
+ *     VITE_GOOGLE_DRIVE_CLIENT_ID=your-client-id \
  *     npm run build
  *
  * Or create a .env file (not committed to git):
- *   GOOGLE_DRIVE_CLIENT_ID=your-client-id
+ *   VITE_GOOGLE_DRIVE_CLIENT_ID=your-client-id
  */
 
 export const googleDriveConfig = {
-  // Client ID must be injected via GOOGLE_DRIVE_CLIENT_ID environment variable at build time
-  clientId: process.env.GOOGLE_DRIVE_CLIENT_ID || '',
+  // Client ID must be injected via VITE_GOOGLE_DRIVE_CLIENT_ID environment variable at build time
+  clientId: import.meta.env.VITE_GOOGLE_DRIVE_CLIENT_ID || '',
 
   // OAuth 2.0 scopes for Google Drive API
   // drive.file: Access only files created by the app or explicitly opened by the user

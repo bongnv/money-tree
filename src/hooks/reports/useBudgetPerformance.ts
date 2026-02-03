@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useStore } from '@/contexts/StoreContext';
 import { useReportService } from '../useServices';
-import { useExchangeRates } from '../useExchangeRates';
 import { getTodayDate } from '@/utils/date.utils';
 import type { BudgetPerformanceData, BudgetTrendPoint } from '@/services/report.service';
 import { CurrencyCode } from '@/types/enums';
@@ -54,8 +53,15 @@ export interface DisplayPerformance {
  * @returns All data and controls needed for budget performance reports
  */
 export function useBudgetPerformance() {
-  const { budgets, transactions, transactionTypes, categories, accounts, baseCurrency } =
-    useStore();
+  const {
+    budgets,
+    transactions,
+    transactionTypes,
+    categories,
+    accounts,
+    baseCurrency,
+    exchangeRatesMap,
+  } = useStore();
   const reportService = useReportService();
 
   // Report parameters
@@ -79,9 +85,6 @@ export function useBudgetPerformance() {
   const [budgetPerformance, setBudgetPerformance] = useState<BudgetPerformanceData | null>(null);
   const [trendData, setTrendData] = useState<BudgetTrendPoint[]>([]);
 
-  // Get exchange rates map
-  const ratesMap = useExchangeRates();
-
   // Budget performance computation
   useEffect(() => {
     if (
@@ -90,7 +93,7 @@ export function useBudgetPerformance() {
       !transactionTypes ||
       !categories ||
       !accounts ||
-      !ratesMap ||
+      !exchangeRatesMap ||
       !conversionCurrency
     ) {
       return;
@@ -109,7 +112,7 @@ export function useBudgetPerformance() {
           endDate,
           accounts,
           conversionCurrency,
-          ratesMap
+          exchangeRatesMap
         );
 
         // Calculate trend data
@@ -128,7 +131,7 @@ export function useBudgetPerformance() {
           intervalDays,
           accounts,
           conversionCurrency,
-          ratesMap
+          exchangeRatesMap
         );
 
         if (!cancelled) {
@@ -155,7 +158,7 @@ export function useBudgetPerformance() {
     endDate,
     conversionCurrency,
     reportService,
-    ratesMap,
+    exchangeRatesMap,
   ]);
 
   // Default performance with fallback

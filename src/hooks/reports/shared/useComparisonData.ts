@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useStore } from '@/contexts/StoreContext';
 import { useReportService } from '../../useServices';
-import { useExchangeRates } from '../../useExchangeRates';
 import type { BalanceSheetData } from '@/services/report.service';
 import type { CurrencyCode } from '@/types/enums';
 
@@ -28,11 +27,8 @@ export function useComparisonData(
   comparisonType: ComparisonType,
   conversionCurrency: CurrencyCode
 ) {
-  const { accounts, assets, transactions } = useStore();
+  const { accounts, assets, transactions, exchangeRatesMap } = useStore();
   const reportService = useReportService();
-
-  // Get exchange rates map
-  const ratesMap = useExchangeRates();
 
   const [data, setData] = useState<ComparisonData | null>(null);
 
@@ -47,7 +43,7 @@ export function useComparisonData(
   );
 
   useEffect(() => {
-    if (!accounts || !assets || !transactions || !ratesMap) {
+    if (!accounts || !assets || !transactions || !exchangeRatesMap) {
       return;
     }
 
@@ -63,7 +59,7 @@ export function useComparisonData(
                 transactions,
                 reportDate,
                 conversionCurrency,
-                ratesMap
+                exchangeRatesMap
               )
             : reportService.calculateYearOverYearComparison(
                 accounts,
@@ -71,7 +67,7 @@ export function useComparisonData(
                 transactions,
                 reportDate,
                 conversionCurrency,
-                ratesMap
+                exchangeRatesMap
               );
 
         if (!cancelled) {
@@ -88,7 +84,14 @@ export function useComparisonData(
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transactionsKey, reportDate, comparisonType, conversionCurrency, reportService, ratesMap]);
+  }, [
+    transactionsKey,
+    reportDate,
+    comparisonType,
+    conversionCurrency,
+    reportService,
+    exchangeRatesMap,
+  ]);
 
   return { data };
 }

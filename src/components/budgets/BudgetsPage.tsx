@@ -20,6 +20,7 @@ import { formatCurrency } from '../../utils/currency.utils';
 import { Group } from '../../types/enums';
 import { useStore } from '@/contexts/StoreContext';
 import { useBudgetGrouping } from '@/hooks/budgets/useBudgetGrouping';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 
 export const BudgetsPage: React.FC = () => {
   const {
@@ -35,6 +36,7 @@ export const BudgetsPage: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | undefined>(undefined);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [deleteBudgetItem, setDeleteBudgetItem] = useState<Budget | null>(null);
 
   // Initialize with current month
   const getCurrentMonthPeriod = () => {
@@ -72,12 +74,14 @@ export const BudgetsPage: React.FC = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (budget: Budget) => {
-    const transactionType = transactionTypes.find((tt) => tt.id === budget.transactionTypeId);
-    const confirmMessage = `Are you sure you want to delete the budget for "${transactionType?.name}"?`;
+  const handleDelete = (budget: Budget) => {
+    setDeleteBudgetItem(budget);
+  };
 
-    if (window.confirm(confirmMessage)) {
-      await deleteBudget(budget.id);
+  const handleConfirmDelete = async () => {
+    if (deleteBudgetItem?.id) {
+      await deleteBudget(deleteBudgetItem.id);
+      setDeleteBudgetItem(null);
     }
   };
 
@@ -370,6 +374,16 @@ export const BudgetsPage: React.FC = () => {
         budget={editingBudget}
         onClose={() => setDialogOpen(false)}
         onSubmit={handleSubmit}
+      />
+
+      <ConfirmDialog
+        open={!!deleteBudgetItem}
+        title="Delete Budget"
+        message={`Are you sure you want to delete the budget for "${transactionTypes?.find((tt) => tt.id === deleteBudgetItem?.transactionTypeId)?.name || 'this category'}"?`}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteBudgetItem(null)}
+        confirmText="Delete"
+        severity="error"
       />
     </Box>
   );

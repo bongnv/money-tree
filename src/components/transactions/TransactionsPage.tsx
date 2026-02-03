@@ -31,7 +31,7 @@ export const TransactionsPage: React.FC = () => {
   });
 
   // Filter accounts to active only
-  const activeAccounts = accounts?.filter((acc) => acc.isActive && !acc.isDeleted) || [];
+  const activeAccounts = accounts?.filter((acc) => acc.isActive);
 
   const handleOpenDialog = () => {
     transactionDialog.openCreate();

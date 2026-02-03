@@ -1,7 +1,6 @@
 import { useMemo, useCallback } from 'react';
 import { useStore } from '@/contexts/StoreContext';
 import { useCalculationService } from '../useServices';
-import { useExchangeRates } from '../useExchangeRates';
 import type { CurrencyCode } from '@/types/enums';
 import type { Budget } from '@/types/models';
 
@@ -31,7 +30,8 @@ export function useBudgetGrouping(
   selectedCategories: string[],
   baseCurrency: CurrencyCode
 ) {
-  const { budgets, transactions, transactionTypes, categories, accounts } = useStore();
+  const { budgets, transactions, transactionTypes, categories, accounts, exchangeRatesMap } =
+    useStore();
   const calculationService = useCalculationService();
 
   // Helper to get category by id - memoized to prevent infinite loops
@@ -40,11 +40,8 @@ export function useBudgetGrouping(
     [categories]
   );
 
-  // Get exchange rates map
-  const ratesMap = useExchangeRates();
-
   const groupedBudgets = useMemo(() => {
-    if (!ratesMap) return {};
+    if (!exchangeRatesMap) return {};
 
     // Filter budgets that are active during the selected period
     let activeBudgets = budgets.filter((budget) => {
@@ -69,7 +66,7 @@ export function useBudgetGrouping(
       accounts,
       selectedPeriod,
       baseCurrency,
-      ratesMap,
+      exchangeRatesMap,
       getCategoryById
     );
   }, [
@@ -77,17 +74,16 @@ export function useBudgetGrouping(
     transactionTypes,
     transactions,
     accounts,
-    categories,
     selectedPeriod,
     getCategoryById,
     selectedCategories,
     baseCurrency,
     calculationService,
-    ratesMap,
+    exchangeRatesMap,
   ]);
 
   return {
     groupedBudgets,
-    isLoading: !ratesMap,
+    isLoading: !exchangeRatesMap,
   };
 }

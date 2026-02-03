@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@/contexts/StoreContext';
 import { useReportService } from '../../useServices';
-import { useExchangeRates } from '../../useExchangeRates';
 import type { NetWorthTrendPoint } from '@/services/report.service';
 import type { CurrencyCode } from '@/types/enums';
 
@@ -20,16 +19,13 @@ export function useNetWorthTrend(
   interval: number = 30,
   conversionCurrency: CurrencyCode
 ) {
-  const { accounts, assets: manualAssets, transactions } = useStore();
+  const { accounts, assets: manualAssets, transactions, exchangeRatesMap } = useStore();
   const reportService = useReportService();
-
-  // Get exchange rates map
-  const ratesMap = useExchangeRates();
 
   const [data, setData] = useState<NetWorthTrendPoint[] | null>(null);
 
   useEffect(() => {
-    if (!accounts || !manualAssets || !transactions || !ratesMap) {
+    if (!accounts || !manualAssets || !transactions || !exchangeRatesMap) {
       return;
     }
 
@@ -45,7 +41,7 @@ export function useNetWorthTrend(
           endDate,
           interval, // Use the interval parameter, not hardcoded 30
           conversionCurrency,
-          ratesMap
+          exchangeRatesMap
         );
 
         if (!cancelled) {
@@ -70,7 +66,7 @@ export function useNetWorthTrend(
     interval,
     conversionCurrency,
     reportService,
-    ratesMap,
+    exchangeRatesMap,
   ]);
 
   return { data };

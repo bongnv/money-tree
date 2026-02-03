@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useCallback } from 'react';
+import React, { createContext, useContext, useCallback, useEffect, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/database';
 import { generateId } from '@/utils/id.utils';
@@ -14,6 +14,7 @@ import type {
   ArchivedYearReference,
 } from '@/types/models';
 import { CurrencyCode } from '@/types/enums';
+import { ensureCurrentMonthRates } from '@/utils/exchangeRate.utils';
 
 // Default state when data is loading
 const DEFAULT_DATA = {
@@ -26,22 +27,8 @@ const DEFAULT_DATA = {
   exchangeRates: [] as ExchangeRate[],
   baseCurrency: CurrencyCode.USD,
   archivedYears: [] as ArchivedYearReference[],
+  isStoreLoaded: false,
 };
-
-// Utility functions for timestamps
-const addTimestamps = (entity: Partial<any>, isUpdate = false): Partial<any> => {
-  const now = new Date().toISOString();
-  return {
-    ...entity,
-    createdAt: isUpdate ? entity.createdAt : entity.createdAt || now,
-    updatedAt: now,
-  };
-};
-
-const softDelete = (entity: Partial<any>): Partial<any> => ({
-  ...entity,
-  isDeleted: true,
-});
 
 // Sync metadata helper
 const setLastModified = async (): Promise<void> => {
@@ -56,8 +43,10 @@ interface StoreContextValue {
   transactionTypes: TransactionType[];
   assets: ManualAsset[];
   exchangeRates: ExchangeRate[];
+  exchangeRatesMap: Map<string, number>;
   baseCurrency: CurrencyCode;
   archivedYears: ArchivedYearReference[];
+  isStoreLoaded: boolean;
 
   // Transaction operations
   addTransaction: (
@@ -169,22 +158,48 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
         exchangeRates,
         baseCurrency: (baseCurrencyRecord?.value as CurrencyCode) || CurrencyCode.USD,
         archivedYears: (archivedYearsRecord?.value as ArchivedYearReference[]) || [],
+        isStoreLoaded: true,
       };
     },
     [],
     DEFAULT_DATA
   );
 
+  // Compute exchange rates map for efficient lookups
+  // Map key format: "YYYY-MM_FROM_TO" -> rate
+  const exchangeRatesMap = useMemo(() => {
+    const ratesMap = new Map<string, number>();
+    for (const rate of data.exchangeRates) {
+      const key = `${rate.month}_${rate.fromCurrency}_${rate.toCurrency}`;
+      ratesMap.set(key, rate.rate);
+    }
+    return ratesMap;
+  }, [data.exchangeRates]);
+
+  // Ensure current month exchange rates are available
+  useEffect(() => {
+    if (!data.isStoreLoaded) {
+      return;
+    }
+
+    void ensureCurrentMonthRates(data.exchangeRates);
+    // we dont want to trigger this effect when exchangeRates change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.isStoreLoaded]);
+
   // ============== Transaction Operations ==============
   const addTransaction = useCallback(
     async (txnData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>) => {
       const id = generateId();
-      const transaction = addTimestamps({
+      const now = new Date().toISOString();
+      const transaction: Transaction = {
         ...txnData,
         id,
         isDeleted: false,
-      });
-      await db.transactions.add(transaction as Transaction);
+        createdAt: now,
+        updatedAt: now,
+      };
+      await db.transactions.add(transaction);
       await setLastModified();
       return id;
     },
@@ -197,8 +212,10 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
       if (!existing) {
         throw new Error(`Transaction with id ${id} not found`);
       }
-      const updated = addTimestamps(updates, true);
-      await db.transactions.update(id, updated);
+      await db.transactions.update(id, {
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      });
       await setLastModified();
     },
     []
@@ -209,8 +226,10 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
     if (!existing) {
       throw new Error(`Transaction with id ${id} not found`);
     }
-    const deleted = addTimestamps(softDelete(existing), true);
-    await db.transactions.update(id, deleted);
+    await db.transactions.update(id, {
+      isDeleted: true,
+      updatedAt: new Date().toISOString(),
+    });
     await setLastModified();
   }, []);
 
@@ -218,13 +237,16 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
   const addAccount = useCallback(
     async (accountData: Omit<Account, 'id' | 'createdAt' | 'updatedAt'>) => {
       const id = generateId();
-      const account = addTimestamps({
+      const now = new Date().toISOString();
+      const account: Account = {
         ...accountData,
         id,
         isActive: accountData.isActive ?? true,
         isDeleted: false,
-      });
-      await db.accounts.add(account as Account);
+        createdAt: now,
+        updatedAt: now,
+      };
+      await db.accounts.add(account);
       await setLastModified();
       return id;
     },
@@ -237,8 +259,10 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
       if (!existing) {
         throw new Error(`Account with id ${id} not found`);
       }
-      const updated = addTimestamps(updates, true);
-      await db.accounts.update(id, updated);
+      await db.accounts.update(id, {
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      });
       await setLastModified();
     },
     []
@@ -249,8 +273,10 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
     if (!existing) {
       throw new Error(`Account with id ${id} not found`);
     }
-    const deleted = addTimestamps(softDelete(existing), true);
-    await db.accounts.update(id, deleted);
+    await db.accounts.update(id, {
+      isDeleted: true,
+      updatedAt: new Date().toISOString(),
+    });
     await setLastModified();
   }, []);
 
@@ -272,12 +298,15 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
   const addBudget = useCallback(
     async (budgetData: Omit<Budget, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>) => {
       const id = generateId();
-      const budget = addTimestamps({
+      const now = new Date().toISOString();
+      const budget: Budget = {
         ...budgetData,
         id,
         isDeleted: false,
-      });
-      await db.budgets.add(budget as Budget);
+        createdAt: now,
+        updatedAt: now,
+      };
+      await db.budgets.add(budget);
       await setLastModified();
       return id;
     },
@@ -290,8 +319,10 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
       if (!existing) {
         throw new Error(`Budget with id ${id} not found`);
       }
-      const updated = addTimestamps(updates, true);
-      await db.budgets.update(id, updated);
+      await db.budgets.update(id, {
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      });
       await setLastModified();
     },
     []
@@ -302,8 +333,10 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
     if (!existing) {
       throw new Error(`Budget with id ${id} not found`);
     }
-    const deleted = addTimestamps(softDelete(existing), true);
-    await db.budgets.update(id, deleted);
+    await db.budgets.update(id, {
+      isDeleted: true,
+      updatedAt: new Date().toISOString(),
+    });
     await setLastModified();
   }, []);
 
@@ -311,12 +344,15 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
   const addCategory = useCallback(
     async (categoryData: Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>) => {
       const id = generateId();
-      const category = addTimestamps({
+      const now = new Date().toISOString();
+      const category: Category = {
         ...categoryData,
         id,
         isDeleted: false,
-      });
-      await db.categories.add(category as Category);
+        createdAt: now,
+        updatedAt: now,
+      };
+      await db.categories.add(category);
       await setLastModified();
       return id;
     },
@@ -329,8 +365,10 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
       if (!existing) {
         throw new Error(`Category with id ${id} not found`);
       }
-      const updated = addTimestamps(updates, true);
-      await db.categories.update(id, updated);
+      await db.categories.update(id, {
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      });
       await setLastModified();
     },
     []
@@ -341,8 +379,10 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
     if (!existing) {
       throw new Error(`Category with id ${id} not found`);
     }
-    const deleted = addTimestamps(softDelete(existing), true);
-    await db.categories.update(id, deleted);
+    await db.categories.update(id, {
+      isDeleted: true,
+      updatedAt: new Date().toISOString(),
+    });
     await setLastModified();
   }, []);
 
@@ -350,13 +390,16 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
   const addTransactionType = useCallback(
     async (typeData: Omit<TransactionType, 'id' | 'createdAt' | 'updatedAt'>) => {
       const id = generateId();
-      const transactionType = addTimestamps({
+      const now = new Date().toISOString();
+      const transactionType: TransactionType = {
         ...typeData,
         id,
         isActive: typeData.isActive ?? true,
         isDeleted: false,
-      });
-      await db.transactionTypes.add(transactionType as TransactionType);
+        createdAt: now,
+        updatedAt: now,
+      };
+      await db.transactionTypes.add(transactionType);
       await setLastModified();
       return id;
     },
@@ -372,8 +415,10 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
       if (!existing) {
         throw new Error(`TransactionType with id ${id} not found`);
       }
-      const updated = addTimestamps(updates, true);
-      await db.transactionTypes.update(id, updated);
+      await db.transactionTypes.update(id, {
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      });
       await setLastModified();
     },
     []
@@ -384,8 +429,10 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
     if (!existing) {
       throw new Error(`TransactionType with id ${id} not found`);
     }
-    const deleted = addTimestamps(softDelete(existing), true);
-    await db.transactionTypes.update(id, deleted);
+    await db.transactionTypes.update(id, {
+      isDeleted: true,
+      updatedAt: new Date().toISOString(),
+    });
     await setLastModified();
   }, []);
 
@@ -393,13 +440,16 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
   const addAsset = useCallback(
     async (assetData: Omit<ManualAsset, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>) => {
       const id = generateId();
-      const asset = addTimestamps({
+      const now = new Date().toISOString();
+      const asset: ManualAsset = {
         ...assetData,
         id,
         isDeleted: false,
         valueHistory: assetData.valueHistory || [],
-      });
-      await db.manualAssets.add(asset as ManualAsset);
+        createdAt: now,
+        updatedAt: now,
+      };
+      await db.manualAssets.add(asset);
       await setLastModified();
       return id;
     },
@@ -412,8 +462,10 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
       if (!existing) {
         throw new Error(`Asset with id ${id} not found`);
       }
-      const updated = addTimestamps(updates, true);
-      await db.manualAssets.update(id, updated);
+      await db.manualAssets.update(id, {
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      });
       await setLastModified();
     },
     []
@@ -424,8 +476,10 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
     if (!existing) {
       throw new Error(`Asset with id ${id} not found`);
     }
-    const deleted = addTimestamps(softDelete(existing), true);
-    await db.manualAssets.update(id, deleted);
+    await db.manualAssets.update(id, {
+      isDeleted: true,
+      updatedAt: new Date().toISOString(),
+    });
     await setLastModified();
   }, []);
 
@@ -447,8 +501,13 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
 
   const addExchangeRate = useCallback(async (rateData: Omit<ExchangeRate, 'id' | 'createdAt'>) => {
     const id = generateId();
-    const rate = addTimestamps({ ...rateData, id });
-    await db.exchangeRates.add(rate as ExchangeRate);
+    const now = new Date().toISOString();
+    const rate: ExchangeRate = {
+      ...rateData,
+      id,
+      createdAt: now,
+    };
+    await db.exchangeRates.add(rate);
     await setLastModified();
     return id;
   }, []);
@@ -473,8 +532,10 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
     transactionTypes: data.transactionTypes,
     assets: data.assets,
     exchangeRates: data.exchangeRates,
+    exchangeRatesMap,
     baseCurrency: data.baseCurrency,
     archivedYears: data.archivedYears,
+    isStoreLoaded: data.isStoreLoaded,
     addTransaction,
     updateTransaction,
     deleteTransaction,

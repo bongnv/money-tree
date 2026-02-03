@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useStore } from '@/contexts/StoreContext';
 import { useCalculationService } from '../useServices';
-import { useExchangeRates } from '../useExchangeRates';
 import { Group } from '@/types/enums';
 import type { CurrencyCode } from '@/types/enums';
 import type { PeriodOption } from '@/components/common/PeriodSelector';
@@ -20,15 +19,13 @@ export interface BudgetWithUsage {
  * Calculates top 5 budgets with usage for the selected period
  */
 export function useBudgetOverview(period: PeriodOption, baseCurrency: CurrencyCode) {
-  const { budgets, transactions, transactionTypes, accounts } = useStore();
+  const { budgets, transactions, transactionTypes, accounts, exchangeRatesMap, isStoreLoaded } =
+    useStore();
   const calculationService = useCalculationService();
-
-  // Get exchange rates map
-  const ratesMap = useExchangeRates();
 
   // Calculate budget usage for the selected period
   const budgetsWithUsage = useMemo(() => {
-    if (!budgets || !transactions || !transactionTypes || !accounts || !ratesMap) return [];
+    if (!budgets || !transactions || !transactionTypes || !accounts || !exchangeRatesMap) return [];
 
     const results: BudgetWithUsage[] = [];
 
@@ -56,7 +53,7 @@ export function useBudgetOverview(period: PeriodOption, baseCurrency: CurrencyCo
         { ...budget, amount: proratedAmount },
         period.startDate.slice(0, 7),
         baseCurrency,
-        ratesMap
+        exchangeRatesMap
       );
 
       // Calculate actual spending/income with currency conversion
@@ -71,7 +68,7 @@ export function useBudgetOverview(period: PeriodOption, baseCurrency: CurrencyCo
         relevantTransactions,
         accounts,
         baseCurrency,
-        ratesMap
+        exchangeRatesMap
       );
 
       // Get transaction type info
@@ -101,11 +98,11 @@ export function useBudgetOverview(period: PeriodOption, baseCurrency: CurrencyCo
     period.endDate,
     baseCurrency,
     calculationService,
-    ratesMap,
+    exchangeRatesMap,
   ]);
 
   return {
-    budgetsWithUsage,
-    isLoading: !budgets || !transactions || !transactionTypes || !accounts || !ratesMap,
+    budgets: budgetsWithUsage,
+    isLoading: !isStoreLoaded,
   };
 }

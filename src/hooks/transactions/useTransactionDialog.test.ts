@@ -59,7 +59,7 @@ describe('useTransactionDialog', () => {
     });
 
     expect(result.current.isOpen).toBe(false);
-    
+
     // selectedItem is cleared after a 300ms delay
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 350));

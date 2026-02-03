@@ -300,11 +300,11 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({
   // Auto-sync whenever lastModified changes (only for subsequent changes after initial sync)
   useEffect(() => {
     if (!provider || !currentFileItem || !lastModified || syncState.isInitializing) return;
-    
+
     // Don't trigger debounced sync if we haven't established the remote state yet
     // (initial sync will handle it)
     if (!syncState.remoteLastModified) return;
-    
+
     // Don't sync if already synced to this timestamp
     if (lastModified === syncState.remoteLastModified) {
       return;

@@ -12,9 +12,9 @@ export interface BudgetOverviewProps {
 
 export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ period }) => {
   const { baseCurrency } = useStore();
-  const { budgetsWithUsage, isLoading } = useBudgetOverview(period, baseCurrency);
+  const { budgets, isLoading } = useBudgetOverview(period, baseCurrency);
 
-  if (isLoading || budgetsWithUsage.length === 0) {
+  if (isLoading || budgets.length === 0) {
     return (
       <Paper sx={{ p: 3, textAlign: 'center' }}>
         <Typography variant="body1" color="text.secondary" gutterBottom>
@@ -35,7 +35,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ period }) => {
 
   return (
     <Box>
-      {budgetsWithUsage.map((budgetItem) => (
+      {budgets.map((budgetItem) => (
         <BudgetProgressBar
           key={budgetItem.id}
           name={budgetItem.name}

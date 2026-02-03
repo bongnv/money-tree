@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useStore } from '@/contexts/StoreContext';
 import { useCalculationService, useReportService } from '../useServices';
-import { useExchangeRates } from '../useExchangeRates';
 import { getCurrentMonth } from '@/utils/date.utils';
 import type { PeriodOption } from '@/components/common/PeriodSelector';
 
@@ -19,20 +18,26 @@ export interface FinancialSummaryData {
  * Calculates net worth, cash flow, savings rate, and budget health
  */
 export function useFinancialSummary(period: PeriodOption): FinancialSummaryData {
-  const { accounts, transactions, assets, budgets, categories, transactionTypes, baseCurrency } =
-    useStore();
+  const {
+    accounts,
+    transactions,
+    assets,
+    budgets,
+    categories,
+    transactionTypes,
+    baseCurrency,
+    exchangeRatesMap,
+    isStoreLoaded,
+  } = useStore();
   const calculationService = useCalculationService();
   const reportService = useReportService();
 
   // Get current month in YYYY-MM format (local timezone)
   const currentMonth = getCurrentMonth();
 
-  // Get exchange rates map
-  const ratesMap = useExchangeRates();
-
   // Calculate net worth with currency conversion using useMemo
   const netWorthResult = useMemo(() => {
-    if (!accounts || !transactions || !assets || !ratesMap) {
+    if (!accounts || !transactions || !assets || !exchangeRatesMap) {
       return { value: 0, error: null };
     }
 
@@ -43,7 +48,7 @@ export function useFinancialSummary(period: PeriodOption): FinancialSummaryData 
         assets,
         baseCurrency,
         currentMonth,
-        ratesMap
+        exchangeRatesMap
       );
       return { value: worth, error: null };
     } catch (err) {
@@ -52,14 +57,22 @@ export function useFinancialSummary(period: PeriodOption): FinancialSummaryData 
         error: err instanceof Error ? err.message : 'Unknown error',
       };
     }
-  }, [accounts, transactions, assets, baseCurrency, currentMonth, calculationService, ratesMap]);
+  }, [
+    accounts,
+    transactions,
+    assets,
+    baseCurrency,
+    currentMonth,
+    calculationService,
+    exchangeRatesMap,
+  ]);
 
   const netWorth = netWorthResult.value;
   const error = netWorthResult.error;
 
   // Calculate cash flow and budget performance using useMemo
   const { cashFlow, savingsRate, budgetHealth } = useMemo(() => {
-    if (!transactions || !transactionTypes || !categories || !accounts || !budgets || !ratesMap) {
+    if (!isStoreLoaded) {
       return { cashFlow: 0, savingsRate: 0, budgetHealth: 0 };
     }
 
@@ -76,7 +89,7 @@ export function useFinancialSummary(period: PeriodOption): FinancialSummaryData 
         period.endDate,
         accounts,
         baseCurrency,
-        ratesMap
+        exchangeRatesMap
       );
 
       const rate = calculationService.calculateSavingsRate(
@@ -93,7 +106,7 @@ export function useFinancialSummary(period: PeriodOption): FinancialSummaryData 
         period.endDate,
         accounts,
         baseCurrency,
-        ratesMap
+        exchangeRatesMap
       );
 
       return {
@@ -115,11 +128,9 @@ export function useFinancialSummary(period: PeriodOption): FinancialSummaryData 
     budgets,
     calculationService,
     reportService,
-    ratesMap,
+    exchangeRatesMap,
+    isStoreLoaded,
   ]);
-
-  const isLoading =
-    !accounts || !transactions || !assets || !budgets || !categories || !transactionTypes;
 
   return {
     netWorth,
@@ -127,6 +138,6 @@ export function useFinancialSummary(period: PeriodOption): FinancialSummaryData 
     savingsRate,
     budgetHealth,
     error,
-    isLoading,
+    isLoading: !isStoreLoaded,
   };
 }

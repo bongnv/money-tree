@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useStore } from '@/contexts/StoreContext';
 import { useReportService } from '../useServices';
-import { useExchangeRates } from '../useExchangeRates';
 import { useNetWorthTrend } from './shared/useNetWorthTrend';
 import { useComparisonData, type ComparisonType } from './shared/useComparisonData';
 import { CurrencyCode } from '@/types/enums';
@@ -21,28 +20,24 @@ import { getTodayDate } from '@/utils/date.utils';
  * @returns All data and controls needed for balance sheet reports
  */
 export function useBalanceSheet() {
-  const { accounts, assets, transactions, baseCurrency } = useStore();
+  const { accounts, assets, transactions, baseCurrency, exchangeRatesMap, isStoreLoaded } =
+    useStore();
   const reportService = useReportService();
 
   // Report parameters
   const today = getTodayDate();
   const [reportDate, setReportDate] = useState<string>(today);
   const [comparisonType, setComparisonType] = useState<ComparisonType>('month');
-  const [conversionCurrency, setConversionCurrency] = useState<CurrencyCodeType | undefined>(
-    undefined
-  );
+  const [conversionCurrency, setConversionCurrency] = useState<CurrencyCodeType>(baseCurrency);
 
   // Set conversion currency to default currency initially
   useEffect(() => {
     setConversionCurrency(baseCurrency);
   }, [baseCurrency]);
 
-  // Get exchange rates map
-  const ratesMap = useExchangeRates();
-
   // Compute balance sheet with loaded rates using useMemo
   const balanceSheetResult = useMemo(() => {
-    if (!accounts || !assets || !transactions || !ratesMap || !conversionCurrency) {
+    if (!isStoreLoaded) {
       return { data: null, error: null };
     }
 
@@ -53,7 +48,7 @@ export function useBalanceSheet() {
         transactions,
         reportDate,
         conversionCurrency,
-        ratesMap
+        exchangeRatesMap
       );
 
       return { data: result, error: null };
@@ -61,7 +56,16 @@ export function useBalanceSheet() {
       console.error('[useBalanceSheet] Computation failed', err);
       return { data: null, error: err instanceof Error ? err : new Error(String(err)) };
     }
-  }, [accounts, assets, transactions, reportDate, conversionCurrency, ratesMap, reportService]);
+  }, [
+    accounts,
+    assets,
+    transactions,
+    reportDate,
+    conversionCurrency,
+    exchangeRatesMap,
+    reportService,
+    isStoreLoaded,
+  ]);
 
   const balanceSheet = balanceSheetResult.data;
   const balanceSheetError = balanceSheetResult.error;
@@ -89,19 +93,10 @@ export function useBalanceSheet() {
     conversionCurrency ?? CurrencyCode.USD
   );
 
-  // Derive loading state from data availability
-  const isLoadingBalanceSheet =
-    !accounts ||
-    !assets ||
-    !transactions ||
-    !ratesMap ||
-    !conversionCurrency ||
-    balanceSheet === null;
-
   return {
     // Balance sheet data
     balanceSheet,
-    isLoadingBalanceSheet,
+    isLoadingBalanceSheet: !isStoreLoaded,
     balanceSheetError,
 
     // Net worth trend

@@ -55,13 +55,14 @@ describe('useBalanceSheet', () => {
       transactions: [],
       baseCurrency: CurrencyCode.USD,
       exchangeRates: [],
+      exchangeRatesMap: new Map(),
+      isStoreLoaded: true,
     } as any);
 
     const { result } = renderHook(() => useBalanceSheet());
 
     expect(result.current.balanceSheet).toBeDefined();
-    // Balance sheet structure is different - just check it exists
-    expect(result.current.balanceSheet).not.toBeNull();
+    expect(result.current.isLoadingBalanceSheet).toBe(false);
   });
 
   it('should allow changing conversion currency', () => {
@@ -71,6 +72,8 @@ describe('useBalanceSheet', () => {
       transactions: [],
       baseCurrency: CurrencyCode.USD,
       exchangeRates: [],
+      exchangeRatesMap: new Map(),
+      isStoreLoaded: true,
     } as any);
 
     const { result } = renderHook(() => useBalanceSheet());
@@ -89,10 +92,12 @@ describe('useBalanceSheet', () => {
       transactions: undefined,
       baseCurrency: CurrencyCode.USD,
       exchangeRates: [],
+      exchangeRatesMap: undefined,
+      isStoreLoaded: false,
     } as any);
 
     const { result } = renderHook(() => useBalanceSheet());
 
-    expect(result.current.balanceSheet).toBeDefined();
+    expect(result.current.isLoadingBalanceSheet).toBe(true);
   });
 });

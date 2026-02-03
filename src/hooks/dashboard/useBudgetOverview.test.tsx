@@ -89,7 +89,7 @@ describe('useBudgetOverview', () => {
 
     const { result } = renderHook(() => useBudgetOverview(period, CurrencyCode.USD));
 
-    expect(result.current.budgetsWithUsage).toEqual([]);
+    expect(result.current.budgets).toEqual([]);
   });
 
   it('should calculate budget overview with spending', () => {
@@ -112,8 +112,8 @@ describe('useBudgetOverview', () => {
 
     const { result } = renderHook(() => useBudgetOverview(period, CurrencyCode.USD));
 
-    expect(result.current.budgetsWithUsage).toBeDefined();
-    expect(Array.isArray(result.current.budgetsWithUsage)).toBe(true);
+    expect(result.current.budgets).toBeDefined();
+    expect(Array.isArray(result.current.budgets)).toBe(true);
   });
 
   it('should handle budgets without matching transaction types', () => {
@@ -136,7 +136,7 @@ describe('useBudgetOverview', () => {
 
     const { result } = renderHook(() => useBudgetOverview(period, CurrencyCode.USD));
 
-    expect(result.current.budgetsWithUsage).toBeDefined();
+    expect(result.current.budgets).toBeDefined();
   });
 
   it('should handle undefined data gracefully', () => {

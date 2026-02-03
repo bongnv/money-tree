@@ -1,4 +1,8 @@
 import { CurrencyCode } from '../types/enums';
+import type { ExchangeRate } from '../types/models';
+import { db } from '@/db/database';
+import { generateId } from '@/utils/id.utils';
+import { getCurrentMonth } from '@/utils/date.utils';
 
 /**
  * Exchange Rate API Response format
@@ -140,4 +144,69 @@ export function getRateSync(
     `Exchange rate not found: ${month} ${fromCurrency}->${toCurrency}. ` +
       `No rate available within 12 months. Rates must be pre-loaded before calling getRateSync().`
   );
+}
+
+/**
+ * Ensures all required exchange rates for the current month exist in the database
+ * Fetches and adds any missing rates from the API
+ *
+ * @param existingRates - Current exchange rates from the database
+ * @returns Promise that resolves when all rates are synced
+ */
+export async function ensureCurrentMonthRates(existingRates: ExchangeRate[]): Promise<void> {
+  const currentMonth = getCurrentMonth();
+  const allCurrencies = Object.values(CurrencyCode);
+
+  // Build a map of existing rates for quick lookup
+  const existingRatesMap = new Set<string>();
+  for (const rate of existingRates) {
+    if (rate.month === currentMonth) {
+      const key = `${rate.fromCurrency}_${rate.toCurrency}`;
+      existingRatesMap.add(key);
+    }
+  }
+
+  // Check which rates are missing
+  const missingRates: CurrencyCode[] = [];
+  for (const currency of allCurrencies) {
+    if (currency === CurrencyCode.USD) continue;
+
+    const key = `${currency}_${CurrencyCode.USD}`;
+    if (!existingRatesMap.has(key)) {
+      missingRates.push(currency);
+    }
+  }
+
+  if (missingRates.length === 0) {
+    return;
+  }
+
+  // Fetch and add missing rates
+  try {
+    const now = new Date().toISOString();
+    const newRates: ExchangeRate[] = [];
+
+    // Fetch all missing rates
+    for (const currency of missingRates) {
+      const rate = await fetchRateFromAPI(currency);
+
+      const exchangeRate: ExchangeRate = {
+        id: generateId(),
+        month: currentMonth,
+        fromCurrency: currency,
+        toCurrency: CurrencyCode.USD,
+        rate,
+        createdAt: now,
+      };
+
+      newRates.push(exchangeRate);
+    }
+
+    // Bulk insert all rates and update metadata once
+    await db.exchangeRates.bulkAdd(newRates);
+    await db.syncMetadata.put({ key: 'lastModified', value: now });
+  } catch (err) {
+    console.error('Error fetching exchange rates:', err);
+    throw err;
+  }
 }

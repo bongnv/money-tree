@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useStore } from '@/contexts/StoreContext';
 import { useReportService, useCalculationService } from '../useServices';
-import { useExchangeRates } from '../useExchangeRates';
 import { getTodayDate } from '@/utils/date.utils';
 import type { CashFlowData, CashFlowTrendPoint } from '@/services/report.service';
 import { CurrencyCode } from '@/types/enums';
@@ -46,7 +45,8 @@ interface ChartData {
  * @returns All data and controls needed for cash flow reports
  */
 export function useCashFlowReport() {
-  const { accounts, transactions, transactionTypes, categories, baseCurrency } = useStore();
+  const { accounts, transactions, transactionTypes, categories, baseCurrency, exchangeRatesMap } =
+    useStore();
   const reportService = useReportService();
   const calculationService = useCalculationService();
 
@@ -150,12 +150,9 @@ export function useCashFlowReport() {
     [transactions, filters, transactionTypes]
   );
 
-  // Get exchange rates map
-  const ratesMap = useExchangeRates();
-
   // Cash flow computation
   useEffect(() => {
-    if (!transactionTypes || !categories || !accounts || !ratesMap || !conversionCurrency) {
+    if (!transactionTypes || !categories || !accounts || !exchangeRatesMap || !conversionCurrency) {
       return;
     }
 
@@ -171,7 +168,7 @@ export function useCashFlowReport() {
           endDate,
           accounts,
           conversionCurrency,
-          ratesMap
+          exchangeRatesMap
         );
 
         if (!cancelled) {
@@ -193,7 +190,7 @@ export function useCashFlowReport() {
     endDate,
     conversionCurrency,
     reportService,
-    ratesMap,
+    exchangeRatesMap,
     transactionTypes,
     categories,
     accounts,
@@ -201,7 +198,7 @@ export function useCashFlowReport() {
 
   // Cash flow trend computation
   useEffect(() => {
-    if (!transactionTypes || !categories || !accounts || !ratesMap || !conversionCurrency) {
+    if (!transactionTypes || !categories || !accounts || !exchangeRatesMap || !conversionCurrency) {
       return;
     }
 
@@ -236,7 +233,7 @@ export function useCashFlowReport() {
           interval,
           accounts,
           conversionCurrency,
-          ratesMap
+          exchangeRatesMap
         );
 
         if (!cancelled) {
@@ -258,7 +255,7 @@ export function useCashFlowReport() {
     endDate,
     conversionCurrency,
     reportService,
-    ratesMap,
+    exchangeRatesMap,
     transactionTypes,
     categories,
     accounts,
@@ -287,7 +284,7 @@ export function useCashFlowReport() {
     }
 
     // Filtered - use transaction type grouping
-    if (!transactionTypes || !accounts || !ratesMap || !conversionCurrency) {
+    if (!transactionTypes || !accounts || !exchangeRatesMap || !conversionCurrency) {
       return null;
     }
 
@@ -296,7 +293,7 @@ export function useCashFlowReport() {
       transactionTypes,
       accounts,
       conversionCurrency,
-      ratesMap
+      exchangeRatesMap
     );
 
     return {
@@ -330,7 +327,7 @@ export function useCashFlowReport() {
     filteredTransactions,
     transactionTypes,
     accounts,
-    ratesMap,
+    exchangeRatesMap,
     conversionCurrency,
     calculationService,
   ]);

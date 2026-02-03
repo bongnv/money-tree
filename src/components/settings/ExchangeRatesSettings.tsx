@@ -15,12 +15,11 @@ import {
   InputLabel,
   Alert,
 } from '@mui/material';
-import { useExchangeRatesArray } from '../../hooks/useExchangeRates';
 import { useStore } from '@/contexts/StoreContext';
 
 export const ExchangeRatesSettings: React.FC = () => {
-  const { baseCurrency } = useStore();
-  const rates = useExchangeRatesArray();
+  const { baseCurrency, exchangeRates } = useStore();
+  const rates = exchangeRates;
 
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);

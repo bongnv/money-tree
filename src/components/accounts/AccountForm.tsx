@@ -1,5 +1,5 @@
 import React from 'react';
-import { TextField, MenuItem, FormControlLabel, Switch, Box, Button } from '@mui/material';
+import { TextField, MenuItem, Box, Button } from '@mui/material';
 import type { Account } from '../../types/models';
 import { AccountType, CurrencyCode } from '../../types/enums';
 import { getAllCurrencies } from '../../utils/currency.utils';
@@ -21,10 +21,6 @@ export const AccountForm: React.FC<AccountFormProps> = ({ account, onSubmit, onC
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handleSubmit();
-  };
-
-  const handleSwitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setField('isActive', e.target.checked);
   };
 
   return (
@@ -99,18 +95,12 @@ export const AccountForm: React.FC<AccountFormProps> = ({ account, onSubmit, onC
         rows={3}
       />
 
-      <FormControlLabel
-        control={<Switch checked={formData.isActive} onChange={handleSwitchChange} />}
-        label="Active"
-        sx={{ mt: 1 }}
-      />
-
-      <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-        <Button type="submit" variant="contained" fullWidth disabled={isSubmitting}>
-          {account ? 'Update Account' : 'Create Account'}
-        </Button>
-        <Button onClick={onCancel} variant="outlined" fullWidth disabled={isSubmitting}>
+      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
+        <Button onClick={onCancel} disabled={isSubmitting}>
           Cancel
+        </Button>
+        <Button type="submit" variant="contained" disabled={isSubmitting}>
+          {account ? 'Update' : 'Create'}
         </Button>
       </Box>
     </Box>

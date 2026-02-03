@@ -8,9 +8,15 @@ interface AccountListProps {
   accounts: Account[];
   onEdit: (account: Account) => void;
   onDelete: (account: Account) => void;
+  onArchive: (account: Account) => void;
 }
 
-export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onDelete }) => {
+export const AccountList: React.FC<AccountListProps> = ({
+  accounts,
+  onEdit,
+  onDelete,
+  onArchive,
+}) => {
   if (accounts.length === 0) {
     return (
       <Box sx={{ textAlign: 'center', py: 4 }}>
@@ -25,7 +31,12 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onDe
     <Grid container spacing={3}>
       {accounts.map((account) => (
         <Grid size={{ xs: 12, sm: 6, md: 4 }} key={account.id}>
-          <AccountCard account={account} onEdit={onEdit} onDelete={onDelete} />
+          <AccountCard
+            account={account}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onArchive={onArchive}
+          />
         </Grid>
       ))}
     </Grid>

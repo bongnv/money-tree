@@ -78,7 +78,7 @@ describe('AccountDialog', () => {
     // Check the last call was for the last character
     expect(mockSetField).toHaveBeenLastCalledWith('name', 't');
 
-    const submitButton = screen.getByText('Create Account');
+    const submitButton = screen.getByRole('button', { name: /create/i });
     await user.click(submitButton);
 
     expect(mockHandleSubmit).toHaveBeenCalled();

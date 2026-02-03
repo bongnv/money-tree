@@ -12,7 +12,7 @@ jest.mock('@/hooks/accounts/useAccountDialog');
 jest.mock('./AccountList', () => ({
   AccountList: ({ accounts, onEdit, onDelete }: any) => (
     <div data-testid="account-list">
-      {accounts.map((acc: Account) => (
+      {accounts?.map((acc: Account) => (
         <div key={acc.id}>
           <span>{acc.name}</span>
           <button onClick={() => onEdit(acc)}>Edit</button>

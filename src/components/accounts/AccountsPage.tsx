@@ -25,6 +25,14 @@ export const AccountsPage: React.FC = () => {
     setDeleteAccount(account);
   };
 
+  const handleArchive = async (account: Account) => {
+    if (account.isActive) {
+      await updateAccount(account.id, { isActive: false });
+    } else {
+      await updateAccount(account.id, { isActive: true });
+    }
+  };
+
   const handleConfirmDelete = async () => {
     if (deleteAccount?.id) {
       await deleteAccountOp(deleteAccount.id);
@@ -51,7 +59,12 @@ export const AccountsPage: React.FC = () => {
         </Button>
       </Box>
 
-      <AccountList accounts={accounts || []} onEdit={handleEdit} onDelete={handleDelete} />
+      <AccountList
+        accounts={accounts}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onArchive={handleArchive}
+      />
 
       <AccountDialog
         open={accountDialog.isOpen}

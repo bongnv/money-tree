@@ -59,8 +59,7 @@ describe('AccountForm', () => {
     expect(screen.getByLabelText(/Account Type/i)).toHaveTextContent('BANK ACCOUNT');
     expect(screen.getByLabelText(/Currency/i)).toHaveTextContent('USD - US Dollar');
     expect(screen.getByLabelText(/Initial Balance/i)).toHaveValue(0);
-    expect(screen.getByLabelText(/Active/i)).toBeChecked();
-    expect(screen.getByText('Create Account')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /create/i })).toBeInTheDocument();
   });
 
   it('should render form with existing account data', () => {
@@ -97,8 +96,7 @@ describe('AccountForm', () => {
     expect(screen.getByLabelText(/Account Name/i)).toHaveValue('Test Account');
     expect(screen.getByLabelText(/Initial Balance/i)).toHaveValue(1500);
     expect(screen.getByLabelText(/Description/i)).toHaveValue('Test description');
-    expect(screen.getByLabelText(/Active/i)).not.toBeChecked();
-    expect(screen.getByText('Update Account')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /update/i })).toBeInTheDocument();
   });
 
   it('should validate required fields', async () => {
@@ -175,7 +173,7 @@ describe('AccountForm', () => {
 
     render(<AccountForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
-    const submitButton = screen.getByText('Create Account');
+    const submitButton = screen.getByRole('button', { name: /create/i });
     await user.click(submitButton);
 
     await waitFor(() => {
@@ -208,32 +206,6 @@ describe('AccountForm', () => {
 
     expect(mockOnCancel).toHaveBeenCalledTimes(1);
     expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('should toggle active switch', async () => {
-    const user = userEvent.setup();
-
-    (useAccountForm as jest.Mock).mockReturnValue({
-      formData: {
-        name: '',
-        type: AccountType.BANK_ACCOUNT,
-        currencyCode: CurrencyCode.USD,
-        initialBalance: '0',
-        description: '',
-        isActive: true,
-      },
-      errors: {},
-      isSubmitting: false,
-      setField: mockSetField,
-      handleSubmit: mockHandleSubmit,
-    });
-
-    render(<AccountForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
-
-    const activeSwitch = screen.getByLabelText(/Active/i);
-
-    await user.click(activeSwitch);
-    expect(mockSetField).toHaveBeenCalledWith('isActive', false);
   });
 
   it('should clear error when user starts typing', async () => {

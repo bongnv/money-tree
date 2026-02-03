@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useArchiveService } from './useServices';
 import { useSync } from '@/contexts/SyncContext';
-import { useStore } from '@/contexts/StoreContext';
 
 interface ArchiveYearSummary {
   transactionCount: number;
@@ -14,7 +13,6 @@ interface ArchiveYearSummary {
 export function useArchivePrompt() {
   const navigate = useNavigate();
   const archiveService = useArchiveService();
-  const { baseCurrency } = useStore();
   const { syncStatus } = useSync();
 
   const [showPrompt, setShowPrompt] = useState(false);
@@ -29,7 +27,7 @@ export function useArchivePrompt() {
 
       const archivableYear = await archiveService.identifyArchivableYear();
       if (archivableYear !== null) {
-        const summary = await archiveService.calculateYearEndSummary(archivableYear, baseCurrency);
+        const summary = await archiveService.calculateYearEndSummary(archivableYear);
         setArchiveYear(archivableYear);
         setArchiveYearSummary(summary);
         setShowPrompt(true);
@@ -37,7 +35,7 @@ export function useArchivePrompt() {
     };
 
     checkArchive();
-  }, [syncStatus, archiveService, baseCurrency]);
+  }, [syncStatus, archiveService]);
 
   const handleGoToSettings = () => {
     setShowPrompt(false);

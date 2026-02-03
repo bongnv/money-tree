@@ -45,6 +45,8 @@ describe('useArchivePrompt', () => {
       fullSync: jest.fn(),
       connect: jest.fn(),
       disconnect: jest.fn(),
+      provider: null,
+      currentFile: null,
     });
   });
 
@@ -61,6 +63,8 @@ describe('useArchivePrompt', () => {
       fullSync: jest.fn(),
       connect: jest.fn(),
       disconnect: jest.fn(),
+      provider: null,
+      currentFile: null,
     });
 
     const { result } = renderHook(() => useArchivePrompt());
@@ -90,7 +94,7 @@ describe('useArchivePrompt', () => {
     });
 
     expect(mockArchiveService.identifyArchivableYear).toHaveBeenCalled();
-    expect(mockArchiveService.calculateYearEndSummary).toHaveBeenCalledWith(2023, CurrencyCode.USD);
+    expect(mockArchiveService.calculateYearEndSummary).toHaveBeenCalledWith(2023);
   });
 
   it('should not show prompt when no archivable year found', async () => {
@@ -176,6 +180,8 @@ describe('useArchivePrompt', () => {
       fullSync: jest.fn(),
       connect: jest.fn(),
       disconnect: jest.fn(),
+      provider: null,
+      currentFile: null,
     });
 
     rerender();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Box,
   Paper,
@@ -21,112 +21,22 @@ import {
 } from '@mui/material';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import WarningIcon from '@mui/icons-material/Warning';
-import { useArchiveService } from '@/hooks/useServices';
-import { useAppContext } from '@/contexts/AppContext';
-import { formatCurrency } from '../../utils/currency.utils';
-import type { YearEndSummary } from '../../types/models';
-import { useStore } from '@/contexts/StoreContext';
-import { CurrencyCode } from '../../types/enums';
+import { formatCurrency } from '@/utils/currency.utils';
+import { useArchiveManager } from '@/hooks/useArchiveManager';
 
 export const ArchiveManager: React.FC = () => {
-  const { baseCurrency, archivedYears, addArchivedYear } = useStore();
-  const effectiveBaseCurrency = baseCurrency || CurrencyCode.USD;
-  const archiveService = useArchiveService();
-  const { showSnackbar } = useAppContext();
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportingYear, setExportingYear] = useState<number | null>(null);
-  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; year: number | null }>({
-    open: false,
-    year: null,
-  });
-  const [yearSummaries, setYearSummaries] = useState<Record<number, YearEndSummary>>({});
-  const [archivableYear, setArchivableYear] = useState<number | null>(null);
-
-  // Get archivable year
-  useEffect(() => {
-    let isMounted = true;
-
-    const getArchivableYear = async () => {
-      const year = await archiveService.identifyArchivableYear();
-      if (isMounted) {
-        setArchivableYear(year);
-      }
-    };
-
-    getArchivableYear();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [archiveService]);
-
-  // Calculate summary for archivable year
-  useEffect(() => {
-    let isMounted = true;
-
-    const calculateSummary = async () => {
-      if (archivableYear !== null) {
-        const summary = await archiveService.calculateYearEndSummary(
-          archivableYear,
-          effectiveBaseCurrency
-        );
-        if (isMounted) {
-          setYearSummaries({ [archivableYear]: summary });
-        }
-      } else {
-        setYearSummaries({});
-      }
-    };
-
-    calculateSummary();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [archivableYear, effectiveBaseCurrency, archiveService]);
-
-  const handleExportYear = async (year: number) => {
-    // Close confirmation dialog
-    setConfirmDialog({ open: false, year: null });
-
-    setIsExporting(true);
-    setExportingYear(year);
-
-    try {
-      // Create archive file
-      const archiveFile = await archiveService.createArchiveFile(year, baseCurrency);
-
-      // Save archive (removes transactions, updates balances, removes budgets)
-      await archiveService.saveArchiveFile(archiveFile);
-
-      // Create and add archive reference (sync triggered automatically)
-      const archiveReference = {
-        year,
-        archivedDate: archiveFile.archivedDate,
-        summary: archiveFile.summary,
-      };
-      await addArchivedYear(archiveReference);
-
-      showSnackbar(
-        `Year ${year} archived successfully. Data has been removed from the main file.`,
-        'success'
-      );
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to export archive';
-      showSnackbar(message, 'error');
-    } finally {
-      setIsExporting(false);
-      setExportingYear(null);
-    }
-  };
-
-  const handleOpenConfirmDialog = (year: number) => {
-    setConfirmDialog({ open: true, year });
-  };
-
-  const handleCloseConfirmDialog = () => {
-    setConfirmDialog({ open: false, year: null });
-  };
+  const {
+    archivableYear,
+    yearSummaries,
+    archivedYears,
+    baseCurrency,
+    isExporting,
+    exportingYear,
+    confirmDialog,
+    handleExportYear,
+    handleOpenConfirmDialog,
+    handleCloseConfirmDialog,
+  } = useArchiveManager();
 
   return (
     <Box>
@@ -183,7 +93,7 @@ export const ArchiveManager: React.FC = () => {
                       </TableCell>
                       <TableCell align="right">{summary.transactionCount}</TableCell>
                       <TableCell align="right">
-                        {formatCurrency(summary.closingNetWorth, effectiveBaseCurrency)}
+                        {formatCurrency(summary.closingNetWorth, baseCurrency)}
                       </TableCell>
                       <TableCell align="right">
                         <Button
@@ -242,7 +152,7 @@ export const ArchiveManager: React.FC = () => {
                     <TableCell>{new Date(archived.archivedDate).toLocaleDateString()}</TableCell>
                     <TableCell align="right">{archived.summary.transactionCount}</TableCell>
                     <TableCell align="right">
-                      {formatCurrency(archived.summary.closingNetWorth, effectiveBaseCurrency)}
+                      {formatCurrency(archived.summary.closingNetWorth, baseCurrency)}
                     </TableCell>
                   </TableRow>
                 ))}

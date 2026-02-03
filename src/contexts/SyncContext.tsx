@@ -39,6 +39,10 @@ export interface SyncOperations {
 
   // Status
   syncStatus: SyncStatusState;
+
+  // Storage provider access
+  provider: IStorageProvider | null;
+  currentFile: CloudItem | null;
 }
 
 interface SyncContextValue extends SyncOperations {

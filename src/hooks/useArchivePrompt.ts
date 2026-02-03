@@ -23,7 +23,7 @@ export function useArchivePrompt() {
   useEffect(() => {
     const checkArchive = async () => {
       // Only check when connected
-      if (syncStatus.status === 'not-connected') return;
+      if (syncStatus.status !== 'connected' && syncStatus.status !== 'synced') return;
 
       const archivableYear = await archiveService.identifyArchivableYear();
       if (archivableYear !== null) {
@@ -35,7 +35,7 @@ export function useArchivePrompt() {
     };
 
     checkArchive();
-  }, [syncStatus, archiveService]);
+  }, [syncStatus.status, archiveService]);
 
   const handleGoToSettings = () => {
     setShowPrompt(false);

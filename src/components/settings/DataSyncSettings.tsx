@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   Box,
   Typography,
@@ -12,82 +12,20 @@ import {
   DialogActions,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import { useNavigate } from 'react-router-dom';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { useSync } from '@/contexts/SyncContext';
-import { db } from '../../db/database';
-import { useStore } from '@/contexts/StoreContext';
+import { useDataSyncSettings } from '@/hooks/useDataSyncSettings';
 
 export const DataSyncSettings: React.FC = () => {
-  const navigate = useNavigate();
-  const syncOps = useSync();
-  const { syncStatus } = syncOps;
-  const cloudFileName = syncStatus.fileName;
-  const { accounts, categories, transactionTypes, transactions, assets, budgets } = useStore();
-
-  const [disconnectDialogOpen, setDisconnectDialogOpen] = React.useState(false);
-
-  const fileSize = useMemo(() => {
-    // Calculate approximate file size from store data
-    // This is a rough estimate - actual file may be larger due to formatting
-    try {
-      // Only calculate if all data is loaded
-      if (
-        accounts === undefined ||
-        categories === undefined ||
-        transactionTypes === undefined ||
-        transactions === undefined ||
-        budgets === undefined ||
-        assets === undefined
-      ) {
-        return 'Loading...';
-      }
-
-      const dataObj = {
-        accounts,
-        categories,
-        transactionTypes,
-        transactions,
-        budgets,
-        manualAssets: assets,
-      };
-
-      const jsonStr = JSON.stringify(dataObj);
-      const bytes = new Blob([jsonStr]).size;
-
-      let result: string;
-      if (bytes < 1024) {
-        result = `${bytes} bytes`;
-      } else if (bytes < 1024 * 1024) {
-        result = `${(bytes / 1024).toFixed(1)} KB`;
-      } else {
-        result = `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-      }
-
-      return result;
-    } catch (error) {
-      console.error('[DataSyncSettings] fileSize error:', error);
-      return 'Unknown';
-    }
-  }, [accounts, categories, transactionTypes, transactions, budgets, assets]);
-
-  const storageLocation = useMemo(() => {
-    return syncStatus.providerName || 'Not connected';
-  }, [syncStatus.providerName]);
-
-  const handleDisconnect = async () => {
-    setDisconnectDialogOpen(false);
-
-    // Clear all data from IndexedDB
-    await db.delete();
-    await db.open();
-
-    // Disconnect from cloud storage (will show welcome dialog automatically)
-    await syncOps.disconnect();
-
-    // Redirect to dashboard
-    navigate('/');
-  };
+  const {
+    cloudFileName,
+    fileSize,
+    storageLocation,
+    status,
+    disconnectDialogOpen,
+    openDisconnectDialog,
+    closeDisconnectDialog,
+    handleDisconnect,
+  } = useDataSyncSettings();
 
   return (
     <Box>
@@ -120,9 +58,7 @@ export const DataSyncSettings: React.FC = () => {
                     <Typography variant="body2" color="text.secondary">
                       Status
                     </Typography>
-                    <Typography variant="body1">
-                      {syncStatus.providerName || 'Not connected'}
-                    </Typography>
+                    <Typography variant="body1">{status}</Typography>
                   </Grid>
                 </Grid>
               </Box>
@@ -156,7 +92,7 @@ export const DataSyncSettings: React.FC = () => {
                 variant="outlined"
                 color="warning"
                 startIcon={<LogoutIcon />}
-                onClick={() => setDisconnectDialogOpen(true)}
+                onClick={openDisconnectDialog}
                 disabled={!cloudFileName}
               >
                 Disconnect
@@ -167,7 +103,7 @@ export const DataSyncSettings: React.FC = () => {
       </Grid>
 
       {/* Disconnect Dialog */}
-      <Dialog open={disconnectDialogOpen} onClose={() => setDisconnectDialogOpen(false)}>
+      <Dialog open={disconnectDialogOpen} onClose={closeDisconnectDialog}>
         <DialogTitle>Disconnect from Current File?</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -179,7 +115,7 @@ export const DataSyncSettings: React.FC = () => {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDisconnectDialogOpen(false)}>Cancel</Button>
+          <Button onClick={closeDisconnectDialog}>Cancel</Button>
           <Button onClick={handleDisconnect} color="warning" autoFocus>
             Disconnect
           </Button>

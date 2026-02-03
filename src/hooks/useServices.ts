@@ -2,11 +2,13 @@ import { useMemo } from 'react';
 import { CalculationService } from '@/services/calculation.service';
 import { ReportService } from '@/services/report.service';
 import { ArchiveService } from '@/services/archive.service';
+import { FormatService } from '@/services/formatService';
 import { db } from '@/db/database';
 
 // Singleton instances
 let calculationServiceInstance: CalculationService | null = null;
 let reportServiceInstance: ReportService | null = null;
+let formatServiceInstance: FormatService | null = null;
 
 function getCalculationService(): CalculationService {
   if (!calculationServiceInstance) {
@@ -56,6 +58,23 @@ export function useReportService(): ReportService {
 }
 
 /**
+ * Get FormatService instance (singleton)
+ */
+function getFormatService(): FormatService {
+  if (!formatServiceInstance) {
+    formatServiceInstance = new FormatService();
+  }
+  return formatServiceInstance;
+}
+
+/**
+ * Hook to get FormatService instance
+ */
+export function useFormatService(): FormatService {
+  return useMemo(() => getFormatService(), []);
+}
+
+/**
  * Hook to get all services at once
  */
 export function useServices() {
@@ -63,5 +82,6 @@ export function useServices() {
     archive: useArchiveService(),
     calculation: useCalculationService(),
     report: useReportService(),
+    format: useFormatService(),
   };
 }

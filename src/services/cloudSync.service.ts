@@ -49,10 +49,8 @@ export class CloudSyncService {
     const categories = mergedData.categories.filter((c) => !c.isDeleted);
     const budgets = mergedData.budgets.filter((b) => !b.isDeleted);
     const manualAssets = mergedData.manualAssets.filter((a) => !a.isDeleted);
-
-    // Filter out archived (inactive) resources
-    const accounts = mergedData.accounts.filter((account) => account.isActive !== false);
-    const transactionTypes = mergedData.transactionTypes.filter((type) => type.isActive !== false);
+    const accounts = mergedData.accounts.filter((account) => !account.isDeleted);
+    const transactionTypes = mergedData.transactionTypes.filter((type) => !type.isDeleted);
 
     const dataFile: DataFile = {
       version: '1.0',

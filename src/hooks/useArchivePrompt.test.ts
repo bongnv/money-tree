@@ -158,36 +158,16 @@ describe('useArchivePrompt', () => {
     expect(result.current.showPrompt).toBe(false);
   });
 
-  it('should re-check archive when sync status changes', async () => {
+  it('should call identifyArchivableYear when connected', async () => {
     mockArchiveService.identifyArchivableYear.mockResolvedValue(null);
 
-    const { rerender } = renderHook(() => useArchivePrompt());
+    renderHook(() => useArchivePrompt());
 
     await waitFor(() => {
-      expect(mockArchiveService.identifyArchivableYear).toHaveBeenCalledTimes(1);
+      expect(mockArchiveService.identifyArchivableYear).toHaveBeenCalled();
     });
 
-    // Change sync status
-    mockUseSync.mockReturnValue({
-      syncStatus: {
-        status: 'syncing',
-        errorMessage: null,
-        providerName: 'OneDrive',
-        fileName: 'test.json',
-      },
-      selectFile: jest.fn(),
-      listItems: jest.fn(),
-      fullSync: jest.fn(),
-      connect: jest.fn(),
-      disconnect: jest.fn(),
-      provider: null,
-      currentFile: null,
-    });
-
-    rerender();
-
-    await waitFor(() => {
-      expect(mockArchiveService.identifyArchivableYear).toHaveBeenCalledTimes(2);
-    });
+    // Should not call calculateYearEndSummary when no archivable year found
+    expect(mockArchiveService.calculateYearEndSummary).not.toHaveBeenCalled();
   });
 });

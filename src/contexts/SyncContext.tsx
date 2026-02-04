@@ -2,17 +2,27 @@ import React, { createContext, useContext, useCallback, useEffect, useMemo, useS
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useDebouncedCallback } from 'use-debounce';
 import { CloudSyncService } from '@/services/cloudSync.service';
-import { StorageProviderFactory } from '@/services/storage/StorageProviderFactory';
 import { IStorageProvider, CloudItem } from '@/services/storage/IStorageProvider';
-import type { StorageProviderType } from '@/services/storage/StorageProviderFactory';
+import { OneDriveProvider } from '@/services/storage/OneDriveProvider';
+import { GoogleDriveProvider } from '@/services/storage/GoogleDriveProvider';
 import { useApp } from '@/contexts/AppContext';
 import { db } from '@/db/database';
 
+/**
+ * Storage provider type
+ */
+export enum StorageProviderType {
+  ONEDRIVE = 'onedrive',
+  GOOGLE_DRIVE = 'google_drive',
+}
+
 const FILE_CACHE_KEY = 'moneyTree.currentFile';
+const STORAGE_CONFIG_KEY = 'moneyTree.storageProviderConfig';
 
 // Simplified sync status for UI display
 export type SyncUIStatus =
   | 'not-connected' // No provider or file configured
+  | 'offline' // Stored config exists but session expired
   | 'connected' // Provider and file set, but not yet synced
   | 'syncing' // Currently syncing
   | 'synced' // Successfully synced
@@ -32,6 +42,7 @@ export interface SyncOperations {
 
   // Sync methods
   fullSync: () => Promise<void>;
+  reconnect: () => Promise<void>;
 
   // Connection methods
   connect: (type: StorageProviderType) => Promise<void>;
@@ -57,7 +68,6 @@ const DEBOUNCE_MS = 30000; // 30 seconds for all syncs
 // Singleton internal state (not UI state)
 let provider: IStorageProvider | null = null;
 let currentFileItem: CloudItem | null = null;
-let onReconnectNeeded: ((providerName: string) => Promise<'reconnect' | 'dismiss'>) | null = null;
 
 // Internal sync state (separate from app UI state for timing accuracy)
 const syncState = {
@@ -67,15 +77,65 @@ const syncState = {
   remoteLastModified: null as string | null,
 };
 
-interface SyncProviderProps {
-  children: React.ReactNode;
-  onReconnectNeeded?: (providerName: string) => Promise<'reconnect' | 'dismiss'>;
+// ==================== HELPER FUNCTIONS ====================
+
+/**
+ * Create provider instance based on type
+ */
+function createProvider(type: StorageProviderType): IStorageProvider | null {
+  switch (type) {
+    case StorageProviderType.ONEDRIVE:
+      return new OneDriveProvider();
+    case StorageProviderType.GOOGLE_DRIVE:
+      return new GoogleDriveProvider();
+    default:
+      return null;
+  }
 }
 
-export const SyncProvider: React.FC<SyncProviderProps> = ({
-  children,
-  onReconnectNeeded: onReconnectNeededCallback,
-}) => {
+/**
+ * Load stored provider configuration
+ */
+function loadProviderConfig(): StorageProviderType | null {
+  const saved = localStorage.getItem(STORAGE_CONFIG_KEY);
+  return saved as StorageProviderType | null;
+}
+
+/**
+ * Save provider configuration
+ */
+function saveProviderConfig(type: StorageProviderType): void {
+  localStorage.setItem(STORAGE_CONFIG_KEY, type);
+}
+
+/**
+ * Clear provider configuration
+ */
+function clearProviderConfig(): void {
+  localStorage.removeItem(STORAGE_CONFIG_KEY);
+}
+
+/**
+ * Load cached file from localStorage
+ */
+function loadCachedFile(): CloudItem | null {
+  try {
+    const cached = localStorage.getItem(FILE_CACHE_KEY);
+    if (!cached) return null;
+    return JSON.parse(cached) as CloudItem;
+  } catch (error) {
+    console.warn('Failed to load cached file info:', error);
+    return null;
+  }
+}
+
+// ==================== TYPES ====================
+
+interface SyncProviderProps {
+  children: React.ReactNode;
+}
+
+export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
   const { showSnackbar, setShowWelcomeDialog, setShowFileSelection } = useApp();
   const [providerState, setProviderState] = useState<IStorageProvider | null>(provider);
   const [fileState, setFileState] = useState<CloudItem | null>(currentFileItem);
@@ -85,13 +145,6 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({
     providerName: null,
     fileName: null,
   });
-
-  // Store reconnect callback
-  useEffect(() => {
-    if (onReconnectNeededCallback) {
-      onReconnectNeeded = onReconnectNeededCallback;
-    }
-  }, [onReconnectNeededCallback]);
 
   // Initialize storage provider on first mount
   useEffect(() => {
@@ -103,48 +156,79 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({
         syncState.isSyncing = false;
         syncState.isInitializing = true;
 
-        const result = await StorageProviderFactory.initialize(
-          onReconnectNeeded || (() => Promise.resolve('dismiss' as const))
-        );
-
-        if (result) {
-          provider = result;
-          setProviderState(result);
-
-          let fileName: string | null = null;
-          try {
-            const cached = localStorage.getItem(FILE_CACHE_KEY);
-            if (cached) {
-              const fileItem = JSON.parse(cached) as CloudItem;
-              currentFileItem = fileItem;
-              setFileState(fileItem);
-              fileName = fileItem.name;
-            }
-          } catch (error) {
-            console.warn('Failed to load cached file info:', error);
-          }
-
-          if (fileName) {
-            setSyncStatus({
-              status: 'connected',
-              errorMessage: null,
-              providerName: result.getName(),
-              fileName: fileName,
-            });
-          } else {
-            setSyncStatus({
-              status: 'not-connected',
-              errorMessage: null,
-              providerName: result.getName(),
-              fileName: null,
-            });
-            setShowFileSelection(true);
-          }
-        }
-
-        if (!provider) {
+        // Guard: No stored config - new user flow
+        const config = loadProviderConfig();
+        if (!config) {
+          setSyncStatus({
+            status: 'not-connected',
+            errorMessage: null,
+            providerName: null,
+            fileName: null,
+          });
           setShowWelcomeDialog(true);
+          return;
         }
+
+        // Guard: Invalid provider type
+        const providerInstance = createProvider(config);
+        if (!providerInstance) {
+          setSyncStatus({
+            status: 'offline',
+            errorMessage: null,
+            providerName: null,
+            fileName: null,
+          });
+          showSnackbar('Session expired - working offline. Click sync to reconnect.', 'info');
+          return;
+        }
+
+        // Try to initialize provider (validates session)
+        let success = false;
+        try {
+          success = await providerInstance.initialize();
+        } catch (error) {
+          console.warn('Provider initialization failed:', error);
+        }
+
+        // Guard: Session expired - offline mode
+        if (!success) {
+          setSyncStatus({
+            status: 'offline',
+            errorMessage: null,
+            providerName: null,
+            fileName: null,
+          });
+          showSnackbar('Session expired - working offline. Click sync to reconnect.', 'info');
+          return;
+        }
+
+        // Provider successfully initialized
+        provider = providerInstance;
+        setProviderState(providerInstance);
+
+        // Try to load cached file
+        const cachedFile = loadCachedFile();
+        if (!cachedFile) {
+          // No file selected yet - show file selection
+          setSyncStatus({
+            status: 'not-connected',
+            errorMessage: null,
+            providerName: providerInstance.getName(),
+            fileName: null,
+          });
+          setShowFileSelection(true);
+          return;
+        }
+
+        // Happy path: Provider initialized and file loaded
+        currentFileItem = cachedFile;
+        setFileState(cachedFile);
+        setSyncStatus({
+          status: 'connected',
+          errorMessage: null,
+          providerName: providerInstance.getName(),
+          fileName: cachedFile.name,
+        });
       } catch (error) {
         console.error('[SyncProvider] Initialization failed:', error);
         setSyncStatus({
@@ -209,13 +293,23 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({
   // Connect to a storage provider
   const connect = useCallback(
     async (type: StorageProviderType): Promise<void> => {
-      const result = await StorageProviderFactory.connect({ type });
-      provider = result;
-      setProviderState(result);
+      const providerInstance = createProvider(type);
+      if (!providerInstance) {
+        throw new Error(`Provider not available: ${type}`);
+      }
+
+      // Authenticate (OAuth popup)
+      await providerInstance.authenticate();
+
+      // Save provider type to localStorage
+      saveProviderConfig(type);
+
+      provider = providerInstance;
+      setProviderState(providerInstance);
       setSyncStatus({
         status: 'not-connected',
         errorMessage: null,
-        providerName: result.getName(),
+        providerName: providerInstance.getName(),
         fileName: null,
       });
       setShowFileSelection(true);
@@ -225,7 +319,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({
 
   // Disconnect from storage provider
   const disconnect = useCallback(async (): Promise<void> => {
-    await StorageProviderFactory.disconnect(provider);
+    clearProviderConfig();
     provider = null;
     currentFileItem = null;
     setProviderState(null);
@@ -240,8 +334,74 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({
     setShowWelcomeDialog(true);
   }, [setSyncStatus, setShowWelcomeDialog]);
 
+  // Reconnect when in offline mode
+  const reconnect = useCallback(async () => {
+    try {
+      showSnackbar('Reconnecting...', 'info');
+
+      const config = loadProviderConfig();
+      if (!config) {
+        throw new Error('No stored configuration found');
+      }
+
+      const providerInstance = createProvider(config);
+      if (!providerInstance) {
+        throw new Error(`Provider not available: ${config}`);
+      }
+
+      // Re-authenticate (triggers OAuth popup)
+      await providerInstance.authenticate();
+
+      // Verify authentication worked
+      const success = await providerInstance.initialize();
+      if (!success) {
+        throw new Error('Authentication failed');
+      }
+
+      provider = providerInstance;
+      setProviderState(providerInstance);
+
+      // Try to reload cached file
+      let fileName: string | null = null;
+      try {
+        const cached = localStorage.getItem(FILE_CACHE_KEY);
+        if (cached) {
+          const fileItem = JSON.parse(cached) as CloudItem;
+          currentFileItem = fileItem;
+          setFileState(fileItem);
+          fileName = fileItem.name;
+        }
+      } catch (error) {
+        console.warn('Failed to load cached file info:', error);
+      }
+
+      setSyncStatus({
+        status: fileName ? 'connected' : 'not-connected',
+        errorMessage: null,
+        providerName: providerInstance.getName(),
+        fileName: fileName,
+      });
+
+      if (!fileName) {
+        setShowFileSelection(true);
+      } else {
+        showSnackbar('Reconnected successfully', 'success');
+        // Note: Auto-sync will be triggered by the useEffect watching syncService
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to reconnect';
+      console.error('[SyncProvider] Reconnect failed:', error);
+      showSnackbar(errorMessage, 'error');
+    }
+  }, [setSyncStatus, setShowFileSelection, showSnackbar]);
+
   // Full bidirectional sync
   const fullSync = useCallback(async (): Promise<void> => {
+    if (syncStatus.status === 'offline') {
+      showSnackbar('Cannot sync while offline', 'info');
+      return;
+    }
+
     if (!syncService) {
       throw new Error('Sync service not initialized or no file selected');
     }
@@ -333,6 +493,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({
     selectFile,
     listItems,
     fullSync,
+    reconnect,
     connect,
     disconnect,
   };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -7,7 +7,6 @@ import { MainLayout } from './components/layout/MainLayout';
 import { WelcomeDialog } from './components/onboarding/WelcomeDialog';
 import { CloudFilePicker } from './components/common/CloudFilePicker';
 import { NotificationSnackbar } from './components/common/NotificationSnackbar';
-import ReconnectDialog from './components/common/ReconnectDialog';
 import { ArchivePrompt } from './components/common/ArchivePrompt';
 import { AppRoutes } from './routes';
 import { useApp, AppProvider } from '@/contexts/AppContext';
@@ -99,59 +98,18 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => {
-  const [reconnectDialogState, setReconnectDialogState] = useState<{
-    open: boolean;
-    providerName: string;
-    resolve: ((value: 'reconnect' | 'dismiss') => void) | null;
-  }>({
-    open: false,
-    providerName: '',
-    resolve: null,
-  });
-
-  // Reconnect callback to be injected into StorageService
-  const handleReconnectNeeded = async (providerName: string): Promise<'reconnect' | 'dismiss'> => {
-    return new Promise<'reconnect' | 'dismiss'>((resolve) => {
-      setReconnectDialogState({
-        open: true,
-        providerName,
-        resolve,
-      });
-    });
-  };
-
-  const handleReconnect = () => {
-    if (reconnectDialogState.resolve) {
-      reconnectDialogState.resolve('reconnect');
-    }
-    setReconnectDialogState({ open: false, providerName: '', resolve: null });
-  };
-
-  const handleReconnectDismiss = () => {
-    if (reconnectDialogState.resolve) {
-      reconnectDialogState.resolve('dismiss');
-    }
-    setReconnectDialogState({ open: false, providerName: '', resolve: null });
-  };
-
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <BrowserRouter>
         <AppProvider>
-          <SyncProvider onReconnectNeeded={handleReconnectNeeded}>
+          <SyncProvider>
             <StoreProvider>
               <AppContent />
             </StoreProvider>
           </SyncProvider>
         </AppProvider>
       </BrowserRouter>
-      <ReconnectDialog
-        open={reconnectDialogState.open}
-        providerName={reconnectDialogState.providerName}
-        onReconnect={handleReconnect}
-        onDismiss={handleReconnectDismiss}
-      />
     </ThemeProvider>
   );
 };

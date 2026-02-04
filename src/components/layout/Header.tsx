@@ -44,9 +44,13 @@ export const Header: React.FC = () => {
 
   const handleSync = async () => {
     try {
-      await syncOps.fullSync();
+      if (syncStatus.status === 'offline') {
+        await syncOps.reconnect();
+      } else {
+        await syncOps.fullSync();
+      }
     } catch (error) {
-      console.error('Sync failed:', error);
+      console.error('Sync operation failed:', error);
     }
   };
 
@@ -60,6 +64,8 @@ export const Header: React.FC = () => {
         return <CloudDoneIcon />;
       case 'connected':
         return <CloudQueueIcon />;
+      case 'offline':
+        return <CloudOffIcon />;
       case 'not-connected':
       default:
         return <CloudOffIcon />;
@@ -76,6 +82,8 @@ export const Header: React.FC = () => {
         return 'Synced';
       case 'connected':
         return 'Connected';
+      case 'offline':
+        return 'Working Offline';
       case 'not-connected':
         return 'Not Connected';
       default:
@@ -87,11 +95,31 @@ export const Header: React.FC = () => {
     switch (syncStatus.status) {
       case 'error':
         return 'error.main';
+      case 'offline':
       case 'not-connected':
       case 'connected':
         return 'warning.main';
       default:
         return 'inherit';
+    }
+  };
+
+  const getTooltip = () => {
+    switch (syncStatus.status) {
+      case 'offline':
+        return 'Click to reconnect';
+      case 'syncing':
+        return 'Syncing in progress...';
+      case 'error':
+        return `Error: ${syncStatus.errorMessage || 'Unknown error'}. Click to retry`;
+      case 'synced':
+        return 'Synced - Click to sync again';
+      case 'connected':
+        return 'Click to sync';
+      case 'not-connected':
+        return 'Not connected - Set up cloud storage in settings';
+      default:
+        return 'Sync status unknown';
     }
   };
 
@@ -186,7 +214,7 @@ export const Header: React.FC = () => {
             </Box>
           )}
 
-          <Tooltip title={getSyncLabel()} arrow>
+          <Tooltip title={getTooltip()} arrow>
             <span>
               <IconButton
                 color="inherit"

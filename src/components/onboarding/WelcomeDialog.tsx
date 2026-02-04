@@ -18,7 +18,7 @@ import {
 import { Cloud as CloudIcon } from '@mui/icons-material';
 import { isOneDriveConfigured } from '../../config/onedrive.config';
 import { isGoogleDriveConfigured } from '../../config/googledrive.config';
-import { StorageProviderType } from '../../services/storage/StorageProviderFactory';
+import { StorageProviderType } from '../../contexts/SyncContext';
 import { useWelcomeDialog } from '@/hooks/onboarding/useWelcomeDialog';
 
 interface WelcomeDialogProps {

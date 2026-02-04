@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useSync } from '@/contexts/SyncContext';
-import { StorageProviderType } from '@/services/storage/StorageProviderFactory';
+import { useSync, StorageProviderType } from '@/contexts/SyncContext';
 import { isUserCancellationError } from '@/utils/error.utils';
 
 interface WelcomeDialogState {

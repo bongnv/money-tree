@@ -45,18 +45,6 @@ jest.mock('./components/common/NotificationSnackbar', () => ({
     ) : null,
 }));
 
-jest.mock('./components/common/ReconnectDialog', () => ({
-  __esModule: true,
-  default: ({ open, onReconnect, onDismiss, providerName }: any) =>
-    open ? (
-      <div data-testid="reconnect-dialog">
-        <div>{providerName}</div>
-        <button onClick={onReconnect}>Reconnect</button>
-        <button onClick={onDismiss}>Dismiss</button>
-      </div>
-    ) : null,
-}));
-
 jest.mock('./components/common/ArchivePrompt', () => ({
   ArchivePrompt: ({ open, year, onGoToSettings, onRemindLater }: any) =>
     open ? (

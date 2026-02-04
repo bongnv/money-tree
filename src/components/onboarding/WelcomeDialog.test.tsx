@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { WelcomeDialog } from './WelcomeDialog';
-import { StorageProviderType } from '../../services/storage/StorageProviderFactory';
+import { StorageProviderType } from '../../contexts/SyncContext';
 
 // Create mock functions
 const mockIsOneDriveConfigured = jest.fn(() => true);
@@ -43,16 +43,21 @@ const mockConnect = jest.fn().mockImplementation(async (type) => {
 });
 
 // Mock SyncProvider context
-jest.mock('@/contexts/SyncContext', () => ({
-  useSync: () => ({
-    connect: mockConnect,
-    selectFile: jest.fn(),
-    listItems: jest.fn().mockResolvedValue([]),
-    fullSync: jest.fn(),
-    disconnect: jest.fn(),
-    syncStatus: mockSyncStatus,
-  }),
-}));
+jest.mock('@/contexts/SyncContext', () => {
+  const actual = jest.requireActual('@/contexts/SyncContext');
+  return {
+    ...actual,
+    StorageProviderType: actual.StorageProviderType,
+    useSync: () => ({
+      connect: mockConnect,
+      selectFile: jest.fn(),
+      listItems: jest.fn().mockResolvedValue([]),
+      fullSync: jest.fn(),
+      disconnect: jest.fn(),
+      syncStatus: mockSyncStatus,
+    }),
+  };
+});
 
 describe('WelcomeDialog', () => {
   const mockOnClose = jest.fn();

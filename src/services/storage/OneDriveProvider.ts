@@ -246,6 +246,10 @@ export class OneDriveProvider implements IStorageProvider {
   private async getGraphClient(): Promise<Client> {
     await this.initPromise;
 
+    if (!this.msalInstance) {
+      throw new Error(errorMessages.configError);
+    }
+
     if (!this.account) {
       throw new Error(errorMessages.authRequired);
     }
@@ -261,6 +265,10 @@ export class OneDriveProvider implements IStorageProvider {
    * Create Microsoft Graph client with authentication
    */
   private async createGraphClient(): Promise<Client> {
+    if (!this.msalInstance) {
+      throw new Error(errorMessages.configError);
+    }
+
     if (!this.account) {
       throw new Error(errorMessages.authRequired);
     }
@@ -281,7 +289,11 @@ export class OneDriveProvider implements IStorageProvider {
    * Get access token (acquire silently or via interaction)
    */
   private async getAccessToken(): Promise<string> {
-    if (!this.msalInstance || !this.account) {
+    if (!this.msalInstance) {
+      throw new Error(errorMessages.configError);
+    }
+
+    if (!this.account) {
       throw new Error(errorMessages.authRequired);
     }
 

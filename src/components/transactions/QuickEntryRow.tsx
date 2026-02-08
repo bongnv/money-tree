@@ -140,8 +140,9 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
   };
 
   const handleFieldChange =
-    (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      handleChange(field as any)(e.target.value);
+    <K extends keyof typeof formData>(field: K) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      handleChange(field)(e.target.value);
     };
 
   const focusNextField = (currentRef: React.RefObject<HTMLInputElement | null>) => {

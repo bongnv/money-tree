@@ -258,12 +258,7 @@ export class ArchiveService {
     const archiveFile = await this.createArchiveFile(year);
 
     // Step 2: Upload to cloud (REQUIRED - throws if upload fails)
-    const uploadedFile = await this.uploadArchiveToCloud(
-      archiveFile,
-      storageProvider,
-      archiveFolder
-    );
-    console.log(`Archive uploaded to cloud: ${uploadedFile.name}`);
+    await this.uploadArchiveToCloud(archiveFile, storageProvider, archiveFolder);
 
     // Step 3: Add archive reference to metadata BEFORE cleanup
     const archiveReference: ArchivedYearReference = {

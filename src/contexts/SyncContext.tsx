@@ -1,10 +1,20 @@
-import React, { createContext, useContext, useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+} from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useDebouncedCallback } from 'use-debounce';
 import { CloudSyncService } from '@/services/cloudSync.service';
 import { IStorageProvider, CloudItem } from '@/services/storage/IStorageProvider';
 import { OneDriveProvider } from '@/services/storage/OneDriveProvider';
 import { GoogleDriveProvider } from '@/services/storage/GoogleDriveProvider';
+import { isOneDriveConfigured } from '@/config/onedrive.config';
+import { isGoogleDriveConfigured } from '@/config/googledrive.config';
 import { useApp } from '@/contexts/AppContext';
 import { db } from '@/db/database';
 
@@ -69,13 +79,14 @@ const DEBOUNCE_MS = 30000; // 30 seconds for all syncs
 
 /**
  * Create provider instance based on type
+ * Returns null if the provider is not properly configured
  */
 function createProvider(type: StorageProviderType): IStorageProvider | null {
   switch (type) {
     case StorageProviderType.ONEDRIVE:
-      return new OneDriveProvider();
+      return isOneDriveConfigured() ? new OneDriveProvider() : null;
     case StorageProviderType.GOOGLE_DRIVE:
-      return new GoogleDriveProvider();
+      return isGoogleDriveConfigured() ? new GoogleDriveProvider() : null;
     default:
       return null;
   }
@@ -115,6 +126,21 @@ function loadCachedFile(): CloudItem | null {
     console.warn('Failed to load cached file info:', error);
     return null;
   }
+}
+
+/**
+ * Check if error is authentication-related and requires reconnection
+ * Includes both auth errors and permission errors
+ */
+function isAuthenticationError(errorMessage: string): boolean {
+  const lowerMessage = errorMessage.toLowerCase();
+  return (
+    lowerMessage.includes('authenticate') ||
+    lowerMessage.includes('authentication') ||
+    lowerMessage.includes('permission denied') ||
+    lowerMessage.includes('grant access') ||
+    lowerMessage.includes('expired')
+  );
 }
 
 // ==================== TYPES ====================
@@ -218,7 +244,8 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
     };
 
     void initialize();
-  }, [setSyncStatus, setShowFileSelection, setShowWelcomeDialog]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Watch lastModified timestamp for changes
   const lastModified = useLiveQuery(() =>
@@ -394,20 +421,31 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
         errorMessage,
         timestamp: new Date().toISOString(),
       });
-      setSyncStatus((prev) => ({ ...prev, status: 'error', errorMessage }));
-      showSnackbar(errorMessage, 'warning');
+
+      // Detect authentication/permission errors and transition to offline mode
+      if (isAuthenticationError(errorMessage)) {
+        setSyncStatus((prev) => ({ ...prev, status: 'offline', errorMessage }));
+        showSnackbar(`${errorMessage}. Click sync to reconnect.`, 'info');
+      } else {
+        setSyncStatus((prev) => ({ ...prev, status: 'error', errorMessage }));
+        showSnackbar(errorMessage, 'warning');
+      }
     } finally {
       syncStateRef.current.isSyncing = false;
     }
-  }, [syncService, currentFile, updateFileItem, showSnackbar, setSyncStatus]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [syncService, currentFile, updateFileItem, showSnackbar]);
 
   // List items in cloud storage
-  const listItems = useCallback(async (parent?: CloudItem): Promise<CloudItem[]> => {
-    if (!provider) {
-      throw new Error('Provider not initialized');
-    }
-    return provider.listItems(parent);
-  }, [provider]);
+  const listItems = useCallback(
+    async (parent?: CloudItem): Promise<CloudItem[]> => {
+      if (!provider) {
+        throw new Error('Provider not initialized');
+      }
+      return provider.listItems(parent);
+    },
+    [provider]
+  );
 
   // Debounced sync using useDebouncedCallback
   const debouncedSync = useDebouncedCallback(

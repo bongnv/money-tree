@@ -342,7 +342,7 @@ export class CloudSyncService {
     mergedLastModified: string;
     fileItem: CloudItem;
   }> {
-    console.log('Starting full sync with cloud storage');
+    // Starting full sync with cloud storage
     // Fetch local snapshot upfront
     const [
       allTransactions,

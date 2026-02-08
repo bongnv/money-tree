@@ -139,7 +139,7 @@ export function useArchiveManager(): UseArchiveManagerReturn {
         setExportingYear(null);
       }
     },
-    [archiveService, provider, showSnackbar]
+    [archiveService, provider, currentFile?.parentItemId, showSnackbar]
   );
 
   return {

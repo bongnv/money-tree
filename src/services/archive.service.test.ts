@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ArchiveService } from './archive.service';
 import { CurrencyCode } from '@/types/enums';
 import type { MoneyTreeDB } from '@/db/database';

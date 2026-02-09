@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { renderHook, act } from '@testing-library/react';
 import { useCashFlowReport } from './useCashFlowReport';
 import { useStore } from '@/contexts/StoreContext';

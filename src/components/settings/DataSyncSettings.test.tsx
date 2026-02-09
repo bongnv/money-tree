@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { render } from '@/test-utils';
 import { DataSyncSettings } from './DataSyncSettings';
 import { useSync } from '@/contexts/SyncContext';

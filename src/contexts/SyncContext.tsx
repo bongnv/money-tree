@@ -150,7 +150,8 @@ interface SyncProviderProps {
 }
 
 export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
-  const { showSnackbar, setShowWelcomeDialog, setShowFileSelection } = useApp();
+  const { showSnackbar, setShowWelcomeDialog, setShowFileSelection, setShowReconnectDialog } =
+    useApp();
   const [provider, setProvider] = useState<IStorageProvider | null>(null);
   const [currentFile, setCurrentFile] = useState<CloudItem | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatusState>({
@@ -204,13 +205,44 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
           return;
         }
 
-        // Set up provider (session validation happens during first sync)
-        setProvider(providerInstance);
+        // Check if provider is authenticated
+        const isAuthenticated = await providerInstance.initialize();
 
         // Try to load cached file
         const cachedFile = loadCachedFile();
+
+        // Handle authentication + file state combinations
+        if (!isAuthenticated && cachedFile) {
+          // Auth expired but file exists (Safari case: sessionStorage cleared, localStorage persists)
+          setProvider(providerInstance);
+          setCurrentFile(cachedFile);
+          setSyncStatus({
+            status: 'offline',
+            errorMessage: null,
+            providerName: providerInstance.getName(),
+            fileName: cachedFile.name,
+          });
+          setShowReconnectDialog(true);
+          return;
+        }
+
+        if (!isAuthenticated && !cachedFile) {
+          // Not authenticated and no file - new user or complete reset
+          setSyncStatus({
+            status: 'not-connected',
+            errorMessage: null,
+            providerName: null,
+            fileName: null,
+          });
+          setShowWelcomeDialog(true);
+          return;
+        }
+
+        // Set up provider
+        setProvider(providerInstance);
+
         if (!cachedFile) {
-          // No file selected yet - show file selection
+          // Authenticated but no file selected yet - show file selection
           setSyncStatus({
             status: 'not-connected',
             errorMessage: null,
@@ -221,7 +253,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
           return;
         }
 
-        // Happy path: Provider initialized and file loaded
+        // Happy path: Authenticated and file loaded
         setCurrentFile(cachedFile);
         setSyncStatus({
           status: 'connected',
@@ -333,62 +365,52 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
 
   // Reconnect when in offline mode
   const reconnect = useCallback(async () => {
+    const config = loadProviderConfig();
+    if (!config) {
+      throw new Error('No stored configuration found');
+    }
+
+    const providerInstance = createProvider(config);
+    if (!providerInstance) {
+      throw new Error(`Provider not available: ${config}`);
+    }
+
+    // Re-authenticate (triggers OAuth popup)
+    await providerInstance.authenticate();
+
+    // Verify authentication worked
+    const success = await providerInstance.initialize();
+    if (!success) {
+      throw new Error('Authentication failed');
+    }
+
+    setProvider(providerInstance);
+
+    // Try to reload cached file
+    let fileName: string | null = null;
     try {
-      showSnackbar('Reconnecting...', 'info');
-
-      const config = loadProviderConfig();
-      if (!config) {
-        throw new Error('No stored configuration found');
-      }
-
-      const providerInstance = createProvider(config);
-      if (!providerInstance) {
-        throw new Error(`Provider not available: ${config}`);
-      }
-
-      // Re-authenticate (triggers OAuth popup)
-      await providerInstance.authenticate();
-
-      // Verify authentication worked
-      const success = await providerInstance.initialize();
-      if (!success) {
-        throw new Error('Authentication failed');
-      }
-
-      setProvider(providerInstance);
-
-      // Try to reload cached file
-      let fileName: string | null = null;
-      try {
-        const cached = localStorage.getItem(FILE_CACHE_KEY);
-        if (cached) {
-          const fileItem = JSON.parse(cached) as CloudItem;
-          setCurrentFile(fileItem);
-          fileName = fileItem.name;
-        }
-      } catch (error) {
-        console.warn('Failed to load cached file info:', error);
-      }
-
-      setSyncStatus({
-        status: fileName ? 'connected' : 'not-connected',
-        errorMessage: null,
-        providerName: providerInstance.getName(),
-        fileName: fileName,
-      });
-
-      if (!fileName) {
-        setShowFileSelection(true);
-      } else {
-        showSnackbar('Reconnected successfully', 'success');
-        // Note: Auto-sync will be triggered by the useEffect watching syncService
+      const cached = localStorage.getItem(FILE_CACHE_KEY);
+      if (cached) {
+        const fileItem = JSON.parse(cached) as CloudItem;
+        setCurrentFile(fileItem);
+        fileName = fileItem.name;
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to reconnect';
-      console.error('[SyncProvider] Reconnect failed:', error);
-      showSnackbar(errorMessage, 'error');
+      console.warn('Failed to load cached file info:', error);
     }
-  }, [setSyncStatus, setShowFileSelection, showSnackbar]);
+
+    setSyncStatus({
+      status: fileName ? 'connected' : 'not-connected',
+      errorMessage: null,
+      providerName: providerInstance.getName(),
+      fileName: fileName,
+    });
+
+    if (!fileName) {
+      setShowFileSelection(true);
+    }
+    // Note: Auto-sync will be triggered by the useEffect watching syncService
+  }, [setSyncStatus, setShowFileSelection]);
 
   // Full bidirectional sync
   const fullSync = useCallback(async (): Promise<void> => {

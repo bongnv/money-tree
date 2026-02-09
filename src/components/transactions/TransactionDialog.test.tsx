@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { render, screen } from '@testing-library/react';
 import { TransactionDialog } from './TransactionDialog';
 import type { Transaction, Account, TransactionType, Category } from '../../types/models';

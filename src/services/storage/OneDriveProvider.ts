@@ -1,8 +1,4 @@
-import {
-  PublicClientApplication,
-  AccountInfo,
-  InteractionRequiredAuthError,
-} from '@azure/msal-browser';
+import { PublicClientApplication, AccountInfo } from '@azure/msal-browser';
 import { Client } from '@microsoft/microsoft-graph-client';
 import {
   msalConfig,
@@ -66,13 +62,24 @@ export class OneDriveProvider implements IStorageProvider {
   }
 
   /**
-   * Initialize provider - verify authentication only
+   * Initialize provider - verify authentication and token validity
    */
   async initialize(): Promise<boolean> {
     await this.initPromise;
 
-    // Check if authenticated
-    return this.account !== null;
+    // Check if account exists
+    if (!this.account) {
+      return false;
+    }
+
+    // Test if we can acquire a valid token silently
+    try {
+      await this.getAccessToken();
+      return true;
+    } catch (error) {
+      console.warn('[OneDrive] Token validation failed:', error);
+      return false;
+    }
   }
 
   /**
@@ -302,16 +309,8 @@ export class OneDriveProvider implements IStorageProvider {
       account: this.account,
     };
 
-    try {
-      const response = await this.msalInstance.acquireTokenSilent(request);
-      return response.accessToken;
-    } catch (error) {
-      if (error instanceof InteractionRequiredAuthError) {
-        const response = await this.msalInstance.acquireTokenPopup(request);
-        return response.accessToken;
-      }
-      throw error;
-    }
+    const response = await this.msalInstance.acquireTokenSilent(request);
+    return response.accessToken;
   }
 
   /**

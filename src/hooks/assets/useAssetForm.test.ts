@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { renderHook, act } from '@testing-library/react';
 import { useAssetForm } from './useAssetForm';
 import type { ManualAsset } from '@/types/models';

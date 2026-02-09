@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { useArchiveManager } from './useArchiveManager';
 import { useArchiveService } from './useServices';

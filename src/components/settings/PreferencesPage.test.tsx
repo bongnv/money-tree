@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { render } from '@/test-utils';
 import { PreferencesPage } from './PreferencesPage';
 import { useStore } from '@/contexts/StoreContext';

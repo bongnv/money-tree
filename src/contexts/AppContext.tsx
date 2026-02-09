@@ -18,6 +18,8 @@ interface AppContextValue {
   setShowWelcomeDialog: (show: boolean) => void;
   showFileSelection: boolean;
   setShowFileSelection: (show: boolean) => void;
+  showReconnectDialog: boolean;
+  setShowReconnectDialog: (show: boolean) => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -34,6 +36,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   });
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
   const [showFileSelection, setShowFileSelection] = useState(false);
+  const [showReconnectDialog, setShowReconnectDialog] = useState(false);
 
   const showSnackbarCallback = useCallback((message: string, severity: AlertColor = 'info') => {
     setSnackbar({ open: true, message, severity });
@@ -51,6 +54,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setShowWelcomeDialog,
     showFileSelection,
     setShowFileSelection,
+    showReconnectDialog,
+    setShowReconnectDialog,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

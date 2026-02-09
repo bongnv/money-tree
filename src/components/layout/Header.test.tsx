@@ -33,6 +33,21 @@ jest.mock('@/contexts/SyncContext', () => ({
   })),
 }));
 
+// Mock AppContext
+jest.mock('@/contexts/AppContext', () => ({
+  useApp: jest.fn(() => ({
+    snackbar: { open: false, message: '', severity: 'info' },
+    showSnackbar: jest.fn(),
+    hideSnackbar: jest.fn(),
+    showWelcomeDialog: false,
+    setShowWelcomeDialog: jest.fn(),
+    showFileSelection: false,
+    setShowFileSelection: jest.fn(),
+    showReconnectDialog: false,
+    setShowReconnectDialog: jest.fn(),
+  })),
+}));
+
 const renderWithRouter = (component: React.ReactElement, initialRoute = '/') => {
   return render(
     <MemoryRouter initialEntries={[initialRoute]}>

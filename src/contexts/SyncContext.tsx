@@ -415,7 +415,12 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
   // Full bidirectional sync
   const fullSync = useCallback(async (): Promise<void> => {
     if (syncStatus.status === 'offline') {
-      showSnackbar('Cannot sync while offline', 'info');
+      showSnackbar('Cannot sync while offline. Click sync to reconnect.', 'info');
+      return;
+    }
+
+    if (syncStatus.status === 'not-connected') {
+      showSnackbar('Please connect to a cloud storage provider first', 'info');
       return;
     }
 

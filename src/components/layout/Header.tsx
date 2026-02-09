@@ -31,6 +31,7 @@ import {
   Error as ErrorIcon,
 } from '@mui/icons-material';
 import { useSync } from '@/contexts/SyncContext';
+import { useApp } from '@/contexts/AppContext';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -40,12 +41,16 @@ export const Header: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const syncOps = useSync();
   const { syncStatus } = syncOps;
+  const { setShowWelcomeDialog } = useApp();
   const cloudFileName = syncStatus.fileName;
 
   const handleSync = async () => {
     try {
       if (syncStatus.status === 'offline') {
         await syncOps.reconnect();
+      } else if (syncStatus.status === 'not-connected') {
+        // Open welcome dialog to connect to cloud storage
+        setShowWelcomeDialog(true);
       } else {
         await syncOps.fullSync();
       }
@@ -117,7 +122,7 @@ export const Header: React.FC = () => {
       case 'connected':
         return 'Click to sync';
       case 'not-connected':
-        return 'Not connected - Set up cloud storage in settings';
+        return 'Click to connect cloud storage';
       default:
         return 'Sync status unknown';
     }

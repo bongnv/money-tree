@@ -37,38 +37,30 @@ export type SyncUIStatus =
   | 'synced' // Successfully synced
   | 'error'; // Sync error occurred
 
-interface SyncStatusState {
+// State-only interface
+export interface SyncState {
+  provider: IStorageProvider | null;
+  currentFile: CloudItem | null;
   status: SyncUIStatus;
   errorMessage: string | null;
-  providerName: string | null;
-  fileName: string | null;
 }
 
+// Operations-only interface
 export interface SyncOperations {
-  // File management
-  selectFile: (fileItem: CloudItem) => Promise<void>;
-  listItems: (parent?: CloudItem) => Promise<CloudItem[]>;
-
-  // Sync methods
-  fullSync: () => Promise<void>;
-  reconnect: () => Promise<void>;
-
-  // Connection methods
+  // Connection lifecycle
   connect: (type: StorageProviderType) => Promise<void>;
   disconnect: () => Promise<void>;
+  reconnect: () => Promise<void>;
 
-  // Status
-  syncStatus: SyncStatusState;
+  // File operations
+  selectFile: (fileItem: CloudItem) => Promise<void>;
 
-  // Storage provider access
-  provider: IStorageProvider | null;
-  currentFile: CloudItem | null;
+  // Sync
+  fullSync: () => Promise<void>;
 }
 
-interface SyncContextValue extends SyncOperations {
-  provider: IStorageProvider | null;
-  currentFile: CloudItem | null;
-}
+// Combined context value
+export interface SyncContextValue extends SyncState, SyncOperations {}
 
 const SyncContext = createContext<SyncContextValue | null>(null);
 
@@ -151,14 +143,18 @@ interface SyncProviderProps {
 export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
   const { showSnackbar, setShowWelcomeDialog, setShowFileSelection, setShowReconnectDialog } =
     useApp();
-  const [provider, setProvider] = useState<IStorageProvider | null>(null);
-  const [currentFile, setCurrentFile] = useState<CloudItem | null>(null);
-  const [syncStatus, setSyncStatus] = useState<SyncStatusState>({
+
+  const [syncState, setSyncState] = useState<SyncState>({
+    provider: null,
+    currentFile: null,
     status: 'offline',
     errorMessage: null,
-    providerName: null,
-    fileName: null,
   });
+
+  // Helper to update sync state
+  const updateSyncState = useCallback((updates: Partial<SyncState>) => {
+    setSyncState((prev) => ({ ...prev, ...updates }));
+  }, []);
 
   // Use refs for sync flags that don't need to trigger re-renders
   const syncStateRef = useRef({
@@ -201,13 +197,11 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
         // Handle authentication + file state combinations
         if (!isAuthenticated && cachedFile) {
           // Auth expired but file exists (Safari case: sessionStorage cleared, localStorage persists)
-          setProvider(providerInstance);
-          setCurrentFile(cachedFile);
-          setSyncStatus({
+          setSyncState({
+            provider: providerInstance,
+            currentFile: cachedFile,
             status: 'offline',
             errorMessage: null,
-            providerName: providerInstance.getName(),
-            fileName: cachedFile.name,
           });
           setShowReconnectDialog(true);
           return;
@@ -218,37 +212,28 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
           return;
         }
 
-        // Set up provider
-        setProvider(providerInstance);
-
         if (!cachedFile) {
           // Authenticated but no file selected yet - show file selection
-          setSyncStatus({
+          setSyncState({
+            provider: providerInstance,
+            currentFile: null,
             status: 'offline',
             errorMessage: null,
-            providerName: providerInstance.getName(),
-            fileName: null,
           });
           setShowFileSelection(true);
           return;
         }
 
         // Happy path: Authenticated and file loaded
-        setCurrentFile(cachedFile);
-        setSyncStatus({
+        setSyncState({
+          provider: providerInstance,
+          currentFile: cachedFile,
           status: 'connected',
           errorMessage: null,
-          providerName: providerInstance.getName(),
-          fileName: cachedFile.name,
         });
       } catch (error) {
         console.error('[SyncProvider] Initialization failed:', error);
-        setSyncStatus({
-          status: 'error',
-          errorMessage: 'Initialization failed',
-          providerName: null,
-          fileName: null,
-        });
+        updateSyncState({ status: 'error', errorMessage: 'Initialization failed' });
         setShowWelcomeDialog(true);
       } finally {
         syncStateRef.current.isInitializing = false;
@@ -266,29 +251,27 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
 
   // Create sync service
   const syncService = useMemo(() => {
-    if (!provider || !currentFile) {
+    if (!syncState.provider || !syncState.currentFile) {
       return null;
     }
-    return new CloudSyncService(provider, currentFile, db);
-  }, [provider, currentFile]);
+    return new CloudSyncService(syncState.provider, syncState.currentFile, db);
+  }, [syncState.provider, syncState.currentFile]);
 
   // Internal function to update file item without clearing DB (for sync updates)
   const updateFileItem = useCallback(
     (fileItem: CloudItem) => {
-      setCurrentFile(fileItem);
       try {
         localStorage.setItem(FILE_CACHE_KEY, JSON.stringify(fileItem));
       } catch (error) {
         console.warn('Failed to cache file info:', error);
       }
-      setSyncStatus((prev) => ({
-        ...prev,
+      updateSyncState({
+        currentFile: fileItem,
         status: 'connected',
         errorMessage: null,
-        fileName: fileItem.name,
-      }));
+      });
     },
-    [setSyncStatus]
+    [updateSyncState]
   );
 
   // Select file for syncing (clears DB for fresh start)
@@ -316,32 +299,28 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
       // Save provider type to localStorage
       saveProviderConfig(type);
 
-      setProvider(providerInstance);
-      setSyncStatus({
+      updateSyncState({
+        provider: providerInstance,
         status: 'offline',
         errorMessage: null,
-        providerName: providerInstance.getName(),
-        fileName: null,
       });
       setShowFileSelection(true);
     },
-    [setSyncStatus, setShowFileSelection]
+    [updateSyncState, setShowFileSelection]
   );
 
   // Disconnect from storage provider
   const disconnect = useCallback(async (): Promise<void> => {
     clearProviderConfig();
-    setProvider(null);
-    setCurrentFile(null);
     localStorage.removeItem(FILE_CACHE_KEY);
-    setSyncStatus({
+    setSyncState({
+      provider: null,
+      currentFile: null,
       status: 'offline',
       errorMessage: null,
-      providerName: null,
-      fileName: null,
     });
     setShowWelcomeDialog(true);
-  }, [setSyncStatus, setShowWelcomeDialog]);
+  }, [setShowWelcomeDialog]);
 
   // Reconnect when in offline mode
   const reconnect = useCallback(async () => {
@@ -362,33 +341,27 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
     // Re-authenticate (triggers OAuth popup)
     await providerInstance.authenticate();
 
-    setProvider(providerInstance);
-
     const cachedFile = loadCachedFile();
     if (!cachedFile) {
       // No file cached → show file picker (stay offline until file selected)
-      setSyncStatus((prev) => ({
-        ...prev,
-        providerName: providerInstance.getName(),
-      }));
+      updateSyncState({ provider: providerInstance });
       setShowFileSelection(true);
     } else {
       // Has file → ready to sync
-      setCurrentFile(cachedFile);
-      setSyncStatus({
+      setSyncState({
+        provider: providerInstance,
+        currentFile: cachedFile,
         status: 'connected',
         errorMessage: null,
-        providerName: providerInstance.getName(),
-        fileName: cachedFile.name,
       });
     }
 
     // Note: Auto-sync will be triggered by the useEffect watching syncService
-  }, [setShowWelcomeDialog, setShowFileSelection, setSyncStatus]);
+  }, [updateSyncState, setShowWelcomeDialog, setShowFileSelection]);
 
   // Full bidirectional sync
   const fullSync = useCallback(async (): Promise<void> => {
-    if (syncStatus.status === 'offline') {
+    if (syncState.status === 'offline') {
       showSnackbar('Cannot sync while offline. Click sync to reconnect.', 'info');
       return;
     }
@@ -402,46 +375,41 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
 
     try {
       syncStateRef.current.isSyncing = true;
-      setSyncStatus((prev) => ({ ...prev, status: 'syncing', errorMessage: null }));
+      updateSyncState({ status: 'syncing', errorMessage: null });
 
       const result = await syncService.fullSync();
       syncStateRef.current.remoteLastModified = result.mergedLastModified;
-      setSyncStatus((prev) => ({ ...prev, status: 'synced', errorMessage: null }));
+      updateSyncState({ status: 'synced', errorMessage: null });
 
-      if (result.fileItem.id !== currentFile!.id) {
+      if (result.fileItem.id !== syncState.currentFile!.id) {
         updateFileItem(result.fileItem);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to sync with cloud';
+      const errorMsg = error instanceof Error ? error.message : 'Failed to sync with cloud';
       console.error('[SyncProvider] Sync failed:', error, {
-        errorMessage,
+        errorMessage: errorMsg,
         timestamp: new Date().toISOString(),
       });
 
       // Detect authentication/permission errors and transition to offline mode
-      if (isAuthenticationError(errorMessage)) {
-        setSyncStatus((prev) => ({ ...prev, status: 'offline', errorMessage }));
-        showSnackbar(`${errorMessage}. Click sync to reconnect.`, 'info');
+      if (isAuthenticationError(errorMsg)) {
+        updateSyncState({ status: 'offline', errorMessage: errorMsg });
+        showSnackbar(`${errorMsg}. Click sync to reconnect.`, 'info');
       } else {
-        setSyncStatus((prev) => ({ ...prev, status: 'error', errorMessage }));
-        showSnackbar(errorMessage, 'warning');
+        updateSyncState({ status: 'error', errorMessage: errorMsg });
+        showSnackbar(errorMsg, 'warning');
       }
     } finally {
       syncStateRef.current.isSyncing = false;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [syncService, currentFile, updateFileItem, showSnackbar]);
-
-  // List items in cloud storage
-  const listItems = useCallback(
-    async (parent?: CloudItem): Promise<CloudItem[]> => {
-      if (!provider) {
-        throw new Error('Provider not initialized');
-      }
-      return provider.listItems(parent);
-    },
-    [provider]
-  );
+  }, [
+    syncState.status,
+    syncState.currentFile,
+    syncService,
+    updateSyncState,
+    updateFileItem,
+    showSnackbar,
+  ]);
 
   // Debounced sync using useDebouncedCallback
   const debouncedSync = useDebouncedCallback(
@@ -465,7 +433,13 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
 
   // Auto-sync whenever lastModified changes (only for subsequent changes after initial sync)
   useEffect(() => {
-    if (!provider || !currentFile || !lastModified || syncStateRef.current.isInitializing) return;
+    if (
+      !syncState.provider ||
+      !syncState.currentFile ||
+      !lastModified ||
+      syncStateRef.current.isInitializing
+    )
+      return;
 
     // Don't trigger debounced sync if we haven't established the remote state yet
     // (initial sync will handle it)
@@ -476,23 +450,24 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
       return;
     }
 
-    setSyncStatus((prev) => {
-      // Only update to 'connected' if currently 'synced' (indicates new local changes)
-      if (prev.status === 'synced') {
-        return { ...prev, status: 'connected' };
-      }
-      return prev;
-    });
+    // Only update to 'connected' if currently 'synced' (indicates new local changes)
+    if (syncState.status === 'synced') {
+      updateSyncState({ status: 'connected' });
+    }
 
     debouncedSync();
-  }, [lastModified, provider, currentFile, debouncedSync, setSyncStatus]);
+  }, [
+    lastModified,
+    syncState.provider,
+    syncState.currentFile,
+    syncState.status,
+    debouncedSync,
+    updateSyncState,
+  ]);
 
   const value: SyncContextValue = {
-    provider,
-    currentFile,
-    syncStatus,
+    ...syncState,
     selectFile,
-    listItems,
     fullSync,
     reconnect,
     connect,
@@ -502,7 +477,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
   return <SyncContext.Provider value={value}>{children}</SyncContext.Provider>;
 };
 
-export const useSync = (): SyncOperations => {
+export const useSync = (): SyncContextValue => {
   const context = useContext(SyncContext);
   if (!context) {
     throw new Error('useSync must be used within SyncProvider');

@@ -26,12 +26,12 @@ import {
   Cloud as CloudIcon,
   People as PeopleIcon,
 } from '@mui/icons-material';
-import type { CloudItem } from '../../services/storage/IStorageProvider';
+import type { CloudItem, IStorageProvider } from '../../services/storage/IStorageProvider';
 
 interface CloudFilePickerProps {
   open: boolean;
   providerName: string;
-  onListItems: (parent?: CloudItem) => Promise<CloudItem[]>;
+  provider: IStorageProvider;
   onFileSelected: (fileItem: CloudItem) => void;
   onCancel: () => void;
   defaultFileName?: string;
@@ -40,7 +40,7 @@ interface CloudFilePickerProps {
 export function CloudFilePicker({
   open,
   providerName,
-  onListItems,
+  provider,
   onFileSelected,
   onCancel,
   defaultFileName = 'money-tree.json',
@@ -71,7 +71,7 @@ export function CloudFilePicker({
     setSelectedFile(null);
 
     try {
-      const folderItems = await onListItems(folder);
+      const folderItems = await provider.listItems(folder);
       setItems(folderItems);
 
       // Update breadcrumbs
@@ -98,7 +98,7 @@ export function CloudFilePicker({
     setSelectedFile(null); // Clear selection when navigating
 
     try {
-      const folderItems = await onListItems(folder);
+      const folderItems = await provider.listItems(folder);
       setItems(folderItems);
       setCurrentFolder(folder);
       setBreadcrumbs([...breadcrumbs, folder]);
@@ -118,7 +118,7 @@ export function CloudFilePicker({
 
     try {
       const folder = targetBreadcrumb.id === 'root' ? undefined : targetBreadcrumb;
-      const folderItems = await onListItems(folder);
+      const folderItems = await provider.listItems(folder);
       setItems(folderItems);
       setCurrentFolder(folder);
       setBreadcrumbs(newBreadcrumbs);

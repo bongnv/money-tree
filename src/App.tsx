@@ -19,7 +19,6 @@ import type { CloudItem } from './services/storage/IStorageProvider';
 
 const AppContent: React.FC = () => {
   const syncOps = useSync();
-  const { syncStatus } = syncOps;
   const { baseCurrency } = useStore();
   const {
     snackbar,
@@ -73,20 +72,20 @@ const AppContent: React.FC = () => {
         <AppRoutes />
       </MainLayout>
       <WelcomeDialog open={showWelcomeDialog} onClose={handleWelcomeClose} />
-      {showReconnectDialog && syncStatus.providerName && syncStatus.fileName && (
+      {showReconnectDialog && syncOps.provider && syncOps.currentFile && (
         <ReconnectDialog
-          providerName={syncStatus.providerName}
-          fileName={syncStatus.fileName}
+          providerName={syncOps.provider.getName()}
+          fileName={syncOps.currentFile.name}
           error={error}
           onReconnect={handleReconnect}
           onCancel={handleCancel}
         />
       )}
-      {showFileSelection && syncStatus.providerName && (
+      {showFileSelection && syncOps.provider && (
         <CloudFilePicker
           open={showFileSelection}
-          providerName={syncStatus.providerName}
-          onListItems={syncOps.listItems}
+          providerName={syncOps.provider.getName()}
+          provider={syncOps.provider}
           onFileSelected={handleFileSelected}
           onCancel={handleFilePickerCancel}
         />

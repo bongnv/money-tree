@@ -30,12 +30,10 @@ describe('DataSyncSettings', () => {
 
   it('should render without crashing when not connected', () => {
     mockUseSync.mockReturnValue({
-      syncStatus: {
-        status: 'disconnected',
-        errorMessage: null,
-        providerName: null,
-        fileName: null,
-      },
+      status: 'disconnected',
+      errorMessage: null,
+      provider: null,
+      currentFile: null,
       connect: mockConnect,
       disconnect: mockDisconnect,
       selectFile: mockSelectFile,
@@ -48,12 +46,10 @@ describe('DataSyncSettings', () => {
 
   it('should render without crashing when connected', () => {
     mockUseSync.mockReturnValue({
-      syncStatus: {
-        status: 'synced',
-        errorMessage: null,
-        providerName: 'OneDrive',
-        fileName: 'test.json',
-      },
+      status: 'synced',
+      errorMessage: null,
+      provider: { getName: () => 'OneDrive' },
+      currentFile: { name: 'test.json', id: '123' },
       connect: mockConnect,
       disconnect: mockDisconnect,
       selectFile: mockSelectFile,

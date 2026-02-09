@@ -1,12 +1,21 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CloudFilePicker } from './CloudFilePicker';
-import type { CloudItem } from '../../services/storage/IStorageProvider';
+import type { CloudItem, IStorageProvider } from '../../services/storage/IStorageProvider';
 
 describe('CloudFilePicker', () => {
   const mockOnFileSelected = jest.fn();
   const mockOnCancel = jest.fn();
-  const mockOnListItems = jest.fn();
+  const mockListItems = jest.fn();
+
+  const mockProvider: IStorageProvider = {
+    getName: () => 'OneDrive',
+    initialize: jest.fn(),
+    authenticate: jest.fn(),
+    listItems: mockListItems,
+    readFile: jest.fn(),
+    writeFile: jest.fn(),
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -20,13 +29,13 @@ describe('CloudFilePicker', () => {
   ];
 
   it('should render with provider name in title', async () => {
-    mockOnListItems.mockResolvedValue([]);
+    mockListItems.mockResolvedValue([]);
 
     render(
       <CloudFilePicker
         open={true}
         providerName="OneDrive"
-        onListItems={mockOnListItems}
+        provider={mockProvider}
         onFileSelected={mockOnFileSelected}
         onCancel={mockOnCancel}
       />
@@ -40,20 +49,20 @@ describe('CloudFilePicker', () => {
   });
 
   it('should load root items on open', async () => {
-    mockOnListItems.mockResolvedValue(mockFolderItems);
+    mockListItems.mockResolvedValue(mockFolderItems);
 
     render(
       <CloudFilePicker
         open={true}
         providerName="Test Storage"
-        onListItems={mockOnListItems}
+        provider={mockProvider}
         onFileSelected={mockOnFileSelected}
         onCancel={mockOnCancel}
       />
     );
 
     await waitFor(() => {
-      expect(mockOnListItems).toHaveBeenCalledWith(undefined);
+      expect(mockListItems).toHaveBeenCalledWith(undefined);
       expect(screen.getByText('Documents')).toBeInTheDocument();
       expect(screen.getByText('Pictures')).toBeInTheDocument();
       expect(screen.getByText('test.json')).toBeInTheDocument();
@@ -63,7 +72,7 @@ describe('CloudFilePicker', () => {
 
   it('should navigate into folders', async () => {
     const user = userEvent.setup();
-    mockOnListItems
+    mockListItems
       .mockResolvedValueOnce(mockFolderItems)
       .mockResolvedValueOnce([{ id: 'file3', name: 'document.json', isFolder: false }]);
 
@@ -71,7 +80,7 @@ describe('CloudFilePicker', () => {
       <CloudFilePicker
         open={true}
         providerName="Test Storage"
-        onListItems={mockOnListItems}
+        provider={mockProvider}
         onFileSelected={mockOnFileSelected}
         onCancel={mockOnCancel}
       />
@@ -85,14 +94,14 @@ describe('CloudFilePicker', () => {
     await user.click(documentsFolder);
 
     await waitFor(() => {
-      expect(mockOnListItems).toHaveBeenCalledWith(mockFolderItems[0]);
+      expect(mockListItems).toHaveBeenCalledWith(mockFolderItems[0]);
       expect(screen.getByText('document.json')).toBeInTheDocument();
     });
   });
 
   it('should navigate breadcrumbs', async () => {
     const user = userEvent.setup();
-    mockOnListItems
+    mockListItems
       .mockResolvedValueOnce(mockFolderItems)
       .mockResolvedValueOnce([{ id: 'file3', name: 'document.json', isFolder: false }])
       .mockResolvedValueOnce(mockFolderItems);
@@ -101,7 +110,7 @@ describe('CloudFilePicker', () => {
       <CloudFilePicker
         open={true}
         providerName="Test Storage"
-        onListItems={mockOnListItems}
+        provider={mockProvider}
         onFileSelected={mockOnFileSelected}
         onCancel={mockOnCancel}
       />
@@ -123,7 +132,7 @@ describe('CloudFilePicker', () => {
     await user.click(rootBreadcrumb);
 
     await waitFor(() => {
-      expect(mockOnListItems).toHaveBeenCalledTimes(3);
+      expect(mockListItems).toHaveBeenCalledTimes(3);
       expect(screen.getByText('Documents')).toBeInTheDocument();
       expect(screen.getByText('Pictures')).toBeInTheDocument();
     });
@@ -131,13 +140,13 @@ describe('CloudFilePicker', () => {
 
   it('should select existing file', async () => {
     const user = userEvent.setup();
-    mockOnListItems.mockResolvedValue(mockFolderItems);
+    mockListItems.mockResolvedValue(mockFolderItems);
 
     render(
       <CloudFilePicker
         open={true}
         providerName="Test Storage"
-        onListItems={mockOnListItems}
+        provider={mockProvider}
         onFileSelected={mockOnFileSelected}
         onCancel={mockOnCancel}
       />
@@ -165,13 +174,13 @@ describe('CloudFilePicker', () => {
       { id: 'folder1', name: 'Documents', isFolder: true },
       { id: 'folder2', name: 'Pictures', isFolder: true },
     ];
-    mockOnListItems.mockResolvedValue(mockFolders);
+    mockListItems.mockResolvedValue(mockFolders);
 
     render(
       <CloudFilePicker
         open={true}
         providerName="Test Storage"
-        onListItems={mockOnListItems}
+        provider={mockProvider}
         onFileSelected={mockOnFileSelected}
         onCancel={mockOnCancel}
         defaultFileName="new-file.json"
@@ -186,7 +195,7 @@ describe('CloudFilePicker', () => {
     await user.click(screen.getByText('Documents'));
 
     await waitFor(() => {
-      expect(mockOnListItems).toHaveBeenCalledWith(mockFolders[0]);
+      expect(mockListItems).toHaveBeenCalledWith(mockFolders[0]);
     });
 
     // Click "Create File" button
@@ -213,13 +222,13 @@ describe('CloudFilePicker', () => {
   it('should validate file name has .json extension', async () => {
     const user = userEvent.setup();
     const mockFolders: CloudItem[] = [{ id: 'folder1', name: 'Documents', isFolder: true }];
-    mockOnListItems.mockResolvedValue(mockFolders);
+    mockListItems.mockResolvedValue(mockFolders);
 
     render(
       <CloudFilePicker
         open={true}
         providerName="Test Storage"
-        onListItems={mockOnListItems}
+        provider={mockProvider}
         onFileSelected={mockOnFileSelected}
         onCancel={mockOnCancel}
       />
@@ -233,7 +242,7 @@ describe('CloudFilePicker', () => {
     await user.click(screen.getByText('Documents'));
 
     await waitFor(() => {
-      expect(mockOnListItems).toHaveBeenCalledWith(mockFolders[0]);
+      expect(mockListItems).toHaveBeenCalledWith(mockFolders[0]);
     });
 
     // Click "Create File" button
@@ -259,13 +268,13 @@ describe('CloudFilePicker', () => {
       { id: 'folder1', name: 'Documents', isFolder: true },
       { id: 'file1', name: 'existing.json', isFolder: false },
     ];
-    mockOnListItems.mockResolvedValue(mockItems);
+    mockListItems.mockResolvedValue(mockItems);
 
     render(
       <CloudFilePicker
         open={true}
         providerName="Test Storage"
-        onListItems={mockOnListItems}
+        provider={mockProvider}
         onFileSelected={mockOnFileSelected}
         onCancel={mockOnCancel}
         defaultFileName="existing.json"
@@ -294,13 +303,13 @@ describe('CloudFilePicker', () => {
 
   it('should call onCancel when cancel button clicked', async () => {
     const user = userEvent.setup();
-    mockOnListItems.mockResolvedValue([]);
+    mockListItems.mockResolvedValue([]);
 
     render(
       <CloudFilePicker
         open={true}
         providerName="Test Storage"
-        onListItems={mockOnListItems}
+        provider={mockProvider}
         onFileSelected={mockOnFileSelected}
         onCancel={mockOnCancel}
       />
@@ -316,13 +325,13 @@ describe('CloudFilePicker', () => {
   });
 
   it('should display error message on load failure', async () => {
-    mockOnListItems.mockRejectedValue(new Error('Network error'));
+    mockListItems.mockRejectedValue(new Error('Network error'));
 
     render(
       <CloudFilePicker
         open={true}
         providerName="Test Storage"
-        onListItems={mockOnListItems}
+        provider={mockProvider}
         onFileSelected={mockOnFileSelected}
         onCancel={mockOnCancel}
       />
@@ -334,13 +343,13 @@ describe('CloudFilePicker', () => {
   });
 
   it('should show empty state when folder has no items', async () => {
-    mockOnListItems.mockResolvedValue([]);
+    mockListItems.mockResolvedValue([]);
 
     render(
       <CloudFilePicker
         open={true}
         providerName="Test Storage"
-        onListItems={mockOnListItems}
+        provider={mockProvider}
         onFileSelected={mockOnFileSelected}
         onCancel={mockOnCancel}
       />
@@ -360,13 +369,13 @@ describe('CloudFilePicker', () => {
       { id: 'file4', name: 'data.JSON', isFolder: false }, // uppercase extension
       { id: 'file5', name: 'README.md', isFolder: false },
     ];
-    mockOnListItems.mockResolvedValue(itemsWithNonJson);
+    mockListItems.mockResolvedValue(itemsWithNonJson);
 
     render(
       <CloudFilePicker
         open={true}
         providerName="Test Storage"
-        onListItems={mockOnListItems}
+        provider={mockProvider}
         onFileSelected={mockOnFileSelected}
         onCancel={mockOnCancel}
       />

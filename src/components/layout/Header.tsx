@@ -39,12 +39,12 @@ export const Header: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const syncOps = useSync();
-  const { syncStatus } = syncOps;
-  const cloudFileName = syncStatus.fileName;
+  const { status, errorMessage, currentFile } = syncOps;
+  const cloudFileName = currentFile?.name ?? null;
 
   const handleSync = async () => {
     try {
-      if (syncStatus.status === 'offline') {
+      if (status === 'offline') {
         await syncOps.reconnect();
       } else {
         await syncOps.fullSync();
@@ -55,7 +55,7 @@ export const Header: React.FC = () => {
   };
 
   const getSyncIcon = () => {
-    switch (syncStatus.status) {
+    switch (status) {
       case 'syncing':
         return <CircularProgress size={20} color="inherit" />;
       case 'error':
@@ -71,11 +71,11 @@ export const Header: React.FC = () => {
   };
 
   const getSyncLabel = () => {
-    switch (syncStatus.status) {
+    switch (status) {
       case 'syncing':
         return 'Syncing';
       case 'error':
-        return syncStatus.errorMessage || 'Sync error';
+        return errorMessage || 'Sync error';
       case 'synced':
         return 'Synced';
       case 'connected':
@@ -88,7 +88,7 @@ export const Header: React.FC = () => {
   };
 
   const getSyncColor = () => {
-    switch (syncStatus.status) {
+    switch (status) {
       case 'error':
         return 'error.main';
       case 'offline':
@@ -100,11 +100,11 @@ export const Header: React.FC = () => {
   };
 
   const getTooltip = () => {
-    switch (syncStatus.status) {
+    switch (status) {
       case 'syncing':
         return 'Syncing in progress...';
       case 'error':
-        return `Error: ${syncStatus.errorMessage || 'Unknown error'}. Click to retry`;
+        return `Error: ${errorMessage || 'Unknown error'}. Click to retry`;
       case 'synced':
         return 'Synced - Click to sync again';
       case 'connected':
@@ -212,7 +212,7 @@ export const Header: React.FC = () => {
               <IconButton
                 color="inherit"
                 onClick={handleSync}
-                disabled={syncStatus.status === 'syncing'}
+                disabled={status === 'syncing'}
                 aria-label={getSyncLabel()}
                 sx={{
                   color: getSyncColor(),

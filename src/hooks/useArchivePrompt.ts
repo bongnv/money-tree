@@ -13,7 +13,7 @@ interface ArchiveYearSummary {
 export function useArchivePrompt() {
   const navigate = useNavigate();
   const archiveService = useArchiveService();
-  const { syncStatus } = useSync();
+  const { status } = useSync();
 
   const [showPrompt, setShowPrompt] = useState(false);
   const [archiveYear, setArchiveYear] = useState<number | null>(null);
@@ -23,7 +23,7 @@ export function useArchivePrompt() {
   useEffect(() => {
     const checkArchive = async () => {
       // Only check when connected
-      if (syncStatus.status !== 'connected' && syncStatus.status !== 'synced') return;
+      if (status !== 'connected' && status !== 'synced') return;
 
       const archivableYear = await archiveService.identifyArchivableYear();
       if (archivableYear !== null) {
@@ -35,7 +35,7 @@ export function useArchivePrompt() {
     };
 
     checkArchive();
-  }, [syncStatus.status, archiveService]);
+  }, [status, archiveService]);
 
   const handleGoToSettings = () => {
     setShowPrompt(false);

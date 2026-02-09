@@ -50,8 +50,8 @@ const mockStorageProvider: IStorageProvider = {
   authenticate: jest.fn(),
   readFile: jest.fn(),
   writeFile: jest.fn(),
-  getName: jest.fn(() => 'Mock Provider'),
   listItems: jest.fn(),
+  getName: jest.fn(() => 'Mock Provider'),
 };
 
 describe('ArchiveService', () => {

@@ -12,15 +12,15 @@ import { db } from '@/db/database';
 export function useDataSyncSettings() {
   const navigate = useNavigate();
   const syncOps = useSync();
-  const { syncStatus } = syncOps;
+  const { provider, currentFile } = syncOps;
   const { accounts, categories, transactionTypes, transactions, assets, budgets } = useStore();
   const formatService = useFormatService();
 
   const [disconnectDialogOpen, setDisconnectDialogOpen] = useState(false);
 
   const cloudFileName = useMemo(() => {
-    return syncStatus.fileName || null;
-  }, [syncStatus.fileName]);
+    return currentFile?.name || null;
+  }, [currentFile]);
 
   const fileSize = useMemo(() => {
     return formatService.calculateDataSize({
@@ -34,8 +34,8 @@ export function useDataSyncSettings() {
   }, [accounts, categories, transactionTypes, transactions, budgets, assets, formatService]);
 
   const storageLocation = useMemo(() => {
-    return syncStatus.providerName || 'Not connected';
-  }, [syncStatus.providerName]);
+    return provider?.getName() || 'Not connected';
+  }, [provider]);
 
   const openDisconnectDialog = useCallback(() => {
     setDisconnectDialogOpen(true);
@@ -63,7 +63,7 @@ export function useDataSyncSettings() {
     cloudFileName,
     fileSize,
     storageLocation,
-    status: syncStatus.providerName || 'Not connected',
+    status: provider?.getName() || 'Not connected',
     disconnectDialogOpen,
     openDisconnectDialog,
     closeDisconnectDialog,

@@ -35,33 +35,23 @@ describe('useArchivePrompt', () => {
     } as any);
     mockUseArchiveService.mockReturnValue(mockArchiveService as any);
     mockUseSync.mockReturnValue({
-      syncStatus: {
-        status: 'synced',
-        errorMessage: null,
-        providerName: 'OneDrive',
-        fileName: 'test.json',
-      },
+      status: 'synced',
+      errorMessage: null,
       selectFile: jest.fn(),
-      listItems: jest.fn(),
       fullSync: jest.fn(),
       reconnect: jest.fn(),
       connect: jest.fn(),
       disconnect: jest.fn(),
-      provider: null,
-      currentFile: null,
+      provider: { getName: () => 'OneDrive' } as any,
+      currentFile: { name: 'test.json', id: '123' } as any,
     });
   });
 
   it('should not show prompt when not connected', async () => {
     mockUseSync.mockReturnValue({
-      syncStatus: {
-        status: 'offline',
-        errorMessage: null,
-        providerName: null,
-        fileName: null,
-      },
+      status: 'offline',
+      errorMessage: null,
       selectFile: jest.fn(),
-      listItems: jest.fn(),
       fullSync: jest.fn(),
       reconnect: jest.fn(),
       connect: jest.fn(),

@@ -27,17 +27,18 @@ const mockGoogleDriveProvider = {
 const mockSyncStatus = {
   status: 'offline' as 'offline' | 'connected' | 'syncing' | 'synced' | 'error',
   errorMessage: null as string | null,
-  providerName: null as string | null,
-  fileName: null as string | null,
 };
+
+let mockProvider: { getName: () => string } | null = null;
+const mockCurrentFile: { name: string } | null = null;
 
 const mockConnect = jest.fn().mockImplementation(async (type) => {
   // Set connection state based on the type
   if (type === StorageProviderType.ONEDRIVE) {
-    mockSyncStatus.providerName = 'OneDrive';
+    mockProvider = { getName: () => 'OneDrive' };
     mockSyncStatus.status = 'connected';
   } else if (type === StorageProviderType.GOOGLE_DRIVE) {
-    mockSyncStatus.providerName = 'Google Drive';
+    mockProvider = { getName: () => 'Google Drive' };
     mockSyncStatus.status = 'connected';
   }
 });
@@ -51,10 +52,13 @@ jest.mock('@/contexts/SyncContext', () => {
     useSync: () => ({
       connect: mockConnect,
       selectFile: jest.fn(),
-      listItems: jest.fn().mockResolvedValue([]),
       fullSync: jest.fn(),
       disconnect: jest.fn(),
-      syncStatus: mockSyncStatus,
+      reconnect: jest.fn(),
+      status: mockSyncStatus.status,
+      errorMessage: mockSyncStatus.errorMessage,
+      provider: mockProvider,
+      currentFile: mockCurrentFile,
     }),
   };
 });

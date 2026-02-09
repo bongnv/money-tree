@@ -19,7 +19,6 @@ jest.mock('../../services/cloudSync.service', () => ({
 jest.mock('@/contexts/SyncContext', () => ({
   useSync: jest.fn(() => ({
     selectFile: jest.fn().mockResolvedValue(undefined),
-    listItems: jest.fn().mockResolvedValue([]),
     fullSync: jest.fn().mockResolvedValue(undefined),
     connect: jest.fn().mockResolvedValue(undefined),
     disconnect: jest.fn().mockResolvedValue(undefined),

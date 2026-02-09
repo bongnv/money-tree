@@ -25,7 +25,7 @@ jest.mock('@/contexts/SyncContext', () => ({
     connect: jest.fn().mockResolvedValue(undefined),
     disconnect: jest.fn().mockResolvedValue(undefined),
     syncStatus: {
-      status: 'not-connected' as const,
+      status: 'offline' as const,
       errorMessage: null,
       providerName: null,
       fileName: null,
@@ -70,15 +70,15 @@ describe('Header', () => {
 
   it('should render Sync button', () => {
     renderWithRouter(<Header />);
-    // Button shows status based on syncStatus - in this case "Not Connected"
-    expect(screen.getByRole('button', { name: /not connected/i })).toBeInTheDocument();
+    // Button shows status based on syncStatus - in this case "Offline"
+    expect(screen.getByRole('button', { name: /offline/i })).toBeInTheDocument();
   });
 
   it('should show "Never synced" when lastSynced is null', () => {
     renderWithRouter(<Header />);
     // The header shows sync status via icon with tooltip, not direct text
-    // When not connected, it shows "Not Connected" in the tooltip
-    const syncButton = screen.getByRole('button', { name: /not connected/i });
+    // When offline, it shows "Offline" in the aria-label
+    const syncButton = screen.getByRole('button', { name: /offline/i });
     expect(syncButton).toBeInTheDocument();
   });
 

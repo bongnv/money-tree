@@ -25,7 +25,7 @@ const mockGoogleDriveProvider = {
 };
 
 const mockSyncStatus = {
-  status: 'not-connected' as 'not-connected' | 'connected' | 'syncing' | 'synced' | 'error',
+  status: 'offline' as 'offline' | 'connected' | 'syncing' | 'synced' | 'error',
   errorMessage: null as string | null,
   providerName: null as string | null,
   fileName: null as string | null,

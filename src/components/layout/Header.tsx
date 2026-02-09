@@ -31,7 +31,6 @@ import {
   Error as ErrorIcon,
 } from '@mui/icons-material';
 import { useSync } from '@/contexts/SyncContext';
-import { useApp } from '@/contexts/AppContext';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -41,16 +40,12 @@ export const Header: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const syncOps = useSync();
   const { syncStatus } = syncOps;
-  const { setShowWelcomeDialog } = useApp();
   const cloudFileName = syncStatus.fileName;
 
   const handleSync = async () => {
     try {
       if (syncStatus.status === 'offline') {
         await syncOps.reconnect();
-      } else if (syncStatus.status === 'not-connected') {
-        // Open welcome dialog to connect to cloud storage
-        setShowWelcomeDialog(true);
       } else {
         await syncOps.fullSync();
       }
@@ -70,8 +65,6 @@ export const Header: React.FC = () => {
       case 'connected':
         return <CloudQueueIcon />;
       case 'offline':
-        return <CloudOffIcon />;
-      case 'not-connected':
       default:
         return <CloudOffIcon />;
     }
@@ -88,9 +81,7 @@ export const Header: React.FC = () => {
       case 'connected':
         return 'Connected';
       case 'offline':
-        return 'Working Offline';
-      case 'not-connected':
-        return 'Not Connected';
+        return 'Offline';
       default:
         return 'Unknown';
     }
@@ -101,7 +92,6 @@ export const Header: React.FC = () => {
       case 'error':
         return 'error.main';
       case 'offline':
-      case 'not-connected':
       case 'connected':
         return 'warning.main';
       default:
@@ -111,8 +101,6 @@ export const Header: React.FC = () => {
 
   const getTooltip = () => {
     switch (syncStatus.status) {
-      case 'offline':
-        return 'Click to reconnect';
       case 'syncing':
         return 'Syncing in progress...';
       case 'error':
@@ -121,8 +109,8 @@ export const Header: React.FC = () => {
         return 'Synced - Click to sync again';
       case 'connected':
         return 'Click to sync';
-      case 'not-connected':
-        return 'Click to connect cloud storage';
+      case 'offline':
+        return 'Click to reconnect';
       default:
         return 'Sync status unknown';
     }

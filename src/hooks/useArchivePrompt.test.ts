@@ -55,7 +55,7 @@ describe('useArchivePrompt', () => {
   it('should not show prompt when not connected', async () => {
     mockUseSync.mockReturnValue({
       syncStatus: {
-        status: 'not-connected',
+        status: 'offline',
         errorMessage: null,
         providerName: null,
         fileName: null,

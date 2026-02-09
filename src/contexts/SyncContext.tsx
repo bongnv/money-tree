@@ -31,8 +31,7 @@ const STORAGE_CONFIG_KEY = 'moneyTree.storageProviderConfig';
 
 // Simplified sync status for UI display
 export type SyncUIStatus =
-  | 'not-connected' // No provider or file configured
-  | 'offline' // Stored config exists but session expired
+  | 'offline' // Not ready to sync (no provider, no file, or auth expired)
   | 'connected' // Provider and file set, but not yet synced
   | 'syncing' // Currently syncing
   | 'synced' // Successfully synced
@@ -155,7 +154,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
   const [provider, setProvider] = useState<IStorageProvider | null>(null);
   const [currentFile, setCurrentFile] = useState<CloudItem | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatusState>({
-    status: 'not-connected',
+    status: 'offline',
     errorMessage: null,
     providerName: null,
     fileName: null,
@@ -182,12 +181,6 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
         // Guard: No stored config - new user flow
         const config = loadProviderConfig();
         if (!config) {
-          setSyncStatus({
-            status: 'not-connected',
-            errorMessage: null,
-            providerName: null,
-            fileName: null,
-          });
           setShowWelcomeDialog(true);
           return;
         }
@@ -195,12 +188,6 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
         // Guard: Invalid provider type
         const providerInstance = createProvider(config);
         if (!providerInstance) {
-          setSyncStatus({
-            status: 'offline',
-            errorMessage: null,
-            providerName: null,
-            fileName: null,
-          });
           showSnackbar('Session expired - working offline. Click sync to reconnect.', 'info');
           return;
         }
@@ -227,13 +214,6 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
         }
 
         if (!isAuthenticated && !cachedFile) {
-          // Not authenticated and no file - new user or complete reset
-          setSyncStatus({
-            status: 'not-connected',
-            errorMessage: null,
-            providerName: null,
-            fileName: null,
-          });
           setShowWelcomeDialog(true);
           return;
         }
@@ -244,7 +224,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
         if (!cachedFile) {
           // Authenticated but no file selected yet - show file selection
           setSyncStatus({
-            status: 'not-connected',
+            status: 'offline',
             errorMessage: null,
             providerName: providerInstance.getName(),
             fileName: null,
@@ -338,7 +318,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
 
       setProvider(providerInstance);
       setSyncStatus({
-        status: 'not-connected',
+        status: 'offline',
         errorMessage: null,
         providerName: providerInstance.getName(),
         fileName: null,
@@ -355,7 +335,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
     setCurrentFile(null);
     localStorage.removeItem(FILE_CACHE_KEY);
     setSyncStatus({
-      status: 'not-connected',
+      status: 'offline',
       errorMessage: null,
       providerName: null,
       fileName: null,
@@ -367,60 +347,49 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
   const reconnect = useCallback(async () => {
     const config = loadProviderConfig();
     if (!config) {
-      throw new Error('No stored configuration found');
+      // No cached config → show welcome dialog to connect from scratch
+      setShowWelcomeDialog(true);
+      return;
     }
 
     const providerInstance = createProvider(config);
     if (!providerInstance) {
-      throw new Error(`Provider not available: ${config}`);
+      // Provider not configured → show welcome dialog
+      setShowWelcomeDialog(true);
+      return;
     }
 
     // Re-authenticate (triggers OAuth popup)
     await providerInstance.authenticate();
 
-    // Verify authentication worked
-    const success = await providerInstance.initialize();
-    if (!success) {
-      throw new Error('Authentication failed');
-    }
-
     setProvider(providerInstance);
 
-    // Try to reload cached file
-    let fileName: string | null = null;
-    try {
-      const cached = localStorage.getItem(FILE_CACHE_KEY);
-      if (cached) {
-        const fileItem = JSON.parse(cached) as CloudItem;
-        setCurrentFile(fileItem);
-        fileName = fileItem.name;
-      }
-    } catch (error) {
-      console.warn('Failed to load cached file info:', error);
-    }
-
-    setSyncStatus({
-      status: fileName ? 'connected' : 'not-connected',
-      errorMessage: null,
-      providerName: providerInstance.getName(),
-      fileName: fileName,
-    });
-
-    if (!fileName) {
+    const cachedFile = loadCachedFile();
+    if (!cachedFile) {
+      // No file cached → show file picker (stay offline until file selected)
+      setSyncStatus((prev) => ({
+        ...prev,
+        providerName: providerInstance.getName(),
+      }));
       setShowFileSelection(true);
+    } else {
+      // Has file → ready to sync
+      setCurrentFile(cachedFile);
+      setSyncStatus({
+        status: 'connected',
+        errorMessage: null,
+        providerName: providerInstance.getName(),
+        fileName: cachedFile.name,
+      });
     }
+
     // Note: Auto-sync will be triggered by the useEffect watching syncService
-  }, [setSyncStatus, setShowFileSelection]);
+  }, [setShowWelcomeDialog, setShowFileSelection, setSyncStatus]);
 
   // Full bidirectional sync
   const fullSync = useCallback(async (): Promise<void> => {
     if (syncStatus.status === 'offline') {
       showSnackbar('Cannot sync while offline. Click sync to reconnect.', 'info');
-      return;
-    }
-
-    if (syncStatus.status === 'not-connected') {
-      showSnackbar('Please connect to a cloud storage provider first', 'info');
       return;
     }
 

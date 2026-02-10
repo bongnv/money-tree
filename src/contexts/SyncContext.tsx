@@ -374,6 +374,11 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
       return;
     }
 
+    // Safety check: Skip if already synced to current timestamp
+    if (lastModified && lastModified === syncStateRef.current.remoteLastModified) {
+      return;
+    }
+
     try {
       syncStateRef.current.isSyncing = true;
       updateSyncState({ status: 'syncing', errorMessage: null });
@@ -404,6 +409,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
       syncStateRef.current.isSyncing = false;
     }
   }, [
+    lastModified,
     syncState.status,
     syncState.currentFile,
     syncService,
@@ -439,12 +445,15 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
       !syncState.currentFile ||
       !lastModified ||
       syncStateRef.current.isInitializing
-    )
+    ) {
       return;
+    }
 
     // Don't trigger debounced sync if we haven't established the remote state yet
     // (initial sync will handle it)
-    if (!syncStateRef.current.remoteLastModified) return;
+    if (!syncStateRef.current.remoteLastModified) {
+      return;
+    }
 
     // Don't sync if already synced to this timestamp
     if (lastModified === syncStateRef.current.remoteLastModified) {
@@ -452,19 +461,15 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
     }
 
     // Only update to 'connected' if currently 'synced' (indicates new local changes)
-    if (syncState.status === 'synced') {
-      updateSyncState({ status: 'connected' });
-    }
+    setSyncState((prev) => {
+      if (prev.status === 'synced') {
+        return { ...prev, status: 'connected' };
+      }
+      return prev;
+    });
 
     debouncedSync();
-  }, [
-    lastModified,
-    syncState.provider,
-    syncState.currentFile,
-    syncState.status,
-    debouncedSync,
-    updateSyncState,
-  ]);
+  }, [lastModified, syncState.provider, syncState.currentFile, debouncedSync]);
 
   const value: SyncContextValue = {
     ...syncState,

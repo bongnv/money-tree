@@ -207,10 +207,9 @@ export class CloudSyncService {
    * Items with newer updatedAt (or createdAt if updatedAt not available) timestamp win
    * Returns merged data and flag indicating if local has newer changes
    */
-  private mergeByTimestamp<T extends { id: string; updatedAt?: string; createdAt: string }>(
-    local: T[],
-    remote: T[]
-  ): { merged: T[]; hasLocalChanges: boolean } {
+  private mergeByTimestamp<
+    T extends { id: string; updatedAt?: string; createdAt: string; isDeleted?: boolean },
+  >(local: T[], remote: T[]): { merged: T[]; hasLocalChanges: boolean } {
     const map = new Map<string, T>();
     let hasLocalChanges = false;
 
@@ -240,9 +239,10 @@ export class CloudSyncService {
     });
 
     // Check for items that exist only in local (not in remote)
+    // Skip soft-deleted items - they're intentionally not in cloud and shouldn't trigger uploads
     local.forEach((item) => {
       const hasInRemote = remote.some((r) => r.id === item.id);
-      if (!hasInRemote) {
+      if (!hasInRemote && !item.isDeleted) {
         hasLocalChanges = true;
       }
     });
@@ -342,7 +342,6 @@ export class CloudSyncService {
     mergedLastModified: string;
     fileItem: CloudItem;
   }> {
-    // Starting full sync with cloud storage
     // Fetch local snapshot upfront
     const [
       allTransactions,

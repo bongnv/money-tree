@@ -39,8 +39,6 @@ export const msalConfig: Configuration = {
     // Safari: sessionStorage (survives reload, cleared on tab close - ITP friendly)
     // Others: localStorage (persists across sessions)
     cacheLocation: 'localStorage',
-    // No cookies - prevents interaction_in_progress errors from stale cookie state
-    storeAuthStateInCookie: false,
   },
 };
 

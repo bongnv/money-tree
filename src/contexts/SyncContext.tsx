@@ -269,11 +269,15 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
     [updateSyncState]
   );
 
-  // Select file for syncing (clears DB for fresh start)
+  // Select file for syncing (resets DB only for existing remote files, not new files)
   const selectFile = useCallback(
     async (fileItem: CloudItem) => {
-      await db.delete();
-      await db.open();
+      // Only reset DB when opening an existing remote file
+      // New files (id === '') should keep local data to upload
+      if (fileItem.id) {
+        await db.delete();
+        await db.open();
+      }
 
       updateFileItem(fileItem);
     },

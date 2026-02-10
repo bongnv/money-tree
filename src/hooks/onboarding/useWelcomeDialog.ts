@@ -20,18 +20,17 @@ export function useWelcomeDialog(onClose: () => void) {
       setState((s) => ({ ...s, isConnecting: true, error: null }));
 
       try {
-        // Cloud: authenticate (hook will show file picker automatically)
+        // Cloud: authenticate (will trigger redirect, page will navigate away)
         await syncOps.connect(provider);
+        // Note: Code below won't execute if redirect happens successfully
         setState((s) => ({ ...s, isConnecting: false }));
-        // Close welcome dialog
         onClose();
       } catch (error) {
+        console.error('[WelcomeDialog] Connect failed:', error);
         setState((s) => ({ ...s, isConnecting: false }));
         if (!isUserCancellationError(error)) {
-          setState((s) => ({
-            ...s,
-            error: error instanceof Error ? error.message : 'Unknown error',
-          }));
+          const errorMessage = error instanceof Error ? error.message : 'Connection failed';
+          setState((s) => ({ ...s, error: errorMessage }));
         }
       }
     },

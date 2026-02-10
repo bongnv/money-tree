@@ -17,7 +17,6 @@ import {
 } from '@mui/material';
 import { Cloud as CloudIcon } from '@mui/icons-material';
 import { isOneDriveConfigured } from '../../config/onedrive.config';
-import { isGoogleDriveConfigured } from '../../config/googledrive.config';
 import { StorageProviderType } from '../../contexts/SyncContext';
 import { useWelcomeDialog } from '@/hooks/onboarding/useWelcomeDialog';
 
@@ -86,36 +85,6 @@ export const WelcomeDialog: React.FC<WelcomeDialogProps> = ({ open, onClose }) =
               </Button>
             </CardActions>
           </Card>
-
-          {/* Connect to Google Drive */}
-          {isGoogleDriveConfigured() && (
-            <Card variant="outlined">
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                  <CloudIcon color="primary" fontSize="large" />
-                  <Box>
-                    <Typography variant="h6" component="div">
-                      Connect to Google Drive
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Sync your data with Google Drive
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-              <CardActions>
-                <Button
-                  variant="contained"
-                  startIcon={isConnecting ? <CircularProgress size={20} /> : <CloudIcon />}
-                  onClick={() => handleConnect(StorageProviderType.GOOGLE_DRIVE)}
-                  disabled={isConnecting}
-                  fullWidth
-                >
-                  {isConnecting ? 'Connecting...' : 'Connect'}
-                </Button>
-              </CardActions>
-            </Card>
-          )}
         </Box>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2, justifyContent: 'space-between', alignItems: 'center' }}>

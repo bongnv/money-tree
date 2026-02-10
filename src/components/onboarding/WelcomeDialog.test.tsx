@@ -4,23 +4,14 @@ import { StorageProviderType } from '../../contexts/SyncContext';
 
 // Create mock functions
 const mockIsOneDriveConfigured = jest.fn(() => true);
-const mockIsGoogleDriveConfigured = jest.fn(() => true);
 
 jest.mock('../../config/onedrive.config', () => ({
   isOneDriveConfigured: () => mockIsOneDriveConfigured(),
-}));
-jest.mock('../../config/googledrive.config', () => ({
-  isGoogleDriveConfigured: () => mockIsGoogleDriveConfigured(),
 }));
 
 // Create mock instances
 const mockOneDriveProvider = {
   listDriveItems: jest.fn().mockResolvedValue([]),
-  setFileInfo: jest.fn().mockResolvedValue(undefined),
-};
-
-const mockGoogleDriveProvider = {
-  listDriveFiles: jest.fn().mockResolvedValue([]),
   setFileInfo: jest.fn().mockResolvedValue(undefined),
 };
 
@@ -36,9 +27,6 @@ const mockConnect = jest.fn().mockImplementation(async (type) => {
   // Set connection state based on the type
   if (type === StorageProviderType.ONEDRIVE) {
     mockProvider = { getName: () => 'OneDrive' };
-    mockSyncStatus.status = 'connected';
-  } else if (type === StorageProviderType.GOOGLE_DRIVE) {
-    mockProvider = { getName: () => 'Google Drive' };
     mockSyncStatus.status = 'connected';
   }
 });
@@ -69,7 +57,6 @@ describe('WelcomeDialog', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockOneDriveProvider.listDriveItems.mockResolvedValue([]);
-    mockGoogleDriveProvider.listDriveFiles.mockResolvedValue([]);
   });
 
   it('should render when open', () => {
@@ -270,23 +257,6 @@ describe('WelcomeDialog', () => {
       });
     });
 
-    it('should connect to Google Drive when Connect clicked', async () => {
-      mockConnect.mockResolvedValue(undefined);
-      mockGoogleDriveProvider.listDriveFiles.mockResolvedValue([]);
-
-      render(<WelcomeDialog open={true} onClose={mockOnClose} />);
-
-      const connectButtons = screen.getAllByRole('button', { name: /^connect$/i });
-      // Google Drive is the second connect button if it's configured
-      if (connectButtons.length > 1) {
-        fireEvent.click(connectButtons[1]); // Google Drive is second option
-
-        await waitFor(() => {
-          expect(mockConnect).toHaveBeenCalledWith(StorageProviderType.GOOGLE_DRIVE);
-        });
-      }
-    });
-
     it('should handle cloud connection errors', async () => {
       mockConnect.mockRejectedValue(new Error('Auth failed'));
 
@@ -305,7 +275,6 @@ describe('WelcomeDialog', () => {
       render(<WelcomeDialog open={true} onClose={mockOnClose} />);
 
       expect(screen.getByText('Connect to OneDrive')).toBeInTheDocument();
-      // Google Drive may or may not be shown depending on configuration
     });
   });
 

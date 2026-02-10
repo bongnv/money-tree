@@ -12,7 +12,7 @@ import { db } from '@/db/database';
 export function useDataSyncSettings() {
   const navigate = useNavigate();
   const syncOps = useSync();
-  const { provider, currentFile } = syncOps;
+  const { provider, currentFile, status, reconnect } = syncOps;
   const { accounts, categories, transactionTypes, transactions, assets, budgets } = useStore();
   const formatService = useFormatService();
 
@@ -37,6 +37,8 @@ export function useDataSyncSettings() {
     return provider?.getName() || 'Not connected';
   }, [provider]);
 
+  const isOffline = status === 'offline';
+
   const openDisconnectDialog = useCallback(() => {
     setDisconnectDialogOpen(true);
   }, []);
@@ -44,6 +46,10 @@ export function useDataSyncSettings() {
   const closeDisconnectDialog = useCallback(() => {
     setDisconnectDialogOpen(false);
   }, []);
+
+  const handleReconnect = useCallback(async () => {
+    await reconnect();
+  }, [reconnect]);
 
   const handleDisconnect = useCallback(async () => {
     setDisconnectDialogOpen(false);
@@ -64,9 +70,11 @@ export function useDataSyncSettings() {
     fileSize,
     storageLocation,
     status: provider?.getName() || 'Not connected',
+    isOffline,
     disconnectDialogOpen,
     openDisconnectDialog,
     closeDisconnectDialog,
+    handleReconnect,
     handleDisconnect,
   };
 }

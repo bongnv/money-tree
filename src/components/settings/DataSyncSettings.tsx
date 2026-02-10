@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import LogoutIcon from '@mui/icons-material/Logout';
+import CloudIcon from '@mui/icons-material/Cloud';
 import { useDataSyncSettings } from '@/hooks/useDataSyncSettings';
 
 export const DataSyncSettings: React.FC = () => {
@@ -21,9 +22,11 @@ export const DataSyncSettings: React.FC = () => {
     fileSize,
     storageLocation,
     status,
+    isOffline,
     disconnectDialogOpen,
     openDisconnectDialog,
     closeDisconnectDialog,
+    handleReconnect,
     handleDisconnect,
   } = useDataSyncSettings();
 
@@ -84,19 +87,31 @@ export const DataSyncSettings: React.FC = () => {
               </Box>
 
               <Typography variant="body2" color="text.secondary" paragraph>
-                Disconnect from the current file and return to the welcome screen to reconnect or
-                choose a different file.
+                {isOffline
+                  ? 'You are currently offline. Click Connect to re-authenticate and sync your data.'
+                  : 'Disconnect from the current file and return to the welcome screen to reconnect or choose a different file.'}
               </Typography>
 
-              <Button
-                variant="outlined"
-                color="warning"
-                startIcon={<LogoutIcon />}
-                onClick={openDisconnectDialog}
-                disabled={!cloudFileName}
-              >
-                Disconnect
-              </Button>
+              {isOffline ? (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<CloudIcon />}
+                  onClick={handleReconnect}
+                >
+                  Connect
+                </Button>
+              ) : (
+                <Button
+                  variant="outlined"
+                  color="warning"
+                  startIcon={<LogoutIcon />}
+                  onClick={openDisconnectDialog}
+                  disabled={!cloudFileName}
+                >
+                  Disconnect
+                </Button>
+              )}
             </CardContent>
           </Card>
         </Grid>

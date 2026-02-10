@@ -22,10 +22,6 @@
 
 import { Configuration } from '@azure/msal-browser';
 
-// Detect Safari browser
-const isSafari =
-  typeof window !== 'undefined' && /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
 export const msalConfig: Configuration = {
   auth: {
     // Client ID must be injected via VITE_ONEDRIVE_CLIENT_ID environment variable at build time
@@ -42,7 +38,7 @@ export const msalConfig: Configuration = {
   cache: {
     // Safari: sessionStorage (survives reload, cleared on tab close - ITP friendly)
     // Others: localStorage (persists across sessions)
-    cacheLocation: isSafari ? 'sessionStorage' : 'localStorage',
+    cacheLocation: 'localStorage',
     // No cookies - prevents interaction_in_progress errors from stale cookie state
     storeAuthStateInCookie: false,
   },

@@ -12,9 +12,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import { CloudSyncService } from '@/services/cloudSync.service';
 import { IStorageProvider, CloudItem } from '@/services/storage/IStorageProvider';
 import { OneDriveProvider } from '@/services/storage/OneDriveProvider';
-import { GoogleDriveProvider } from '@/services/storage/GoogleDriveProvider';
 import { isOneDriveConfigured } from '@/config/onedrive.config';
-import { isGoogleDriveConfigured } from '@/config/googledrive.config';
 import { useApp } from '@/contexts/AppContext';
 import { db } from '@/db/database';
 
@@ -23,7 +21,6 @@ import { db } from '@/db/database';
  */
 export enum StorageProviderType {
   ONEDRIVE = 'onedrive',
-  GOOGLE_DRIVE = 'google_drive',
 }
 
 const FILE_CACHE_KEY = 'moneyTree.currentFile';
@@ -76,8 +73,6 @@ function createProvider(type: StorageProviderType): IStorageProvider | null {
   switch (type) {
     case StorageProviderType.ONEDRIVE:
       return isOneDriveConfigured() ? new OneDriveProvider() : null;
-    case StorageProviderType.GOOGLE_DRIVE:
-      return isGoogleDriveConfigured() ? new GoogleDriveProvider() : null;
     default:
       return null;
   }
@@ -293,12 +288,14 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
         throw new Error(`Provider not available: ${type}`);
       }
 
-      // Authenticate (OAuth popup)
-      await providerInstance.authenticate();
-
-      // Save provider type to localStorage
+      // Save provider type to localStorage BEFORE redirect
       saveProviderConfig(type);
 
+      // Authenticate (may redirect or return if already authenticated)
+      await providerInstance.authenticate();
+
+      // If we reach here, no redirect happened (already authenticated)
+      // Continue with the flow: update state and show file selection
       updateSyncState({
         provider: providerInstance,
         status: 'offline',
@@ -338,9 +335,11 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
       return;
     }
 
-    // Re-authenticate (triggers OAuth popup)
+    // Re-authenticate (may redirect or return if already authenticated)
     await providerInstance.authenticate();
 
+    // If we reach here, no redirect happened (already authenticated)
+    // Check for cached file and update state accordingly
     const cachedFile = loadCachedFile();
     if (!cachedFile) {
       // No file cached → show file picker (stay offline until file selected)
@@ -355,8 +354,6 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
         errorMessage: null,
       });
     }
-
-    // Note: Auto-sync will be triggered by the useEffect watching syncService
   }, [updateSyncState, setShowWelcomeDialog, setShowFileSelection]);
 
   // Full bidirectional sync

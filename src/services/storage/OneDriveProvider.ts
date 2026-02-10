@@ -35,7 +35,6 @@ export interface DriveItem {
 export class OneDriveProvider implements IStorageProvider {
   private msalInstance: PublicClientApplication | null = null;
   private graphClient: Client | null = null;
-  private account: AccountInfo | null = null;
   private initPromise: Promise<void> | null = null;
 
   constructor() {
@@ -46,18 +45,24 @@ export class OneDriveProvider implements IStorageProvider {
   }
 
   /**
-   * Initialize MSAL instance and check for cached account
+   * Initialize MSAL instance and handle redirect
    */
   private async initializeMsal(): Promise<void> {
     if (!this.msalInstance) return;
 
     await this.msalInstance.initialize();
 
-    // Check for cached account
-    const account = this.msalInstance.getActiveAccount() || this.msalInstance.getAllAccounts()[0];
-    if (account) {
-      this.account = account;
-      this.msalInstance.setActiveAccount(account);
+    // Handle redirect response if coming back from login
+    const response = await this.msalInstance.handleRedirectPromise();
+    if (response) {
+      this.msalInstance.setActiveAccount(response.account);
+    }
+
+    // Set active account if one exists in cache
+    const cachedAccount =
+      this.msalInstance.getActiveAccount() || this.msalInstance.getAllAccounts()[0];
+    if (cachedAccount) {
+      this.msalInstance.setActiveAccount(cachedAccount);
     }
   }
 
@@ -67,8 +72,9 @@ export class OneDriveProvider implements IStorageProvider {
   async initialize(): Promise<boolean> {
     await this.initPromise;
 
-    // Check if account exists
-    if (!this.account) {
+    // Check if account exists in MSAL
+    const account = this.getAccount();
+    if (!account) {
       return false;
     }
 
@@ -76,20 +82,20 @@ export class OneDriveProvider implements IStorageProvider {
     try {
       await this.getAccessToken();
       return true;
-    } catch (error) {
-      console.warn('[OneDrive] Token validation failed:', error);
+    } catch {
       return false;
     }
   }
 
   /**
-   * Authenticate with Microsoft using popup flow
+   * Authenticate with Microsoft using redirect flow
    */
   async authenticate(): Promise<void> {
     await this.initPromise;
 
-    // Already authenticated
-    if (this.account !== null) {
+    // Check if already authenticated (query MSAL, not stored state)
+    const account = this.getAccount();
+    if (account !== null) {
       return;
     }
 
@@ -97,9 +103,7 @@ export class OneDriveProvider implements IStorageProvider {
       throw new Error(errorMessages.configError);
     }
 
-    const response = await this.msalInstance.loginPopup(loginRequest);
-    this.account = response.account;
-    this.msalInstance.setActiveAccount(response.account);
+    await this.msalInstance.loginRedirect(loginRequest);
   }
 
   /**
@@ -248,6 +252,14 @@ export class OneDriveProvider implements IStorageProvider {
   }
 
   /**
+   * Get current account from MSAL (stateless)
+   */
+  private getAccount(): AccountInfo | null {
+    if (!this.msalInstance) return null;
+    return this.msalInstance.getActiveAccount() || this.msalInstance.getAllAccounts()[0] || null;
+  }
+
+  /**
    * Get Graph client (creates lazily on first use)
    */
   private async getGraphClient(): Promise<Client> {
@@ -257,7 +269,8 @@ export class OneDriveProvider implements IStorageProvider {
       throw new Error(errorMessages.configError);
     }
 
-    if (!this.account) {
+    const account = this.getAccount();
+    if (!account) {
       throw new Error(errorMessages.authRequired);
     }
 
@@ -276,7 +289,8 @@ export class OneDriveProvider implements IStorageProvider {
       throw new Error(errorMessages.configError);
     }
 
-    if (!this.account) {
+    const account = this.getAccount();
+    if (!account) {
       throw new Error(errorMessages.authRequired);
     }
 
@@ -300,13 +314,14 @@ export class OneDriveProvider implements IStorageProvider {
       throw new Error(errorMessages.configError);
     }
 
-    if (!this.account) {
+    const account = this.getAccount();
+    if (!account) {
       throw new Error(errorMessages.authRequired);
     }
 
     const request = {
       ...loginRequest,
-      account: this.account,
+      account,
     };
 
     const response = await this.msalInstance.acquireTokenSilent(request);
@@ -353,9 +368,6 @@ export class OneDriveProvider implements IStorageProvider {
    * Create user-friendly error messages from Graph API errors
    */
   private createFriendlyError(error: unknown): Error {
-    // Log the original error first to preserve debugging information
-    console.error('OneDrive API error:', error);
-
     const statusCode = (error as { statusCode?: number })?.statusCode;
     const code = (error as { code?: string })?.code;
     const message = (error as { message?: string })?.message;

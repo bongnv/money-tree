@@ -1,8 +1,31 @@
-import { fetchRateFromAPI, getRateSync } from './exchangeRate.utils';
+import { fetchRateFromAPI, getRateSync, ensureCurrentMonthRates } from './exchangeRate.utils';
 import { CurrencyCode } from '../types/enums';
+import { db } from '@/db/database';
 
 // Mock fetch globally
 global.fetch = jest.fn();
+
+// Mock db
+jest.mock('@/db/database', () => ({
+  db: {
+    exchangeRates: {
+      bulkAdd: jest.fn().mockResolvedValue(undefined),
+    },
+    syncMetadata: {
+      put: jest.fn().mockResolvedValue(undefined),
+    },
+  },
+}));
+
+// Mock id.utils
+jest.mock('@/utils/id.utils', () => ({
+  generateId: jest.fn(() => 'mock-id'),
+}));
+
+// Mock date.utils
+jest.mock('@/utils/date.utils', () => ({
+  getCurrentMonth: jest.fn(() => '2024-06'),
+}));
 
 describe('exchangeRate.utils', () => {
   beforeEach(() => {
@@ -225,6 +248,134 @@ describe('exchangeRate.utils', () => {
       expect(() => getRateSync(ratesMap, '2024-07', CurrencyCode.SGD, CurrencyCode.VND)).toThrow(
         'Exchange rate not found'
       );
+    });
+
+    it('should handle USD to non-USD with fallback', () => {
+      const rate = getRateSync(ratesMap, '2024-03', CurrencyCode.USD, CurrencyCode.AUD);
+      // Should use 2024-02 AUD rate: 1 / 1.27
+      expect(rate).toBeCloseTo(1 / 1.27, 5);
+    });
+
+    it('should throw for USD to non-USD when no rate found', () => {
+      const emptyMap = new Map<string, number>();
+
+      expect(() => getRateSync(emptyMap, '2024-01', CurrencyCode.USD, CurrencyCode.SGD)).toThrow(
+        'Exchange rate not found'
+      );
+    });
+  });
+
+  describe('ensureCurrentMonthRates', () => {
+    it('should do nothing when all rates exist for current month', async () => {
+      const existingRates = Object.values(CurrencyCode)
+        .filter((c) => c !== CurrencyCode.USD)
+        .map((currency) => ({
+          id: `rate-${currency}`,
+          month: '2024-06',
+          fromCurrency: currency,
+          toCurrency: CurrencyCode.USD,
+          rate: 1.5,
+          createdAt: '2024-06-01T00:00:00Z',
+        }));
+
+      await ensureCurrentMonthRates(existingRates);
+
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(db.exchangeRates.bulkAdd).not.toHaveBeenCalled();
+    });
+
+    it('should fetch missing rates for current month', async () => {
+      // Provide only one existing rate
+      const existingRates = [
+        {
+          id: 'rate-sgd',
+          month: '2024-06',
+          fromCurrency: CurrencyCode.SGD,
+          toCurrency: CurrencyCode.USD,
+          rate: 1.35,
+          createdAt: '2024-06-01T00:00:00Z',
+        },
+      ];
+
+      // Mock fetch for all missing currencies
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          conversion_rates: { USD: 1.5 },
+        }),
+      });
+
+      await ensureCurrentMonthRates(existingRates);
+
+      // Should have fetched for all currencies except USD and SGD
+      const allCurrencies = Object.values(CurrencyCode).filter(
+        (c) => c !== CurrencyCode.USD && c !== CurrencyCode.SGD
+      );
+      expect(global.fetch).toHaveBeenCalledTimes(allCurrencies.length);
+      expect(db.exchangeRates.bulkAdd).toHaveBeenCalledTimes(1);
+      expect(db.syncMetadata.put).toHaveBeenCalledTimes(1);
+    });
+
+    it('should handle empty existing rates', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          conversion_rates: { USD: 1.5 },
+        }),
+      });
+
+      await ensureCurrentMonthRates([]);
+
+      const nonUsdCurrencies = Object.values(CurrencyCode).filter((c) => c !== CurrencyCode.USD);
+      expect(global.fetch).toHaveBeenCalledTimes(nonUsdCurrencies.length);
+      expect(db.exchangeRates.bulkAdd).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            month: '2024-06',
+            toCurrency: CurrencyCode.USD,
+          }),
+        ])
+      );
+    });
+
+    it('should ignore rates from different months', async () => {
+      // Rates exist but for a different month
+      const existingRates = Object.values(CurrencyCode)
+        .filter((c) => c !== CurrencyCode.USD)
+        .map((currency) => ({
+          id: `rate-${currency}`,
+          month: '2024-05', // Different month
+          fromCurrency: currency,
+          toCurrency: CurrencyCode.USD,
+          rate: 1.5,
+          createdAt: '2024-05-01T00:00:00Z',
+        }));
+
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          conversion_rates: { USD: 1.5 },
+        }),
+      });
+
+      await ensureCurrentMonthRates(existingRates);
+
+      // Should still fetch for current month
+      expect(global.fetch).toHaveBeenCalled();
+    });
+
+    it('should throw and log error when fetch fails', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: false,
+        status: 500,
+      });
+
+      const consoleError = jest.spyOn(console, 'error').mockImplementation();
+
+      await expect(ensureCurrentMonthRates([])).rejects.toThrow();
+
+      expect(consoleError).toHaveBeenCalled();
+      consoleError.mockRestore();
     });
   });
 });

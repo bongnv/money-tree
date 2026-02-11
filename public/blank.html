@@ -11,7 +11,7 @@
       This handles OAuth redirects for popup/iframe flows without loading the full app.
       See: https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/msal-v5/lib/msal-browser/docs/login-user.md#redirecturi-considerations
     -->
-    <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@5/lib/msal-redirect-bridge.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@5/lib/redirect-bridge/msal-redirect-bridge.min.js"></script>
     <script>
       // Send authentication response back to main window via BroadcastChannel
       msalRedirectBridge.sendRedirectPayloadToMainFrame();

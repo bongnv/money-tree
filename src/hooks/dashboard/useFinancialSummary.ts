@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useStore } from '@/contexts/StoreContext';
-import { useCalculationService, useReportService } from '../useServices';
+import { useCalculationService, useReportService } from '@/contexts/ServiceContext';
 import { getCurrentMonth } from '@/utils/date.utils';
 import type { PeriodOption } from '@/components/common/PeriodSelector';
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useArchiveService } from './useServices';
+import { useArchiveService, useCloudService } from '@/contexts/ServiceContext';
 import { useStore } from '@/contexts/StoreContext';
 import { useAppContext } from '@/contexts/AppContext';
 import { useSync } from '@/contexts/SyncContext';
@@ -38,9 +38,10 @@ interface UseArchiveManagerReturn {
  */
 export function useArchiveManager(): UseArchiveManagerReturn {
   const { baseCurrency, archivedYears } = useStore();
+  const { currentFile } = useSync();
   const archiveService = useArchiveService();
+  const cloudService = useCloudService();
   const { showSnackbar } = useAppContext();
-  const { provider, currentFile } = useSync();
 
   // State
   const [isExporting, setIsExporting] = useState(false);
@@ -112,7 +113,7 @@ export function useArchiveManager(): UseArchiveManagerReturn {
 
       try {
         // Verify we have a storage provider
-        if (!provider) {
+        if (!cloudService.getCurrentProvider()) {
           throw new Error('No cloud storage connected. Please connect to a cloud provider first.');
         }
 
@@ -125,7 +126,7 @@ export function useArchiveManager(): UseArchiveManagerReturn {
         };
 
         // Archive year (creates file, uploads to cloud, removes local data)
-        await archiveService.archiveYear(year, provider, archiveFolder);
+        await archiveService.archiveYear(year, archiveFolder);
 
         showSnackbar(
           `Year ${year} archived successfully. Data has been removed from the main file.`,
@@ -139,7 +140,7 @@ export function useArchiveManager(): UseArchiveManagerReturn {
         setExportingYear(null);
       }
     },
-    [archiveService, provider, currentFile?.parentItemId, showSnackbar]
+    [archiveService, cloudService, currentFile?.parentItemId, showSnackbar]
   );
 
   return {

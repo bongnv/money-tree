@@ -11,7 +11,7 @@ import { AccountType, Group, CurrencyCode } from '../../types/enums';
 
 // Mock hooks
 jest.mock('@/contexts/StoreContext');
-jest.mock('@/hooks/useServices');
+jest.mock('@/contexts/ServiceContext');
 jest.mock('@/hooks/transactions/useTransactionDialog');
 jest.mock('@/hooks/transactions/useTransactionFilters');
 

@@ -18,7 +18,7 @@ jest.mock('@/contexts/StoreContext', () => ({
 }));
 
 // Mock the hooks
-jest.mock('../useServices', () => ({
+jest.mock('@/contexts/ServiceContext', () => ({
   useCalculationService: () => ({
     calculateBudgetGrouping: jest.fn(() => ({})),
   }),

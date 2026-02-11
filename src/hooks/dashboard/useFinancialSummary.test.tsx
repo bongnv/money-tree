@@ -6,7 +6,7 @@ import { CurrencyCode } from '@/types/enums';
 import type { Account, ManualAsset } from '@/types/models';
 
 jest.mock('@/contexts/StoreContext');
-jest.mock('../useServices', () => ({
+jest.mock('@/contexts/ServiceContext', () => ({
   useCalculationService: jest.fn(() => ({
     calculateAccountBalance: jest.fn(() => 1000),
   })),

@@ -2,7 +2,8 @@
 import { ArchiveService } from './archive.service';
 import { CurrencyCode } from '@/types/enums';
 import type { MoneyTreeDB } from '@/db/database';
-import type { IStorageProvider, CloudItem } from './storage/IStorageProvider';
+import type { CloudItem } from './storage/IStorageProvider';
+import type { CloudService } from './cloud.service';
 
 // Mock dependencies
 const mockDb = {
@@ -45,21 +46,26 @@ const mockDb = {
   },
 } as unknown as MoneyTreeDB;
 
-const mockStorageProvider: IStorageProvider = {
+const mockCloudService: CloudService = {
   initialize: jest.fn(),
-  authenticate: jest.fn(),
+  connect: jest.fn(),
+  disconnect: jest.fn(),
+  reconnect: jest.fn(),
+  listFiles: jest.fn(),
   readFile: jest.fn(),
   writeFile: jest.fn(),
-  listItems: jest.fn(),
-  getName: jest.fn(() => 'Mock Provider'),
-};
+  getCurrentProvider: jest.fn(),
+  getProviderName: jest.fn(() => 'OneDrive'),
+  isAuthenticated: jest.fn(),
+  createSyncService: jest.fn(),
+} as unknown as CloudService;
 
 describe('ArchiveService', () => {
   let archiveService: ArchiveService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    archiveService = new ArchiveService(mockDb);
+    archiveService = new ArchiveService(mockDb, mockCloudService);
   });
 
   describe('identifyArchivableYear', () => {
@@ -150,7 +156,7 @@ describe('ArchiveService', () => {
 
   describe('archiveYear with cloud upload', () => {
     it('should require cloud upload and throw if provider not configured', async () => {
-      const archiveServiceWithoutCloud = new ArchiveService(mockDb);
+      const archiveServiceWithoutCloud = new ArchiveService(mockDb, mockCloudService);
 
       // Mock all required methods
       (mockDb.transactions.toArray as jest.Mock).mockResolvedValue([
@@ -174,9 +180,7 @@ describe('ArchiveService', () => {
       (mockDb.syncMetadata.get as jest.Mock).mockResolvedValue({ value: CurrencyCode.USD });
       (mockDb.syncMetadata.put as jest.Mock).mockResolvedValue(undefined);
 
-      await expect(
-        archiveServiceWithoutCloud.archiveYear(2023, null as any, null as any)
-      ).rejects.toThrow();
+      await expect(archiveServiceWithoutCloud.archiveYear(2023, null as any)).rejects.toThrow();
     });
     it('should upload archive to cloud when provider is configured', async () => {
       const archiveFolder: CloudItem = {
@@ -209,15 +213,15 @@ describe('ArchiveService', () => {
         .mockResolvedValueOnce(null); // archivedYears (for archiveYear - empty)
       (mockDb.syncMetadata.put as jest.Mock).mockResolvedValue(undefined);
 
-      (mockStorageProvider.writeFile as jest.Mock).mockResolvedValue({
+      (mockCloudService.writeFile as jest.Mock).mockResolvedValue({
         id: 'file123',
         name: 'archive-2023.json',
         isFolder: false,
       });
 
-      const result = await archiveService.archiveYear(2023, mockStorageProvider, archiveFolder);
+      const result = await archiveService.archiveYear(2023, archiveFolder);
 
-      expect(mockStorageProvider.writeFile).toHaveBeenCalled();
+      expect(mockCloudService.writeFile).toHaveBeenCalled();
       expect(mockDb.syncMetadata.put).toHaveBeenCalledWith({
         key: 'archivedYears',
         value: [result],
@@ -259,12 +263,12 @@ describe('ArchiveService', () => {
       (mockDb.syncMetadata.put as jest.Mock).mockResolvedValue(undefined);
 
       // Simulate cloud upload failure
-      (mockStorageProvider.writeFile as jest.Mock).mockRejectedValue(new Error('Network error'));
+      (mockCloudService.writeFile as jest.Mock).mockRejectedValue(new Error('Network error'));
 
       // Should throw - archive fails if upload fails
-      await expect(
-        archiveService.archiveYear(2023, mockStorageProvider, archiveFolder)
-      ).rejects.toThrow('Failed to upload archive to cloud');
+      await expect(archiveService.archiveYear(2023, archiveFolder)).rejects.toThrow(
+        'Failed to upload archive to cloud'
+      );
 
       // Verify cleanup was NOT called (no delete operations)
       expect(mockFilterResult.delete).not.toHaveBeenCalled();

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useStore } from '@/contexts/StoreContext';
-import { useCalculationService } from '../useServices';
+import { useCalculationService } from '@/contexts/ServiceContext';
 import { Group } from '@/types/enums';
 import type { CurrencyCode } from '@/types/enums';
 import type { PeriodOption } from '@/components/common/PeriodSelector';

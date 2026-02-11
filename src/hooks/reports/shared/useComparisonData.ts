@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useStore } from '@/contexts/StoreContext';
-import { useReportService } from '../../useServices';
+import { useReportService } from '@/contexts/ServiceContext';
 import type { BalanceSheetData } from '@/services/report.service';
 import type { CurrencyCode } from '@/types/enums';
 

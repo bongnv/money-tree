@@ -26,12 +26,12 @@ import {
   Cloud as CloudIcon,
   People as PeopleIcon,
 } from '@mui/icons-material';
-import type { CloudItem, IStorageProvider } from '../../services/storage/IStorageProvider';
+import type { CloudItem } from '../../services/storage/IStorageProvider';
+import type { CloudService } from '../../services/cloud.service';
 
 interface CloudFilePickerProps {
   open: boolean;
-  providerName: string;
-  provider: IStorageProvider;
+  cloudService: CloudService;
   onFileSelected: (fileItem: CloudItem) => void;
   onCancel: () => void;
   defaultFileName?: string;
@@ -39,8 +39,7 @@ interface CloudFilePickerProps {
 
 export function CloudFilePicker({
   open,
-  providerName,
-  provider,
+  cloudService,
   onFileSelected,
   onCancel,
   defaultFileName = 'money-tree.json',
@@ -54,6 +53,7 @@ export function CloudFilePicker({
   const [showFileNameDialog, setShowFileNameDialog] = useState(false);
   const [newFileName, setNewFileName] = useState(defaultFileName);
 
+  const providerName = cloudService.getProviderName() || 'Cloud';
   const title = `Select ${providerName} File Location`;
   const rootName = providerName;
 
@@ -71,7 +71,7 @@ export function CloudFilePicker({
     setSelectedFile(null);
 
     try {
-      const folderItems = await provider.listItems(folder);
+      const folderItems = await cloudService.listFiles(folder);
       setItems(folderItems);
 
       // Update breadcrumbs
@@ -98,7 +98,7 @@ export function CloudFilePicker({
     setSelectedFile(null); // Clear selection when navigating
 
     try {
-      const folderItems = await provider.listItems(folder);
+      const folderItems = await cloudService.listFiles(folder);
       setItems(folderItems);
       setCurrentFolder(folder);
       setBreadcrumbs([...breadcrumbs, folder]);
@@ -118,7 +118,7 @@ export function CloudFilePicker({
 
     try {
       const folder = targetBreadcrumb.id === 'root' ? undefined : targetBreadcrumb;
-      const folderItems = await provider.listItems(folder);
+      const folderItems = await cloudService.listFiles(folder);
       setItems(folderItems);
       setCurrentFolder(folder);
       setBreadcrumbs(newBreadcrumbs);

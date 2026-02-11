@@ -1,5 +1,6 @@
 import type { MoneyTreeDB } from '../db/database';
-import { IStorageProvider, CloudItem } from './storage/IStorageProvider';
+import { CloudItem } from './storage/IStorageProvider';
+import type { CloudService } from './cloud.service';
 import type { DataFile, ExchangeRate, ArchivedYearReference } from '../types/models';
 import { CurrencyCode } from '../types/enums';
 import { DataFileSchema } from '../schemas/models.schema';
@@ -28,12 +29,12 @@ type LocalDataSnapshot = {
  * State management (file info) is handled by SyncProvider
  */
 export class CloudSyncService {
-  private provider: IStorageProvider;
+  private cloudService: CloudService;
   private fileItem: CloudItem;
   private db: MoneyTreeDB;
 
-  constructor(provider: IStorageProvider, fileItem: CloudItem, db: MoneyTreeDB) {
-    this.provider = provider;
+  constructor(cloudService: CloudService, fileItem: CloudItem, db: MoneyTreeDB) {
+    this.cloudService = cloudService;
     this.fileItem = fileItem;
     this.db = db;
   }
@@ -68,7 +69,7 @@ export class CloudSyncService {
 
     const content = JSON.stringify(dataFile);
     const blob = new Blob([content], { type: 'application/json' });
-    const updatedFileItem = await this.provider.writeFile(this.fileItem, blob);
+    const updatedFileItem = await this.cloudService.writeFile(this.fileItem, blob);
     return { fileItem: updatedFileItem };
   }
 
@@ -80,7 +81,7 @@ export class CloudSyncService {
     hasLocalChanges: boolean;
     mergedData: LocalDataSnapshot;
   }> {
-    const blob = await this.provider.readFile(this.fileItem);
+    const blob = await this.cloudService.readFile(this.fileItem);
     const content = await blob.text();
     const rawData = JSON.parse(content);
 

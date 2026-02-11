@@ -6,7 +6,7 @@ import { CurrencyCode, BudgetPeriod, Group } from '@/types/enums';
 import type { Budget, TransactionType, Category, Account } from '@/types/models';
 
 jest.mock('@/contexts/StoreContext');
-jest.mock('../useServices', () => ({
+jest.mock('@/contexts/ServiceContext', () => ({
   useReportService: jest.fn(() => ({
     calculateBudgetPerformance: jest.fn(() => []),
   })),

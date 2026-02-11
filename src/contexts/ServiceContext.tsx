@@ -88,10 +88,3 @@ export function useCloudService(): CloudService {
   const { cloudService } = useServiceContext();
   return cloudService;
 }
-
-/**
- * Hook to get all services at once
- */
-export function useServices() {
-  return useServiceContext();
-}

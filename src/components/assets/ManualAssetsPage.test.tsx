@@ -8,7 +8,7 @@ import type { ManualAsset } from '../../types/models';
 import { CurrencyCode } from '../../types/enums';
 
 jest.mock('@/contexts/StoreContext');
-jest.mock('@/hooks/useServices');
+jest.mock('@/contexts/ServiceContext');
 jest.mock('@/hooks/assets/useAssetDialog');
 
 jest.mock('./ManualAssetList', () => ({

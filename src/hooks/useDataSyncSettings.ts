@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSync } from '@/contexts/SyncContext';
 import { useStore } from '@/contexts/StoreContext';
-import { useFormatService } from '@/hooks/useServices';
+import { useFormatService, useCloudService } from '@/contexts/ServiceContext';
 import { db } from '@/db/database';
 
 /**
@@ -12,9 +12,10 @@ import { db } from '@/db/database';
 export function useDataSyncSettings() {
   const navigate = useNavigate();
   const syncOps = useSync();
-  const { provider, currentFile, status, reconnect } = syncOps;
+  const { currentFile, status, reconnect } = syncOps;
   const { accounts, categories, transactionTypes, transactions, assets, budgets } = useStore();
   const formatService = useFormatService();
+  const cloudService = useCloudService();
 
   const [disconnectDialogOpen, setDisconnectDialogOpen] = useState(false);
 
@@ -34,8 +35,8 @@ export function useDataSyncSettings() {
   }, [accounts, categories, transactionTypes, transactions, budgets, assets, formatService]);
 
   const storageLocation = useMemo(() => {
-    return provider?.getName() || 'Not connected';
-  }, [provider]);
+    return cloudService.getProviderName() || 'Not connected';
+  }, [cloudService]);
 
   const isOffline = status === 'offline';
 
@@ -69,7 +70,7 @@ export function useDataSyncSettings() {
     cloudFileName,
     fileSize,
     storageLocation,
-    status: provider?.getName() || 'Not connected',
+    status: storageLocation,
     isOffline,
     disconnectDialogOpen,
     openDisconnectDialog,

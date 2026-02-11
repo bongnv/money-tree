@@ -8,7 +8,7 @@ import {
 } from '@mui/icons-material';
 import type { Account } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
-import { useCalculationService } from '@/hooks/useServices';
+import { useCalculationService } from '@/contexts/ServiceContext';
 import { useStore } from '@/contexts/StoreContext';
 
 interface AccountCardProps {

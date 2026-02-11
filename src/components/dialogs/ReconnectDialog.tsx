@@ -10,9 +10,10 @@ import {
   Alert,
 } from '@mui/material';
 import { CloudOff as CloudOffIcon } from '@mui/icons-material';
+import type { CloudService } from '../../services/cloud.service';
 
 interface ReconnectDialogProps {
-  providerName: string;
+  cloudService: CloudService;
   fileName: string;
   error: string | null;
   onReconnect: () => void;
@@ -20,12 +21,13 @@ interface ReconnectDialogProps {
 }
 
 export const ReconnectDialog: React.FC<ReconnectDialogProps> = ({
-  providerName,
+  cloudService,
   fileName,
   error,
   onReconnect,
   onCancel,
 }) => {
+  const providerName = cloudService.getProviderName() || 'Cloud';
   return (
     <Dialog open={true} maxWidth="sm" fullWidth>
       <DialogTitle>

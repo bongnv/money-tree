@@ -1,3 +1,11 @@
+/**
+ * Storage provider type enum
+ */
+export enum StorageProviderType {
+  ONEDRIVE = 'onedrive',
+  // GOOGLEDRIVE = 'googledrive', // Future
+}
+
 // Generic cloud item for file picker
 export interface CloudItem {
   id: string;
@@ -24,6 +32,12 @@ export interface IStorageProvider {
   initialize(): Promise<boolean>;
 
   /**
+   * Check if provider is authenticated
+   * @returns true if authenticated and ready to use
+   */
+  isAuthenticated(): Promise<boolean>;
+
+  /**
    * Authenticate with the storage provider
    * For local: no-op (File System Access API handles permissions per-file)
    * For cloud: trigger OAuth flow
@@ -46,9 +60,9 @@ export interface IStorageProvider {
   writeFile(fileItem: CloudItem, content: Blob): Promise<CloudItem>;
 
   /**
-   * Get provider name for display
+   * Get provider type identifier
    */
-  getName(): string;
+  getType(): StorageProviderType;
 
   /**
    * List items (files and folders) in a given folder

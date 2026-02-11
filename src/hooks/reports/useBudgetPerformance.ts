@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useStore } from '@/contexts/StoreContext';
-import { useReportService } from '../useServices';
+import { useReportService } from '@/contexts/ServiceContext';
 import { getTodayDate } from '@/utils/date.utils';
 import type { BudgetPerformanceData, BudgetTrendPoint } from '@/services/report.service';
 import { CurrencyCode } from '@/types/enums';

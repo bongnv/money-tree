@@ -10,7 +10,8 @@ import type {
 import { CurrencyCode } from '@/types/enums';
 import { getRateSync } from '@/utils/exchangeRate.utils';
 import { getAssetCurrentValue } from '@/utils/asset.utils';
-import type { IStorageProvider, CloudItem } from './storage/IStorageProvider';
+import type { CloudItem } from './storage/IStorageProvider';
+import type { CloudService } from './cloud.service';
 import { CalculationService } from './calculation.service';
 
 /**
@@ -20,7 +21,10 @@ import { CalculationService } from './calculation.service';
 export class ArchiveService {
   private calculationService: CalculationService;
 
-  constructor(private db: MoneyTreeDB) {
+  constructor(
+    private db: MoneyTreeDB,
+    private cloudService: CloudService
+  ) {
     this.calculationService = new CalculationService();
   }
 
@@ -202,14 +206,12 @@ export class ArchiveService {
   /**
    * Upload archive file to cloud storage
    * @param archiveFile Archive file to upload
-   * @param storageProvider Cloud storage provider
    * @param archiveFolder Folder to store archive in
    * @returns CloudItem representing the uploaded file
    * @throws Error if upload fails - we must not proceed with data cleanup without a backup
    */
   private async uploadArchiveToCloud(
     archiveFile: ArchiveFile,
-    storageProvider: IStorageProvider,
     archiveFolder: CloudItem
   ): Promise<CloudItem> {
     const fileName = `archive-${archiveFile.year}.json`;
@@ -226,7 +228,7 @@ export class ArchiveService {
     };
 
     try {
-      const uploadedFile = await storageProvider.writeFile(fileItem, blob);
+      const uploadedFile = await this.cloudService.writeFile(fileItem, blob);
       return uploadedFile;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
@@ -245,20 +247,15 @@ export class ArchiveService {
    * 7. Removes archived year budgets
    * 8. Updates lastModified to trigger sync
    *
-   * @param storageProvider Cloud storage provider (required)
    * @param archiveFolder Folder to store archive in (required)
    * @returns Archive reference that was added
    */
-  async archiveYear(
-    year: number,
-    storageProvider: IStorageProvider,
-    archiveFolder: CloudItem
-  ): Promise<ArchivedYearReference> {
+  async archiveYear(year: number, archiveFolder: CloudItem): Promise<ArchivedYearReference> {
     // Step 1: Create archive file
     const archiveFile = await this.createArchiveFile(year);
 
     // Step 2: Upload to cloud (REQUIRED - throws if upload fails)
-    await this.uploadArchiveToCloud(archiveFile, storageProvider, archiveFolder);
+    await this.uploadArchiveToCloud(archiveFile, archiveFolder);
 
     // Step 3: Add archive reference to metadata BEFORE cleanup
     const archiveReference: ArchivedYearReference = {

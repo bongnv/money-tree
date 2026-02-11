@@ -10,21 +10,12 @@ import React, {
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useDebouncedCallback } from 'use-debounce';
 import { CloudSyncService } from '@/services/cloudSync.service';
-import { IStorageProvider, CloudItem } from '@/services/storage/IStorageProvider';
-import { OneDriveProvider } from '@/services/storage/OneDriveProvider';
-import { isOneDriveConfigured } from '@/config/onedrive.config';
+import { CloudItem, StorageProviderType } from '@/services/storage/IStorageProvider';
 import { useApp } from '@/contexts/AppContext';
+import { useCloudService } from '@/contexts/ServiceContext';
 import { db } from '@/db/database';
 
-/**
- * Storage provider type
- */
-export enum StorageProviderType {
-  ONEDRIVE = 'onedrive',
-}
-
 const FILE_CACHE_KEY = 'moneyTree.currentFile';
-const STORAGE_CONFIG_KEY = 'moneyTree.storageProviderConfig';
 
 // Simplified sync status for UI display
 export type SyncUIStatus =
@@ -36,7 +27,6 @@ export type SyncUIStatus =
 
 // State-only interface
 export interface SyncState {
-  provider: IStorageProvider | null;
   currentFile: CloudItem | null;
   status: SyncUIStatus;
   errorMessage: string | null;
@@ -64,41 +54,6 @@ const SyncContext = createContext<SyncContextValue | null>(null);
 const DEBOUNCE_MS = 15000; // 15 seconds for all syncs
 
 // ==================== HELPER FUNCTIONS ====================
-
-/**
- * Create provider instance based on type
- * Returns null if the provider is not properly configured
- */
-function createProvider(type: StorageProviderType): IStorageProvider | null {
-  switch (type) {
-    case StorageProviderType.ONEDRIVE:
-      return isOneDriveConfigured() ? new OneDriveProvider() : null;
-    default:
-      return null;
-  }
-}
-
-/**
- * Load stored provider configuration
- */
-function loadProviderConfig(): StorageProviderType | null {
-  const saved = localStorage.getItem(STORAGE_CONFIG_KEY);
-  return saved as StorageProviderType | null;
-}
-
-/**
- * Save provider configuration
- */
-function saveProviderConfig(type: StorageProviderType): void {
-  localStorage.setItem(STORAGE_CONFIG_KEY, type);
-}
-
-/**
- * Clear provider configuration
- */
-function clearProviderConfig(): void {
-  localStorage.removeItem(STORAGE_CONFIG_KEY);
-}
 
 /**
  * Load cached file from localStorage
@@ -136,11 +91,11 @@ interface SyncProviderProps {
 }
 
 export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
+  const cloudService = useCloudService();
   const { showSnackbar, setShowWelcomeDialog, setShowFileSelection, setShowReconnectDialog } =
     useApp();
 
   const [syncState, setSyncState] = useState<SyncState>({
-    provider: null,
     currentFile: null,
     status: 'offline',
     errorMessage: null,
@@ -169,31 +124,19 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
         syncStateRef.current.isSyncing = false;
         syncStateRef.current.isInitializing = true;
 
-        // Guard: No stored config - new user flow
-        const config = loadProviderConfig();
-        if (!config) {
+        const providerType = cloudService.getCurrentProvider();
+        const cachedFile = loadCachedFile();
+        const isAuthenticated = await cloudService.isAuthenticated();
+
+        // No provider - new user flow
+        if (!providerType) {
           setShowWelcomeDialog(true);
           return;
         }
 
-        // Guard: Invalid provider type
-        const providerInstance = createProvider(config);
-        if (!providerInstance) {
-          showSnackbar('Session expired - working offline. Click sync to reconnect.', 'info');
-          return;
-        }
-
-        // Check if provider is authenticated
-        const isAuthenticated = await providerInstance.initialize();
-
-        // Try to load cached file
-        const cachedFile = loadCachedFile();
-
-        // Handle authentication + file state combinations
-        if (!isAuthenticated && cachedFile) {
-          // Auth expired but file exists (Safari case: sessionStorage cleared, localStorage persists)
+        // Provider exists but not authenticated - show reconnect dialog
+        if (!isAuthenticated) {
           setSyncState({
-            provider: providerInstance,
             currentFile: cachedFile,
             status: 'offline',
             errorMessage: null,
@@ -202,15 +145,9 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
           return;
         }
 
-        if (!isAuthenticated && !cachedFile) {
-          setShowWelcomeDialog(true);
-          return;
-        }
-
+        // Authenticated but no file - show file picker
         if (!cachedFile) {
-          // Authenticated but no file selected yet - show file selection
           setSyncState({
-            provider: providerInstance,
             currentFile: null,
             status: 'offline',
             errorMessage: null,
@@ -219,9 +156,8 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
           return;
         }
 
-        // Happy path: Authenticated and file loaded
+        // Happy path: authenticated and file loaded
         setSyncState({
-          provider: providerInstance,
           currentFile: cachedFile,
           status: 'connected',
           errorMessage: null,
@@ -246,11 +182,11 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
 
   // Create sync service
   const syncService = useMemo(() => {
-    if (!syncState.provider || !syncState.currentFile) {
+    if (!cloudService.getCurrentProvider() || !syncState.currentFile) {
       return null;
     }
-    return new CloudSyncService(syncState.provider, syncState.currentFile, db);
-  }, [syncState.provider, syncState.currentFile]);
+    return new CloudSyncService(cloudService, syncState.currentFile, db);
+  }, [cloudService, syncState.currentFile]);
 
   // Internal function to update file item without clearing DB (for sync updates)
   const updateFileItem = useCallback(
@@ -287,78 +223,59 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
   // Connect to a storage provider
   const connect = useCallback(
     async (type: StorageProviderType): Promise<void> => {
-      const providerInstance = createProvider(type);
-      if (!providerInstance) {
-        throw new Error(`Provider not available: ${type}`);
-      }
-
-      // Save provider type to localStorage BEFORE redirect
-      saveProviderConfig(type);
-
-      // Authenticate (may redirect or return if already authenticated)
-      await providerInstance.authenticate();
+      // Authenticate with CloudService (may redirect or return if already authenticated)
+      await cloudService.connect(type);
 
       // If we reach here, no redirect happened (already authenticated)
-      // Continue with the flow: update state and show file selection
+      // Update state and show file selection
       updateSyncState({
-        provider: providerInstance,
         status: 'offline',
         errorMessage: null,
       });
       setShowFileSelection(true);
     },
-    [updateSyncState, setShowFileSelection]
+    [cloudService, updateSyncState, setShowFileSelection]
   );
 
   // Disconnect from storage provider
   const disconnect = useCallback(async (): Promise<void> => {
-    clearProviderConfig();
+    await cloudService.disconnect();
     localStorage.removeItem(FILE_CACHE_KEY);
     setSyncState({
-      provider: null,
       currentFile: null,
       status: 'offline',
       errorMessage: null,
     });
     setShowWelcomeDialog(true);
-  }, [setShowWelcomeDialog]);
+  }, [cloudService, setShowWelcomeDialog]);
 
   // Reconnect when in offline mode
   const reconnect = useCallback(async () => {
-    const config = loadProviderConfig();
-    if (!config) {
-      // No cached config → show welcome dialog to connect from scratch
-      setShowWelcomeDialog(true);
-      return;
-    }
-
-    const providerInstance = createProvider(config);
-    if (!providerInstance) {
-      // Provider not configured → show welcome dialog
+    const providerType = cloudService.getCurrentProvider();
+    if (!providerType) {
+      // No cached provider → show welcome dialog
       setShowWelcomeDialog(true);
       return;
     }
 
     // Re-authenticate (may redirect or return if already authenticated)
-    await providerInstance.authenticate();
+    await cloudService.reconnect();
 
     // If we reach here, no redirect happened (already authenticated)
     // Check for cached file and update state accordingly
     const cachedFile = loadCachedFile();
     if (!cachedFile) {
       // No file cached → show file picker (stay offline until file selected)
-      updateSyncState({ provider: providerInstance });
       setShowFileSelection(true);
     } else {
       // Has file → ready to sync
       setSyncState({
-        provider: providerInstance,
         currentFile: cachedFile,
         status: 'connected',
         errorMessage: null,
       });
     }
-  }, [updateSyncState, setShowWelcomeDialog, setShowFileSelection]);
+  }, [cloudService, updateSyncState, setShowWelcomeDialog, setShowFileSelection]);
 
   // Full bidirectional sync
   const fullSync = useCallback(async (): Promise<void> => {
@@ -441,7 +358,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
   // Auto-sync whenever lastModified changes (only for subsequent changes after initial sync)
   useEffect(() => {
     if (
-      !syncState.provider ||
+      !cloudService.getCurrentProvider() ||
       !syncState.currentFile ||
       !lastModified ||
       syncStateRef.current.isInitializing
@@ -469,7 +386,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
     });
 
     debouncedSync();
-  }, [lastModified, syncState.provider, syncState.currentFile, debouncedSync]);
+  }, [lastModified, cloudService, syncState.currentFile, debouncedSync]);
 
   const value: SyncContextValue = {
     ...syncState,
@@ -490,3 +407,6 @@ export const useSync = (): SyncContextValue => {
   }
   return context;
 };
+
+// Export utilities
+export { StorageProviderType };

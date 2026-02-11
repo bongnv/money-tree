@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { renderHook, waitFor } from '@testing-library/react';
 import { useArchivePrompt } from './useArchivePrompt';
-import { useArchiveService } from './useServices';
+import { useArchiveService } from '@/contexts/ServiceContext';
 import { useSync } from '@/contexts/SyncContext';
 import { useStore } from '@/contexts/StoreContext';
 import { CurrencyCode } from '@/types/enums';
 import { act } from 'react';
 
 // Mock dependencies
-jest.mock('./useServices');
+jest.mock('@/contexts/ServiceContext');
 jest.mock('@/contexts/SyncContext');
 jest.mock('@/contexts/StoreContext');
 jest.mock('react-router-dom', () => ({
@@ -42,7 +42,6 @@ describe('useArchivePrompt', () => {
       reconnect: jest.fn(),
       connect: jest.fn(),
       disconnect: jest.fn(),
-      provider: { getName: () => 'OneDrive' } as any,
       currentFile: { name: 'test.json', id: '123' } as any,
     });
   });
@@ -56,7 +55,6 @@ describe('useArchivePrompt', () => {
       reconnect: jest.fn(),
       connect: jest.fn(),
       disconnect: jest.fn(),
-      provider: null,
       currentFile: null,
     });
 

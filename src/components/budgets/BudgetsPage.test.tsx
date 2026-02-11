@@ -8,7 +8,7 @@ import type { Budget, Category, TransactionType } from '../../types/models';
 import { BudgetPeriod, Group, CurrencyCode } from '../../types/enums';
 
 jest.mock('@/contexts/StoreContext');
-jest.mock('@/hooks/useServices');
+jest.mock('@/contexts/ServiceContext');
 jest.mock('@/hooks/budgets/useBudgetGrouping');
 
 jest.mock('./BudgetDialog', () => ({

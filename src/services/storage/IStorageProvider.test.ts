@@ -1,6 +1,7 @@
 import type { IStorageProvider, CloudItem } from './IStorageProvider';
 import type { DataFile } from '../../types/models';
 import { CurrencyCode } from '@/types/enums';
+import { StorageProviderType } from './IStorageProvider';
 
 /**
  * Tests for IStorageProvider interface
@@ -17,8 +18,16 @@ describe('IStorageProvider', () => {
       return true;
     }
 
+    async isAuthenticated(): Promise<boolean> {
+      return true;
+    }
+
     async authenticate(): Promise<void> {
       // Mock authentication
+    }
+
+    getType(): StorageProviderType {
+      return StorageProviderType.ONEDRIVE;
     }
 
     async readFile(_fileItem: CloudItem): Promise<Blob> {
@@ -37,10 +46,6 @@ describe('IStorageProvider', () => {
         reader.readAsText(content);
       });
       return { id: 'mock-id', name: 'mock-file.json', isFolder: false };
-    }
-
-    getName(): string {
-      return 'Mock Provider';
     }
 
     async listItems(_parent?: CloudItem): Promise<CloudItem[]> {

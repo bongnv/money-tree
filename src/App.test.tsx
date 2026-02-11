@@ -1,6 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { render } from '@testing-library/react';
 import App from './App';
+import { CloudService } from './services/cloud.service';
+
+// Mock CloudService
+const mockCloudService = {
+  initialize: jest.fn().mockResolvedValue(undefined),
+  connect: jest.fn().mockResolvedValue(undefined),
+  disconnect: jest.fn().mockResolvedValue(undefined),
+  reconnect: jest.fn().mockResolvedValue(undefined),
+  listFiles: jest.fn().mockResolvedValue([]),
+  readFile: jest.fn().mockResolvedValue(new Blob()),
+  writeFile: jest.fn().mockResolvedValue({ id: '123', name: 'test.json', isFolder: false }),
+  getCurrentProvider: jest.fn().mockReturnValue(null),
+  isAuthenticated: jest.fn().mockResolvedValue(false),
+  getProvider: jest.fn().mockReturnValue(null),
+} as unknown as CloudService;
 
 // Mock the hooks
 jest.mock('@/hooks/useArchivePrompt');
@@ -79,13 +94,13 @@ describe('App', () => {
   });
 
   it('should render app without crashing', () => {
-    render(<App />);
+    render(<App cloudService={mockCloudService} />);
     // App should render with providers
     expect(document.body).toBeInTheDocument();
   });
 
   it('should call archive prompt hook', () => {
-    render(<App />);
+    render(<App cloudService={mockCloudService} />);
     expect(mockUseArchivePrompt).toHaveBeenCalled();
   });
 });

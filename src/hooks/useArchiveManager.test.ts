@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { useArchiveManager } from './useArchiveManager';
-import { useArchiveService } from './useServices';
+import { useArchiveService } from '@/contexts/ServiceContext';
 import { useStore } from '@/contexts/StoreContext';
 import { useAppContext } from '@/contexts/AppContext';
 import { useSync } from '@/contexts/SyncContext';
@@ -9,7 +9,7 @@ import { CurrencyCode } from '@/types/enums';
 import type { YearEndSummary } from '@/types/models';
 
 // Mock dependencies
-jest.mock('./useServices');
+jest.mock('@/contexts/ServiceContext');
 jest.mock('@/contexts/StoreContext');
 jest.mock('@/contexts/AppContext');
 jest.mock('@/contexts/SyncContext');
@@ -47,8 +47,8 @@ describe('useArchiveManager', () => {
       showSnackbar: mockShowSnackbar,
     } as any);
     mockUseSync.mockReturnValue({
-      provider: null,
       currentFile: null,
+      getCloudService: jest.fn(),
     } as any);
   });
 
@@ -169,10 +169,13 @@ describe('useArchiveManager', () => {
     };
 
     it('should successfully export a year', async () => {
-      const mockProvider = {} as any;
+      const mockCloudService = {
+        writeFile: jest.fn(),
+        getCurrentProvider: jest.fn(() => 'onedrive'),
+      } as any;
       mockUseSync.mockReturnValue({
-        provider: mockProvider,
         currentFile: { id: 'file1', name: 'test.json', parentItemId: 'folder1' } as any,
+        getCloudService: jest.fn(() => mockCloudService),
       } as any);
 
       mockArchiveService.archiveYear.mockResolvedValue(mockArchiveReference);
@@ -183,7 +186,7 @@ describe('useArchiveManager', () => {
         await result.current.handleExportYear(2023);
       });
 
-      expect(mockArchiveService.archiveYear).toHaveBeenCalledWith(2023, mockProvider, {
+      expect(mockArchiveService.archiveYear).toHaveBeenCalledWith(2023, {
         id: 'folder1',
         name: '',
         isFolder: true,
@@ -213,10 +216,13 @@ describe('useArchiveManager', () => {
     });
 
     it('should set loading state during export', async () => {
-      const mockProvider = {} as any;
+      const mockCloudService = {
+        writeFile: jest.fn(),
+        getCurrentProvider: jest.fn(() => 'onedrive'),
+      } as any;
       mockUseSync.mockReturnValue({
-        provider: mockProvider,
         currentFile: { id: 'file1', name: 'test.json', parentItemId: 'folder1' } as any,
+        getCloudService: jest.fn(() => mockCloudService),
       } as any);
 
       let resolveExport: any;
@@ -250,10 +256,13 @@ describe('useArchiveManager', () => {
     });
 
     it('should handle error during archiveYear', async () => {
-      const mockProvider = {} as any;
+      const mockCloudService = {
+        writeFile: jest.fn(),
+        getCurrentProvider: jest.fn(() => 'onedrive'),
+      } as any;
       mockUseSync.mockReturnValue({
-        provider: mockProvider,
         currentFile: { id: 'file1', name: 'test.json', parentItemId: 'folder1' } as any,
+        getCloudService: jest.fn(() => mockCloudService),
       } as any);
 
       const error = new Error('Failed to archive year');
@@ -271,10 +280,13 @@ describe('useArchiveManager', () => {
     });
 
     it('should handle non-Error exceptions', async () => {
-      const mockProvider = {} as any;
+      const mockCloudService = {
+        writeFile: jest.fn(),
+        getCurrentProvider: jest.fn(() => 'onedrive'),
+      } as any;
       mockUseSync.mockReturnValue({
-        provider: mockProvider,
         currentFile: { id: 'file1', name: 'test.json', parentItemId: 'folder1' } as any,
+        getCloudService: jest.fn(() => mockCloudService),
       } as any);
 
       mockArchiveService.archiveYear.mockRejectedValue('string error');

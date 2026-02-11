@@ -11,15 +11,19 @@ import { NotificationSnackbar } from './components/common/NotificationSnackbar';
 import { ArchivePrompt } from './components/common/ArchivePrompt';
 import { AppRoutes } from './routes';
 import { useApp, AppProvider } from '@/contexts/AppContext';
-import { useSync, SyncProvider } from '@/contexts/SyncContext';
+import { useSync } from '@/contexts/SyncContext';
 import { StoreProvider, useStore } from '@/contexts/StoreContext';
+import { ServiceProvider, useCloudService } from '@/contexts/ServiceContext';
 import { useArchivePrompt } from '@/hooks/useArchivePrompt';
 import { useReconnectDialog } from '@/hooks/dialogs/useReconnectDialog';
 import type { CloudItem } from './services/storage/IStorageProvider';
+import type { CloudService } from './services/cloud.service';
+import { SyncProvider } from '@/contexts/SyncContext';
 
 const AppContent: React.FC = () => {
   const syncOps = useSync();
   const { baseCurrency } = useStore();
+  const cloudService = useCloudService();
   const {
     snackbar,
     hideSnackbar,
@@ -72,20 +76,19 @@ const AppContent: React.FC = () => {
         <AppRoutes />
       </MainLayout>
       <WelcomeDialog open={showWelcomeDialog} onClose={handleWelcomeClose} />
-      {showReconnectDialog && syncOps.provider && syncOps.currentFile && (
+      {showReconnectDialog && cloudService.getCurrentProvider() && syncOps.currentFile && (
         <ReconnectDialog
-          providerName={syncOps.provider.getName()}
+          cloudService={cloudService}
           fileName={syncOps.currentFile.name}
           error={error}
           onReconnect={handleReconnect}
           onCancel={handleCancel}
         />
       )}
-      {showFileSelection && syncOps.provider && (
+      {showFileSelection && cloudService.getCurrentProvider() && (
         <CloudFilePicker
           open={showFileSelection}
-          providerName={syncOps.provider.getName()}
-          provider={syncOps.provider}
+          cloudService={cloudService}
           onFileSelected={handleFileSelected}
           onCancel={handleFilePickerCancel}
         />
@@ -110,17 +113,23 @@ const AppContent: React.FC = () => {
   );
 };
 
-const App: React.FC = () => {
+interface AppProps {
+  cloudService: CloudService;
+}
+
+const App: React.FC<AppProps> = ({ cloudService }) => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <BrowserRouter>
         <AppProvider>
-          <SyncProvider>
-            <StoreProvider>
-              <AppContent />
-            </StoreProvider>
-          </SyncProvider>
+          <ServiceProvider cloudService={cloudService}>
+            <SyncProvider>
+              <StoreProvider>
+                <AppContent />
+              </StoreProvider>
+            </SyncProvider>
+          </ServiceProvider>
         </AppProvider>
       </BrowserRouter>
     </ThemeProvider>

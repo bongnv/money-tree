@@ -1,6 +1,6 @@
 import { useMemo, useCallback } from 'react';
 import { useStore } from '@/contexts/StoreContext';
-import { useCalculationService } from '../useServices';
+import { useCalculationService } from '@/contexts/ServiceContext';
 import type { CurrencyCode } from '@/types/enums';
 import type { Budget } from '@/types/models';
 

@@ -7,6 +7,7 @@ import {
   isOneDriveConfigured,
 } from '../../config/onedrive.config';
 import type { IStorageProvider, CloudItem } from './IStorageProvider';
+import { StorageProviderType } from './IStorageProvider';
 
 /**
  * OneDrive Storage Provider - Stateless
@@ -180,8 +181,12 @@ export class OneDriveProvider implements IStorageProvider {
     }
   }
 
-  getName(): string {
-    return 'OneDrive';
+  getType(): StorageProviderType {
+    return StorageProviderType.ONEDRIVE;
+  }
+
+  async isAuthenticated(): Promise<boolean> {
+    return this.initialize();
   }
 
   /**

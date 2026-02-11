@@ -50,54 +50,45 @@ export class OneDriveProvider implements IStorageProvider {
   private async initializeMsal(): Promise<void> {
     if (!this.msalInstance) return;
 
-    await this.msalInstance.initialize();
+    try {
+      await this.msalInstance.initialize();
 
-    // Handle redirect response if coming back from login
-    const response = await this.msalInstance.handleRedirectPromise();
-    if (response) {
-      this.msalInstance.setActiveAccount(response.account);
-    }
+      // Handle redirect response if coming back from login
+      const response = await this.msalInstance.handleRedirectPromise();
+      if (response) {
+        this.msalInstance.setActiveAccount(response.account);
+      }
 
-    // Set active account if one exists in cache
-    const cachedAccount =
-      this.msalInstance.getActiveAccount() || this.msalInstance.getAllAccounts()[0];
-    if (cachedAccount) {
-      this.msalInstance.setActiveAccount(cachedAccount);
+      // Set active account if one exists in cache
+      const cachedAccount =
+        this.msalInstance.getActiveAccount() || this.msalInstance.getAllAccounts()[0];
+      if (cachedAccount) {
+        this.msalInstance.setActiveAccount(cachedAccount);
+      }
+    } catch (error) {
+      // MSAL initialization or redirect handling failed (e.g., timeout)
+      // Log and continue - callers will handle authentication state
+      console.warn('[OneDriveProvider] MSAL initialization failed:', error);
     }
   }
 
   /**
-   * Initialize provider - verify authentication and token validity
+   * Initialize provider - check if account exists in cache
    */
   async initialize(): Promise<boolean> {
     await this.initPromise;
 
-    // Check if account exists in MSAL
+    // Check if account exists in MSAL (don't validate token yet)
     const account = this.getAccount();
-    if (!account) {
-      return false;
-    }
-
-    // Test if we can acquire a valid token silently
-    try {
-      await this.getAccessToken();
-      return true;
-    } catch {
-      return false;
-    }
+    return account !== null;
   }
 
   /**
    * Authenticate with Microsoft using redirect flow
+   * Always triggers re-authentication even if account exists in cache
    */
   async authenticate(): Promise<void> {
     await this.initPromise;
-
-    // Check if already authenticated (query MSAL, not stored state)
-    const account = this.getAccount();
-    if (account !== null) {
-      return;
-    }
 
     if (!this.msalInstance) {
       throw new Error(errorMessages.configError);

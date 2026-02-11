@@ -141,7 +141,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         error={!!errors.amount}
         helperText={errors.amount}
         required
-        inputProps={{ min: 0, step: 0.01 }}
+        inputProps={{ step: 0.01 }}
       />
 
       <Autocomplete

@@ -53,8 +53,8 @@ export interface TransactionType {
   description?: string;
   isActive: boolean;
   isDeleted: boolean;
-  defaultFromAccountId?: string; // Default from account (TRANSFER group only)
-  defaultToAccountId?: string; // Default to account (TRANSFER group only)
+  defaultFromAccountId?: string; // Default from account (for EXPENSE, TRANSFER, ASSET_PURCHASE)
+  defaultToAccountId?: string; // Default to account (for INCOME, TRANSFER, ASSET_SALE)
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }

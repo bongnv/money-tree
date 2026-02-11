@@ -61,7 +61,7 @@ export interface SyncContextValue extends SyncState, SyncOperations {}
 
 const SyncContext = createContext<SyncContextValue | null>(null);
 
-const DEBOUNCE_MS = 30000; // 30 seconds for all syncs
+const DEBOUNCE_MS = 15000; // 15 seconds for all syncs
 
 // ==================== HELPER FUNCTIONS ====================
 

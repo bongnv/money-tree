@@ -85,22 +85,20 @@ export function useQuickEntryForm({
     return transactionTypes.find((tt) => tt.id === formData.transactionTypeId);
   }, [formData.transactionTypeId, transactionTypes]);
 
-  // Check if accounts have defaults (should be hidden in quick entry)
+  // Check if accounts have defaults (will be shown as disabled)
   const hasFromAccountDefault = !!selectedTransactionType?.defaultFromAccountId;
   const hasToAccountDefault = !!selectedTransactionType?.defaultToAccountId;
 
-  // Field visibility logic
+  // Field visibility logic - always show if group requires them
   const showFromAccount =
-    (selectedGroup === Group.EXPENSE ||
-      selectedGroup === Group.TRANSFER ||
-      selectedGroup === Group.ASSET_PURCHASE) &&
-    !hasFromAccountDefault;
+    selectedGroup === Group.EXPENSE ||
+    selectedGroup === Group.TRANSFER ||
+    selectedGroup === Group.ASSET_PURCHASE;
 
   const showToAccount =
-    (selectedGroup === Group.INCOME ||
-      selectedGroup === Group.TRANSFER ||
-      selectedGroup === Group.ASSET_SALE) &&
-    !hasToAccountDefault;
+    selectedGroup === Group.INCOME ||
+    selectedGroup === Group.TRANSFER ||
+    selectedGroup === Group.ASSET_SALE;
 
   const showFromAsset = selectedGroup === Group.ASSET_SALE;
   const showToAsset = selectedGroup === Group.ASSET_PURCHASE;

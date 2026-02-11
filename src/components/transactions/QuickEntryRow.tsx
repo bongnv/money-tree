@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Box, TextField, IconButton, Tooltip, Chip } from '@mui/material';
+import { Box, TextField, IconButton, Tooltip } from '@mui/material';
 import { Add as AddIcon, Clear as ClearIcon, MoreHoriz as MoreIcon } from '@mui/icons-material';
 import { QuickEntryAutocomplete } from './QuickEntryAutocomplete';
 import { FormDatePicker } from '../common/FormDatePicker';
@@ -37,7 +37,6 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
   const {
     formData,
     errors,
-    selectedTransactionType,
     hasFromAccountDefault,
     hasToAccountDefault,
     showFromAccount,
@@ -220,7 +219,7 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
         error={!!errors.amount}
         helperText={errors.amount}
         size="small"
-        inputProps={{ min: 0, step: 0.01 }}
+        inputProps={{ step: 0.01 }}
         sx={{ width: 120 }}
       />
 
@@ -282,20 +281,6 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
         minWidth={180}
       />
 
-      {(hasFromAccountDefault || hasToAccountDefault) && (
-        <Chip
-          label={
-            hasFromAccountDefault && hasToAccountDefault
-              ? `From: ${accounts.find((a) => a.id === selectedTransactionType?.defaultFromAccountId)?.name} → To: ${accounts.find((a) => a.id === selectedTransactionType?.defaultToAccountId)?.name}`
-              : hasFromAccountDefault
-                ? `From: ${accounts.find((a) => a.id === selectedTransactionType?.defaultFromAccountId)?.name}`
-                : `To: ${accounts.find((a) => a.id === selectedTransactionType?.defaultToAccountId)?.name}`
-          }
-          size="small"
-          sx={{ alignSelf: 'center' }}
-        />
-      )}
-
       {showFromAccount && (
         <QuickEntryAutocomplete
           inputRef={fromAccountRef}
@@ -314,6 +299,7 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
           placeholder="From"
           error={!!errors.fromAccountId}
           helperText={errors.fromAccountId}
+          disabled={hasFromAccountDefault}
         />
       )}
 
@@ -335,6 +321,7 @@ export const QuickEntryRow: React.FC<QuickEntryRowProps> = ({
           placeholder="To"
           error={!!errors.toAccountId}
           helperText={errors.toAccountId}
+          disabled={hasToAccountDefault}
         />
       )}
 

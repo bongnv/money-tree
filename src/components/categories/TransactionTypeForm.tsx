@@ -75,18 +75,29 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
     (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const newValue = e.target.value;
 
-      // If changing group from TRANSFER to something else, clear default accounts
-      if (field === 'group' && newValue !== Group.TRANSFER) {
+      // If changing group, clear incompatible default accounts
+      if (field === 'group') {
+        const newGroup = newValue as Group;
+        const updates: Partial<typeof formData> = { group: newGroup };
+
+        // Clear default accounts based on new group
+        const supportsFromAccount =
+          newGroup === Group.EXPENSE ||
+          newGroup === Group.TRANSFER ||
+          newGroup === Group.ASSET_PURCHASE;
+        const supportsToAccount =
+          newGroup === Group.INCOME || newGroup === Group.TRANSFER || newGroup === Group.ASSET_SALE;
+
+        if (!supportsFromAccount) {
+          updates.defaultFromAccountId = '';
+        }
+        if (!supportsToAccount) {
+          updates.defaultToAccountId = '';
+        }
+
         setFormData({
           ...formData,
-          group: newValue as Group,
-          defaultFromAccountId: '',
-          defaultToAccountId: '',
-        });
-      } else if (field === 'group') {
-        setFormData({
-          ...formData,
-          group: newValue as Group,
+          ...updates,
         });
       } else {
         setFormData({
@@ -176,50 +187,54 @@ export const TransactionTypeForm: React.FC<TransactionTypeFormProps> = ({
         rows={3}
       />
 
-      {formData.group === Group.TRANSFER && (
-        <>
-          <TextField
-            fullWidth
-            select
-            label="Default From Account"
-            value={formData.defaultFromAccountId}
-            onChange={handleChange('defaultFromAccountId')}
-            margin="normal"
-            helperText="Optional: Pre-set the 'from' account for this transaction type"
-          >
-            <MenuItem value="">
-              <em>None</em>
-            </MenuItem>
-            {activeAccounts
-              .filter((account) => account.isActive)
-              .map((account) => (
-                <MenuItem key={account.id} value={account.id}>
-                  {account.name}
-                </MenuItem>
-              ))}
-          </TextField>
+      {(formData.group === Group.EXPENSE ||
+        formData.group === Group.TRANSFER ||
+        formData.group === Group.ASSET_PURCHASE) && (
+        <TextField
+          fullWidth
+          select
+          label="Default From Account"
+          value={formData.defaultFromAccountId}
+          onChange={handleChange('defaultFromAccountId')}
+          margin="normal"
+          helperText="Optional: Pre-set the 'from' account for this transaction type"
+        >
+          <MenuItem value="">
+            <em>None</em>
+          </MenuItem>
+          {activeAccounts
+            .filter((account) => account.isActive)
+            .map((account) => (
+              <MenuItem key={account.id} value={account.id}>
+                {account.name}
+              </MenuItem>
+            ))}
+        </TextField>
+      )}
 
-          <TextField
-            fullWidth
-            select
-            label="Default To Account"
-            value={formData.defaultToAccountId}
-            onChange={handleChange('defaultToAccountId')}
-            margin="normal"
-            helperText="Optional: Pre-set the 'to' account for this transaction type"
-          >
-            <MenuItem value="">
-              <em>None</em>
-            </MenuItem>
-            {activeAccounts
-              .filter((account) => account.isActive)
-              .map((account) => (
-                <MenuItem key={account.id} value={account.id}>
-                  {account.name}
-                </MenuItem>
-              ))}
-          </TextField>
-        </>
+      {(formData.group === Group.INCOME ||
+        formData.group === Group.TRANSFER ||
+        formData.group === Group.ASSET_SALE) && (
+        <TextField
+          fullWidth
+          select
+          label="Default To Account"
+          value={formData.defaultToAccountId}
+          onChange={handleChange('defaultToAccountId')}
+          margin="normal"
+          helperText="Optional: Pre-set the 'to' account for this transaction type"
+        >
+          <MenuItem value="">
+            <em>None</em>
+          </MenuItem>
+          {activeAccounts
+            .filter((account) => account.isActive)
+            .map((account) => (
+              <MenuItem key={account.id} value={account.id}>
+                {account.name}
+              </MenuItem>
+            ))}
+        </TextField>
       )}
 
       <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>

@@ -638,7 +638,7 @@ describe('QuickEntryRow', () => {
   });
 
   describe('Default Account Fields', () => {
-    it('should hide account fields when transaction type has defaults', async () => {
+    it('should show disabled account fields when transaction type has defaults', async () => {
       const user = userEvent.setup();
       render(
         <QuickEntryRow
@@ -658,14 +658,14 @@ describe('QuickEntryRow', () => {
       await user.click(typeCombobox!);
       await user.click(screen.getByText('Salary Deposit'));
 
-      // Account fields should be hidden
+      // Account fields should be visible but disabled
       await waitFor(() => {
-        expect(screen.queryByPlaceholderText('From')).not.toBeInTheDocument();
-        expect(screen.queryByPlaceholderText('To')).not.toBeInTheDocument();
+        expect(screen.getByPlaceholderText('From')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('To')).toBeInTheDocument();
       });
     });
 
-    it('should show indicator chip with default account names', async () => {
+    it('should show disabled account fields with default values', async () => {
       const user = userEvent.setup();
       render(
         <QuickEntryRow
@@ -685,9 +685,25 @@ describe('QuickEntryRow', () => {
       await user.click(typeCombobox!);
       await user.click(screen.getByText('Salary Deposit'));
 
-      // Should show indicator with account names
+      // Should show disabled account fields with default values
       await waitFor(() => {
-        expect(screen.getByText(/From: Checking.*To: Savings/)).toBeInTheDocument();
+        const fromInput = screen.getByPlaceholderText('From');
+        const toInput = screen.getByPlaceholderText('To');
+
+        expect(fromInput).toBeInTheDocument();
+        expect(toInput).toBeInTheDocument();
+        expect(fromInput).toHaveValue('Checking');
+        expect(toInput).toHaveValue('Savings');
+
+        // Fields should be disabled (Autocomplete adds aria-disabled)
+        const fromAutocomplete = fromInput.closest('.MuiAutocomplete-root');
+        const toAutocomplete = toInput.closest('.MuiAutocomplete-root');
+        expect(
+          fromAutocomplete?.querySelector('.MuiAutocomplete-endAdornment button')
+        ).toBeDisabled();
+        expect(
+          toAutocomplete?.querySelector('.MuiAutocomplete-endAdornment button')
+        ).toBeDisabled();
       });
     });
 

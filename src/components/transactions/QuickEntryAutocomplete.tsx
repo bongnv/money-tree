@@ -13,6 +13,7 @@ interface QuickEntryAutocompleteProps<T> {
   sx?: Record<string, unknown>;
   minWidth?: number;
   inputRef?: React.Ref<HTMLDivElement>;
+  disabled?: boolean;
 }
 
 export function QuickEntryAutocomplete<T>({
@@ -27,6 +28,7 @@ export function QuickEntryAutocomplete<T>({
   sx,
   minWidth = 150,
   inputRef,
+  disabled = false,
 }: QuickEntryAutocompleteProps<T>) {
   const handleKeyDown = (event: React.KeyboardEvent) => {
     // Stop Enter from bubbling to form (MUI handles selection via autoHighlight)
@@ -48,6 +50,7 @@ export function QuickEntryAutocomplete<T>({
       openOnFocus
       autoHighlight
       size="small"
+      disabled={disabled}
       renderInput={(params) => (
         <TextField {...params} placeholder={placeholder} error={error} helperText={helperText} />
       )}

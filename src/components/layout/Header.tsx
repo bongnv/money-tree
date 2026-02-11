@@ -44,7 +44,7 @@ export const Header: React.FC = () => {
 
   const handleSync = async () => {
     try {
-      if (status === 'offline') {
+      if (status === 'offline' || status === 'error') {
         await syncOps.reconnect();
       } else {
         await syncOps.fullSync();

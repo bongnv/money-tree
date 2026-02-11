@@ -5,6 +5,7 @@ import {
   loginRequest,
   errorMessages,
   isOneDriveConfigured,
+  getBlankRedirectUri,
 } from '../../config/onedrive.config';
 import type { IStorageProvider, CloudItem } from './IStorageProvider';
 import { StorageProviderType } from './IStorageProvider';
@@ -318,6 +319,9 @@ export class OneDriveProvider implements IStorageProvider {
     const request = {
       ...loginRequest,
       account,
+      // Use dedicated blank redirect page for silent token acquisition
+      // This prevents the "block_iframe_reload" error by not loading the main app in the iframe
+      redirectUri: getBlankRedirectUri(),
     };
 
     const response = await this.msalInstance.acquireTokenSilent(request);

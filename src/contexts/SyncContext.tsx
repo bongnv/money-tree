@@ -275,7 +275,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
         errorMessage: null,
       });
     }
-  }, [cloudService, updateSyncState, setShowWelcomeDialog, setShowFileSelection]);
+  }, [cloudService, setShowWelcomeDialog, setShowFileSelection]);
 
   // Full bidirectional sync
   const fullSync = useCallback(async (): Promise<void> => {

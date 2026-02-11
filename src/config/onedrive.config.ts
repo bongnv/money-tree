@@ -6,7 +6,11 @@
  * 2. Click "New registration"
  * 3. Name: "Money Tree App"
  * 4. Supported account types: "Accounts in any organizational directory and personal Microsoft accounts"
- * 5. Redirect URI: Select "Single-page application (SPA)" platform, add http://localhost:8080
+ * 5. Redirect URI: Select "Single-page application (SPA)" platform, add:
+ *    - http://localhost:8080 (for interactive login)
+ *    - http://localhost:8080/blank.html (for silent authentication)
+ *    - https://yourdomain.com (your production domain)
+ *    - https://yourdomain.com/blank.html (for silent authentication in production)
  * 6. After registration, copy the "Application (client) ID"
  * 7. Under "API permissions", add "Microsoft Graph" -> "Delegated permissions" -> "Files.ReadWrite"
  * 8. Grant admin consent for the permissions
@@ -40,6 +44,17 @@ export const msalConfig: Configuration = {
     // Others: localStorage (persists across sessions)
     cacheLocation: 'localStorage',
   },
+};
+
+/**
+ * Get the blank redirect URI for silent authentication
+ * Uses a dedicated page that doesn't invoke MSAL APIs to prevent iframe errors
+ */
+export const getBlankRedirectUri = (): string => {
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/blank.html`;
+  }
+  return 'http://localhost:3000/blank.html';
 };
 
 /**

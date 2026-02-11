@@ -2,12 +2,17 @@
 import { renderHook } from '@testing-library/react';
 import { useBudgetOverview } from './useBudgetOverview';
 import { useStore } from '@/contexts/StoreContext';
+import { useCalculationService } from '@/contexts/ServiceContext';
 import { Group, CurrencyCode, BudgetPeriod } from '@/types/enums';
 import type { Budget, Transaction, TransactionType, Category, Account } from '@/types/models';
 
 jest.mock('@/contexts/StoreContext');
+jest.mock('@/contexts/ServiceContext');
 
 const mockUseStore = useStore as jest.MockedFunction<typeof useStore>;
+const mockUseCalculationService = useCalculationService as jest.MockedFunction<
+  typeof useCalculationService
+>;
 
 describe('useBudgetOverview', () => {
   const mockCategory: Category = {
@@ -66,8 +71,16 @@ describe('useBudgetOverview', () => {
     updatedAt: '2024-01-01T00:00:00Z',
   };
 
+  const mockCalculationService = {
+    getActiveBudgetForPeriod: jest.fn(),
+    prorateBudgetForPeriod: jest.fn(),
+    convertBudgetAmount: jest.fn(),
+    sumTransactionAmounts: jest.fn(),
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseCalculationService.mockReturnValue(mockCalculationService as any);
   });
 
   it('should return empty budgets when no budgets exist', () => {
@@ -78,7 +91,8 @@ describe('useBudgetOverview', () => {
       categories: [],
       accounts: [],
       baseCurrency: CurrencyCode.USD,
-      exchangeRates: [],
+      exchangeRatesMap: {},
+      isStoreLoaded: true,
     } as any);
 
     const period = {
@@ -101,7 +115,8 @@ describe('useBudgetOverview', () => {
       categories: [mockCategory],
       accounts: [mockAccount],
       baseCurrency: CurrencyCode.USD,
-      exchangeRates: [],
+      exchangeRatesMap: {},
+      isStoreLoaded: true,
     } as any);
 
     const period = {
@@ -125,7 +140,8 @@ describe('useBudgetOverview', () => {
       categories: [],
       accounts: [],
       baseCurrency: CurrencyCode.USD,
-      exchangeRates: [],
+      exchangeRatesMap: {},
+      isStoreLoaded: true,
     } as any);
 
     const period = {
@@ -148,7 +164,8 @@ describe('useBudgetOverview', () => {
       categories: undefined,
       accounts: undefined,
       baseCurrency: CurrencyCode.USD,
-      exchangeRates: [],
+      exchangeRatesMap: undefined,
+      isStoreLoaded: false,
     } as any);
 
     const period = {

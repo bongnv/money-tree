@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AccountDialog } from './AccountDialog';
-import { AccountType, CurrencyCode } from '../../types/enums';
-import type { Account } from '../../types/models';
+import { AccountType, CurrencyCode } from '@/types/enums';
+import type { Account } from '@/types/models';
 import { useAccountForm } from '@/hooks/accounts/useAccountForm';
 
 jest.mock('@/hooks/accounts/useAccountForm');

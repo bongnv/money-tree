@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AccountForm } from './AccountForm';
-import { AccountType, CurrencyCode } from '../../types/enums';
-import type { Account } from '../../types/models';
+import { AccountType, CurrencyCode } from '@/types/enums';
+import type { Account } from '@/types/models';
 
 // Mock the useAccountForm hook
 jest.mock('@/hooks/accounts/useAccountForm', () => ({

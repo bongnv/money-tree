@@ -16,8 +16,8 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { Cloud as CloudIcon } from '@mui/icons-material';
-import { isOneDriveConfigured } from '../../config/onedrive.config';
-import { StorageProviderType } from '../../contexts/SyncContext';
+import { isOneDriveConfigured } from '@/config/onedrive.config';
+import { StorageProviderType } from '@/contexts/SyncContext';
 import { useWelcomeDialog } from '@/hooks/onboarding/useWelcomeDialog';
 
 interface WelcomeDialogProps {

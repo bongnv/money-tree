@@ -9,9 +9,9 @@ import {
   MenuItem,
   Divider,
 } from '@mui/material';
-import { DEFAULT_CURRENCIES } from '../../constants/defaults';
+import { DEFAULT_CURRENCIES } from '@/constants/defaults';
 import { DataSyncSettings } from './DataSyncSettings';
-import { CurrencyCode } from '../../types/enums';
+import { CurrencyCode } from '@/types/enums';
 import { useStore } from '@/contexts/StoreContext';
 
 export const PreferencesPage: React.FC = () => {

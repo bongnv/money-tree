@@ -12,12 +12,12 @@ import {
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { BudgetDialog } from './BudgetDialog';
-import { PeriodSelector } from '../common/PeriodSelector';
-import { CategoryFilter } from '../common/CategoryFilter';
+import { PeriodSelector } from '@/components/common/PeriodSelector';
+import { CategoryFilter } from '@/components/common/CategoryFilter';
 import { getBudgetPresets } from './periodPresets';
-import type { Budget } from '../../types/models';
-import { formatCurrency } from '../../utils/currency.utils';
-import { Group } from '../../types/enums';
+import type { Budget } from '@/types/models';
+import { formatCurrency } from '@/utils/currency.utils';
+import { Group } from '@/types/enums';
 import { useStore } from '@/contexts/StoreContext';
 import { useBudgetGrouping } from '@/hooks/budgets/useBudgetGrouping';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';

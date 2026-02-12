@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { BudgetProgressBar } from './BudgetProgressBar';
-import { CurrencyCode } from '../../types/enums';
+import { CurrencyCode } from '@/types/enums';
 
 describe('BudgetProgressBar', () => {
   it('renders budget name and amounts', () => {

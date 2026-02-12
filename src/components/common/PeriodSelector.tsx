@@ -13,7 +13,7 @@ import {
   Box,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
-import { getTodayDate } from '../../utils/date.utils';
+import { getTodayDate } from '@/utils/date.utils';
 import { FormDatePicker } from './FormDatePicker';
 
 export interface PeriodOption {

@@ -1,9 +1,9 @@
 import React from 'react';
 import { TextField, MenuItem, Box, Button } from '@mui/material';
-import { FormDatePicker } from '../common/FormDatePicker';
-import type { ManualAsset } from '../../types/models';
-import { AssetType, CurrencyCode } from '../../types/enums';
-import { getAllCurrencies } from '../../utils/currency.utils';
+import { FormDatePicker } from '@/components/common/FormDatePicker';
+import type { ManualAsset } from '@/types/models';
+import { AssetType, CurrencyCode } from '@/types/enums';
+import { getAllCurrencies } from '@/utils/currency.utils';
 import { useAssetForm } from '@/hooks/assets/useAssetForm';
 
 interface ManualAssetFormProps {

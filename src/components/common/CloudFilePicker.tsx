@@ -26,8 +26,8 @@ import {
   Cloud as CloudIcon,
   People as PeopleIcon,
 } from '@mui/icons-material';
-import type { CloudItem } from '../../services/storage/IStorageProvider';
-import type { CloudService } from '../../services/cloud.service';
+import type { CloudItem } from '@/services/storage/IStorageProvider';
+import type { CloudService } from '@/services/cloud.service';
 
 interface CloudFilePickerProps {
   open: boolean;

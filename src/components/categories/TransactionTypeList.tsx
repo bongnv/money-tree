@@ -1,7 +1,7 @@
 import React from 'react';
 import Grid from '@mui/material/Grid';
 import { Typography, Box } from '@mui/material';
-import type { TransactionType, Category } from '../../types/models';
+import type { TransactionType, Category } from '@/types/models';
 import { TransactionTypeCard } from './TransactionTypeCard';
 
 interface TransactionTypeListProps {

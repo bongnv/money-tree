@@ -6,7 +6,7 @@ import {
   errorMessages,
   isOneDriveConfigured,
   getBlankRedirectUri,
-} from '../../config/onedrive.config';
+} from '@/config/onedrive.config';
 import type { IStorageProvider, CloudItem } from './IStorageProvider';
 import { StorageProviderType } from './IStorageProvider';
 

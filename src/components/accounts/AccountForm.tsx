@@ -1,8 +1,8 @@
 import React from 'react';
 import { TextField, MenuItem, Box, Button } from '@mui/material';
-import type { Account } from '../../types/models';
-import { AccountType, CurrencyCode } from '../../types/enums';
-import { getAllCurrencies } from '../../utils/currency.utils';
+import type { Account } from '@/types/models';
+import { AccountType, CurrencyCode } from '@/types/enums';
+import { getAllCurrencies } from '@/utils/currency.utils';
 import { useAccountForm } from '@/hooks/accounts/useAccountForm';
 
 interface AccountFormProps {

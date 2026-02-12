@@ -1,6 +1,6 @@
 import React from 'react';
 import { TextField, Box, Button } from '@mui/material';
-import type { Category } from '../../types/models';
+import type { Category } from '@/types/models';
 import { useCategoryForm } from '@/hooks/categories/useCategoryForm';
 
 interface CategoryFormProps {

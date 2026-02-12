@@ -6,7 +6,7 @@ import {
   Archive as ArchiveIcon,
   Unarchive as UnarchiveIcon,
 } from '@mui/icons-material';
-import type { TransactionType, Category } from '../../types/models';
+import type { TransactionType, Category } from '@/types/models';
 
 interface TransactionTypeCardProps {
   transactionType: TransactionType;

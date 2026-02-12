@@ -4,7 +4,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { BudgetProgressBar } from './BudgetProgressBar';
 import { useBudgetOverview } from '@/hooks/dashboard/useBudgetOverview';
 import { useStore } from '@/contexts/StoreContext';
-import type { PeriodOption } from '../common/PeriodSelector';
+import type { PeriodOption } from '@/components/common/PeriodSelector';
 
 export interface BudgetOverviewProps {
   period: PeriodOption;

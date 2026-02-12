@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography, LinearProgress, styled } from '@mui/material';
-import { formatCurrency } from '../../utils/currency.utils';
-import type { CurrencyCode } from '../../types/enums';
+import { formatCurrency } from '@/utils/currency.utils';
+import type { CurrencyCode } from '@/types/enums';
 
 const StyledLinearProgress = styled(LinearProgress, {
   shouldForwardProp: (prop) => prop !== 'progressColor',

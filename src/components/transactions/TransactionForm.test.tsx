@@ -3,8 +3,8 @@ import { render } from '@testing-library/react';
 import { TransactionForm } from './TransactionForm';
 import { useTransactionForm } from '@/hooks/transactions/useTransactionForm';
 import { useStore } from '@/contexts/StoreContext';
-import type { Transaction, Account, TransactionType, Category } from '../../types/models';
-import { AccountType, Group, CurrencyCode } from '../../types/enums';
+import type { Transaction, Account, TransactionType, Category } from '@/types/models';
+import { AccountType, Group, CurrencyCode } from '@/types/enums';
 
 jest.mock('@/hooks/transactions/useTransactionForm');
 jest.mock('@/contexts/StoreContext');

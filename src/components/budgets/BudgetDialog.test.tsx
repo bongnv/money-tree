@@ -1,7 +1,7 @@
 import { render, screen } from '@/test-utils';
 import { BudgetDialog } from './BudgetDialog';
-import type { Budget } from '../../types/models';
-import { CurrencyCode } from '../../types/enums';
+import type { Budget } from '@/types/models';
+import { CurrencyCode } from '@/types/enums';
 
 describe('BudgetDialog', () => {
   const mockOnClose = jest.fn();

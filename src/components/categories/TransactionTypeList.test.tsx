@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { TransactionTypeList } from './TransactionTypeList';
-import { Group } from '../../types/enums';
-import type { Category, TransactionType } from '../../types/models';
+import { Group } from '@/types/enums';
+import type { Category, TransactionType } from '@/types/models';
 
 describe('TransactionTypeList', () => {
   const mockCategories: Category[] = [

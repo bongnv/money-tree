@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
-import type { Account } from '../../types/models';
+import type { Account } from '@/types/models';
 import { AccountList } from './AccountList';
 import { AccountDialog } from './AccountDialog';
 import { useStore } from '@/contexts/StoreContext';

@@ -1,10 +1,10 @@
 import { screen } from '@testing-library/react';
-import { renderWithProviders as render } from '../../test-utils';
+import { renderWithProviders as render } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { TransactionFilters, TransactionFiltersState } from './TransactionFilters';
-import type { Account, Category, TransactionType } from '../../types/models';
-import { Group, AccountType, CurrencyCode } from '../../types/enums';
+import type { Account, Category, TransactionType } from '@/types/models';
+import { Group, AccountType, CurrencyCode } from '@/types/enums';
 
 describe('TransactionFilters', () => {
   const mockAccounts: Account[] = [

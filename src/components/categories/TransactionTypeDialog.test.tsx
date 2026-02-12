@@ -1,9 +1,9 @@
 import { screen } from '@testing-library/react';
-import { renderWithProviders as render } from '../../test-utils';
+import { renderWithProviders as render } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { TransactionTypeDialog } from './TransactionTypeDialog';
-import { Group } from '../../types/enums';
-import type { Category, TransactionType } from '../../types/models';
+import { Group } from '@/types/enums';
+import type { Category, TransactionType } from '@/types/models';
 
 describe('TransactionTypeDialog', () => {
   const mockCategories: Category[] = [

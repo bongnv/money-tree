@@ -10,7 +10,7 @@ import {
   Alert,
 } from '@mui/material';
 import { CloudOff as CloudOffIcon } from '@mui/icons-material';
-import type { CloudService } from '../../services/cloud.service';
+import type { CloudService } from '@/services/cloud.service';
 
 interface ReconnectDialogProps {
   cloudService: CloudService;

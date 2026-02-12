@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CloudFilePicker } from './CloudFilePicker';
-import type { CloudItem } from '../../services/storage/IStorageProvider';
-import type { CloudService } from '../../services/cloud.service';
+import type { CloudItem } from '@/services/storage/IStorageProvider';
+import type { CloudService } from '@/services/cloud.service';
 
 describe('CloudFilePicker', () => {
   const mockOnFileSelected = jest.fn();

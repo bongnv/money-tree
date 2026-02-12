@@ -4,8 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { BudgetsPage } from './BudgetsPage';
 import { useStore } from '@/contexts/StoreContext';
 import { useBudgetGrouping } from '@/hooks/budgets/useBudgetGrouping';
-import type { Budget, Category, TransactionType } from '../../types/models';
-import { BudgetPeriod, Group, CurrencyCode } from '../../types/enums';
+import type { Budget, Category, TransactionType } from '@/types/models';
+import { BudgetPeriod, Group, CurrencyCode } from '@/types/enums';
 
 jest.mock('@/contexts/StoreContext');
 jest.mock('@/contexts/ServiceContext');

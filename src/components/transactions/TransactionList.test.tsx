@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TransactionList } from './TransactionList';
-import type { Transaction, Account, Category, TransactionType } from '../../types/models';
-import { Group, AccountType, CurrencyCode } from '../../types/enums';
+import type { Transaction, Account, Category, TransactionType } from '@/types/models';
+import { Group, AccountType, CurrencyCode } from '@/types/enums';
 
 describe('TransactionList', () => {
   const mockAccounts: Account[] = [

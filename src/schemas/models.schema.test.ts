@@ -9,7 +9,7 @@ import {
   ManualAssetSchema,
   DataFileSchema,
 } from './models.schema';
-import { AccountType, Group, AssetType, CurrencyCode } from '../types/enums';
+import { AccountType, Group, AssetType, CurrencyCode } from '@/types/enums';
 
 // Helper to get date in YYYY-MM-DD format
 const getDateString = () => new Date().toISOString().split('T')[0];

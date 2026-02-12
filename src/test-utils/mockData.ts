@@ -1,4 +1,4 @@
-import { AccountType, Group, CurrencyCode, AssetType } from '../types/enums';
+import { AccountType, Group, CurrencyCode, AssetType } from '@/types/enums';
 import type {
   Account,
   Transaction,
@@ -6,7 +6,7 @@ import type {
   TransactionType,
   Budget,
   ManualAsset,
-} from '../types/models';
+} from '@/types/models';
 
 /**
  * Test utilities for mocking Dexie hooks

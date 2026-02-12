@@ -11,10 +11,10 @@ import {
   SelectChangeEvent,
 } from '@mui/material';
 import { Clear as ClearIcon } from '@mui/icons-material';
-import { PeriodSelector } from '../common/PeriodSelector';
-import { CategoryFilter } from '../common/CategoryFilter';
-import type { Account, Category, TransactionType } from '../../types/models';
-import { Group } from '../../types/enums';
+import { PeriodSelector } from '@/components/common/PeriodSelector';
+import { CategoryFilter } from '@/components/common/CategoryFilter';
+import type { Account, Category, TransactionType } from '@/types/models';
+import { Group } from '@/types/enums';
 
 export interface TransactionFiltersState {
   dateFrom: string;

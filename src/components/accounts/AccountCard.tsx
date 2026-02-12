@@ -6,8 +6,8 @@ import {
   Archive as ArchiveIcon,
   Unarchive as UnarchiveIcon,
 } from '@mui/icons-material';
-import type { Account } from '../../types/models';
-import { formatCurrency } from '../../utils/currency.utils';
+import type { Account } from '@/types/models';
+import { formatCurrency } from '@/utils/currency.utils';
 import { useServiceContext } from '@/contexts/ServiceContext';
 import { useStore } from '@/contexts/StoreContext';
 

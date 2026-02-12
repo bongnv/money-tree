@@ -1,9 +1,9 @@
 import { screen } from '@testing-library/react';
-import { renderWithProviders as render } from '../../test-utils';
+import { renderWithProviders as render } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { ManualAssetSection } from './ManualAssetSection';
-import { AssetGroup } from '../../services/report.service';
-import { CurrencyCode } from '../../types/enums';
+import { AssetGroup } from '@/services/report.service';
+import { CurrencyCode } from '@/types/enums';
 
 describe('ManualAssetSection', () => {
   const mockGroups: AssetGroup[] = [

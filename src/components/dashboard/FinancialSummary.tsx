@@ -4,8 +4,8 @@ import Grid from '@mui/material/Grid';
 import { Box, Alert } from '@mui/material';
 import { FinancialSummaryCard } from './FinancialSummaryCard';
 import { useFinancialSummary } from '@/hooks/dashboard/useFinancialSummary';
-import type { PeriodOption } from '../common/PeriodSelector';
-import { formatCurrency } from '../../utils/currency.utils';
+import type { PeriodOption } from '@/components/common/PeriodSelector';
+import { formatCurrency } from '@/utils/currency.utils';
 import { useStore } from '@/contexts/StoreContext';
 
 export interface FinancialSummaryProps {

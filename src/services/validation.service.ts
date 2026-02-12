@@ -1,5 +1,5 @@
-import type { Transaction, Account, TransactionType } from '../types/models';
-import { Group } from '../types/enums';
+import type { Transaction, Account, TransactionType } from '@/types/models';
+import { Group } from '@/types/enums';
 
 export interface ValidationError {
   field: string;

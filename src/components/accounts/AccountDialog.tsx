@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dialog, DialogTitle, DialogContent } from '@mui/material';
-import type { Account } from '../../types/models';
+import type { Account } from '@/types/models';
 import { AccountForm } from './AccountForm';
 
 interface AccountDialogProps {

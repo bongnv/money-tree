@@ -10,9 +10,9 @@ import {
   Typography,
   Divider,
 } from '@mui/material';
-import { formatCurrency } from '../../utils/currency.utils';
-import type { YearEndSummary } from '../../types/models';
-import { CurrencyCode } from '../../types/enums';
+import { formatCurrency } from '@/utils/currency.utils';
+import type { YearEndSummary } from '@/types/models';
+import { CurrencyCode } from '@/types/enums';
 
 export interface ArchivePromptProps {
   open: boolean;

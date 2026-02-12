@@ -5,11 +5,11 @@ import type {
   TransactionType,
   Category,
   Budget,
-} from '../types/models';
-import { AccountType, AssetType, CurrencyCode, Group } from '../types/enums';
+} from '@/types/models';
+import { AccountType, AssetType, CurrencyCode, Group } from '@/types/enums';
 import { CalculationService } from './calculation.service';
-import { getAssetCurrentValue } from '../utils/asset.utils';
-import { getRateSync } from '../utils/exchangeRate.utils';
+import { getAssetCurrentValue } from '@/utils/asset.utils';
+import { getRateSync } from '@/utils/exchangeRate.utils';
 
 export interface BalanceSheetData {
   assets: AssetGroup[];

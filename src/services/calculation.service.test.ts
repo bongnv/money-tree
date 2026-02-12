@@ -6,9 +6,9 @@ import type {
   Budget,
   TransactionType,
   Category,
-} from '../types/models';
-import { AccountType, AssetType, CurrencyCode, Group } from '../types/enums';
-import * as exchangeRateUtils from '../utils/exchangeRate.utils';
+} from '@/types/models';
+import { AccountType, AssetType, CurrencyCode, Group } from '@/types/enums';
+import * as exchangeRateUtils from '@/utils/exchangeRate.utils';
 
 // Mock the exchange rate utils
 jest.mock('../utils/exchangeRate.utils', () => ({

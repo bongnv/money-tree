@@ -2,9 +2,9 @@ import React from 'react';
 import { Box, Typography, Button, Paper, IconButton, Chip } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { formatDate } from '../../utils/date.utils';
-import { formatCurrency } from '../../utils/currency.utils';
-import { Group, CurrencyCode } from '../../types/enums';
+import { formatDate } from '@/utils/date.utils';
+import { formatCurrency } from '@/utils/currency.utils';
+import { Group, CurrencyCode } from '@/types/enums';
 import { useStore } from '@/contexts/StoreContext';
 
 export interface RecentTransactionsListProps {

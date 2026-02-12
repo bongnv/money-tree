@@ -2,15 +2,15 @@ import React, { useRef } from 'react';
 import { Box, TextField, IconButton, Tooltip } from '@mui/material';
 import { Add as AddIcon, Clear as ClearIcon, MoreHoriz as MoreIcon } from '@mui/icons-material';
 import { QuickEntryAutocomplete } from './QuickEntryAutocomplete';
-import { FormDatePicker } from '../common/FormDatePicker';
+import { FormDatePicker } from '@/components/common/FormDatePicker';
 import type {
   Transaction,
   Account,
   TransactionType,
   Category,
   ManualAsset,
-} from '../../types/models';
-import { Group } from '../../types/enums';
+} from '@/types/models';
+import { Group } from '@/types/enums';
 import { useQuickEntryForm } from '@/hooks/transactions/useQuickEntryForm';
 
 interface QuickEntryRowProps {

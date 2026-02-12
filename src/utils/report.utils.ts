@@ -1,5 +1,5 @@
-import { Group } from '../types/enums';
-import type { TransactionType } from '../types/models';
+import { Group } from '@/types/enums';
+import type { TransactionType } from '@/types/models';
 
 /**
  * Check if filtered categories contain any transaction types with the specified group

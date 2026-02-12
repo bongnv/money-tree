@@ -20,12 +20,12 @@ import {
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
-import { ManualAsset } from '../../types/models';
-import { formatCurrency } from '../../utils/currency.utils';
-import { formatDate, getTodayDate } from '../../utils/date.utils';
-import { getAssetCurrentValue } from '../../utils/asset.utils';
-import { LineChart } from '../common/charts/LineChart';
-import { getCompleteValueHistory, calculateAssetValueGrowth } from '../../utils/asset.utils';
+import { ManualAsset } from '@/types/models';
+import { formatCurrency } from '@/utils/currency.utils';
+import { formatDate, getTodayDate } from '@/utils/date.utils';
+import { getAssetCurrentValue } from '@/utils/asset.utils';
+import { LineChart } from '@/components/common/charts/LineChart';
+import { getCompleteValueHistory, calculateAssetValueGrowth } from '@/utils/asset.utils';
 
 export interface AssetValueHistoryDialogProps {
   open: boolean;

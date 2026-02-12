@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardActions, Typography, IconButton } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import type { Category } from '../../types/models';
+import type { Category } from '@/types/models';
 
 interface CategoryCardProps {
   category: Category;

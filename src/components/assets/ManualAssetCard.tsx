@@ -5,11 +5,11 @@ import {
   Delete as DeleteIcon,
   TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
-import type { ManualAsset } from '../../types/models';
-import { AssetType } from '../../types/enums';
-import { formatCurrency } from '../../utils/currency.utils';
-import { formatDate } from '../../utils/date.utils';
-import { getAssetCurrentValue } from '../../utils/asset.utils';
+import type { ManualAsset } from '@/types/models';
+import { AssetType } from '@/types/enums';
+import { formatCurrency } from '@/utils/currency.utils';
+import { formatDate } from '@/utils/date.utils';
+import { getAssetCurrentValue } from '@/utils/asset.utils';
 
 interface ManualAssetCardProps {
   asset: ManualAsset;

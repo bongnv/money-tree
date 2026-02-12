@@ -1,5 +1,5 @@
-import { Currency as CurrencyModel } from '../types/models';
-import { CurrencyCode } from '../types/enums';
+import { Currency as CurrencyModel } from '@/types/models';
+import { CurrencyCode } from '@/types/enums';
 
 /**
  * Default currencies available in the application

@@ -1,5 +1,5 @@
-import { Group } from '../types/enums';
-import type { TransactionType } from '../types/models';
+import { Group } from '@/types/enums';
+import type { TransactionType } from '@/types/models';
 import { hasTransactionTypesInGroup } from './report.utils';
 
 describe('report.utils', () => {

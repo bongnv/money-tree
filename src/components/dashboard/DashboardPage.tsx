@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Box, Typography, Container } from '@mui/material';
 import { startOfYear, format } from 'date-fns';
-import { PeriodSelector } from '../common/PeriodSelector';
+import { PeriodSelector } from '@/components/common/PeriodSelector';
 import { FinancialSummary } from './FinancialSummary';
 import { BudgetOverview } from './BudgetOverview';
 import { RecentTransactionsList } from './RecentTransactionsList';

@@ -10,7 +10,7 @@ import {
   SxProps,
   Theme,
 } from '@mui/material';
-import type { Category } from '../../types/models';
+import type { Category } from '@/types/models';
 
 interface CategoryFilterProps {
   categories: Category[];

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Container, Box } from '@mui/material';
-import { AccountsPage } from '../accounts/AccountsPage';
-import { ManualAssetsPage } from '../assets/ManualAssetsPage';
+import { AccountsPage } from '@/components/accounts/AccountsPage';
+import { ManualAssetsPage } from '@/components/assets/ManualAssetsPage';
 
 export const AssetsSettingsPage: React.FC = () => {
   return (

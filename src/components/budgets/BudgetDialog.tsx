@@ -9,10 +9,10 @@ import {
   Button,
   Autocomplete,
 } from '@mui/material';
-import { FormDatePicker } from '../common/FormDatePicker';
-import type { Budget } from '../../types/models';
-import { DEFAULT_CURRENCIES } from '../../constants/defaults';
-import { CurrencyCode, Group } from '../../types/enums';
+import { FormDatePicker } from '@/components/common/FormDatePicker';
+import type { Budget } from '@/types/models';
+import { DEFAULT_CURRENCIES } from '@/constants/defaults';
+import { CurrencyCode, Group } from '@/types/enums';
 import { useStore } from '@/contexts/StoreContext';
 
 interface BudgetDialogProps {

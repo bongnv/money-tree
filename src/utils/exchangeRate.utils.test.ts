@@ -1,5 +1,5 @@
 import { fetchRateFromAPI, getRateSync, ensureCurrentMonthRates } from './exchangeRate.utils';
-import { CurrencyCode } from '../types/enums';
+import { CurrencyCode } from '@/types/enums';
 import { db } from '@/db/database';
 
 // Mock fetch globally

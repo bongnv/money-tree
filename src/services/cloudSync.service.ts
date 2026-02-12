@@ -1,9 +1,9 @@
-import type { MoneyTreeDB } from '../db/database';
+import type { MoneyTreeDB } from '@/db/database';
 import { CloudItem } from './storage/IStorageProvider';
 import type { CloudService } from './cloud.service';
-import type { DataFile, ExchangeRate, ArchivedYearReference } from '../types/models';
-import { CurrencyCode } from '../types/enums';
-import { DataFileSchema } from '../schemas/models.schema';
+import type { DataFile, ExchangeRate, ArchivedYearReference } from '@/types/models';
+import { CurrencyCode } from '@/types/enums';
+import { DataFileSchema } from '@/schemas/models.schema';
 
 /**
  * Represents the complete local data snapshot (unfiltered)

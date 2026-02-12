@@ -1,4 +1,4 @@
-import type { ManualAsset, AssetValueHistory } from '../types/models';
+import type { ManualAsset, AssetValueHistory } from '@/types/models';
 
 /**
  * Asset utility functions

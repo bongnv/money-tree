@@ -1,7 +1,7 @@
 import { ReportService } from './report.service';
 import { CalculationService } from './calculation.service';
-import type { Account, ManualAsset, Transaction, TransactionType, Category } from '../types/models';
-import { AccountType, AssetType, Group, CurrencyCode } from '../types/enums';
+import type { Account, ManualAsset, Transaction, TransactionType, Category } from '@/types/models';
+import { AccountType, AssetType, Group, CurrencyCode } from '@/types/enums';
 
 const calculationService = new CalculationService();
 const reportService = new ReportService(calculationService);

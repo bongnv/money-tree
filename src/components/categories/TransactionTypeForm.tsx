@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { TextField, MenuItem, Box, Button } from '@mui/material';
-import type { TransactionType, Category } from '../../types/models';
-import { Group } from '../../types/enums';
+import type { TransactionType, Category } from '@/types/models';
+import { Group } from '@/types/enums';
 import { useStore } from '@/contexts/StoreContext';
 
 interface TransactionTypeFormProps {

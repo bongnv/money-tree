@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Container, Typography, Box, Button } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { CategoryList } from '../categories/CategoryList';
-import { CategoryDialog } from '../categories/CategoryDialog';
-import type { Category } from '../../types/models';
+import { CategoryList } from '@/components/categories/CategoryList';
+import { CategoryDialog } from '@/components/categories/CategoryDialog';
+import type { Category } from '@/types/models';
 import { useStore } from '@/contexts/StoreContext';
 
 export const CategoriesListPage: React.FC = () => {

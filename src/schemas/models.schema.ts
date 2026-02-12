@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AccountType, Group, AssetType, CurrencyCode } from '../types/enums';
+import { AccountType, Group, AssetType, CurrencyCode } from '@/types/enums';
 
 /**
  * Zod schema for Currency

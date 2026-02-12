@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CategoryFilter } from './CategoryFilter';
-import type { Category } from '../../types/models';
+import type { Category } from '@/types/models';
 
 describe('CategoryFilter', () => {
   const mockCategories: Category[] = [

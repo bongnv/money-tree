@@ -27,13 +27,13 @@ import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
 import { useBudgetPerformance } from '@/hooks/reports/useBudgetPerformance';
-import { PeriodSelector } from '../common/PeriodSelector';
-import { CategoryFilter } from '../common/CategoryFilter';
-import { LineChart } from '../common/charts/LineChart';
-import { CHART_COLORS } from '../../theme';
-import { formatCurrency } from '../../utils/currency.utils';
-import { CurrencyCode } from '../../types/enums';
-import { DEFAULT_CURRENCIES } from '../../constants/defaults';
+import { PeriodSelector } from '@/components/common/PeriodSelector';
+import { CategoryFilter } from '@/components/common/CategoryFilter';
+import { LineChart } from '@/components/common/charts/LineChart';
+import { CHART_COLORS } from '@/theme';
+import { formatCurrency } from '@/utils/currency.utils';
+import { CurrencyCode } from '@/types/enums';
+import { DEFAULT_CURRENCIES } from '@/constants/defaults';
 import { useStore } from '@/contexts/StoreContext';
 
 export const BudgetPerformanceReport: React.FC = () => {

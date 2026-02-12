@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dialog, DialogTitle, DialogContent } from '@mui/material';
-import type { Category } from '../../types/models';
+import type { Category } from '@/types/models';
 import { CategoryForm } from './CategoryForm';
 
 interface CategoryDialogProps {

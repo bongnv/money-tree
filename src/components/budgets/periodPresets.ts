@@ -1,4 +1,4 @@
-import type { PeriodOption } from '../common/PeriodSelector';
+import type { PeriodOption } from '@/components/common/PeriodSelector';
 import { getTodayDate } from '@/utils/date.utils';
 
 const formatDate = (year: number, month: number, day: number): string => {

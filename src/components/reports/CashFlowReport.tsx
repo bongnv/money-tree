@@ -26,16 +26,16 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import { useCashFlowReport } from '@/hooks/reports/useCashFlowReport';
 import { useStore } from '@/contexts/StoreContext';
-import { LineChart } from '../common/charts/LineChart';
-import { PieChart } from '../common/charts/PieChart';
-import { PeriodSelector } from '../common/PeriodSelector';
-import { CategoryFilter } from '../common/CategoryFilter';
-import { formatCurrency } from '../../utils/currency.utils';
-import { hasTransactionTypesInGroup } from '../../utils/report.utils';
-import { CHART_COLORS } from '../../theme';
-import { CurrencyCode } from '../../types/enums';
-import { Group } from '../../types/enums';
-import { DEFAULT_CURRENCIES } from '../../constants/defaults';
+import { LineChart } from '@/components/common/charts/LineChart';
+import { PieChart } from '@/components/common/charts/PieChart';
+import { PeriodSelector } from '@/components/common/PeriodSelector';
+import { CategoryFilter } from '@/components/common/CategoryFilter';
+import { formatCurrency } from '@/utils/currency.utils';
+import { hasTransactionTypesInGroup } from '@/utils/report.utils';
+import { CHART_COLORS } from '@/theme';
+import { CurrencyCode } from '@/types/enums';
+import { Group } from '@/types/enums';
+import { DEFAULT_CURRENCIES } from '@/constants/defaults';
 
 /**
  * Build chart lines for cash flow trend based on available income/expense types

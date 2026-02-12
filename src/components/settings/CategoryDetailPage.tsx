@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Container, Typography, Box, Button, Breadcrumbs, Link } from '@mui/material';
 import { Add as AddIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
-import { TransactionTypeList } from '../categories/TransactionTypeList';
-import { TransactionTypeDialog } from '../categories/TransactionTypeDialog';
-import type { TransactionType } from '../../types/models';
+import { TransactionTypeList } from '@/components/categories/TransactionTypeList';
+import { TransactionTypeDialog } from '@/components/categories/TransactionTypeDialog';
+import type { TransactionType } from '@/types/models';
 import { useStore } from '@/contexts/StoreContext';
 
 export const CategoryDetailPage: React.FC = () => {

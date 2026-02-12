@@ -6,8 +6,8 @@ import { useStore } from '@/contexts/StoreContext';
 
 import { useTransactionDialog } from '@/hooks/transactions/useTransactionDialog';
 import { useTransactionFilters } from '@/hooks/transactions/useTransactionFilters';
-import type { Transaction, Account, Category, TransactionType } from '../../types/models';
-import { AccountType, Group, CurrencyCode } from '../../types/enums';
+import type { Transaction, Account, Category, TransactionType } from '@/types/models';
+import { AccountType, Group, CurrencyCode } from '@/types/enums';
 
 // Mock hooks
 jest.mock('@/contexts/StoreContext');

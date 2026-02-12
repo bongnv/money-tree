@@ -5,8 +5,8 @@ import {
   getCompleteValueHistory,
   calculateAssetValueGrowth,
 } from './asset.utils';
-import type { ManualAsset } from '../types/models';
-import { AssetType, CurrencyCode } from '../types/enums';
+import type { ManualAsset } from '@/types/models';
+import { AssetType, CurrencyCode } from '@/types/enums';
 
 describe('asset.utils', () => {
   describe('getAssetCurrentValue', () => {

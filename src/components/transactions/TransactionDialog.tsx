@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dialog, DialogTitle, DialogContent } from '@mui/material';
-import type { Transaction, Account, TransactionType, Category } from '../../types/models';
+import type { Transaction, Account, TransactionType, Category } from '@/types/models';
 import { TransactionForm } from './TransactionForm';
 
 interface TransactionDialogProps {

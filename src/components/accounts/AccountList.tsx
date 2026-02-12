@@ -1,7 +1,7 @@
 import React from 'react';
 import Grid from '@mui/material/Grid';
 import { Typography, Box } from '@mui/material';
-import type { Account } from '../../types/models';
+import type { Account } from '@/types/models';
 import { AccountCard } from './AccountCard';
 
 interface AccountListProps {

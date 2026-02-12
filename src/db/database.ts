@@ -7,7 +7,7 @@ import type {
   Budget,
   ManualAsset,
   ExchangeRate,
-} from '../types/models';
+} from '@/types/models';
 
 interface SyncMetadata {
   key: string;

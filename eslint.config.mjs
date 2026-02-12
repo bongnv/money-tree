@@ -77,12 +77,32 @@ export default [
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'prefer-const': 'warn',
 
-      // Import rules - enforce path aliases over relative imports
-      'import/no-relative-parent-imports': 'warn',
+      // Import rules - enforce path aliases (@/) over relative parent imports (../)
+      // Checks the literal import string, not the resolved path
+      // This prevents imports like `from '../utils/foo'` and requires `from '@/utils/foo'`
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['../*', '../../*', '../../../*'],
+              message:
+                'Relative parent imports are not allowed. Use path alias imports instead (e.g., @/utils/foo instead of ../utils/foo)',
+            },
+          ],
+        },
+      ],
     },
     settings: {
       react: {
         version: 'detect',
+      },
+      // Configure import resolver to understand TypeScript path mappings
+      'import/resolver': {
+        typescript: {
+          alwaysTryTypes: true,
+          project: './tsconfig.json',
+        },
       },
     },
   },

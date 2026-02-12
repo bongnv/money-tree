@@ -1,5 +1,8 @@
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { StorageProviderType, type CloudItem } from '@/services/storage/IStorageProvider';
+import { useApp } from './AppContext';
+import { useServiceContext } from './ServiceContext';
+import { SyncProvider, useSync } from './SyncContext';
 
 // Mock services
 const mockCloudService = {
@@ -64,11 +67,6 @@ const localStorageMock = (() => {
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
 });
-
-// Import after mocks
-import { useApp } from './AppContext';
-import { useServiceContext } from './ServiceContext';
-import { SyncProvider, useSync } from './SyncContext';
 
 const mockUseApp = useApp as jest.MockedFunction<typeof useApp>;
 const mockUseServiceContext = useServiceContext as jest.MockedFunction<typeof useServiceContext>;

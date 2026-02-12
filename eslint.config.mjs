@@ -95,7 +95,7 @@ export default [
 
       // Import ordering and grouping
       'import/order': [
-        'warn',
+        'error',
         {
           groups: [
             'builtin', // Node.js built-in modules

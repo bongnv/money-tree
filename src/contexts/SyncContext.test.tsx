@@ -1,4 +1,3 @@
-import React from 'react';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { StorageProviderType, type CloudItem } from '@/services/storage/IStorageProvider';
 
@@ -67,9 +66,9 @@ Object.defineProperty(window, 'localStorage', {
 });
 
 // Import after mocks
-import { SyncProvider, useSync } from './SyncContext';
 import { useApp } from './AppContext';
 import { useServiceContext } from './ServiceContext';
+import { SyncProvider, useSync } from './SyncContext';
 
 const mockUseApp = useApp as jest.MockedFunction<typeof useApp>;
 const mockUseServiceContext = useServiceContext as jest.MockedFunction<typeof useServiceContext>;
@@ -215,7 +214,7 @@ describe('SyncContext', () => {
     it('should reconnect to provider', async () => {
       const mockFile = { id: 'file1', name: 'data.json', isFolder: false };
       localStorageMock.setItem('moneyTree.currentFile', JSON.stringify(mockFile));
-      
+
       mockCloudService.reconnect.mockResolvedValue(undefined);
       mockCloudService.getCurrentProvider.mockReturnValue(StorageProviderType.ONEDRIVE);
       mockCloudSyncService.fullSync.mockResolvedValue({
@@ -255,7 +254,7 @@ describe('SyncContext', () => {
   describe('selectFile', () => {
     it('should select file and trigger sync', async () => {
       const mockFile = { id: 'file1', name: 'data.json', isFolder: false };
-      
+
       mockCloudService.getCurrentProvider.mockReturnValue(StorageProviderType.ONEDRIVE);
       mockCloudService.isAuthenticated.mockResolvedValue(true);
       mockCloudSyncService.fullSync.mockResolvedValue({
@@ -277,7 +276,7 @@ describe('SyncContext', () => {
 
     it('should handle file selection errors', async () => {
       const mockFile = { id: 'file1', name: 'data.json', isFolder: false };
-      
+
       mockCloudService.getCurrentProvider.mockReturnValue(StorageProviderType.ONEDRIVE);
       mockCloudSyncService.fullSync.mockRejectedValue(new Error('Sync failed'));
 
@@ -349,21 +348,24 @@ describe('SyncContext', () => {
         await result.current.fullSync();
       });
 
-      await waitFor(() => {
-        expect(result.current.status).toBe('offline');
-        expect(result.current.errorMessage).toContain('Authentication failed');
-        expect(mockShowSnackbar).toHaveBeenCalledWith(
-          expect.stringContaining('Authentication failed'),
-          'info'
-        );
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(result.current.status).toBe('offline');
+          expect(result.current.errorMessage).toContain('Authentication failed');
+          expect(mockShowSnackbar).toHaveBeenCalledWith(
+            expect.stringContaining('Authentication failed'),
+            'info'
+          );
+        },
+        { timeout: 3000 }
+      );
     });
   });
 
   describe('Status management', () => {
     it('should start with offline status', () => {
       mockCloudService.getCurrentProvider.mockReturnValue(null);
-      
+
       const { result } = renderHook(() => useSync(), { wrapper });
 
       expect(result.current.status).toBe('offline');
@@ -375,11 +377,13 @@ describe('SyncContext', () => {
 
       mockCloudService.getCurrentProvider.mockReturnValue(StorageProviderType.ONEDRIVE);
       mockCloudService.isAuthenticated.mockResolvedValue(true);
-      
+
       let resolveSync!: (value: { mergedLastModified: string; fileItem: CloudItem }) => void;
-      const syncPromise = new Promise<{ mergedLastModified: string; fileItem: CloudItem }>((resolve) => {
-        resolveSync = resolve;
-      });
+      const syncPromise = new Promise<{ mergedLastModified: string; fileItem: CloudItem }>(
+        (resolve) => {
+          resolveSync = resolve;
+        }
+      );
       mockCloudSyncService.fullSync.mockReturnValue(syncPromise);
 
       const { result } = renderHook(() => useSync(), { wrapper });

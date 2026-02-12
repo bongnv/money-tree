@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { renderHook } from '@testing-library/react';
-import { useBudgetGrouping } from './useBudgetGrouping';
-import { useStore } from '@/contexts/StoreContext';
 import { useServiceContext } from '@/contexts/ServiceContext';
+import { useStore } from '@/contexts/StoreContext';
 import { CurrencyCode, BudgetPeriod, Group } from '@/types/enums';
 import type { Budget, TransactionType, Category } from '@/types/models';
+import { useBudgetGrouping } from './useBudgetGrouping';
 
 jest.mock('@/contexts/StoreContext');
 jest.mock('@/contexts/ServiceContext');

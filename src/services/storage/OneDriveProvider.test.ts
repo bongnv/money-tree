@@ -2,8 +2,8 @@
 // Provider now only handles raw file I/O and authentication
 // Integration tests with StorageService are in StorageService.test.ts
 
-import { OneDriveProvider } from './OneDriveProvider';
 import { StorageProviderType } from './IStorageProvider';
+import { OneDriveProvider } from './OneDriveProvider';
 
 describe('OneDriveProvider', () => {
   it('should create instance', () => {

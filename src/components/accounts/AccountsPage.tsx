@@ -1,12 +1,12 @@
-import React from 'react';
-import { Box, Typography, Button } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
-import type { Account } from '@/types/models';
-import { AccountList } from './AccountList';
-import { AccountDialog } from './AccountDialog';
+import { Box, Typography, Button } from '@mui/material';
+import React from 'react';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useStore } from '@/contexts/StoreContext';
 import { useAccountDialog } from '@/hooks/accounts/useAccountDialog';
-import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import type { Account } from '@/types/models';
+import { AccountDialog } from './AccountDialog';
+import { AccountList } from './AccountList';
 
 export const AccountsPage: React.FC = () => {
   const { accounts, addAccount, updateAccount, deleteAccount: deleteAccountOp } = useStore();

@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { renderHook, waitFor } from '@testing-library/react';
-import { useArchivePrompt } from './useArchivePrompt';
-import { useServiceContext } from '@/contexts/ServiceContext';
-import { useSync } from '@/contexts/SyncContext';
-import { useStore } from '@/contexts/StoreContext';
-import { CurrencyCode } from '@/types/enums';
 import { act } from 'react';
+import { useServiceContext } from '@/contexts/ServiceContext';
+import { useStore } from '@/contexts/StoreContext';
+import { useSync } from '@/contexts/SyncContext';
+import { CurrencyCode } from '@/types/enums';
+import { useArchivePrompt } from './useArchivePrompt';
 
 // Mock dependencies
 jest.mock('@/contexts/ServiceContext');

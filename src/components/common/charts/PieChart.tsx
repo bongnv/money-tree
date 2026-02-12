@@ -1,3 +1,4 @@
+import { Box } from '@mui/material';
 import React from 'react';
 import {
   PieChart as RechartsPieChart,
@@ -7,7 +8,6 @@ import {
   Legend,
   Tooltip,
 } from 'recharts';
-import { Box } from '@mui/material';
 
 export interface PieChartDataPoint {
   name: string;

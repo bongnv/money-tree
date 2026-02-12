@@ -1,4 +1,4 @@
-import React from 'react';
+import { Cloud as CloudIcon } from '@mui/icons-material';
 import {
   Dialog,
   DialogTitle,
@@ -15,7 +15,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { Cloud as CloudIcon } from '@mui/icons-material';
+import React from 'react';
 import { isOneDriveConfigured } from '@/config/onedrive.config';
 import { StorageProviderType } from '@/contexts/SyncContext';
 import { useWelcomeDialog } from '@/hooks/onboarding/useWelcomeDialog';

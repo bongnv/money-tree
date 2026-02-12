@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { renderHook, act } from '@testing-library/react';
-import { useCashFlowReport } from './useCashFlowReport';
-import { useStore } from '@/contexts/StoreContext';
 import { useServiceContext } from '@/contexts/ServiceContext';
+import { useStore } from '@/contexts/StoreContext';
 import { CurrencyCode, Group } from '@/types/enums';
 import type { Account, TransactionType } from '@/types/models';
+import { useCashFlowReport } from './useCashFlowReport';
 
 jest.mock('@/contexts/StoreContext');
 jest.mock('@/contexts/ServiceContext');

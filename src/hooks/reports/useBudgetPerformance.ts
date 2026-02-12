@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useStore } from '@/contexts/StoreContext';
 import { useServiceContext } from '@/contexts/ServiceContext';
-import { getTodayDate } from '@/utils/date.utils';
+import { useStore } from '@/contexts/StoreContext';
 import type { BudgetPerformanceData, BudgetTrendPoint } from '@/services/report.service';
 import { CurrencyCode } from '@/types/enums';
 import type { CurrencyCode as CurrencyCodeType } from '@/types/enums';
+import { getTodayDate } from '@/utils/date.utils';
 
 export interface GroupedBudgetItem {
   categoryId: string;

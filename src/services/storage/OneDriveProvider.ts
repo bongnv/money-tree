@@ -7,8 +7,8 @@ import {
   isOneDriveConfigured,
   getBlankRedirectUri,
 } from '@/config/onedrive.config';
-import type { IStorageProvider, CloudItem } from './IStorageProvider';
 import { StorageProviderType } from './IStorageProvider';
+import type { IStorageProvider, CloudItem } from './IStorageProvider';
 
 /**
  * OneDrive Storage Provider - Stateless

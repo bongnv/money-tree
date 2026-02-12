@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { renderHook, act } from '@testing-library/react';
-import { useTransactionForm } from './useTransactionForm';
 import type { Transaction } from '@/types/models';
+import { useTransactionForm } from './useTransactionForm';
 
 describe('useTransactionForm', () => {
   const mockTransaction: Transaction = {

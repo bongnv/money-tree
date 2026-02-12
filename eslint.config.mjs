@@ -92,6 +92,34 @@ export default [
           ],
         },
       ],
+
+      // Import ordering and grouping
+      'import/order': [
+        'warn',
+        {
+          groups: [
+            'builtin', // Node.js built-in modules
+            'external', // External packages (react, @mui, etc.)
+            'internal', // Internal packages using @ alias
+            ['parent', 'sibling'], // Relative imports
+            'index', // Index imports
+            'type', // Type imports
+          ],
+          pathGroups: [
+            {
+              pattern: '@/**',
+              group: 'internal',
+              position: 'after',
+            },
+          ],
+          pathGroupsExcludedImportTypes: ['builtin'],
+          'newlines-between': 'never',
+          alphabetize: {
+            order: 'asc',
+            caseInsensitive: true,
+          },
+        },
+      ],
     },
     settings: {
       react: {

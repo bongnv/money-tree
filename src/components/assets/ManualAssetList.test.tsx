@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import { ManualAssetList } from './ManualAssetList';
 import { AssetType, CurrencyCode } from '@/types/enums';
 import type { ManualAsset } from '@/types/models';
+import { ManualAssetList } from './ManualAssetList';
 
 describe('ManualAssetList', () => {
   const mockOnEdit = jest.fn();

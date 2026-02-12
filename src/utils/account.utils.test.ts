@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { validateAccountForm, transformFormToAccount } from './account.utils';
 import { AccountType, CurrencyCode } from '@/types/enums';
+import { validateAccountForm, transformFormToAccount } from './account.utils';
 import type { AccountFormData } from './account.utils';
 
 describe('account.utils', () => {

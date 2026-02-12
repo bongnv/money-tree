@@ -1,8 +1,8 @@
-import React from 'react';
-import { Container, Box, Typography, Button, Paper } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import HomeIcon from '@mui/icons-material/Home';
+import { Container, Box, Typography, Button, Paper } from '@mui/material';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export const NotFoundPage: React.FC = () => {
   const navigate = useNavigate();

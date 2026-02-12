@@ -1,4 +1,5 @@
-import React from 'react';
+import CloudIcon from '@mui/icons-material/Cloud';
+import LogoutIcon from '@mui/icons-material/Logout';
 import {
   Box,
   Typography,
@@ -12,8 +13,7 @@ import {
   DialogActions,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import LogoutIcon from '@mui/icons-material/Logout';
-import CloudIcon from '@mui/icons-material/Cloud';
+import React from 'react';
 import { useDataSyncSettings } from '@/hooks/useDataSyncSettings';
 
 export const DataSyncSettings: React.FC = () => {

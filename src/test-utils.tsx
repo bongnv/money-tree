@@ -1,6 +1,6 @@
 import { render, RenderOptions } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
 import React from 'react';
+import { BrowserRouter } from 'react-router-dom';
 import { StoreProvider } from './contexts/StoreContext';
 
 // Mock CloudSyncService class

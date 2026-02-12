@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { Container, Typography, Box, Button, Breadcrumbs, Link } from '@mui/material';
 import { Add as AddIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+import { Container, Typography, Box, Button, Breadcrumbs, Link } from '@mui/material';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { TransactionTypeList } from '@/components/categories/TransactionTypeList';
 import { TransactionTypeDialog } from '@/components/categories/TransactionTypeDialog';
-import type { TransactionType } from '@/types/models';
+import { TransactionTypeList } from '@/components/categories/TransactionTypeList';
 import { useStore } from '@/contexts/StoreContext';
+import type { TransactionType } from '@/types/models';
 
 export const CategoryDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

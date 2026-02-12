@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import {
   Box,
   Typography,
@@ -10,17 +10,17 @@ import {
   Divider,
   LinearProgress,
 } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { BudgetDialog } from './BudgetDialog';
-import { PeriodSelector } from '@/components/common/PeriodSelector';
+import React, { useState } from 'react';
 import { CategoryFilter } from '@/components/common/CategoryFilter';
-import { getBudgetPresets } from './periodPresets';
-import type { Budget } from '@/types/models';
-import { formatCurrency } from '@/utils/currency.utils';
-import { Group } from '@/types/enums';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { PeriodSelector } from '@/components/common/PeriodSelector';
 import { useStore } from '@/contexts/StoreContext';
 import { useBudgetGrouping } from '@/hooks/budgets/useBudgetGrouping';
-import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { Group } from '@/types/enums';
+import type { Budget } from '@/types/models';
+import { formatCurrency } from '@/utils/currency.utils';
+import { BudgetDialog } from './BudgetDialog';
+import { getBudgetPresets } from './periodPresets';
 
 export const BudgetsPage: React.FC = () => {
   const {

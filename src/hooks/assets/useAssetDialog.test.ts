@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
-import { useAssetDialog } from './useAssetDialog';
-import type { ManualAsset } from '@/types/models';
 import { AssetType, CurrencyCode } from '@/types/enums';
+import type { ManualAsset } from '@/types/models';
+import { useAssetDialog } from './useAssetDialog';
 
 describe('useAssetDialog', () => {
   const mockAsset: ManualAsset = {

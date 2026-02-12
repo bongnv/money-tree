@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ArchiveManager } from './ArchiveManager';
 import * as useArchiveManagerHook from '@/hooks/useArchiveManager';
 import { CurrencyCode } from '@/types/enums';
 import type { YearEndSummary } from '@/types/models';
+import { ArchiveManager } from './ArchiveManager';
 
 jest.mock('@/hooks/useArchiveManager');
 
@@ -64,7 +64,7 @@ describe('ArchiveManager', () => {
     });
 
     render(<ArchiveManager />);
-    
+
     expect(screen.getByText('2022')).toBeInTheDocument();
     expect(screen.getByText('150')).toBeInTheDocument();
     expect(screen.getByText('$50,000.00')).toBeInTheDocument();
@@ -78,7 +78,7 @@ describe('ArchiveManager', () => {
     });
 
     render(<ArchiveManager />);
-    
+
     // CircularProgress should be in the table
     const progressBars = screen.getAllByRole('progressbar');
     expect(progressBars.length).toBeGreaterThan(0);
@@ -95,10 +95,10 @@ describe('ArchiveManager', () => {
     });
 
     render(<ArchiveManager />);
-    
+
     const archiveButton = screen.getByRole('button', { name: /Archive/i });
     expect(archiveButton).toBeInTheDocument();
-    
+
     await user.click(archiveButton);
     expect(mockHandleOpenConfirmDialog).toHaveBeenCalledWith(2022);
   });
@@ -115,7 +115,7 @@ describe('ArchiveManager', () => {
     });
 
     render(<ArchiveManager />);
-    
+
     const archiveButton = screen.getByRole('button', { name: /Archiving\.\.\./i });
     expect(archiveButton).toBeDisabled();
   });
@@ -143,7 +143,7 @@ describe('ArchiveManager', () => {
     });
 
     render(<ArchiveManager />);
-    
+
     expect(screen.getByText('2021')).toBeInTheDocument();
     expect(screen.getByText('2020')).toBeInTheDocument();
     expect(screen.getByText('200')).toBeInTheDocument();
@@ -164,7 +164,7 @@ describe('ArchiveManager', () => {
     });
 
     render(<ArchiveManager />);
-    
+
     expect(screen.getByText('Archive Year 2022?')).toBeInTheDocument();
     expect(screen.getByText(/This will:/i)).toBeInTheDocument();
     expect(screen.getByText(/Create an archive file for 2022/i)).toBeInTheDocument();
@@ -178,10 +178,10 @@ describe('ArchiveManager', () => {
     });
 
     render(<ArchiveManager />);
-    
+
     const cancelButton = screen.getByRole('button', { name: /Cancel/i });
     await user.click(cancelButton);
-    
+
     expect(mockHandleCloseConfirmDialog).toHaveBeenCalled();
   });
 
@@ -193,10 +193,10 @@ describe('ArchiveManager', () => {
     });
 
     render(<ArchiveManager />);
-    
+
     const confirmButton = screen.getByRole('button', { name: /Archive & Remove Data/i });
     await user.click(confirmButton);
-    
+
     expect(mockHandleExportYear).toHaveBeenCalledWith(2022);
   });
 
@@ -208,10 +208,10 @@ describe('ArchiveManager', () => {
     });
 
     render(<ArchiveManager />);
-    
+
     const confirmButton = screen.getByRole('button', { name: /Archive & Remove Data/i });
     await user.click(confirmButton);
-    
+
     expect(mockHandleExportYear).not.toHaveBeenCalled();
   });
 
@@ -228,7 +228,7 @@ describe('ArchiveManager', () => {
     });
 
     render(<ArchiveManager />);
-    
+
     // Check that a date is displayed (format may vary by locale)
     const dateCell = screen.getByText(/2023|6\/15\/2023|15\/6\/2023/);
     expect(dateCell).toBeInTheDocument();
@@ -245,7 +245,7 @@ describe('ArchiveManager', () => {
     });
 
     render(<ArchiveManager />);
-    
+
     expect(screen.getByText('A$50,000.00')).toBeInTheDocument();
   });
 });

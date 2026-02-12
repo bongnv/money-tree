@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Box,
   Paper,
@@ -9,10 +8,11 @@ import {
   MenuItem,
   Divider,
 } from '@mui/material';
+import React from 'react';
 import { DEFAULT_CURRENCIES } from '@/constants/defaults';
-import { DataSyncSettings } from './DataSyncSettings';
-import { CurrencyCode } from '@/types/enums';
 import { useStore } from '@/contexts/StoreContext';
+import { CurrencyCode } from '@/types/enums';
+import { DataSyncSettings } from './DataSyncSettings';
 
 export const PreferencesPage: React.FC = () => {
   const { baseCurrency, setBaseCurrency } = useStore();

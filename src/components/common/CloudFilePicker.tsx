@@ -1,4 +1,10 @@
-import { useState, useEffect } from 'react';
+import {
+  Folder as FolderIcon,
+  InsertDriveFile as FileIcon,
+  NavigateNext as NavigateNextIcon,
+  Cloud as CloudIcon,
+  People as PeopleIcon,
+} from '@mui/icons-material';
 import {
   Dialog,
   DialogTitle,
@@ -19,15 +25,9 @@ import {
   TextField,
   Divider,
 } from '@mui/material';
-import {
-  Folder as FolderIcon,
-  InsertDriveFile as FileIcon,
-  NavigateNext as NavigateNextIcon,
-  Cloud as CloudIcon,
-  People as PeopleIcon,
-} from '@mui/icons-material';
-import type { CloudItem } from '@/services/storage/IStorageProvider';
+import { useState, useEffect } from 'react';
 import type { CloudService } from '@/services/cloud.service';
+import type { CloudItem } from '@/services/storage/IStorageProvider';
 
 interface CloudFilePickerProps {
   open: boolean;

@@ -1,5 +1,5 @@
-import React from 'react';
 import { Dialog, DialogTitle, DialogContent } from '@mui/material';
+import React from 'react';
 import type { TransactionType, Category } from '@/types/models';
 import { TransactionTypeForm } from './TransactionTypeForm';
 

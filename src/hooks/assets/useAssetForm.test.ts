@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { renderHook, act } from '@testing-library/react';
-import { useAssetForm } from './useAssetForm';
-import type { ManualAsset } from '@/types/models';
 import { AssetType, CurrencyCode } from '@/types/enums';
+import type { ManualAsset } from '@/types/models';
+import { useAssetForm } from './useAssetForm';
 
 describe('useAssetForm', () => {
   const mockAsset: ManualAsset = {

@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { renderHook, act } from '@testing-library/react';
-import { useBalanceSheet } from './useBalanceSheet';
 import { useStore } from '@/contexts/StoreContext';
 import { CurrencyCode } from '@/types/enums';
 import type { Account, ManualAsset } from '@/types/models';
+import { useBalanceSheet } from './useBalanceSheet';
 
 jest.mock('@/contexts/StoreContext');
 jest.mock('@/contexts/ServiceContext', () => ({

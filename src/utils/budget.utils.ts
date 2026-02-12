@@ -1,5 +1,5 @@
-import type { Budget } from '@/types/models';
 import { BudgetPeriod, CurrencyCode } from '@/types/enums';
+import type { Budget } from '@/types/models';
 
 export interface BudgetFormData {
   transactionTypeId: string;

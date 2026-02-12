@@ -1,4 +1,5 @@
-import React from 'react';
+import ArchiveIcon from '@mui/icons-material/Archive';
+import WarningIcon from '@mui/icons-material/Warning';
 import {
   Box,
   Paper,
@@ -19,10 +20,9 @@ import {
   DialogContentText,
   DialogActions,
 } from '@mui/material';
-import ArchiveIcon from '@mui/icons-material/Archive';
-import WarningIcon from '@mui/icons-material/Warning';
-import { formatCurrency } from '@/utils/currency.utils';
+import React from 'react';
 import { useArchiveManager } from '@/hooks/useArchiveManager';
+import { formatCurrency } from '@/utils/currency.utils';
 
 export const ArchiveManager: React.FC = () => {
   const {

@@ -1,5 +1,7 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import WarningIcon from '@mui/icons-material/Warning';
 import {
   Box,
   Paper,
@@ -22,19 +24,17 @@ import {
   Button,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import TrendingDownIcon from '@mui/icons-material/TrendingDown';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import WarningIcon from '@mui/icons-material/Warning';
-import { useBudgetPerformance } from '@/hooks/reports/useBudgetPerformance';
-import { PeriodSelector } from '@/components/common/PeriodSelector';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CategoryFilter } from '@/components/common/CategoryFilter';
 import { LineChart } from '@/components/common/charts/LineChart';
-import { CHART_COLORS } from '@/theme';
-import { formatCurrency } from '@/utils/currency.utils';
-import { CurrencyCode } from '@/types/enums';
+import { PeriodSelector } from '@/components/common/PeriodSelector';
 import { DEFAULT_CURRENCIES } from '@/constants/defaults';
 import { useStore } from '@/contexts/StoreContext';
+import { useBudgetPerformance } from '@/hooks/reports/useBudgetPerformance';
+import { CHART_COLORS } from '@/theme';
+import { CurrencyCode } from '@/types/enums';
+import { formatCurrency } from '@/utils/currency.utils';
 
 export const BudgetPerformanceReport: React.FC = () => {
   const navigate = useNavigate();

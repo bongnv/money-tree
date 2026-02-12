@@ -1,5 +1,5 @@
-import React from 'react';
 import { Box, Container, Paper, Tabs, Tab, Typography } from '@mui/material';
+import React from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 const REPORT_TABS = [

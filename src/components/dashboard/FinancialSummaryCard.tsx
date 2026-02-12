@@ -1,6 +1,6 @@
-import React from 'react';
-import { Card, CardContent, Typography, Box } from '@mui/material';
 import { TrendingUp, TrendingDown } from '@mui/icons-material';
+import { Card, CardContent, Typography, Box } from '@mui/material';
+import React from 'react';
 
 export interface FinancialSummaryCardProps {
   title: string;

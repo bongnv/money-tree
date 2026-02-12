@@ -1,8 +1,8 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSync } from '@/contexts/SyncContext';
-import { useStore } from '@/contexts/StoreContext';
 import { useServiceContext } from '@/contexts/ServiceContext';
+import { useStore } from '@/contexts/StoreContext';
+import { useSync } from '@/contexts/SyncContext';
 import { db } from '@/db/database';
 
 /**

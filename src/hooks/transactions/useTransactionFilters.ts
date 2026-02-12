@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
-import type { Transaction, TransactionType } from '@/types/models';
 import { Group } from '@/types/enums';
+import type { Transaction, TransactionType } from '@/types/models';
 import { getTodayDate } from '@/utils/date.utils';
 import { filterTransactions } from '@/utils/transaction.utils';
 

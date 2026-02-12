@@ -1,6 +1,6 @@
-import { validationService } from './validation.service';
-import type { Transaction, Account, TransactionType } from '@/types/models';
 import { Group, AccountType, CurrencyCode } from '@/types/enums';
+import type { Transaction, Account, TransactionType } from '@/types/models';
+import { validationService } from './validation.service';
 
 const mockAccount1: Account = {
   id: 'acc-1',

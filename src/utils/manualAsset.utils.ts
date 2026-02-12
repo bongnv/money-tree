@@ -1,5 +1,5 @@
-import type { ManualAsset } from '@/types/models';
 import { AssetType, CurrencyCode } from '@/types/enums';
+import type { ManualAsset } from '@/types/models';
 
 export interface AssetFormData {
   name: string;

@@ -1,6 +1,6 @@
+import { isOneDriveConfigured } from '@/config/onedrive.config';
 import { IStorageProvider, CloudItem, StorageProviderType } from './storage/IStorageProvider';
 import { OneDriveProvider } from './storage/OneDriveProvider';
-import { isOneDriveConfigured } from '@/config/onedrive.config';
 
 const STORAGE_CONFIG_KEY = 'moneyTree.storageProviderConfig';
 

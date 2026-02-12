@@ -1,7 +1,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useAccountForm } from './useAccountForm';
-import type { Account } from '@/types/models';
 import { AccountType, CurrencyCode } from '@/types/enums';
+import type { Account } from '@/types/models';
+import { useAccountForm } from './useAccountForm';
 
 describe('useAccountForm', () => {
   const mockAccount: Account = {

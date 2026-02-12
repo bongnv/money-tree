@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { RecentTransactionsList } from './RecentTransactionsList';
 import { useStore } from '@/contexts/StoreContext';
 import { Group, CurrencyCode } from '@/types/enums';
+import { RecentTransactionsList } from './RecentTransactionsList';
 
 jest.mock('@/contexts/StoreContext');
 

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { renderHook, act } from '@testing-library/react';
-import { useReconnectDialog } from './useReconnectDialog';
-import { useSync } from '@/contexts/SyncContext';
 import { useApp } from '@/contexts/AppContext';
+import { useSync } from '@/contexts/SyncContext';
+import { useReconnectDialog } from './useReconnectDialog';
 
 jest.mock('@/contexts/SyncContext');
 jest.mock('@/contexts/AppContext');

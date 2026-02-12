@@ -1,3 +1,4 @@
+import { AccountType, AssetType, CurrencyCode, Group } from '@/types/enums';
 import type {
   Account,
   ManualAsset,
@@ -6,10 +7,9 @@ import type {
   Category,
   Budget,
 } from '@/types/models';
-import { AccountType, AssetType, CurrencyCode, Group } from '@/types/enums';
-import { CalculationService } from './calculation.service';
 import { getAssetCurrentValue } from '@/utils/asset.utils';
 import { getRateSync } from '@/utils/exchangeRate.utils';
+import { CalculationService } from './calculation.service';
 
 export interface BalanceSheetData {
   assets: AssetGroup[];

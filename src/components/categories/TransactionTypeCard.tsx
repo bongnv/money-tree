@@ -1,11 +1,11 @@
-import React from 'react';
-import { Card, CardContent, CardActions, Typography, IconButton, Box, Chip } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Archive as ArchiveIcon,
   Unarchive as UnarchiveIcon,
 } from '@mui/icons-material';
+import { Card, CardContent, CardActions, Typography, IconButton, Box, Chip } from '@mui/material';
+import React from 'react';
 import type { TransactionType, Category } from '@/types/models';
 
 interface TransactionTypeCardProps {

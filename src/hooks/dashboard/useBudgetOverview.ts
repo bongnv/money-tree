@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import { useStore } from '@/contexts/StoreContext';
+import type { PeriodOption } from '@/components/common/PeriodSelector';
 import { useServiceContext } from '@/contexts/ServiceContext';
+import { useStore } from '@/contexts/StoreContext';
 import { Group } from '@/types/enums';
 import type { CurrencyCode } from '@/types/enums';
-import type { PeriodOption } from '@/components/common/PeriodSelector';
 
 export interface BudgetWithUsage {
   id: string;

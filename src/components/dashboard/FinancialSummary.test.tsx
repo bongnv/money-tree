@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { FinancialSummary } from './FinancialSummary';
-import { useFinancialSummary } from '@/hooks/dashboard/useFinancialSummary';
 import { useStore } from '@/contexts/StoreContext';
+import { useFinancialSummary } from '@/hooks/dashboard/useFinancialSummary';
 import { CurrencyCode } from '@/types/enums';
+import { FinancialSummary } from './FinancialSummary';
 
 jest.mock('@/hooks/dashboard/useFinancialSummary');
 jest.mock('@/contexts/StoreContext');

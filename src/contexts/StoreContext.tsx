@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useCallback, useEffect, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import React, { createContext, useContext, useCallback, useEffect, useMemo } from 'react';
 import { db } from '@/db/database';
-import { generateId } from '@/utils/id.utils';
+import { CurrencyCode } from '@/types/enums';
 import type {
   Transaction,
   Account,
@@ -13,8 +13,8 @@ import type {
   AssetValueHistory,
   ArchivedYearReference,
 } from '@/types/models';
-import { CurrencyCode } from '@/types/enums';
 import { ensureCurrentMonthRates } from '@/utils/exchangeRate.utils';
+import { generateId } from '@/utils/id.utils';
 
 // Default state when data is loading
 const DEFAULT_DATA = {

@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { render } from '@testing-library/react';
-import { TransactionForm } from './TransactionForm';
-import { useTransactionForm } from '@/hooks/transactions/useTransactionForm';
 import { useStore } from '@/contexts/StoreContext';
-import type { Transaction, Account, TransactionType, Category } from '@/types/models';
+import { useTransactionForm } from '@/hooks/transactions/useTransactionForm';
 import { AccountType, Group, CurrencyCode } from '@/types/enums';
+import type { Transaction, Account, TransactionType, Category } from '@/types/models';
+import { TransactionForm } from './TransactionForm';
 
 jest.mock('@/hooks/transactions/useTransactionForm');
 jest.mock('@/contexts/StoreContext');

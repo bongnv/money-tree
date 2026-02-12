@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
+import { BrowserRouter } from 'react-router-dom';
 import { NotFoundPage } from './NotFoundPage';
 
 const mockNavigate = jest.fn();

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { useStore } from '@/contexts/StoreContext';
+import { useSync } from '@/contexts/SyncContext';
 import { render } from '@/test-utils';
 import { DataSyncSettings } from './DataSyncSettings';
-import { useSync } from '@/contexts/SyncContext';
-import { useStore } from '@/contexts/StoreContext';
 
 jest.mock('@/contexts/SyncContext');
 jest.mock('@/contexts/StoreContext');

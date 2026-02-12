@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { QuickEntryRow } from './QuickEntryRow';
-import type { Account, Category, Transaction, TransactionType } from '@/types/models';
 import { Group, AccountType, CurrencyCode } from '@/types/enums';
+import type { Account, Category, Transaction, TransactionType } from '@/types/models';
+import { QuickEntryRow } from './QuickEntryRow';
 
 describe('QuickEntryRow', () => {
   const mockAccounts: Account[] = [

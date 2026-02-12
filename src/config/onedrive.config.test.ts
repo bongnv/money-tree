@@ -104,9 +104,9 @@ describe('onedrive.config', () => {
         'downloadFailed',
         'networkError',
         'permissionDenied',
-        'configError'
+        'configError',
       ];
-      
+
       expect(requiredMessages.length).toBe(7);
     });
   });

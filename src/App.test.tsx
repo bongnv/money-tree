@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { render } from '@testing-library/react';
+import { useArchivePrompt } from '@/hooks/useArchivePrompt';
 import App from './App';
 import { CloudService } from './services/cloud.service';
 
@@ -71,10 +72,6 @@ jest.mock('./components/common/ArchivePrompt', () => ({
       </div>
     ) : null,
 }));
-
-// Import after mocking
-import { useArchivePrompt } from '@/hooks/useArchivePrompt';
-
 const mockUseArchivePrompt = useArchivePrompt as jest.MockedFunction<typeof useArchivePrompt>;
 
 describe('App', () => {

@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { CategoriesListPage } from './CategoriesListPage';
 import { useStore } from '@/contexts/StoreContext';
+import { CategoriesListPage } from './CategoriesListPage';
 
 jest.mock('@/contexts/StoreContext');
 

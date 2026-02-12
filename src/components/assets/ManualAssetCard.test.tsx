@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import { ManualAssetCard } from './ManualAssetCard';
 import { AssetType, CurrencyCode } from '@/types/enums';
 import type { ManualAsset } from '@/types/models';
+import { ManualAssetCard } from './ManualAssetCard';
 
 describe('ManualAssetCard', () => {
   const mockAsset: ManualAsset = {

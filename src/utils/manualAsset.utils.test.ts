@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { AssetType, CurrencyCode } from '@/types/enums';
+import type { ManualAsset } from '@/types/models';
 import {
   validateAssetForm,
   transformFormToAsset,
   validateAssetValueUpdate,
   getAssetFormFromValue,
 } from './manualAsset.utils';
-import { AssetType, CurrencyCode } from '@/types/enums';
 import type { AssetFormData, AssetValueUpdateData } from './manualAsset.utils';
-import type { ManualAsset } from '@/types/models';
 
 describe('manualAsset.utils', () => {
   describe('validateAssetForm', () => {

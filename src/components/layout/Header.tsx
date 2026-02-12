@@ -1,5 +1,15 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  Dashboard as DashboardIcon,
+  ReceiptLong as TransactionsIcon,
+  Assessment as ReportsIcon,
+  AccountBalanceWallet as BudgetIcon,
+  Settings as SettingsIcon,
+  Menu as MenuIcon,
+  CloudDone as CloudDoneIcon,
+  CloudOff as CloudOffIcon,
+  CloudQueue as CloudQueueIcon,
+  Error as ErrorIcon,
+} from '@mui/icons-material';
 import {
   AppBar,
   Toolbar,
@@ -18,18 +28,8 @@ import {
   useMediaQuery,
   Tooltip,
 } from '@mui/material';
-import {
-  Dashboard as DashboardIcon,
-  ReceiptLong as TransactionsIcon,
-  Assessment as ReportsIcon,
-  AccountBalanceWallet as BudgetIcon,
-  Settings as SettingsIcon,
-  Menu as MenuIcon,
-  CloudDone as CloudDoneIcon,
-  CloudOff as CloudOffIcon,
-  CloudQueue as CloudQueueIcon,
-  Error as ErrorIcon,
-} from '@mui/icons-material';
+import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useSync } from '@/contexts/SyncContext';
 
 export const Header: React.FC = () => {

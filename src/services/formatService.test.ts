@@ -1,4 +1,4 @@
-import { FormatService } from './formatService';
+import { CurrencyCode, BudgetPeriod, Group, AccountType, AssetType } from '@/types/enums';
 import type {
   Account,
   Category,
@@ -7,7 +7,7 @@ import type {
   Budget,
   ManualAsset,
 } from '@/types/models';
-import { CurrencyCode, BudgetPeriod, Group, AccountType, AssetType } from '@/types/enums';
+import { FormatService } from './formatService';
 
 describe('FormatService', () => {
   let formatService: FormatService;

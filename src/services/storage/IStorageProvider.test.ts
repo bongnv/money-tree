@@ -1,7 +1,7 @@
-import type { IStorageProvider, CloudItem } from './IStorageProvider';
-import type { DataFile } from '@/types/models';
 import { CurrencyCode } from '@/types/enums';
+import type { DataFile } from '@/types/models';
 import { StorageProviderType } from './IStorageProvider';
+import type { IStorageProvider, CloudItem } from './IStorageProvider';
 
 /**
  * Tests for IStorageProvider interface

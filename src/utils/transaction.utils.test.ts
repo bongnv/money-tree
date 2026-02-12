@@ -1,11 +1,11 @@
+import { Group, CurrencyCode, AccountType } from '@/types/enums';
+import type { Transaction, TransactionType, Account } from '@/types/models';
 import {
   filterTransactions,
   validateTransactionForm,
   transformFormToTransaction,
   deriveTransactionType,
 } from './transaction.utils';
-import { Group, CurrencyCode, AccountType } from '@/types/enums';
-import type { Transaction, TransactionType, Account } from '@/types/models';
 import type { TransactionFilters, TransactionFormData } from './transaction.utils';
 
 describe('transaction.utils', () => {

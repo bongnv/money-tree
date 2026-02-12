@@ -1,5 +1,5 @@
-import { validateBudgetForm, transformFormToBudget } from './budget.utils';
 import { BudgetPeriod, CurrencyCode } from '@/types/enums';
+import { validateBudgetForm, transformFormToBudget } from './budget.utils';
 import type { BudgetFormData } from './budget.utils';
 
 describe('budget.utils', () => {

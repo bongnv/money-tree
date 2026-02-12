@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import {
   Box,
   Paper,
@@ -13,17 +14,16 @@ import {
   FormControl,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import TrendingDownIcon from '@mui/icons-material/TrendingDown';
-import { ManualAssetSection } from './ManualAssetSection';
-import { DEFAULT_CURRENCIES } from '@/constants/defaults';
+import React, { useState } from 'react';
 import { AssetValueHistoryDialog } from '@/components/assets/AssetValueHistoryDialog';
 import { LineChart } from '@/components/common/charts/LineChart';
-import { formatCurrency } from '@/utils/currency.utils';
 import { FormDatePicker } from '@/components/common/FormDatePicker';
+import { DEFAULT_CURRENCIES } from '@/constants/defaults';
+import { useBalanceSheet } from '@/hooks/reports/useBalanceSheet';
 import { CurrencyCode } from '@/types/enums';
 import type { ManualAsset } from '@/types/models';
-import { useBalanceSheet } from '@/hooks/reports/useBalanceSheet';
+import { formatCurrency } from '@/utils/currency.utils';
+import { ManualAssetSection } from './ManualAssetSection';
 
 type ComparisonType = 'none' | 'month' | 'year';
 

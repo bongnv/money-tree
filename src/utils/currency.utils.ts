@@ -1,6 +1,6 @@
 import { DEFAULT_CURRENCIES } from '@/constants/defaults';
-import type { Currency } from '@/types/models';
 import type { CurrencyCode } from '@/types/enums';
+import type { Currency } from '@/types/models';
 
 /**
  * Get currency by code

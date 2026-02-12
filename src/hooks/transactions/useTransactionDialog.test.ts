@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
-import { useTransactionDialog } from './useTransactionDialog';
 import type { Transaction } from '@/types/models';
+import { useTransactionDialog } from './useTransactionDialog';
 
 describe('useTransactionDialog', () => {
   const mockTransaction: Transaction = {

@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { renderHook, waitFor, act } from '@testing-library/react';
-import { useArchiveManager } from './useArchiveManager';
+import { useAppContext } from '@/contexts/AppContext';
 import { useServiceContext } from '@/contexts/ServiceContext';
 import { useStore } from '@/contexts/StoreContext';
-import { useAppContext } from '@/contexts/AppContext';
 import { useSync } from '@/contexts/SyncContext';
 import { CurrencyCode } from '@/types/enums';
 import type { YearEndSummary } from '@/types/models';
+import { useArchiveManager } from './useArchiveManager';
 
 // Mock dependencies
 jest.mock('@/contexts/ServiceContext');

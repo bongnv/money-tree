@@ -1,3 +1,5 @@
+import { DEFAULT_CURRENCIES } from '@/constants/defaults';
+import { CurrencyCode } from '@/types/enums';
 import {
   getCurrencyByCode,
   formatCurrency,
@@ -7,8 +9,6 @@ import {
   convertAmount,
   formatCurrencyWithConversion,
 } from './currency.utils';
-import { DEFAULT_CURRENCIES } from '@/constants/defaults';
-import { CurrencyCode } from '@/types/enums';
 
 describe('currency.utils', () => {
   describe('getCurrencyByCode', () => {

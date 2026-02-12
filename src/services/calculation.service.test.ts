@@ -1,4 +1,4 @@
-import { CalculationService } from './calculation.service';
+import { AccountType, AssetType, CurrencyCode, Group } from '@/types/enums';
 import type {
   Transaction,
   Account,
@@ -7,8 +7,8 @@ import type {
   TransactionType,
   Category,
 } from '@/types/models';
-import { AccountType, AssetType, CurrencyCode, Group } from '@/types/enums';
 import * as exchangeRateUtils from '@/utils/exchangeRate.utils';
+import { CalculationService } from './calculation.service';
 
 // Mock the exchange rate utils
 jest.mock('../utils/exchangeRate.utils', () => ({

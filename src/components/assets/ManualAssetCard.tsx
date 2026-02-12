@@ -1,15 +1,15 @@
-import React from 'react';
-import { Box, Paper, Typography, IconButton, Chip, Button } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
-import type { ManualAsset } from '@/types/models';
+import { Box, Paper, Typography, IconButton, Chip, Button } from '@mui/material';
+import React from 'react';
 import { AssetType } from '@/types/enums';
+import type { ManualAsset } from '@/types/models';
+import { getAssetCurrentValue } from '@/utils/asset.utils';
 import { formatCurrency } from '@/utils/currency.utils';
 import { formatDate } from '@/utils/date.utils';
-import { getAssetCurrentValue } from '@/utils/asset.utils';
 
 interface ManualAssetCardProps {
   asset: ManualAsset;

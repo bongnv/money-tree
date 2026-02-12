@@ -1,3 +1,4 @@
+import { Clear as ClearIcon } from '@mui/icons-material';
 import {
   Box,
   TextField,
@@ -10,11 +11,10 @@ import {
   OutlinedInput,
   SelectChangeEvent,
 } from '@mui/material';
-import { Clear as ClearIcon } from '@mui/icons-material';
-import { PeriodSelector } from '@/components/common/PeriodSelector';
 import { CategoryFilter } from '@/components/common/CategoryFilter';
-import type { Account, Category, TransactionType } from '@/types/models';
+import { PeriodSelector } from '@/components/common/PeriodSelector';
 import { Group } from '@/types/enums';
+import type { Account, Category, TransactionType } from '@/types/models';
 
 export interface TransactionFiltersState {
   dateFrom: string;

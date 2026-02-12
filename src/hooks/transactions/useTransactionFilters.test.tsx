@@ -1,9 +1,9 @@
-import React from 'react';
 import { renderHook, act } from '@testing-library/react';
-import { useTransactionFilters } from './useTransactionFilters';
+import React from 'react';
+import { BrowserRouter } from 'react-router-dom';
 import { Group } from '@/types/enums';
 import type { Transaction, TransactionType } from '@/types/models';
-import { BrowserRouter } from 'react-router-dom';
+import { useTransactionFilters } from './useTransactionFilters';
 
 const mockTransactions: Transaction[] = [
   {

@@ -1,11 +1,11 @@
-import React, { useState, useMemo } from 'react';
 import { Box, Typography, Container } from '@mui/material';
 import { startOfYear, format } from 'date-fns';
+import React, { useState, useMemo } from 'react';
 import { PeriodSelector } from '@/components/common/PeriodSelector';
-import { FinancialSummary } from './FinancialSummary';
-import { BudgetOverview } from './BudgetOverview';
-import { RecentTransactionsList } from './RecentTransactionsList';
 import { getTodayDate } from '@/utils/date.utils';
+import { BudgetOverview } from './BudgetOverview';
+import { FinancialSummary } from './FinancialSummary';
+import { RecentTransactionsList } from './RecentTransactionsList';
 
 export const DashboardPage: React.FC = () => {
   const [startDate, setStartDate] = useState(format(startOfYear(new Date()), 'yyyy-MM-dd'));

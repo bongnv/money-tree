@@ -1,5 +1,5 @@
-import React from 'react';
 import { Snackbar, Alert, AlertColor } from '@mui/material';
+import React from 'react';
 
 export interface NotificationSnackbarProps {
   open: boolean;

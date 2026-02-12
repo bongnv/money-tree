@@ -1,6 +1,6 @@
-import React from 'react';
-import Grid from '@mui/material/Grid';
 import { Typography, Box } from '@mui/material';
+import Grid from '@mui/material/Grid';
+import React from 'react';
 import type { ManualAsset } from '@/types/models';
 import { ManualAssetCard } from './ManualAssetCard';
 

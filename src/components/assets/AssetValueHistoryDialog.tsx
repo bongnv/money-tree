@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import {
   Dialog,
   DialogTitle,
@@ -18,14 +19,13 @@ import {
   ToggleButton,
   Chip,
 } from '@mui/material';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import React, { useState } from 'react';
+import { LineChart } from '@/components/common/charts/LineChart';
 import { ManualAsset } from '@/types/models';
+import { getAssetCurrentValue } from '@/utils/asset.utils';
+import { getCompleteValueHistory, calculateAssetValueGrowth } from '@/utils/asset.utils';
 import { formatCurrency } from '@/utils/currency.utils';
 import { formatDate, getTodayDate } from '@/utils/date.utils';
-import { getAssetCurrentValue } from '@/utils/asset.utils';
-import { LineChart } from '@/components/common/charts/LineChart';
-import { getCompleteValueHistory, calculateAssetValueGrowth } from '@/utils/asset.utils';
 
 export interface AssetValueHistoryDialogProps {
   open: boolean;

@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { useSync } from '@/contexts/SyncContext';
 import { useApp } from '@/contexts/AppContext';
+import { useSync } from '@/contexts/SyncContext';
 
 /**
  * Hook for managing ReconnectDialog state and actions

@@ -1,5 +1,5 @@
-import type { Account } from '@/types/models';
 import { AccountType, CurrencyCode } from '@/types/enums';
+import type { Account } from '@/types/models';
 
 export interface AccountFormData {
   name: string;

@@ -1,16 +1,14 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { AccountForm } from './AccountForm';
+import { useAccountForm } from '@/hooks/accounts/useAccountForm';
 import { AccountType, CurrencyCode } from '@/types/enums';
 import type { Account } from '@/types/models';
+import { AccountForm } from './AccountForm';
 
 // Mock the useAccountForm hook
 jest.mock('@/hooks/accounts/useAccountForm', () => ({
   useAccountForm: jest.fn(),
 }));
-
-import { useAccountForm } from '@/hooks/accounts/useAccountForm';
-
 describe('AccountForm', () => {
   const mockOnSubmit = jest.fn();
   const mockOnCancel = jest.fn();

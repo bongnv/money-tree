@@ -3,9 +3,9 @@
  */
 
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ArchivePrompt } from './ArchivePrompt';
-import type { YearEndSummary } from '@/types/models';
 import { CurrencyCode } from '@/types/enums';
+import type { YearEndSummary } from '@/types/models';
+import { ArchivePrompt } from './ArchivePrompt';
 
 describe('ArchivePrompt', () => {
   const mockYearSummary: YearEndSummary = {

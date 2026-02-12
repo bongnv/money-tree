@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -10,9 +9,10 @@ import {
   Typography,
   Divider,
 } from '@mui/material';
-import { formatCurrency } from '@/utils/currency.utils';
-import type { YearEndSummary } from '@/types/models';
+import React from 'react';
 import { CurrencyCode } from '@/types/enums';
+import type { YearEndSummary } from '@/types/models';
+import { formatCurrency } from '@/utils/currency.utils';
 
 export interface ArchivePromptProps {
   open: boolean;

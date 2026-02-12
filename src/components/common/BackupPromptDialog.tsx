@@ -1,4 +1,4 @@
-import React from 'react';
+import { Backup as BackupIcon } from '@mui/icons-material';
 import {
   Dialog,
   DialogTitle,
@@ -9,7 +9,7 @@ import {
   Box,
   Alert,
 } from '@mui/material';
-import { Backup as BackupIcon } from '@mui/icons-material';
+import React from 'react';
 
 interface BackupPromptDialogProps {
   open: boolean;

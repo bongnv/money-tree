@@ -1,6 +1,6 @@
-import { DEFAULT_CURRENCIES } from './defaults';
 import { CurrencySchema } from '@/schemas/models.schema';
 import { CurrencyCode } from '@/types/enums';
+import { DEFAULT_CURRENCIES } from './defaults';
 
 describe('Default Data', () => {
   describe('DEFAULT_CURRENCIES', () => {

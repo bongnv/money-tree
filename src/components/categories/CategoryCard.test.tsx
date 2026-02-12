@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { CategoryCard } from './CategoryCard';
 import type { Category } from '@/types/models';
+import { CategoryCard } from './CategoryCard';
 
 describe('CategoryCard', () => {
   const mockCategory: Category = {

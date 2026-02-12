@@ -1,7 +1,7 @@
+import * as oneDriveConfig from '@/config/onedrive.config';
 import { CloudService } from './cloud.service';
 import { StorageProviderType } from './storage/IStorageProvider';
 import { OneDriveProvider } from './storage/OneDriveProvider';
-import * as oneDriveConfig from '@/config/onedrive.config';
 
 // Mock dependencies
 jest.mock('./storage/OneDriveProvider');

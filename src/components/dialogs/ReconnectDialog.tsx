@@ -1,4 +1,4 @@
-import React from 'react';
+import { CloudOff as CloudOffIcon } from '@mui/icons-material';
 import {
   Dialog,
   DialogTitle,
@@ -9,7 +9,7 @@ import {
   Box,
   Alert,
 } from '@mui/material';
-import { CloudOff as CloudOffIcon } from '@mui/icons-material';
+import React from 'react';
 import type { CloudService } from '@/services/cloud.service';
 
 interface ReconnectDialogProps {

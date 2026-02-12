@@ -1,4 +1,3 @@
-import React, { useState, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -15,6 +14,7 @@ import {
   InputLabel,
   Alert,
 } from '@mui/material';
+import React, { useState, useMemo } from 'react';
 import { useStore } from '@/contexts/StoreContext';
 
 export const ExchangeRatesSettings: React.FC = () => {

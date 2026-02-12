@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TransactionTypeCard } from './TransactionTypeCard';
 import { Group } from '@/types/enums';
 import type { TransactionType, Category } from '@/types/models';
+import { TransactionTypeCard } from './TransactionTypeCard';
 
 describe('TransactionTypeCard', () => {
   const mockCategory: Category = {

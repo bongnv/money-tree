@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { BudgetOverview } from './BudgetOverview';
-import { useBudgetOverview } from '@/hooks/dashboard/useBudgetOverview';
 import { useStore } from '@/contexts/StoreContext';
+import { useBudgetOverview } from '@/hooks/dashboard/useBudgetOverview';
 import { CurrencyCode } from '@/types/enums';
+import { BudgetOverview } from './BudgetOverview';
 
 jest.mock('@/hooks/dashboard/useBudgetOverview');
 jest.mock('@/contexts/StoreContext');

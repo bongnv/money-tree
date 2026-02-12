@@ -1,6 +1,6 @@
-import { fetchRateFromAPI, getRateSync, ensureCurrentMonthRates } from './exchangeRate.utils';
-import { CurrencyCode } from '@/types/enums';
 import { db } from '@/db/database';
+import { CurrencyCode } from '@/types/enums';
+import { fetchRateFromAPI, getRateSync, ensureCurrentMonthRates } from './exchangeRate.utils';
 
 // Mock fetch globally
 global.fetch = jest.fn();

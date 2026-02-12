@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import {
   Box,
   Typography,
@@ -17,17 +19,15 @@ import {
   ToggleButtonGroup,
   ToggleButton,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { LineChart } from '@/components/common/charts/LineChart';
+import { useStore } from '@/contexts/StoreContext';
 import { AssetGroup } from '@/services/report.service';
+import type { CurrencyCode } from '@/types/enums';
+import { getCompleteValueHistory, calculateAssetValueGrowth } from '@/utils/asset.utils';
 import { formatCurrency } from '@/utils/currency.utils';
 import { getTodayDate } from '@/utils/date.utils';
-import { LineChart } from '@/components/common/charts/LineChart';
-import { getCompleteValueHistory, calculateAssetValueGrowth } from '@/utils/asset.utils';
-import type { CurrencyCode } from '@/types/enums';
-import { useStore } from '@/contexts/StoreContext';
 
 export interface ManualAssetSectionProps {
   title: string;

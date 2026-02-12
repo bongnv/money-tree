@@ -1,15 +1,15 @@
-import React from 'react';
-import { Card, CardContent, CardActions, Typography, IconButton, Box, Chip } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Archive as ArchiveIcon,
   Unarchive as UnarchiveIcon,
 } from '@mui/icons-material';
-import type { Account } from '@/types/models';
-import { formatCurrency } from '@/utils/currency.utils';
+import { Card, CardContent, CardActions, Typography, IconButton, Box, Chip } from '@mui/material';
+import React from 'react';
 import { useServiceContext } from '@/contexts/ServiceContext';
 import { useStore } from '@/contexts/StoreContext';
+import type { Account } from '@/types/models';
+import { formatCurrency } from '@/utils/currency.utils';
 
 interface AccountCardProps {
   account: Account;

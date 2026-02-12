@@ -1,6 +1,3 @@
-import React, { useEffect } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Box, Tabs, Tab } from '@mui/material';
 import {
   AccountBalanceWallet as AccountsIcon,
   Category as CategoryIcon,
@@ -8,6 +5,9 @@ import {
   Archive as ArchiveIcon,
   Settings as SettingsIcon,
 } from '@mui/icons-material';
+import { Box, Tabs, Tab } from '@mui/material';
+import React, { useEffect } from 'react';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 
 const navItems = [
   { path: '/settings/preferences', label: 'Preferences', icon: <SettingsIcon /> },

@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { BudgetsPage } from './BudgetsPage';
 import { useStore } from '@/contexts/StoreContext';
 import { useBudgetGrouping } from '@/hooks/budgets/useBudgetGrouping';
-import type { Budget, Category, TransactionType } from '@/types/models';
 import { BudgetPeriod, Group, CurrencyCode } from '@/types/enums';
+import type { Budget, Category, TransactionType } from '@/types/models';
+import { BudgetsPage } from './BudgetsPage';
 
 jest.mock('@/contexts/StoreContext');
 jest.mock('@/contexts/ServiceContext');

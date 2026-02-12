@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { render, screen } from '@testing-library/react';
-import { ExchangeRatesSettings } from './ExchangeRatesSettings';
 import { useStore } from '@/contexts/StoreContext';
 import { CurrencyCode } from '@/types/enums';
+import { ExchangeRatesSettings } from './ExchangeRatesSettings';
 
 jest.mock('@/contexts/StoreContext');
 

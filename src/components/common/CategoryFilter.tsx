@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   FormControl,
   InputLabel,
@@ -10,6 +9,7 @@ import {
   SxProps,
   Theme,
 } from '@mui/material';
+import React from 'react';
 import type { Category } from '@/types/models';
 
 interface CategoryFilterProps {

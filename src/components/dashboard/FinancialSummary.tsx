@@ -1,12 +1,12 @@
+import { Box, Alert } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Grid from '@mui/material/Grid';
-import { Box, Alert } from '@mui/material';
-import { FinancialSummaryCard } from './FinancialSummaryCard';
-import { useFinancialSummary } from '@/hooks/dashboard/useFinancialSummary';
 import type { PeriodOption } from '@/components/common/PeriodSelector';
-import { formatCurrency } from '@/utils/currency.utils';
 import { useStore } from '@/contexts/StoreContext';
+import { useFinancialSummary } from '@/hooks/dashboard/useFinancialSummary';
+import { formatCurrency } from '@/utils/currency.utils';
+import { FinancialSummaryCard } from './FinancialSummaryCard';
 
 export interface FinancialSummaryProps {
   period: PeriodOption;

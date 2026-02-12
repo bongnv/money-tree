@@ -1,6 +1,6 @@
-import type { Transaction, TransactionType, Account } from '@/types/models';
-import type { Group } from '@/types/enums';
 import { validationService, ValidationError } from '@/services/validation.service';
+import type { Group } from '@/types/enums';
+import type { Transaction, TransactionType, Account } from '@/types/models';
 
 export interface TransactionFormData {
   date: string;

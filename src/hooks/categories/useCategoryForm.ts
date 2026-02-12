@@ -1,10 +1,10 @@
 import { useState, useCallback } from 'react';
+import type { Category } from '@/types/models';
 import {
   validateCategoryForm,
   transformFormToCategory,
   type CategoryFormData,
 } from '@/utils/category.utils';
-import type { Category } from '@/types/models';
 
 interface UseCategoryFormProps {
   category?: Category;

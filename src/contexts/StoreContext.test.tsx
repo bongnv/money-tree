@@ -1,20 +1,22 @@
-import React from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
-import { StoreProvider, useStore } from './StoreContext';
+import React from 'react';
 import { db } from '@/db/database';
 import { CurrencyCode, AssetType, AccountType, Group } from '@/types/enums';
 import type { Transaction, ManualAsset } from '@/types/models';
+import { StoreProvider, useStore } from './StoreContext';
 
 // Mock dexie-react-hooks
 jest.mock('dexie-react-hooks', () => ({
   useLiveQuery: <T,>(queryFn: () => Promise<T>, _deps: unknown[], defaultValue: T) => {
     const [data, setData] = React.useState<T>(defaultValue);
-    
+
     React.useEffect(() => {
-      void queryFn().then(setData).catch(() => setData(defaultValue));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      void queryFn()
+        .then(setData)
+        .catch(() => setData(defaultValue));
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    
+
     return data;
   },
 }));
@@ -98,15 +100,17 @@ describe('StoreContext', () => {
     });
 
     it('should load data from database', async () => {
-      const mockTransactions: Transaction[] = [{
-        id: 'tx1',
-        date: '2024-01-01',
-        amount: 100,
-        transactionTypeId: 'type1',
-        isDeleted: false,
-        createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-01T00:00:00Z',
-      }];
+      const mockTransactions: Transaction[] = [
+        {
+          id: 'tx1',
+          date: '2024-01-01',
+          amount: 100,
+          transactionTypeId: 'type1',
+          isDeleted: false,
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+        },
+      ];
 
       (db.transactions.filter as jest.Mock).mockReturnValue({
         toArray: jest.fn().mockResolvedValue(mockTransactions),
@@ -161,7 +165,7 @@ describe('StoreContext', () => {
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',
       };
-      
+
       (db.transactions.get as jest.Mock).mockResolvedValue(mockTransaction);
       (db.transactions.update as jest.Mock).mockResolvedValue(1);
 
@@ -189,7 +193,7 @@ describe('StoreContext', () => {
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',
       };
-      
+
       (db.transactions.get as jest.Mock).mockResolvedValue(mockTransaction);
       (db.transactions.update as jest.Mock).mockResolvedValue(1);
 
@@ -246,7 +250,7 @@ describe('StoreContext', () => {
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',
       };
-      
+
       (db.accounts.get as jest.Mock).mockResolvedValue(mockAccount);
       (db.accounts.update as jest.Mock).mockResolvedValue(1);
 
@@ -275,7 +279,7 @@ describe('StoreContext', () => {
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',
       };
-      
+
       (db.accounts.get as jest.Mock).mockResolvedValue(mockAccount);
       (db.accounts.update as jest.Mock).mockResolvedValue(1);
 
@@ -304,7 +308,7 @@ describe('StoreContext', () => {
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',
       };
-      
+
       (db.accounts.get as jest.Mock).mockResolvedValue(mockAccount);
       (db.accounts.update as jest.Mock).mockResolvedValue(1);
 
@@ -357,7 +361,7 @@ describe('StoreContext', () => {
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',
       };
-      
+
       (db.budgets.get as jest.Mock).mockResolvedValue(mockBudget);
       (db.budgets.update as jest.Mock).mockResolvedValue(1);
 

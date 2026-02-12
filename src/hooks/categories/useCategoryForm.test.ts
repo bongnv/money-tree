@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
-import { useCategoryForm } from './useCategoryForm';
 import type { Category } from '@/types/models';
+import { useCategoryForm } from './useCategoryForm';
 
 describe('useCategoryForm', () => {
   const mockCategory: Category = {

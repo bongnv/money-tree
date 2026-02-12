@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useStore } from '@/contexts/StoreContext';
 import { useServiceContext } from '@/contexts/ServiceContext';
-import { useNetWorthTrend } from './shared/useNetWorthTrend';
-import { useComparisonData, type ComparisonType } from './shared/useComparisonData';
+import { useStore } from '@/contexts/StoreContext';
 import { CurrencyCode } from '@/types/enums';
 import type { CurrencyCode as CurrencyCodeType } from '@/types/enums';
 import { getTodayDate } from '@/utils/date.utils';
+import { useComparisonData, type ComparisonType } from './shared/useComparisonData';
+import { useNetWorthTrend } from './shared/useNetWorthTrend';
 
 /**
  * Comprehensive balance sheet report hook

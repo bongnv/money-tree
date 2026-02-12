@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ManualAssetsPage } from './ManualAssetsPage';
 import { useStore } from '@/contexts/StoreContext';
 import { useAssetDialog } from '@/hooks/assets/useAssetDialog';
-import type { ManualAsset } from '@/types/models';
 import { CurrencyCode } from '@/types/enums';
+import type { ManualAsset } from '@/types/models';
+import { ManualAssetsPage } from './ManualAssetsPage';
 
 jest.mock('@/contexts/StoreContext');
 jest.mock('@/contexts/ServiceContext');

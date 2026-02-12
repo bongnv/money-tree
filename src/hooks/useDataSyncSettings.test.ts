@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { renderHook, act } from '@testing-library/react';
-import { useDataSyncSettings } from './useDataSyncSettings';
-import { useSync } from '@/contexts/SyncContext';
-import { useStore } from '@/contexts/StoreContext';
 import { useServiceContext } from '@/contexts/ServiceContext';
+import { useStore } from '@/contexts/StoreContext';
+import { useSync } from '@/contexts/SyncContext';
 import { db } from '@/db/database';
+import { useDataSyncSettings } from './useDataSyncSettings';
 
 // Mock react-router-dom
 const mockNavigate = jest.fn();

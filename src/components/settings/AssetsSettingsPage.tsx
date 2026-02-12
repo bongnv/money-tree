@@ -1,5 +1,5 @@
-import React from 'react';
 import { Container, Box } from '@mui/material';
+import React from 'react';
 import { AccountsPage } from '@/components/accounts/AccountsPage';
 import { ManualAssetsPage } from '@/components/assets/ManualAssetsPage';
 

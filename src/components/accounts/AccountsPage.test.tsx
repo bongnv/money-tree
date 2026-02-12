@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { AccountsPage } from './AccountsPage';
 import { useStore } from '@/contexts/StoreContext';
 import { useAccountDialog } from '@/hooks/accounts/useAccountDialog';
-import type { Account } from '@/types/models';
 import { AccountType, CurrencyCode } from '@/types/enums';
+import type { Account } from '@/types/models';
+import { AccountsPage } from './AccountsPage';
 
 jest.mock('@/contexts/StoreContext');
 jest.mock('@/hooks/accounts/useAccountDialog');

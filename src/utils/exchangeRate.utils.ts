@@ -1,8 +1,8 @@
+import { db } from '@/db/database';
 import { CurrencyCode } from '@/types/enums';
 import type { ExchangeRate } from '@/types/models';
-import { db } from '@/db/database';
-import { generateId } from '@/utils/id.utils';
 import { getCurrentMonth } from '@/utils/date.utils';
+import { generateId } from '@/utils/id.utils';
 
 /**
  * Exchange Rate API Response format

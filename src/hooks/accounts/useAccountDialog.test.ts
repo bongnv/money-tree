@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
-import { useAccountDialog } from './useAccountDialog';
-import type { Account } from '@/types/models';
 import { AccountType, CurrencyCode } from '@/types/enums';
+import type { Account } from '@/types/models';
+import { useAccountDialog } from './useAccountDialog';
 
 describe('useAccountDialog', () => {
   const mockAccount: Account = {

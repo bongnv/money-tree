@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { PreferencesPage } from './PreferencesPage';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { useStore } from '@/contexts/StoreContext';
 import { useSync } from '@/contexts/SyncContext';
-import { useServiceContext } from '@/contexts/ServiceContext';
 import { CurrencyCode } from '@/types/enums';
+import { PreferencesPage } from './PreferencesPage';
 
 jest.mock('@/contexts/StoreContext');
 jest.mock('@/contexts/SyncContext');

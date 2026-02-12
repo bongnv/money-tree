@@ -1,8 +1,8 @@
-import { CloudSyncService } from './cloudSync.service';
-import type { CloudService } from './cloud.service';
 import type { MoneyTreeDB } from '@/db/database';
 import { CurrencyCode, AccountType } from '@/types/enums';
 import type { DataFile, Transaction, Account, Category } from '@/types/models';
+import { CloudSyncService } from './cloudSync.service';
+import type { CloudService } from './cloud.service';
 
 // Polyfill Blob.text() for tests
 if (typeof Blob.prototype.text !== 'function') {
@@ -116,7 +116,8 @@ describe('CloudSyncService', () => {
       (mockDb.syncMetadata.get as jest.Mock).mockImplementation((key: string) => {
         if (key === 'baseCurrency') return Promise.resolve({ key, value: CurrencyCode.USD });
         if (key === 'archivedYears') return Promise.resolve({ key, value: [] });
-        if (key === 'lastModified') return Promise.resolve({ key, value: '2024-01-01T00:00:00.000Z' });
+        if (key === 'lastModified')
+          return Promise.resolve({ key, value: '2024-01-01T00:00:00.000Z' });
         return Promise.resolve(undefined);
       });
 
@@ -209,7 +210,10 @@ describe('CloudSyncService', () => {
 
     it('should filter out soft-deleted items when uploading', async () => {
       const deletedTransaction = { ...mockTransaction, id: 'tx2', isDeleted: true };
-      (mockDb.transactions.toArray as jest.Mock).mockResolvedValue([mockTransaction, deletedTransaction]);
+      (mockDb.transactions.toArray as jest.Mock).mockResolvedValue([
+        mockTransaction,
+        deletedTransaction,
+      ]);
 
       const newFileItem = { id: '', name: 'data.json', isFolder: false };
       const updatedFileItem = { id: 'new-file-id', name: 'data.json', isFolder: false };
@@ -224,7 +228,7 @@ describe('CloudSyncService', () => {
 
       expect(uploadedData.transactions).toHaveLength(1);
       expect(uploadedData.transactions[0].id).toBe('tx1');
-      expect(uploadedData.transactions.find(t => t.id === 'tx2')).toBeUndefined();
+      expect(uploadedData.transactions.find((t) => t.id === 'tx2')).toBeUndefined();
     });
 
     it('should merge transactions using Last-Write-Wins', async () => {
@@ -259,7 +263,11 @@ describe('CloudSyncService', () => {
     });
 
     it('should add new items from remote', async () => {
-      const remoteTx = { ...mockTransaction, id: 'tx-remote', updatedAt: '2024-01-02T00:00:00.000Z' };
+      const remoteTx = {
+        ...mockTransaction,
+        id: 'tx-remote',
+        updatedAt: '2024-01-02T00:00:00.000Z',
+      };
 
       const cloudData: DataFile = {
         version: '1.0',
@@ -297,7 +305,18 @@ describe('CloudSyncService', () => {
         budgets: [],
         manualAssets: [],
         exchangeRates: [],
-        archivedYears: [{ year: 2023, archivedDate: '2024-01-01T00:00:00.000Z', summary: { transactionCount: 100, closingNetWorth: 5000, closingBalances: {}, closingAssetValuations: {} } }],
+        archivedYears: [
+          {
+            year: 2023,
+            archivedDate: '2024-01-01T00:00:00.000Z',
+            summary: {
+              transactionCount: 100,
+              closingNetWorth: 5000,
+              closingBalances: {},
+              closingAssetValuations: {},
+            },
+          },
+        ],
         baseCurrency: CurrencyCode.AUD,
         lastModified: '2024-01-02T00:00:00.000Z',
       };

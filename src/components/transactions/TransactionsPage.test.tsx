@@ -1,13 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TransactionsPage } from './TransactionsPage';
 import { useStore } from '@/contexts/StoreContext';
-
 import { useTransactionDialog } from '@/hooks/transactions/useTransactionDialog';
 import { useTransactionFilters } from '@/hooks/transactions/useTransactionFilters';
-import type { Transaction, Account, Category, TransactionType } from '@/types/models';
 import { AccountType, Group, CurrencyCode } from '@/types/enums';
+import type { Transaction, Account, Category, TransactionType } from '@/types/models';
+import { TransactionsPage } from './TransactionsPage';
 
 // Mock hooks
 jest.mock('@/contexts/StoreContext');

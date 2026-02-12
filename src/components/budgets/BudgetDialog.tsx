@@ -1,4 +1,3 @@
-import React, { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -9,11 +8,12 @@ import {
   Button,
   Autocomplete,
 } from '@mui/material';
+import React, { useState, useMemo } from 'react';
 import { FormDatePicker } from '@/components/common/FormDatePicker';
-import type { Budget } from '@/types/models';
 import { DEFAULT_CURRENCIES } from '@/constants/defaults';
-import { CurrencyCode, Group } from '@/types/enums';
 import { useStore } from '@/contexts/StoreContext';
+import { CurrencyCode, Group } from '@/types/enums';
+import type { Budget } from '@/types/models';
 
 interface BudgetDialogProps {
   open: boolean;

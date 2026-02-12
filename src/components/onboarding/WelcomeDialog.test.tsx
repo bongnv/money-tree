@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { WelcomeDialog } from './WelcomeDialog';
 import { StorageProviderType } from '@/services/storage/IStorageProvider';
+import { WelcomeDialog } from './WelcomeDialog';
 
 // Create mock functions
 const mockIsOneDriveConfigured = jest.fn(() => true);

@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { render, screen, fireEvent } from '@testing-library/react';
-import { AccountCard } from './AccountCard';
-import { useStore } from '@/contexts/StoreContext';
 import { useServiceContext } from '@/contexts/ServiceContext';
+import { useStore } from '@/contexts/StoreContext';
 import { CurrencyCode } from '@/types/enums';
 import type { Account } from '@/types/models';
+import { AccountCard } from './AccountCard';
 
 jest.mock('@/contexts/StoreContext');
 jest.mock('@/contexts/ServiceContext');

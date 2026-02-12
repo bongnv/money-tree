@@ -1,5 +1,5 @@
-import React from 'react';
 import { Autocomplete, TextField } from '@mui/material';
+import React from 'react';
 
 interface QuickEntryAutocompleteProps<T> {
   options: T[];

@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import {
   Box,
   Paper,
@@ -22,20 +22,20 @@ import {
   ToggleButtonGroup,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import TrendingDownIcon from '@mui/icons-material/TrendingDown';
-import { useCashFlowReport } from '@/hooks/reports/useCashFlowReport';
-import { useStore } from '@/contexts/StoreContext';
+import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { CategoryFilter } from '@/components/common/CategoryFilter';
 import { LineChart } from '@/components/common/charts/LineChart';
 import { PieChart } from '@/components/common/charts/PieChart';
 import { PeriodSelector } from '@/components/common/PeriodSelector';
-import { CategoryFilter } from '@/components/common/CategoryFilter';
-import { formatCurrency } from '@/utils/currency.utils';
-import { hasTransactionTypesInGroup } from '@/utils/report.utils';
+import { DEFAULT_CURRENCIES } from '@/constants/defaults';
+import { useStore } from '@/contexts/StoreContext';
+import { useCashFlowReport } from '@/hooks/reports/useCashFlowReport';
 import { CHART_COLORS } from '@/theme';
 import { CurrencyCode } from '@/types/enums';
 import { Group } from '@/types/enums';
-import { DEFAULT_CURRENCIES } from '@/constants/defaults';
+import { formatCurrency } from '@/utils/currency.utils';
+import { hasTransactionTypesInGroup } from '@/utils/report.utils';
 
 /**
  * Build chart lines for cash flow trend based on available income/expense types

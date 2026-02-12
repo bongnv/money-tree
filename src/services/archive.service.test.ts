@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ArchiveService } from './archive.service';
-import { CurrencyCode } from '@/types/enums';
 import type { MoneyTreeDB } from '@/db/database';
-import type { CloudItem } from './storage/IStorageProvider';
+import { CurrencyCode } from '@/types/enums';
+import { ArchiveService } from './archive.service';
 import type { CloudService } from './cloud.service';
+import type { CloudItem } from './storage/IStorageProvider';
 
 // Mock dependencies
 const mockDb = {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useStore } from '@/contexts/StoreContext';
-import { useReportService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { getTodayDate } from '@/utils/date.utils';
 import type { BudgetPerformanceData, BudgetTrendPoint } from '@/services/report.service';
 import { CurrencyCode } from '@/types/enums';
@@ -62,7 +62,7 @@ export function useBudgetPerformance() {
     baseCurrency,
     exchangeRatesMap,
   } = useStore();
-  const reportService = useReportService();
+  const { reportService } = useServiceContext();
 
   // Report parameters
   const today = getTodayDate();

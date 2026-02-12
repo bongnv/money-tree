@@ -3,7 +3,7 @@ import { renderHook, act } from '@testing-library/react';
 import { useDataSyncSettings } from './useDataSyncSettings';
 import { useSync } from '@/contexts/SyncContext';
 import { useStore } from '@/contexts/StoreContext';
-import { useFormatService, useCloudService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { db } from '@/db/database';
 
 // Mock react-router-dom
@@ -24,8 +24,7 @@ jest.mock('@/db/database', () => ({
 
 const mockUseSync = useSync as jest.MockedFunction<typeof useSync>;
 const mockUseStore = useStore as jest.MockedFunction<typeof useStore>;
-const mockUseFormatService = useFormatService as jest.MockedFunction<typeof useFormatService>;
-const mockUseCloudService = useCloudService as jest.MockedFunction<typeof useCloudService>;
+const mockUseServiceContext = useServiceContext as jest.MockedFunction<typeof useServiceContext>;
 
 describe('useDataSyncSettings', () => {
   const mockDisconnect = jest.fn().mockResolvedValue(undefined);
@@ -52,12 +51,13 @@ describe('useDataSyncSettings', () => {
       assets: [],
     } as any);
 
-    mockUseFormatService.mockReturnValue({
-      calculateDataSize: mockCalculateDataSize,
-    } as any);
-
-    mockUseCloudService.mockReturnValue({
-      getProviderName: mockGetProviderName,
+    mockUseServiceContext.mockReturnValue({
+      formatService: {
+        calculateDataSize: mockCalculateDataSize,
+      },
+      cloudService: {
+        getProviderName: mockGetProviderName,
+      },
     } as any);
   });
 

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useStore } from '@/contexts/StoreContext';
-import { useCalculationService, useReportService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { getCurrentMonth } from '@/utils/date.utils';
 import type { PeriodOption } from '@/components/common/PeriodSelector';
 
@@ -29,8 +29,7 @@ export function useFinancialSummary(period: PeriodOption): FinancialSummaryData 
     exchangeRatesMap,
     isStoreLoaded,
   } = useStore();
-  const calculationService = useCalculationService();
-  const reportService = useReportService();
+  const { calculationService, reportService } = useServiceContext();
 
   // Get current month in YYYY-MM format (local timezone)
   const currentMonth = getCurrentMonth();

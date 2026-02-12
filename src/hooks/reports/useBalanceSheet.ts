@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useStore } from '@/contexts/StoreContext';
-import { useReportService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { useNetWorthTrend } from './shared/useNetWorthTrend';
 import { useComparisonData, type ComparisonType } from './shared/useComparisonData';
 import { CurrencyCode } from '@/types/enums';
@@ -22,7 +22,7 @@ import { getTodayDate } from '@/utils/date.utils';
 export function useBalanceSheet() {
   const { accounts, assets, transactions, baseCurrency, exchangeRatesMap, isStoreLoaded } =
     useStore();
-  const reportService = useReportService();
+  const { reportService } = useServiceContext();
 
   // Report parameters
   const today = getTodayDate();

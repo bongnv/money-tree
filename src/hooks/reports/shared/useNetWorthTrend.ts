@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@/contexts/StoreContext';
-import { useReportService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import type { NetWorthTrendPoint } from '@/services/report.service';
 import type { CurrencyCode } from '@/types/enums';
 
@@ -20,7 +20,7 @@ export function useNetWorthTrend(
   conversionCurrency: CurrencyCode
 ) {
   const { accounts, assets: manualAssets, transactions, exchangeRatesMap } = useStore();
-  const reportService = useReportService();
+  const { reportService } = useServiceContext();
 
   const [data, setData] = useState<NetWorthTrendPoint[] | null>(null);
 

@@ -2,7 +2,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { useCashFlowReport } from './useCashFlowReport';
 import { useStore } from '@/contexts/StoreContext';
-import { useReportService, useCalculationService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { CurrencyCode, Group } from '@/types/enums';
 import type { Account, TransactionType } from '@/types/models';
 
@@ -10,10 +10,7 @@ jest.mock('@/contexts/StoreContext');
 jest.mock('@/contexts/ServiceContext');
 
 const mockUseStore = useStore as jest.MockedFunction<typeof useStore>;
-const mockUseReportService = useReportService as jest.MockedFunction<typeof useReportService>;
-const mockUseCalculationService = useCalculationService as jest.MockedFunction<
-  typeof useCalculationService
->;
+const mockUseServiceContext = useServiceContext as jest.MockedFunction<typeof useServiceContext>;
 
 describe('useCashFlowReport', () => {
   const mockAccount: Account = {
@@ -59,12 +56,14 @@ describe('useCashFlowReport', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseReportService.mockReturnValue({
-      calculateCashFlow: mockCalculateCashFlow,
-      calculateCashFlowTrend: mockCalculateCashFlowTrend,
-    } as any);
-    mockUseCalculationService.mockReturnValue({
-      calculateTransactionTypeGrouping: mockCalculateTransactionTypeGrouping,
+    mockUseServiceContext.mockReturnValue({
+      reportService: {
+        calculateCashFlow: mockCalculateCashFlow,
+        calculateCashFlowTrend: mockCalculateCashFlowTrend,
+      },
+      calculationService: {
+        calculateTransactionTypeGrouping: mockCalculateTransactionTypeGrouping,
+      },
     } as any);
   });
 

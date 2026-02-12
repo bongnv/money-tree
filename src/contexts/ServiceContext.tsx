@@ -4,10 +4,12 @@ import { ReportService } from '@/services/report.service';
 import { ArchiveService } from '@/services/archive.service';
 import { FormatService } from '@/services/formatService';
 import { CloudService } from '@/services/cloud.service';
+import { CloudSyncService } from '@/services/cloudSync.service';
 import { db } from '@/db/database';
 
 interface Services {
   cloudService: CloudService;
+  cloudSyncService: CloudSyncService;
   archiveService: ArchiveService;
   calculationService: CalculationService;
   reportService: ReportService;
@@ -28,9 +30,11 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({ cloudService, 
     const reportService = new ReportService(calculationService);
     const archiveService = new ArchiveService(db, cloudService);
     const formatService = new FormatService();
+    const cloudSyncService = new CloudSyncService(cloudService, db);
 
     return {
       cloudService,
+      cloudSyncService,
       archiveService,
       calculationService,
       reportService,
@@ -41,50 +45,13 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({ cloudService, 
   return <ServiceContext.Provider value={services}>{children}</ServiceContext.Provider>;
 };
 
-function useServiceContext() {
+/**
+ * Hook to get all service instances
+ */
+export function useServiceContext() {
   const context = useContext(ServiceContext);
   if (!context) {
-    throw new Error('Service hooks must be used within ServiceProvider');
+    throw new Error('useServiceContext must be used within ServiceProvider');
   }
   return context;
-}
-
-/**
- * Hook to get ArchiveService instance
- */
-export function useArchiveService(): ArchiveService {
-  const { archiveService } = useServiceContext();
-  return archiveService;
-}
-
-/**
- * Hook to get CalculationService instance
- */
-export function useCalculationService(): CalculationService {
-  const { calculationService } = useServiceContext();
-  return calculationService;
-}
-
-/**
- * Hook to get ReportService instance
- */
-export function useReportService(): ReportService {
-  const { reportService } = useServiceContext();
-  return reportService;
-}
-
-/**
- * Hook to get FormatService instance
- */
-export function useFormatService(): FormatService {
-  const { formatService } = useServiceContext();
-  return formatService;
-}
-
-/**
- * Hook to get CloudService from context
- */
-export function useCloudService(): CloudService {
-  const { cloudService } = useServiceContext();
-  return cloudService;
 }

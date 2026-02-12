@@ -3,7 +3,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { AccountCard } from './AccountCard';
 import { useStore } from '@/contexts/StoreContext';
-import { useCalculationService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { CurrencyCode } from '@/types/enums';
 import type { Account } from '@/types/models';
 
@@ -11,9 +11,7 @@ jest.mock('@/contexts/StoreContext');
 jest.mock('@/contexts/ServiceContext');
 
 const mockUseStore = useStore as jest.MockedFunction<typeof useStore>;
-const mockUseCalcService = useCalculationService as jest.MockedFunction<
-  typeof useCalculationService
->;
+const mockUseServiceContext = useServiceContext as jest.MockedFunction<typeof useServiceContext>;
 
 describe('AccountCard', () => {
   const mockAccount: Account = {
@@ -35,8 +33,10 @@ describe('AccountCard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseStore.mockReturnValue({ transactions: [] } as any);
-    mockUseCalcService.mockReturnValue({
-      calculateAccountBalance: jest.fn().mockReturnValue(1500),
+    mockUseServiceContext.mockReturnValue({
+      calculationService: {
+        calculateAccountBalance: jest.fn().mockReturnValue(1500),
+      },
     } as any);
   });
 

@@ -8,7 +8,7 @@ import {
 } from '@mui/icons-material';
 import type { Account } from '../../types/models';
 import { formatCurrency } from '../../utils/currency.utils';
-import { useCalculationService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { useStore } from '@/contexts/StoreContext';
 
 interface AccountCardProps {
@@ -25,7 +25,7 @@ export const AccountCard: React.FC<AccountCardProps> = ({
   onArchive,
 }) => {
   const { transactions } = useStore();
-  const calculationService = useCalculationService();
+  const { calculationService } = useServiceContext();
   const currentBalance = calculationService.calculateAccountBalance(account, transactions || []);
 
   const handleEdit = () => {

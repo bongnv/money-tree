@@ -30,12 +30,10 @@ type LocalDataSnapshot = {
  */
 export class CloudSyncService {
   private cloudService: CloudService;
-  private fileItem: CloudItem;
   private db: MoneyTreeDB;
 
-  constructor(cloudService: CloudService, fileItem: CloudItem, db: MoneyTreeDB) {
+  constructor(cloudService: CloudService, db: MoneyTreeDB) {
     this.cloudService = cloudService;
-    this.fileItem = fileItem;
     this.db = db;
   }
 
@@ -44,7 +42,10 @@ export class CloudSyncService {
    * Takes merged result to avoid reloading from DB
    * Returns updated CloudItem (may have new id if it was a new file)
    */
-  private async uploadToCloud(mergedData: LocalDataSnapshot): Promise<{ fileItem: CloudItem }> {
+  private async uploadToCloud(
+    fileItem: CloudItem,
+    mergedData: LocalDataSnapshot
+  ): Promise<{ fileItem: CloudItem }> {
     // Filter out soft-deleted resources
     const transactions = mergedData.transactions.filter((t) => !t.isDeleted);
     const categories = mergedData.categories.filter((c) => !c.isDeleted);
@@ -69,7 +70,7 @@ export class CloudSyncService {
 
     const content = JSON.stringify(dataFile);
     const blob = new Blob([content], { type: 'application/json' });
-    const updatedFileItem = await this.cloudService.writeFile(this.fileItem, blob);
+    const updatedFileItem = await this.cloudService.writeFile(fileItem, blob);
     return { fileItem: updatedFileItem };
   }
 
@@ -77,11 +78,14 @@ export class CloudSyncService {
    * Download from cloud and merge with local snapshot (Last-Write-Wins)
    * Returns whether local has newer changes and merged results
    */
-  private async downloadFromCloud(localSnapshot: LocalDataSnapshot): Promise<{
+  private async downloadFromCloud(
+    fileItem: CloudItem,
+    localSnapshot: LocalDataSnapshot
+  ): Promise<{
     hasLocalChanges: boolean;
     mergedData: LocalDataSnapshot;
   }> {
-    const blob = await this.cloudService.readFile(this.fileItem);
+    const blob = await this.cloudService.readFile(fileItem);
     const content = await blob.text();
     const rawData = JSON.parse(content);
 
@@ -339,7 +343,7 @@ export class CloudSyncService {
    * Optimized: skips upload if only remote changes were merged (nothing new to upload)
    * Returns updated CloudItem from upload and the merged lastModified timestamp
    */
-  async fullSync(): Promise<{
+  async fullSync(fileItem: CloudItem): Promise<{
     mergedLastModified: string;
     fileItem: CloudItem;
   }> {
@@ -383,27 +387,27 @@ export class CloudSyncService {
 
     // If file doesn't have an ID yet, it's a new file that hasn't been uploaded
     // Skip download and upload directly to create the file
-    if (!this.fileItem.id) {
-      const { fileItem } = await this.uploadToCloud(localSnapshot);
+    if (!fileItem.id) {
+      const { fileItem: updatedFileItem } = await this.uploadToCloud(fileItem, localSnapshot);
       return {
         mergedLastModified: localSnapshot.lastModified,
-        fileItem,
+        fileItem: updatedFileItem,
       };
     }
 
-    const { hasLocalChanges, mergedData } = await this.downloadFromCloud(localSnapshot);
+    const { hasLocalChanges, mergedData } = await this.downloadFromCloud(fileItem, localSnapshot);
 
     // Only upload if we have local changes that are newer than remote
     if (hasLocalChanges) {
-      const { fileItem } = await this.uploadToCloud(mergedData);
-      return { mergedLastModified: mergedData.lastModified, fileItem };
+      const { fileItem: updatedFileItem } = await this.uploadToCloud(fileItem, mergedData);
+      return { mergedLastModified: mergedData.lastModified, fileItem: updatedFileItem };
     }
 
     // No local changes - data is in sync
 
     return {
       mergedLastModified: mergedData.lastModified,
-      fileItem: this.fileItem,
+      fileItem: fileItem,
     };
   }
 }

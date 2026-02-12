@@ -2,7 +2,7 @@
 import { renderHook } from '@testing-library/react';
 import { useBudgetOverview } from './useBudgetOverview';
 import { useStore } from '@/contexts/StoreContext';
-import { useCalculationService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { Group, CurrencyCode, BudgetPeriod } from '@/types/enums';
 import type { Budget, Transaction, TransactionType, Category, Account } from '@/types/models';
 
@@ -10,9 +10,7 @@ jest.mock('@/contexts/StoreContext');
 jest.mock('@/contexts/ServiceContext');
 
 const mockUseStore = useStore as jest.MockedFunction<typeof useStore>;
-const mockUseCalculationService = useCalculationService as jest.MockedFunction<
-  typeof useCalculationService
->;
+const mockUseServiceContext = useServiceContext as jest.MockedFunction<typeof useServiceContext>;
 
 describe('useBudgetOverview', () => {
   const mockCategory: Category = {
@@ -111,7 +109,9 @@ describe('useBudgetOverview', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseCalculationService.mockReturnValue(mockCalculationService as any);
+    mockUseServiceContext.mockReturnValue({
+      calculationService: mockCalculationService,
+    } as any);
   });
 
   it('should return empty budgets when no budgets exist', () => {

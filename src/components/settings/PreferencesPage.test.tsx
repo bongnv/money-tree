@@ -5,7 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { PreferencesPage } from './PreferencesPage';
 import { useStore } from '@/contexts/StoreContext';
 import { useSync } from '@/contexts/SyncContext';
-import { useFormatService, useCloudService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { CurrencyCode } from '@/types/enums';
 
 jest.mock('@/contexts/StoreContext');
@@ -14,8 +14,7 @@ jest.mock('@/contexts/ServiceContext');
 
 const mockUseStore = useStore as jest.MockedFunction<typeof useStore>;
 const mockUseSync = useSync as jest.MockedFunction<typeof useSync>;
-const mockUseFormatService = useFormatService as jest.MockedFunction<typeof useFormatService>;
-const mockUseCloudService = useCloudService as jest.MockedFunction<typeof useCloudService>;
+const mockUseServiceContext = useServiceContext as jest.MockedFunction<typeof useServiceContext>;
 
 const renderWithRouter = (ui: React.ReactElement) => render(<BrowserRouter>{ui}</BrowserRouter>);
 
@@ -38,11 +37,13 @@ describe('PreferencesPage', () => {
       reconnect: jest.fn(),
       disconnect: jest.fn(),
     } as any);
-    mockUseFormatService.mockReturnValue({
-      calculateDataSize: jest.fn().mockReturnValue('1.5 KB'),
-    } as any);
-    mockUseCloudService.mockReturnValue({
-      getProviderName: jest.fn().mockReturnValue('OneDrive'),
+    mockUseServiceContext.mockReturnValue({
+      formatService: {
+        calculateDataSize: jest.fn().mockReturnValue('1.5 KB'),
+      },
+      cloudService: {
+        getProviderName: jest.fn().mockReturnValue('OneDrive'),
+      },
     } as any);
   });
 

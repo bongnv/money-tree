@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { useArchiveManager } from './useArchiveManager';
-import { useArchiveService, useCloudService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { useStore } from '@/contexts/StoreContext';
 import { useAppContext } from '@/contexts/AppContext';
 import { useSync } from '@/contexts/SyncContext';
@@ -14,8 +14,7 @@ jest.mock('@/contexts/StoreContext');
 jest.mock('@/contexts/AppContext');
 jest.mock('@/contexts/SyncContext');
 
-const mockUseArchiveService = useArchiveService as jest.MockedFunction<typeof useArchiveService>;
-const mockUseCloudService = useCloudService as jest.MockedFunction<typeof useCloudService>;
+const mockUseServiceContext = useServiceContext as jest.MockedFunction<typeof useServiceContext>;
 const mockUseStore = useStore as jest.MockedFunction<typeof useStore>;
 const mockUseAppContext = useAppContext as jest.MockedFunction<typeof useAppContext>;
 const mockUseSync = useSync as jest.MockedFunction<typeof useSync>;
@@ -25,6 +24,10 @@ describe('useArchiveManager', () => {
     identifyArchivableYear: jest.fn(),
     calculateYearEndSummary: jest.fn(),
     archiveYear: jest.fn(),
+  };
+
+  const mockCloudService = {
+    getCurrentProvider: jest.fn(() => null),
   };
 
   const mockShowSnackbar = jest.fn();
@@ -39,9 +42,9 @@ describe('useArchiveManager', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockUseArchiveService.mockReturnValue(mockArchiveService as any);
-    mockUseCloudService.mockReturnValue({
-      getCurrentProvider: jest.fn(() => null),
+    mockUseServiceContext.mockReturnValue({
+      archiveService: mockArchiveService,
+      cloudService: mockCloudService,
     } as any);
     mockUseStore.mockReturnValue({
       baseCurrency: CurrencyCode.USD,
@@ -172,8 +175,11 @@ describe('useArchiveManager', () => {
     };
 
     it('should successfully export a year', async () => {
-      mockUseCloudService.mockReturnValue({
-        getCurrentProvider: jest.fn(() => 'onedrive'),
+      mockUseServiceContext.mockReturnValue({
+        archiveService: mockArchiveService,
+        cloudService: {
+          getCurrentProvider: jest.fn(() => 'onedrive'),
+        },
       } as any);
       mockUseSync.mockReturnValue({
         currentFile: { id: 'file1', name: 'test.json', parentItemId: 'folder1' } as any,
@@ -217,8 +223,11 @@ describe('useArchiveManager', () => {
     });
 
     it('should set loading state during export', async () => {
-      mockUseCloudService.mockReturnValue({
-        getCurrentProvider: jest.fn(() => 'onedrive'),
+      mockUseServiceContext.mockReturnValue({
+        archiveService: mockArchiveService,
+        cloudService: {
+          getCurrentProvider: jest.fn(() => 'onedrive'),
+        },
       } as any);
       mockUseSync.mockReturnValue({
         currentFile: { id: 'file1', name: 'test.json', parentItemId: 'folder1' } as any,
@@ -255,8 +264,11 @@ describe('useArchiveManager', () => {
     });
 
     it('should handle error during archiveYear', async () => {
-      mockUseCloudService.mockReturnValue({
-        getCurrentProvider: jest.fn(() => 'onedrive'),
+      mockUseServiceContext.mockReturnValue({
+        archiveService: mockArchiveService,
+        cloudService: {
+          getCurrentProvider: jest.fn(() => 'onedrive'),
+        },
       } as any);
       mockUseSync.mockReturnValue({
         currentFile: { id: 'file1', name: 'test.json', parentItemId: 'folder1' } as any,
@@ -277,8 +289,11 @@ describe('useArchiveManager', () => {
     });
 
     it('should handle non-Error exceptions', async () => {
-      mockUseCloudService.mockReturnValue({
-        getCurrentProvider: jest.fn(() => 'onedrive'),
+      mockUseServiceContext.mockReturnValue({
+        archiveService: mockArchiveService,
+        cloudService: {
+          getCurrentProvider: jest.fn(() => 'onedrive'),
+        },
       } as any);
       mockUseSync.mockReturnValue({
         currentFile: { id: 'file1', name: 'test.json', parentItemId: 'folder1' } as any,

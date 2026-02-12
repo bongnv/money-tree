@@ -1,18 +1,9 @@
-import React, {
-  createContext,
-  useContext,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useRef,
-} from 'react';
+import React, { createContext, useContext, useCallback, useEffect, useState, useRef } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useDebouncedCallback } from 'use-debounce';
-import { CloudSyncService } from '@/services/cloudSync.service';
 import { CloudItem, StorageProviderType } from '@/services/storage/IStorageProvider';
 import { useApp } from '@/contexts/AppContext';
-import { useCloudService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { db } from '@/db/database';
 
 const FILE_CACHE_KEY = 'moneyTree.currentFile';
@@ -91,7 +82,7 @@ interface SyncProviderProps {
 }
 
 export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
-  const cloudService = useCloudService();
+  const { cloudService, cloudSyncService } = useServiceContext();
   const { showSnackbar, setShowWelcomeDialog, setShowFileSelection, setShowReconnectDialog } =
     useApp();
 
@@ -179,14 +170,6 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
   const lastModified = useLiveQuery(() =>
     db.syncMetadata.get('lastModified').then((r) => r?.value as string | undefined)
   );
-
-  // Create sync service
-  const syncService = useMemo(() => {
-    if (!cloudService.getCurrentProvider() || !syncState.currentFile) {
-      return null;
-    }
-    return new CloudSyncService(cloudService, syncState.currentFile, db);
-  }, [cloudService, syncState.currentFile]);
 
   // Internal function to update file item without clearing DB (for sync updates)
   const updateFileItem = useCallback(
@@ -284,8 +267,8 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
       return;
     }
 
-    if (!syncService) {
-      throw new Error('Sync service not initialized or no file selected');
+    if (!syncState.currentFile) {
+      throw new Error('No file selected for sync');
     }
     if (syncStateRef.current.isSyncing) {
       return;
@@ -300,7 +283,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
       syncStateRef.current.isSyncing = true;
       updateSyncState({ status: 'syncing', errorMessage: null });
 
-      const result = await syncService.fullSync();
+      const result = await cloudSyncService.fullSync(syncState.currentFile);
       syncStateRef.current.remoteLastModified = result.mergedLastModified;
       updateSyncState({ status: 'synced', errorMessage: null });
 
@@ -329,7 +312,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
     lastModified,
     syncState.status,
     syncState.currentFile,
-    syncService,
+    cloudSyncService,
     updateSyncState,
     updateFileItem,
     showSnackbar,
@@ -338,7 +321,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
   // Debounced sync using useDebouncedCallback
   const debouncedSync = useDebouncedCallback(
     async () => {
-      if (!syncService) return;
+      if (!syncState.currentFile) return;
       await fullSync();
     },
     DEBOUNCE_MS,
@@ -347,13 +330,13 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
 
   // Auto-sync when connection established or file changes
   useEffect(() => {
-    if (!syncService) return;
+    if (!syncState.currentFile) return;
 
     fullSync().catch((err) => {
       console.error('[SyncProvider] Initial sync error:', err);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [syncService]);
+  }, [syncState.currentFile]);
 
   // Auto-sync whenever lastModified changes (only for subsequent changes after initial sync)
   useEffect(() => {

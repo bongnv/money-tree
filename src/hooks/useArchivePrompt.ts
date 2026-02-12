@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useArchiveService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { useSync } from '@/contexts/SyncContext';
 
 interface ArchiveYearSummary {
@@ -13,7 +13,7 @@ interface ArchiveYearSummary {
 export function useArchivePrompt() {
   const navigate = useNavigate();
   const { status } = useSync();
-  const archiveService = useArchiveService();
+  const { archiveService } = useServiceContext();
 
   const [showPrompt, setShowPrompt] = useState(false);
   const [archiveYear, setArchiveYear] = useState<number | null>(null);

@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSync } from '@/contexts/SyncContext';
 import { useStore } from '@/contexts/StoreContext';
-import { useFormatService, useCloudService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { db } from '@/db/database';
 
 /**
@@ -14,8 +14,7 @@ export function useDataSyncSettings() {
   const syncOps = useSync();
   const { currentFile, status, reconnect } = syncOps;
   const { accounts, categories, transactionTypes, transactions, assets, budgets } = useStore();
-  const formatService = useFormatService();
-  const cloudService = useCloudService();
+  const { formatService, cloudService } = useServiceContext();
 
   const [disconnectDialogOpen, setDisconnectDialogOpen] = useState(false);
 

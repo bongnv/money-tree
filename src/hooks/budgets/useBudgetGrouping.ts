@@ -1,6 +1,6 @@
 import { useMemo, useCallback } from 'react';
 import { useStore } from '@/contexts/StoreContext';
-import { useCalculationService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import type { CurrencyCode } from '@/types/enums';
 import type { Budget } from '@/types/models';
 
@@ -32,7 +32,7 @@ export function useBudgetGrouping(
 ) {
   const { budgets, transactions, transactionTypes, categories, accounts, exchangeRatesMap } =
     useStore();
-  const calculationService = useCalculationService();
+  const { calculationService } = useServiceContext();
 
   // Helper to get category by id - memoized to prevent infinite loops
   const getCategoryById = useCallback(

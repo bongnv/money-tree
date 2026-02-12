@@ -2,7 +2,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { useBudgetPerformance } from './useBudgetPerformance';
 import { useStore } from '@/contexts/StoreContext';
-import { useReportService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { CurrencyCode, BudgetPeriod, Group } from '@/types/enums';
 import type { Budget, TransactionType, Category, Account } from '@/types/models';
 
@@ -10,7 +10,7 @@ jest.mock('@/contexts/StoreContext');
 jest.mock('@/contexts/ServiceContext');
 
 const mockUseStore = useStore as jest.MockedFunction<typeof useStore>;
-const mockUseReportService = useReportService as jest.MockedFunction<typeof useReportService>;
+const mockUseServiceContext = useServiceContext as jest.MockedFunction<typeof useServiceContext>;
 
 describe('useBudgetPerformance', () => {
   const mockBudget: Budget = {
@@ -88,9 +88,11 @@ describe('useBudgetPerformance', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseReportService.mockReturnValue({
-      calculateBudgetPerformance: mockCalculateBudgetPerformance,
-      calculateBudgetTrend: mockCalculateBudgetTrend,
+    mockUseServiceContext.mockReturnValue({
+      reportService: {
+        calculateBudgetPerformance: mockCalculateBudgetPerformance,
+        calculateBudgetTrend: mockCalculateBudgetTrend,
+      },
     } as any);
   });
 

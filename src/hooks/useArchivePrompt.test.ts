@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { renderHook, waitFor } from '@testing-library/react';
 import { useArchivePrompt } from './useArchivePrompt';
-import { useArchiveService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { useSync } from '@/contexts/SyncContext';
 import { useStore } from '@/contexts/StoreContext';
 import { CurrencyCode } from '@/types/enums';
@@ -16,7 +16,7 @@ jest.mock('react-router-dom', () => ({
 }));
 
 const mockUseStore = useStore as jest.MockedFunction<typeof useStore>;
-const mockUseArchiveService = useArchiveService as jest.MockedFunction<typeof useArchiveService>;
+const mockUseServiceContext = useServiceContext as jest.MockedFunction<typeof useServiceContext>;
 const mockUseSync = useSync as jest.MockedFunction<typeof useSync>;
 
 describe('useArchivePrompt', () => {
@@ -33,7 +33,9 @@ describe('useArchivePrompt', () => {
     mockUseStore.mockReturnValue({
       baseCurrency: CurrencyCode.USD,
     } as any);
-    mockUseArchiveService.mockReturnValue(mockArchiveService as any);
+    mockUseServiceContext.mockReturnValue({
+      archiveService: mockArchiveService,
+    } as any);
     mockUseSync.mockReturnValue({
       status: 'synced',
       errorMessage: null,

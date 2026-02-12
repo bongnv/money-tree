@@ -2,7 +2,7 @@
 import { renderHook } from '@testing-library/react';
 import { useBudgetGrouping } from './useBudgetGrouping';
 import { useStore } from '@/contexts/StoreContext';
-import { useCalculationService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { CurrencyCode, BudgetPeriod, Group } from '@/types/enums';
 import type { Budget, TransactionType, Category } from '@/types/models';
 
@@ -10,9 +10,7 @@ jest.mock('@/contexts/StoreContext');
 jest.mock('@/contexts/ServiceContext');
 
 const mockUseStore = useStore as jest.MockedFunction<typeof useStore>;
-const mockUseCalculationService = useCalculationService as jest.MockedFunction<
-  typeof useCalculationService
->;
+const mockUseServiceContext = useServiceContext as jest.MockedFunction<typeof useServiceContext>;
 
 describe('useBudgetGrouping', () => {
   const mockCategory: Category = {
@@ -75,8 +73,10 @@ describe('useBudgetGrouping', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseCalculationService.mockReturnValue({
-      calculateBudgetGrouping: mockCalculateBudgetGrouping,
+    mockUseServiceContext.mockReturnValue({
+      calculationService: {
+        calculateBudgetGrouping: mockCalculateBudgetGrouping,
+      },
     } as any);
   });
 

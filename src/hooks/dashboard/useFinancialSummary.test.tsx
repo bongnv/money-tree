@@ -2,7 +2,7 @@
 import { renderHook } from '@testing-library/react';
 import { useFinancialSummary } from './useFinancialSummary';
 import { useStore } from '@/contexts/StoreContext';
-import { useCalculationService, useReportService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { CurrencyCode } from '@/types/enums';
 import type { Account, ManualAsset } from '@/types/models';
 
@@ -10,10 +10,7 @@ jest.mock('@/contexts/StoreContext');
 jest.mock('@/contexts/ServiceContext');
 
 const mockUseStore = useStore as jest.MockedFunction<typeof useStore>;
-const mockUseCalculationService = useCalculationService as jest.MockedFunction<
-  typeof useCalculationService
->;
-const mockUseReportService = useReportService as jest.MockedFunction<typeof useReportService>;
+const mockUseServiceContext = useServiceContext as jest.MockedFunction<typeof useServiceContext>;
 
 describe('useFinancialSummary', () => {
   const mockAccount: Account = {
@@ -67,8 +64,10 @@ describe('useFinancialSummary', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseCalculationService.mockReturnValue(mockCalculationService as any);
-    mockUseReportService.mockReturnValue(mockReportService as any);
+    mockUseServiceContext.mockReturnValue({
+      calculationService: mockCalculationService,
+      reportService: mockReportService,
+    } as any);
   });
 
   it('should calculate financial summary with all data', () => {

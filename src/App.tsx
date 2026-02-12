@@ -13,7 +13,7 @@ import { AppRoutes } from './routes';
 import { useApp, AppProvider } from '@/contexts/AppContext';
 import { useSync } from '@/contexts/SyncContext';
 import { StoreProvider, useStore } from '@/contexts/StoreContext';
-import { ServiceProvider, useCloudService } from '@/contexts/ServiceContext';
+import { ServiceProvider, useServiceContext } from '@/contexts/ServiceContext';
 import { useArchivePrompt } from '@/hooks/useArchivePrompt';
 import { useReconnectDialog } from '@/hooks/dialogs/useReconnectDialog';
 import type { CloudItem } from './services/storage/IStorageProvider';
@@ -23,7 +23,7 @@ import { SyncProvider } from '@/contexts/SyncContext';
 const AppContent: React.FC = () => {
   const syncOps = useSync();
   const { baseCurrency } = useStore();
-  const cloudService = useCloudService();
+  const { cloudService } = useServiceContext();
   const {
     snackbar,
     hideSnackbar,

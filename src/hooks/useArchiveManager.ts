@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useArchiveService, useCloudService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { useStore } from '@/contexts/StoreContext';
 import { useAppContext } from '@/contexts/AppContext';
 import { useSync } from '@/contexts/SyncContext';
@@ -39,8 +39,7 @@ interface UseArchiveManagerReturn {
 export function useArchiveManager(): UseArchiveManagerReturn {
   const { baseCurrency, archivedYears } = useStore();
   const { currentFile } = useSync();
-  const archiveService = useArchiveService();
-  const cloudService = useCloudService();
+  const { archiveService, cloudService } = useServiceContext();
   const { showSnackbar } = useAppContext();
 
   // State

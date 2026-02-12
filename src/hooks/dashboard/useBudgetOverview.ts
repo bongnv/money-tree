@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useStore } from '@/contexts/StoreContext';
-import { useCalculationService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { Group } from '@/types/enums';
 import type { CurrencyCode } from '@/types/enums';
 import type { PeriodOption } from '@/components/common/PeriodSelector';
@@ -21,7 +21,7 @@ export interface BudgetWithUsage {
 export function useBudgetOverview(period: PeriodOption, baseCurrency: CurrencyCode) {
   const { budgets, transactions, transactionTypes, accounts, exchangeRatesMap, isStoreLoaded } =
     useStore();
-  const calculationService = useCalculationService();
+  const { calculationService } = useServiceContext();
 
   // Calculate budget usage for the selected period
   const budgetsWithUsage = useMemo(() => {

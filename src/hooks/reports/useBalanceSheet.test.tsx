@@ -7,15 +7,17 @@ import type { Account, ManualAsset } from '@/types/models';
 
 jest.mock('@/contexts/StoreContext');
 jest.mock('@/contexts/ServiceContext', () => ({
-  useCalculationService: jest.fn(() => ({
-    calculateAccountBalance: jest.fn(() => 1000),
-  })),
-  useReportService: jest.fn(() => ({
-    calculateBalanceSheet: jest.fn(() => ({
-      assets: { accounts: 1000, manualAssets: 10000, total: 11000 },
-      liabilities: { total: 0 },
-      netWorth: 11000,
-    })),
+  useServiceContext: jest.fn(() => ({
+    calculationService: {
+      calculateAccountBalance: jest.fn(() => 1000),
+    },
+    reportService: {
+      calculateBalanceSheet: jest.fn(() => ({
+        assets: { accounts: 1000, manualAssets: 10000, total: 11000 },
+        liabilities: { total: 0 },
+        netWorth: 11000,
+      })),
+    },
   })),
 }));
 

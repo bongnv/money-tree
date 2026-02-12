@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useStore } from '@/contexts/StoreContext';
-import { useReportService, useCalculationService } from '@/contexts/ServiceContext';
+import { useServiceContext } from '@/contexts/ServiceContext';
 import { getTodayDate } from '@/utils/date.utils';
 import type { CashFlowData, CashFlowTrendPoint } from '@/services/report.service';
 import { CurrencyCode } from '@/types/enums';
@@ -47,8 +47,7 @@ interface ChartData {
 export function useCashFlowReport() {
   const { accounts, transactions, transactionTypes, categories, baseCurrency, exchangeRatesMap } =
     useStore();
-  const reportService = useReportService();
-  const calculationService = useCalculationService();
+  const { reportService, calculationService } = useServiceContext();
 
   // Report parameters
   const today = getTodayDate();

@@ -35,9 +35,7 @@ describe('useTransactionForm', () => {
     });
 
     it('should initialize with transaction data in edit mode', () => {
-      const { result } = renderHook(() =>
-        useTransactionForm({ transaction: mockTransaction })
-      );
+      const { result } = renderHook(() => useTransactionForm({ transaction: mockTransaction }));
 
       expect(result.current.formData.date).toBe('2024-03-15');
       expect(result.current.formData.transactionTypeId).toBe('type-1');
@@ -55,9 +53,7 @@ describe('useTransactionForm', () => {
         description: undefined as any,
       };
 
-      const { result } = renderHook(() =>
-        useTransactionForm({ transaction: txWithoutDesc })
-      );
+      const { result } = renderHook(() => useTransactionForm({ transaction: txWithoutDesc }));
 
       expect(result.current.formData.description).toBe('');
     });
@@ -71,9 +67,7 @@ describe('useTransactionForm', () => {
         toAssetId: undefined as any,
       };
 
-      const { result } = renderHook(() =>
-        useTransactionForm({ transaction: txMinimal })
-      );
+      const { result } = renderHook(() => useTransactionForm({ transaction: txMinimal }));
 
       expect(result.current.formData.fromAccountId).toBe('');
       expect(result.current.formData.toAccountId).toBe('');
@@ -178,9 +172,7 @@ describe('useTransactionForm', () => {
     it('should not call onSubmit when validation fails', async () => {
       const onSubmit = jest.fn();
 
-      const { result } = renderHook(() =>
-        useTransactionForm({ onSubmit })
-      );
+      const { result } = renderHook(() => useTransactionForm({ onSubmit }));
 
       await act(async () => {
         await result.current.handleSubmit();
@@ -190,9 +182,7 @@ describe('useTransactionForm', () => {
     });
 
     it('should work when no onSubmit callback is provided', async () => {
-      const { result } = renderHook(() =>
-        useTransactionForm({ transaction: mockTransaction })
-      );
+      const { result } = renderHook(() => useTransactionForm({ transaction: mockTransaction }));
 
       // Should not throw
       await act(async () => {

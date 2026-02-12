@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BudgetsPage } from './BudgetsPage';
 import { useStore } from '@/contexts/StoreContext';
@@ -205,6 +205,30 @@ describe('BudgetsPage', () => {
     });
 
     render(<BudgetsPage />);
+    expect(screen.getByText('Budgets')).toBeInTheDocument();
+  });
+
+  it('should show period change button', () => {
+    render(<BudgetsPage />);
+    expect(screen.getByRole('button', { name: /change period/i })).toBeInTheDocument();
+  });
+
+  it('should show filter button', () => {
+    render(<BudgetsPage />);
+    expect(screen.getByRole('button', { name: /filter/i })).toBeInTheDocument();
+  });
+
+  it('should have add budget button', () => {
+    render(<BudgetsPage />);
+    const addBudgetButton = screen.getByRole('button', { name: /add budget/i });
+    expect(addBudgetButton).toBeInTheDocument();
+  });
+
+  it('should render without crashing when clicking add budget', () => {
+    render(<BudgetsPage />);
+    const addBudgetButton = screen.getByRole('button', { name: /add budget/i });
+    fireEvent.click(addBudgetButton);
+    // Component should still be rendered
     expect(screen.getByText('Budgets')).toBeInTheDocument();
   });
 });

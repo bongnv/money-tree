@@ -1,5 +1,12 @@
 import { FormatService } from './formatService';
-import type { Account, Category, TransactionType, Transaction, Budget, ManualAsset } from '@/types/models';
+import type {
+  Account,
+  Category,
+  TransactionType,
+  Transaction,
+  Budget,
+  ManualAsset,
+} from '@/types/models';
 import { CurrencyCode, BudgetPeriod, Group, AccountType, AssetType } from '@/types/enums';
 
 describe('FormatService', () => {
@@ -78,59 +85,71 @@ describe('FormatService', () => {
     };
 
     it('should return "Loading..." when any data is undefined', () => {
-      expect(formatService.calculateDataSize({
-        accounts: undefined,
-        categories: [mockCategory],
-        transactionTypes: [mockTransactionType],
-        transactions: [mockTransaction],
-        budgets: [mockBudget],
-        assets: [mockAsset],
-      })).toBe('Loading...');
+      expect(
+        formatService.calculateDataSize({
+          accounts: undefined,
+          categories: [mockCategory],
+          transactionTypes: [mockTransactionType],
+          transactions: [mockTransaction],
+          budgets: [mockBudget],
+          assets: [mockAsset],
+        })
+      ).toBe('Loading...');
 
-      expect(formatService.calculateDataSize({
-        accounts: [mockAccount],
-        categories: undefined,
-        transactionTypes: [mockTransactionType],
-        transactions: [mockTransaction],
-        budgets: [mockBudget],
-        assets: [mockAsset],
-      })).toBe('Loading...');
+      expect(
+        formatService.calculateDataSize({
+          accounts: [mockAccount],
+          categories: undefined,
+          transactionTypes: [mockTransactionType],
+          transactions: [mockTransaction],
+          budgets: [mockBudget],
+          assets: [mockAsset],
+        })
+      ).toBe('Loading...');
 
-      expect(formatService.calculateDataSize({
-        accounts: [mockAccount],
-        categories: [mockCategory],
-        transactionTypes: undefined,
-        transactions: [mockTransaction],
-        budgets: [mockBudget],
-        assets: [mockAsset],
-      })).toBe('Loading...');
+      expect(
+        formatService.calculateDataSize({
+          accounts: [mockAccount],
+          categories: [mockCategory],
+          transactionTypes: undefined,
+          transactions: [mockTransaction],
+          budgets: [mockBudget],
+          assets: [mockAsset],
+        })
+      ).toBe('Loading...');
 
-      expect(formatService.calculateDataSize({
-        accounts: [mockAccount],
-        categories: [mockCategory],
-        transactionTypes: [mockTransactionType],
-        transactions: undefined,
-        budgets: [mockBudget],
-        assets: [mockAsset],
-      })).toBe('Loading...');
+      expect(
+        formatService.calculateDataSize({
+          accounts: [mockAccount],
+          categories: [mockCategory],
+          transactionTypes: [mockTransactionType],
+          transactions: undefined,
+          budgets: [mockBudget],
+          assets: [mockAsset],
+        })
+      ).toBe('Loading...');
 
-      expect(formatService.calculateDataSize({
-        accounts: [mockAccount],
-        categories: [mockCategory],
-        transactionTypes: [mockTransactionType],
-        transactions: [mockTransaction],
-        budgets: undefined,
-        assets: [mockAsset],
-      })).toBe('Loading...');
+      expect(
+        formatService.calculateDataSize({
+          accounts: [mockAccount],
+          categories: [mockCategory],
+          transactionTypes: [mockTransactionType],
+          transactions: [mockTransaction],
+          budgets: undefined,
+          assets: [mockAsset],
+        })
+      ).toBe('Loading...');
 
-      expect(formatService.calculateDataSize({
-        accounts: [mockAccount],
-        categories: [mockCategory],
-        transactionTypes: [mockTransactionType],
-        transactions: [mockTransaction],
-        budgets: [mockBudget],
-        assets: undefined,
-      })).toBe('Loading...');
+      expect(
+        formatService.calculateDataSize({
+          accounts: [mockAccount],
+          categories: [mockCategory],
+          transactionTypes: [mockTransactionType],
+          transactions: [mockTransaction],
+          budgets: [mockBudget],
+          assets: undefined,
+        })
+      ).toBe('Loading...');
     });
 
     it('should return size in bytes for very small data', () => {

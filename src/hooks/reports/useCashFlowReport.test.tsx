@@ -328,12 +328,8 @@ describe('useCashFlowReport', () => {
   });
 
   it('should use transaction type grouping when category filter is active', () => {
-    const incomeByType = new Map([
-      ['type-2', { name: 'Salary', total: 5000, count: 1 }],
-    ]);
-    const expenseByType = new Map([
-      ['type-1', { name: 'Groceries', total: 300, count: 3 }],
-    ]);
+    const incomeByType = new Map([['type-2', { name: 'Salary', total: 5000, count: 1 }]]);
+    const expenseByType = new Map([['type-1', { name: 'Groceries', total: 300, count: 3 }]]);
     mockCalculateTransactionTypeGrouping.mockReturnValue({ incomeByType, expenseByType });
 
     setupStore();
